@@ -1,0 +1,78 @@
+# Changelog
+
+All notable changes to Humptown. Format loosely follows Keep a Changelog;
+versions are milestones rather than releases until there is something to release.
+
+## [0.1.0] — 2026-09-17 — Milestone 1: foundation and simulation spine
+
+The world runs. Nothing is drawn yet, and everything that is claimed is tested.
+
+### Added
+
+**Foundation**
+- Godot 4.5 project targeting the GL Compatibility renderer for low-end hardware
+- Autoloads: `Log` (leveled, with secret redaction), `Events` (typed bus),
+  `Settings` (persisted, keys excluded), `Game` (composition root)
+- `Result` for operations that can be legitimately refused, `SafeJson` for input
+  we do not control, `RngStreams` for named deterministic randomness
+
+**Time**
+- `GameClock` on a real Gregorian calendar, with continuous ticking for play and
+  batched advancement for sleep and travel
+- `WorldEventQueue`: a deterministic min-heap of scheduled world events, so
+  things happen off-screen without being simulated
+
+**World**
+- `WorldState`, `Region`, `Location`; regions unlock through story, money,
+  reputation, contacts, items, knowledge or skill, and each may differ
+- `DataRegistry` loading validated JSON content with cross-reference checking
+
+**People**
+- `Npc`, `NpcRegistry`, `NpcNeeds`, and `NpcSchedule` as a pure function of time
+- `SimLod` and `NpcDirector`: four simulation tiers, budgeted, with the awake set
+  walked directly, candidates indexed by region, and resolved positions cached
+  until the routine block ends
+- Story NPCs protected from incidental death; ordinary deaths carry a cause
+
+**Society**
+- `RelationshipGraph`: directed, five dimensions, sparse
+- `KnowledgeNetwork`: facts with provenance, gossip that spreads along social
+  ties, losing confidence and gaining distortion with each retelling
+- `Reputation`: derived per scope from what people actually believe, with groups
+  reading the same act differently
+
+**The player**
+- `PlayerState`, `Wallet` (cash and bank), weight-based `Inventory`
+- `Stats`: attributes, condition meters, persistent injuries
+- `Skills`: use-based progression to level 99, with diminishing returns that
+  make grinding a trivial task pointless
+
+**AI**
+- Provider abstraction with OpenAI, Anthropic, Google and OpenRouter adapters,
+  built as pure request-builders and response-parsers
+- `LlmRouter` for cheap/main routing and response caching
+- `LlmBudget`: daily cap, rate limiting, circuit breaker
+- `NullProvider` as a first-class offline mode
+- `SecretStore`: encrypted local key storage, never in settings, saves or logs
+
+**Persistence and presentation**
+- `SaveManager` with verified writes that cannot destroy the previous save
+- `SaveMigrations` with a versioned chain, in place before it is needed
+- `Localization` from JSON; English complete, Finnish partial by design
+- `SimViewer`: a debug screen showing the clock, the population, their routines,
+  the event queue and the knowledge network
+
+**Content**
+- Harbourside plus two locked regions, 19 locations, 10 inhabitants with
+  relationships, 8 shared routines, 4 distinct character backgrounds
+
+**Verification**
+- 259 tests, 5766 assertions, across 14 suites
+- A benchmark measuring the real per-minute loop at 50 to 3000 inhabitants
+
+### Notes
+
+- Schedules were rewritten mid-milestone to use `@home` / `@work` tokens after
+  the first version proved unscalable past a handful of people (see D-011)
+- The director originally scanned the whole population every minute; the
+  benchmark caught it, and per-minute cost is now flat in total population

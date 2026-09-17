@@ -1,0 +1,167 @@
+# Architecture decisions
+
+One entry per decision worth defending later. Newest last. Never edit a
+decision in place — supersede it with a new one.
+
+---
+
+## D-001 — Godot 4.5 with GDScript
+
+**Decision.** Godot 4.5.x, GDScript only, no C# and no GDExtension for now.
+
+**Why.** GDScript compiles instantly, has no toolchain, and every contributor
+can read it. The simulation work here is dictionary and integer manipulation,
+not number-crunching; the benchmark shows a three-thousand-person town costing
+a fraction of a frame. If a genuine hot spot appears later, GDExtension can
+replace one class without touching the rest.
+
+**Cost accepted.** GDScript's type inference gives up on `Variant` returns, so
+annotations are needed in places one would rather not bother. Warnings are
+treated as errors precisely to keep that honest.
+
+---
+
+## D-002 — GL Compatibility renderer
+
+**Decision.** `renderer/rendering_method = "gl_compatibility"`, 2D MSAA off,
+physics at 30 Hz.
+
+**Why.** The stated target is an i3-class CPU with integrated graphics. The
+Forward+ renderer assumes a discrete GPU; Compatibility targets exactly the
+hardware in the brief, and a 2D JRPG loses nothing by it. This is a decision
+to make now, because switching renderers after a hundred scenes exist is a
+different and much worse job.
+
+---
+
+## D-003 — Four autoloads, everything else injected
+
+**Decision.** `Log`, `Events`, `Settings`, `Game` are autoloads. No others.
+
+**Why.** Autoloads are convenient and they are also global mutable state. Four
+is enough: logging and settings are genuinely cross-cutting, the event bus is
+how systems avoid holding references to each other, and `Game` is the
+composition root where the world is assembled. Everything else is constructed
+by `Game` and handed its dependencies, which is what makes the systems
+testable in isolation.
+
+---
+
+## D-004 — Content is JSON, not Godot resources
+
+**Decision.** Authored content lives in `data/*.json`, loaded and validated by
+`DataRegistry`. Not `.tres`.
+
+**Why.** Three reasons, in order of how much they matter. JSON diffs cleanly
+in git, so a content change is reviewable. It needs no editor import step, so
+headless tests load exactly what the game loads rather than a re-exported
+approximation. And it can be generated or bulk-edited by tools, which matters
+once the town is larger than a person wants to click through.
+
+**Cost accepted.** No editor inspector for content, and no type safety until
+load. Mitigated by validating every table on load and by
+`validate_references()`, which catches the cross-file breakage that actually
+happens.
+
+---
+
+## D-005 — Schedules are pure functions; position is computed, not simulated
+
+**Decision.** `NpcSchedule.resolve(weekday, minute_of_day)` reads and writes no
+state. Dormant NPCs are never ticked; their location is derived on demand and
+cached until the routine block ends.
+
+**Why.** This is the single decision that makes a large persistent population
+affordable on weak hardware. The alternative — every NPC as a scene with an
+agent that thinks on a timer — is what makes ambitious simulation games stutter.
+The benchmark shows per-minute cost flat from 50 to 3000 inhabitants.
+
+**Consequence to respect.** Anything that wants an NPC to be somewhere the
+routine does not put them must go through an explicit `Override` with a time
+window, not by writing `npc.location`. Overrides are how events bend a life
+without corrupting the function.
+
+---
+
+## D-006 — API keys in an encrypted local file, and the honest threat model
+
+**Decision.** Keys live in `user://secrets.dat`, encrypted with a passphrase
+derived from `OS.get_unique_id()`. They never touch `settings.json`, saves,
+logs or the repository. `Log.redact()` exists for anything that might be one.
+
+**Why, and what this does not do.** The player owns the machine and the key is
+theirs, so the game must be able to decrypt it unattended — which means a
+determined local attacker can too. Claiming otherwise would be dishonest. What
+this genuinely prevents is *accidental disclosure*: a key committed to git, a
+save file sent to a friend, a `settings.json` pasted into a bug report, a
+screenshot of a log. Those are the ways keys actually leak, and they are all
+closed.
+
+**Considered and rejected.** Windows DPAPI would be stronger but needs a
+GDExtension for one file, and would still decrypt unattended for the same
+reason. Not worth the dependency at this stage.
+
+---
+
+## D-007 — Providers are pure; transport is separate
+
+**Decision.** `LlmProvider` subclasses only build requests and parse replies.
+`LlmClient` owns all HTTP, retries, timeouts and deduplication.
+
+**Why.** It makes the entire LLM stack testable with no network and no API key,
+which is why 46 tests cover every wire format and error path on every run. It
+also makes adding a provider one small file with no engine coupling. The
+alternative — each provider doing its own HTTP — means the only way to test a
+parser is to call a paid API.
+
+---
+
+## D-008 — Reputation is derived from knowledge, never stored as a number
+
+**Decision.** No global notoriety value. Standing in a scope is computed from
+what that scope's members actually believe, weighted by confidence and diluted
+by how few of them have heard.
+
+**Why.** The brief asks that a secret crime not affect public reputation. With a
+stored counter that requires special cases everywhere something might be
+witnessed, and one missed case silently breaks the promise. Deriving it means
+secrecy works by construction: if nobody learned the fact, there is nothing to
+derive from.
+
+**Cost accepted.** Computing a standing walks the members of a scope. Cached and
+invalidated on `fact_learned`, which is rare.
+
+---
+
+## D-009 — Migrations exist before there is anything to migrate
+
+**Decision.** `SaveMigrations` ships at version 1 with an empty step table and a
+test asserting every registered version has a reachable path.
+
+**Why.** Save migration is never added retroactively in practice; what happens
+instead is that early saves are declared unsupported. Writing the frame first
+costs an afternoon and makes the first real migration a ten-line function.
+
+---
+
+## D-010 — A manual save is never destroyed by a failed write
+
+**Decision.** `SaveManager` writes to a temporary file, reads it back, parses it,
+and only then replaces the existing slot.
+
+**Why.** Saving is manual and tied to places in the world, so consequences stick.
+That design is only defensible if the last good save is safe. A write that fails
+halfway must cost the player nothing but the save they were trying to make.
+
+---
+
+## D-011 — Symbolic location tokens in schedules
+
+**Decision.** Schedule blocks may name `@home` or `@work`, resolved per NPC by
+`NpcRegistry`.
+
+**Why.** The first draft hardcoded each person's home into their routine, which
+meant a near-identical schedule per inhabitant and made the data unscalable past
+a handful of people. Tokens let one `sched_docks_early` serve every dockhand in
+town. This was rewritten before any content depended on it, which is the cheapest
+time to notice.
