@@ -1,0 +1,9 @@
+[
+  {"id": "occ_shopkeeper", "name_key": "occ.shopkeeper", "daily_wage": 95, "workplace_kind": "shop", "skills": ["haggling", "observation"]},
+  {"id": "occ_dockhand", "name_key": "occ.dockhand", "daily_wage": 110, "workplace_kind": "work", "skills": ["labour", "endurance_training"]},
+  {"id": "occ_barkeep", "name_key": "occ.barkeep", "daily_wage": 85, "workplace_kind": "bar", "skills": ["persuasion", "observation"]},
+  {"id": "occ_nurse", "name_key": "occ.nurse", "daily_wage": 130, "workplace_kind": "civic", "skills": ["first_aid", "observation"]},
+  {"id": "occ_officer", "name_key": "occ.officer", "daily_wage": 140, "workplace_kind": "civic", "skills": ["observation", "intimidation"]},
+  {"id": "occ_fixer", "name_key": "occ.fixer", "daily_wage": 0, "workplace_kind": "bar", "skills": ["persuasion", "stealth"]},
+  {"id": "occ_unemployed", "name_key": "occ.unemployed", "daily_wage": 0, "workplace_kind": "", "skills": []}
+]

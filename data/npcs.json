@@ -1,0 +1,175 @@
+[
+  {
+    "id": "npc_ida",
+    "name": "Ida Lahtinen",
+    "age": 44,
+    "occupation": "occ_shopkeeper",
+    "home": "loc_ida_flat",
+    "workplace": "loc_corner_shop",
+    "schedule": "sched_shop_day",
+    "importance": "story",
+    "traits": ["blunt", "observant", "keeps_accounts"],
+    "groups": ["harbourside_traders"],
+    "portrait": "ida",
+    "relationships": [
+      {"to": "npc_elias", "kind": "family", "trust": 0.8, "affection": 0.9, "familiarity": 1.0},
+      {"to": "npc_tuomas", "kind": "friend", "trust": 0.6, "affection": 0.4, "familiarity": 0.8},
+      {"to": "npc_rauno", "kind": "acquaintance", "trust": -0.3, "fear": 0.2, "familiarity": 0.6}
+    ]
+  },
+  {
+    "id": "npc_elias",
+    "name": "Elias Lahtinen",
+    "age": 22,
+    "occupation": "occ_unemployed",
+    "home": "loc_ida_flat",
+    "workplace": "",
+    "schedule": "sched_student_day",
+    "importance": "named",
+    "traits": ["restless", "eager", "in_debt"],
+    "groups": ["harbourside_traders"],
+    "portrait": "elias",
+    "relationships": [
+      {"to": "npc_ida", "kind": "family", "trust": 0.7, "affection": 0.6, "familiarity": 1.0},
+      {"to": "npc_rauno", "kind": "acquaintance", "trust": 0.3, "fear": 0.4, "familiarity": 0.5}
+    ]
+  },
+  {
+    "id": "npc_veikko",
+    "name": "Veikko Nieminen",
+    "age": 39,
+    "occupation": "occ_dockhand",
+    "home": "loc_veikko_flat",
+    "workplace": "loc_harbour",
+    "schedule": "sched_docks_early",
+    "importance": "story",
+    "traits": ["steady", "loyal", "drinks_too_much"],
+    "groups": ["harbour_crew"],
+    "portrait": "veikko",
+    "relationships": [
+      {"to": "npc_tuomas", "kind": "friend", "trust": 0.7, "affection": 0.5, "familiarity": 0.9},
+      {"to": "npc_rauno", "kind": "colleague", "trust": 0.2, "respect": 0.4, "familiarity": 0.7},
+      {"to": "npc_sanna", "kind": "acquaintance", "trust": 0.4, "affection": 0.3, "familiarity": 0.4}
+    ]
+  },
+  {
+    "id": "npc_tuomas",
+    "name": "Tuomas Rask",
+    "age": 53,
+    "occupation": "occ_barkeep",
+    "home": "loc_tuomas_flat",
+    "workplace": "loc_anchor_bar",
+    "schedule": "sched_bar_night",
+    "importance": "named",
+    "traits": ["hears_everything", "discreet", "dry_humour"],
+    "groups": ["harbourside_traders"],
+    "portrait": "tuomas",
+    "relationships": [
+      {"to": "npc_veikko", "kind": "friend", "trust": 0.6, "affection": 0.5, "familiarity": 0.9},
+      {"to": "npc_ida", "kind": "friend", "trust": 0.7, "affection": 0.4, "familiarity": 0.8},
+      {"to": "npc_rauno", "kind": "acquaintance", "trust": -0.1, "familiarity": 0.8}
+    ]
+  },
+  {
+    "id": "npc_sanna",
+    "name": "Sanna Koskinen",
+    "age": 35,
+    "occupation": "occ_nurse",
+    "home": "loc_sanna_house",
+    "workplace": "loc_clinic",
+    "schedule": "sched_clinic_day",
+    "importance": "named",
+    "traits": ["patient", "tired", "notices_injuries"],
+    "groups": ["clinic_staff"],
+    "portrait": "sanna",
+    "relationships": [
+      {"to": "npc_marika", "kind": "friend", "trust": 0.6, "affection": 0.5, "familiarity": 0.7},
+      {"to": "npc_veikko", "kind": "acquaintance", "trust": 0.3, "familiarity": 0.4}
+    ]
+  },
+  {
+    "id": "npc_marika",
+    "name": "Marika Aalto",
+    "age": 46,
+    "occupation": "occ_officer",
+    "home": "loc_marika_flat",
+    "workplace": "loc_police_post",
+    "schedule": "sched_patrol_day",
+    "importance": "story",
+    "traits": ["by_the_book", "long_memory", "unhurried"],
+    "groups": ["police_harbour"],
+    "portrait": "marika",
+    "relationships": [
+      {"to": "npc_sanna", "kind": "friend", "trust": 0.6, "affection": 0.4, "familiarity": 0.7},
+      {"to": "npc_rauno", "kind": "rival", "trust": -0.7, "respect": 0.3, "familiarity": 0.8}
+    ]
+  },
+  {
+    "id": "npc_rauno",
+    "name": "Rauno Virta",
+    "age": 58,
+    "occupation": "occ_fixer",
+    "home": "loc_rauno_room",
+    "workplace": "loc_warehouse_9",
+    "schedule": "sched_irregular_night",
+    "importance": "story",
+    "traits": ["calculating", "generous_when_useful", "never_writes_anything_down"],
+    "groups": ["harbour_crew"],
+    "portrait": "rauno",
+    "relationships": [
+      {"to": "npc_marika", "kind": "rival", "trust": -0.6, "respect": 0.4, "familiarity": 0.8},
+      {"to": "npc_elias", "kind": "acquaintance", "trust": 0.1, "respect": -0.2, "familiarity": 0.5},
+      {"to": "npc_veikko", "kind": "colleague", "trust": 0.3, "familiarity": 0.7}
+    ]
+  },
+  {
+    "id": "npc_pirjo",
+    "name": "Pirjo Salo",
+    "age": 71,
+    "occupation": "occ_unemployed",
+    "home": "loc_sanna_house",
+    "workplace": "",
+    "schedule": "sched_local_idle",
+    "importance": "named",
+    "traits": ["talks_to_everyone", "remembers_the_old_harbour", "poor_eyesight"],
+    "groups": [],
+    "portrait": "pirjo",
+    "relationships": [
+      {"to": "npc_sanna", "kind": "family", "trust": 0.9, "affection": 0.9, "familiarity": 1.0},
+      {"to": "npc_ida", "kind": "acquaintance", "trust": 0.5, "familiarity": 0.7},
+      {"to": "npc_tuomas", "kind": "acquaintance", "trust": 0.4, "familiarity": 0.6}
+    ]
+  },
+  {
+    "id": "npc_joonas",
+    "name": "Joonas Heikkila",
+    "age": 29,
+    "occupation": "occ_dockhand",
+    "home": "loc_veikko_flat",
+    "workplace": "loc_harbour",
+    "schedule": "sched_docks_early",
+    "importance": "background",
+    "traits": ["quiet", "strong", "sends_money_home"],
+    "groups": ["harbour_crew"],
+    "relationships": [
+      {"to": "npc_veikko", "kind": "colleague", "trust": 0.5, "respect": 0.6, "familiarity": 0.7}
+    ]
+  },
+  {
+    "id": "npc_leena",
+    "name": "Leena Maki",
+    "age": 31,
+    "occupation": "occ_shopkeeper",
+    "home": "loc_marika_flat",
+    "workplace": "loc_cafe_kaisla",
+    "schedule": "sched_shop_day",
+    "importance": "background",
+    "traits": ["cheerful", "gossips"],
+    "groups": ["harbourside_traders"],
+    "relationships": [
+      {"to": "npc_ida", "kind": "colleague", "trust": 0.5, "familiarity": 0.6},
+      {"to": "npc_marika", "kind": "family", "trust": 0.8, "affection": 0.7, "familiarity": 1.0},
+      {"to": "npc_pirjo", "kind": "acquaintance", "trust": 0.4, "familiarity": 0.5}
+    ]
+  }
+]
