@@ -1,0 +1,21 @@
+[
+  {"id": "loc_player_flat", "region": "harbourside", "name_key": "loc.player_flat", "kind": "home", "access": "private", "travel_minutes": 0, "connections": ["loc_dock_street"]},
+  {"id": "loc_dock_street", "region": "harbourside", "name_key": "loc.dock_street", "kind": "street", "access": "public", "travel_minutes": 2, "connections": ["loc_player_flat", "loc_corner_shop", "loc_cafe_kaisla", "loc_harbour", "loc_bus_stop"]},
+  {"id": "loc_corner_shop", "region": "harbourside", "name_key": "loc.corner_shop", "kind": "shop", "access": "public", "open_from": 420, "open_until": 1260, "travel_minutes": 3, "connections": ["loc_dock_street"]},
+  {"id": "loc_cafe_kaisla", "region": "harbourside", "name_key": "loc.cafe_kaisla", "kind": "shop", "access": "public", "open_from": 420, "open_until": 1080, "travel_minutes": 4, "connections": ["loc_dock_street"]},
+  {"id": "loc_harbour", "region": "harbourside", "name_key": "loc.harbour", "kind": "work", "access": "semi_public", "travel_minutes": 6, "connections": ["loc_dock_street", "loc_warehouse_9"]},
+  {"id": "loc_warehouse_9", "region": "harbourside", "name_key": "loc.warehouse_9", "kind": "work", "access": "locked", "travel_minutes": 8, "connections": ["loc_harbour"]},
+  {"id": "loc_anchor_bar", "region": "harbourside", "name_key": "loc.anchor_bar", "kind": "bar", "access": "public", "open_from": 960, "open_until": 180, "travel_minutes": 5, "connections": ["loc_dock_street"]},
+  {"id": "loc_bus_stop", "region": "harbourside", "name_key": "loc.bus_stop", "kind": "civic", "access": "public", "travel_minutes": 3, "connections": ["loc_dock_street"]},
+  {"id": "loc_clinic", "region": "harbourside", "name_key": "loc.clinic", "kind": "civic", "access": "public", "open_from": 480, "open_until": 1020, "travel_minutes": 7, "connections": ["loc_dock_street"]},
+  {"id": "loc_police_post", "region": "harbourside", "name_key": "loc.police_post", "kind": "civic", "access": "semi_public", "travel_minutes": 7, "connections": ["loc_dock_street"]},
+  {"id": "loc_ida_flat", "region": "harbourside", "name_key": "loc.ida_flat", "kind": "home", "access": "private", "owner": "npc_ida", "travel_minutes": 4, "connections": ["loc_dock_street"]},
+  {"id": "loc_veikko_flat", "region": "harbourside", "name_key": "loc.veikko_flat", "kind": "home", "access": "private", "owner": "npc_veikko", "travel_minutes": 5, "connections": ["loc_dock_street"]},
+  {"id": "loc_sanna_house", "region": "harbourside", "name_key": "loc.sanna_house", "kind": "home", "access": "private", "owner": "npc_sanna", "travel_minutes": 6, "connections": ["loc_dock_street"]},
+  {"id": "loc_tuomas_flat", "region": "harbourside", "name_key": "loc.tuomas_flat", "kind": "home", "access": "private", "owner": "npc_tuomas", "travel_minutes": 5, "connections": ["loc_dock_street"]},
+  {"id": "loc_marika_flat", "region": "harbourside", "name_key": "loc.marika_flat", "kind": "home", "access": "private", "owner": "npc_marika", "travel_minutes": 6, "connections": ["loc_dock_street"]},
+  {"id": "loc_rauno_room", "region": "harbourside", "name_key": "loc.rauno_room", "kind": "home", "access": "private", "owner": "npc_rauno", "travel_minutes": 7, "connections": ["loc_dock_street"]},
+  {"id": "loc_old_square", "region": "old_town", "name_key": "loc.old_square", "kind": "street", "access": "public", "travel_minutes": 3, "connections": ["loc_pawn_shop"]},
+  {"id": "loc_pawn_shop", "region": "old_town", "name_key": "loc.pawn_shop", "kind": "shop", "access": "public", "open_from": 600, "open_until": 1140, "travel_minutes": 4, "connections": ["loc_old_square"]},
+  {"id": "loc_eastfield_yard", "region": "eastfield", "name_key": "loc.eastfield_yard", "kind": "work", "access": "semi_public", "travel_minutes": 5, "connections": []}
+]
