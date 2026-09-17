@@ -1,0 +1,15 @@
+[
+  {"id": "item_phone", "name_key": "item.phone", "weight": 0.2, "stackable": false, "value": 150, "kind": "tool"},
+  {"id": "item_keys", "name_key": "item.keys", "weight": 0.1, "stackable": false, "value": 0, "kind": "tool"},
+  {"id": "item_wallet", "name_key": "item.wallet", "weight": 0.1, "stackable": false, "value": 15, "kind": "tool"},
+  {"id": "item_sandwich", "name_key": "item.sandwich", "weight": 0.3, "stackable": true, "value": 5, "kind": "food", "hunger": -0.4},
+  {"id": "item_coffee", "name_key": "item.coffee", "weight": 0.3, "stackable": true, "value": 3, "kind": "food", "sleep": 0.1},
+  {"id": "item_beer", "name_key": "item.beer", "weight": 0.5, "stackable": true, "value": 6, "kind": "drink", "intoxication": 0.15},
+  {"id": "item_bandage", "name_key": "item.bandage", "weight": 0.1, "stackable": true, "value": 8, "kind": "medical", "health": 0.2},
+  {"id": "item_crowbar", "name_key": "item.crowbar", "weight": 3.5, "stackable": false, "value": 25, "kind": "tool"},
+  {"id": "item_toolbox", "name_key": "item.toolbox", "weight": 6.0, "stackable": false, "value": 90, "kind": "tool"},
+  {"id": "item_work_boots", "name_key": "item.work_boots", "weight": 1.6, "stackable": false, "value": 45, "kind": "clothing"},
+  {"id": "item_backpack", "name_key": "item.backpack", "weight": 0.8, "stackable": false, "value": 35, "kind": "container", "capacity_bonus": 10.0},
+  {"id": "item_cigarettes", "name_key": "item.cigarettes", "weight": 0.1, "stackable": true, "value": 9, "kind": "misc"},
+  {"id": "item_notebook", "name_key": "item.notebook", "weight": 0.3, "stackable": false, "value": 4, "kind": "misc"}
+]

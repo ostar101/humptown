@@ -1,0 +1,16 @@
+[
+  {"id": "persuasion", "name_key": "skill.persuasion", "category": "social", "start_level": 1, "description_key": "skill.persuasion.desc"},
+  {"id": "deception", "name_key": "skill.deception", "category": "social", "start_level": 1, "description_key": "skill.deception.desc"},
+  {"id": "intimidation", "name_key": "skill.intimidation", "category": "social", "start_level": 1, "description_key": "skill.intimidation.desc"},
+  {"id": "haggling", "name_key": "skill.haggling", "category": "social", "start_level": 1, "description_key": "skill.haggling.desc"},
+  {"id": "observation", "name_key": "skill.observation", "category": "mental", "start_level": 1, "description_key": "skill.observation.desc"},
+  {"id": "streetwise", "name_key": "skill.streetwise", "category": "mental", "start_level": 1, "description_key": "skill.streetwise.desc"},
+  {"id": "first_aid", "name_key": "skill.first_aid", "category": "mental", "start_level": 1, "description_key": "skill.first_aid.desc"},
+  {"id": "stealth", "name_key": "skill.stealth", "category": "physical", "start_level": 1, "description_key": "skill.stealth.desc"},
+  {"id": "brawling", "name_key": "skill.brawling", "category": "physical", "start_level": 1, "description_key": "skill.brawling.desc"},
+  {"id": "labour", "name_key": "skill.labour", "category": "physical", "start_level": 1, "description_key": "skill.labour.desc"},
+  {"id": "endurance_training", "name_key": "skill.endurance_training", "category": "physical", "start_level": 1, "description_key": "skill.endurance_training.desc"},
+  {"id": "lockpicking", "name_key": "skill.lockpicking", "category": "technical", "start_level": 1, "description_key": "skill.lockpicking.desc"},
+  {"id": "repair", "name_key": "skill.repair", "category": "technical", "start_level": 1, "description_key": "skill.repair.desc"},
+  {"id": "cooking", "name_key": "skill.cooking", "category": "technical", "start_level": 1, "description_key": "skill.cooking.desc"}
+]

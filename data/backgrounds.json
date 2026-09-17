@@ -1,0 +1,77 @@
+[
+  {
+    "id": "bg_returning",
+    "name_key": "background.returning",
+    "description_key": "background.returning.desc",
+    "attributes": {"strength": 5, "agility": 5, "endurance": 6, "wits": 6, "charisma": 5, "resolve": 6},
+    "skills": {"observation": 4, "streetwise": 3, "labour": 3, "persuasion": 2},
+    "cash": 85,
+    "bank": 240,
+    "home": "loc_player_flat",
+    "job": "",
+    "items": [
+      {"id": "item_phone", "count": 1},
+      {"id": "item_keys", "count": 1},
+      {"id": "item_wallet", "count": 1},
+      {"id": "item_notebook", "count": 1}
+    ],
+    "contacts": ["npc_ida"],
+    "flags": ["grew_up_here"]
+  },
+  {
+    "id": "bg_dockhand",
+    "name_key": "background.dockhand",
+    "description_key": "background.dockhand.desc",
+    "attributes": {"strength": 7, "agility": 5, "endurance": 7, "wits": 4, "charisma": 4, "resolve": 6},
+    "skills": {"labour": 8, "endurance_training": 6, "brawling": 4, "streetwise": 3},
+    "cash": 45,
+    "bank": 60,
+    "home": "loc_player_flat",
+    "job": "occ_dockhand",
+    "items": [
+      {"id": "item_phone", "count": 1},
+      {"id": "item_keys", "count": 1},
+      {"id": "item_work_boots", "count": 1},
+      {"id": "item_sandwich", "count": 2}
+    ],
+    "contacts": ["npc_veikko"],
+    "flags": ["has_harbour_pass"]
+  },
+  {
+    "id": "bg_in_debt",
+    "name_key": "background.in_debt",
+    "description_key": "background.in_debt.desc",
+    "attributes": {"strength": 5, "agility": 6, "endurance": 5, "wits": 6, "charisma": 7, "resolve": 4},
+    "skills": {"persuasion": 6, "deception": 5, "streetwise": 5, "haggling": 4},
+    "cash": 20,
+    "bank": 0,
+    "home": "loc_player_flat",
+    "job": "",
+    "items": [
+      {"id": "item_phone", "count": 1},
+      {"id": "item_keys", "count": 1},
+      {"id": "item_cigarettes", "count": 1}
+    ],
+    "contacts": ["npc_rauno"],
+    "flags": ["owes_money"]
+  },
+  {
+    "id": "bg_trained",
+    "name_key": "background.trained",
+    "description_key": "background.trained.desc",
+    "attributes": {"strength": 5, "agility": 5, "endurance": 5, "wits": 7, "charisma": 6, "resolve": 6},
+    "skills": {"first_aid": 8, "observation": 6, "persuasion": 4, "repair": 3},
+    "cash": 60,
+    "bank": 480,
+    "home": "loc_player_flat",
+    "job": "",
+    "items": [
+      {"id": "item_phone", "count": 1},
+      {"id": "item_keys", "count": 1},
+      {"id": "item_bandage", "count": 3},
+      {"id": "item_backpack", "count": 1}
+    ],
+    "contacts": ["npc_sanna"],
+    "flags": ["medically_trained"]
+  }
+]
