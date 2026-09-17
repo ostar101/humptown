@@ -1,0 +1,24 @@
+# Godot 4
+.godot/
+/android/
+export_presets.cfg
+*.translation
+
+# Build output
+build/
+dist/
+*.exe
+*.pck
+*.zip
+
+# Secrets - never commit. Runtime keys live in user:// (see DECISIONS.md D-006)
+*.key
+secrets.*
+.env
+.env.*
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
