@@ -7,7 +7,10 @@ extends Node2D
 ##     godot --path . res://scenes/debug/region_preview.tscn -- --screenshot=user://region.png
 ##
 ## With --screenshot the scene saves one frame and quits, which is how the
-## map's look is checked without anyone sitting at the window.
+## map's look is checked without anyone sitting at the window. `--at=x,y`
+## centres the shot on a cell and `--zoom=0.3` pulls back far enough to judge
+## a whole district's layout in one frame, which is the only way to see that
+## e.g. street furniture has ended up somewhere silly.
 
 const PAN_SPEED := 600.0
 
@@ -32,8 +35,28 @@ func _ready() -> void:
 	_camera.limit_right = int(limits.end.x)
 	_camera.limit_bottom = int(limits.end.y)
 	_camera.position = RegionView.cell_to_world(map.spawn)
+	_apply_view_args(map)
 	_view.focus_on(_camera.position)
 	DevCapture.maybe_capture(self)
+
+
+## `--at=x,y` and `--zoom=z`, for surveying a district rather than a doorway.
+## Zooming out past the streamer's load radius shows empty chunks, so the
+## radius grows with the pull-back — this is a developer view, not the game.
+func _apply_view_args(map: DistrictMap) -> void:
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--at="):
+			var cell := arg.trim_prefix("--at=").split(",")
+			if cell.size() == 2:
+				_camera.position = RegionView.cell_to_world(Vector2i(int(cell[0]), int(cell[1])))
+		elif arg.begins_with("--zoom="):
+			var zoom := maxf(0.05, float(arg.trim_prefix("--zoom=")))
+			_camera.zoom = Vector2(zoom, zoom)
+			var visible_chunks := ceili(maxf(
+				get_viewport().get_visible_rect().size.x / zoom,
+				get_viewport().get_visible_rect().size.y / zoom) / (DistrictMap.CHUNK_SIZE * RegionView.TILE))
+			_view.load_radius = maxi(_view.load_radius, visible_chunks)
+			_view.show_map(map)   # the streamer's radius is fixed when the map is shown
 
 
 func _process(delta: float) -> void:

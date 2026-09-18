@@ -3,7 +3,9 @@ extends RefCounted
 ## The tile set every region is drawn with, and the rule for which tile a map
 ## cell shows.
 ##
-## Atlas layout: one row per DistrictMap.Terrain, VARIANTS columns per row.
+## Atlas layout: one row per DistrictMap.Terrain, VARIANTS columns per row,
+## then the themed rows, then one transparent-but-solid row (`_hidden_row()`)
+## for cells a whole-building sprite draws over.
 ## Each (terrain, variant) cell is either a real LimeZu tile (D-019/D-021) or,
 ## where none was curated, code-painted (D-014). `_real_file()` is the whole
 ## seam: it says which file a cell wants; `_build()` blits it in when present
@@ -86,6 +88,8 @@ static func coords_for(map: DistrictMap, cell: Vector2i, structure_layer: bool) 
 	var terrain := map.structure_at(cell) if structure_layer else map.ground_at(cell)
 	if terrain == DistrictMap.Terrain.NONE:
 		return Vector2i(-1, -1)
+	if structure_layer and BuildingArt.covers(map, cell):
+		return hidden_coords()
 	var variant := _hash(cell) % VARIANTS
 	# Interiors have no `buildings` entry for themselves, so kind_at() (and
 	# therefore theme) is always "" there: an interior never themes its own
@@ -139,6 +143,21 @@ static func _theme_for_row(row: int) -> String:
 
 static func _total_rows() -> int:
 	return DistrictMap.Terrain.size() - 1 + THEMED_ROWS.size()
+
+
+## One extra row after every terrain and themed row: fully transparent, but
+## solid exactly like the wall it stands in for. A building drawn as one whole
+## sprite (`BuildingArt`) uses it for its own roof/wall/door cells, because the
+## art's silhouette is not a rectangle — a pitched roof leaves its top corners
+## clear — and the generic tiles underneath showed through as stray brickwork
+## around a finished house (D-028). Those cells still block, still path and
+## still collide; they simply draw nothing.
+static func _hidden_row() -> int:
+	return _total_rows()
+
+
+static func hidden_coords() -> Vector2i:
+	return Vector2i(0, _hidden_row())
 
 
 static func is_solid(terrain: DistrictMap.Terrain) -> bool:
@@ -208,10 +227,10 @@ static func _darken(img: Image, o: Vector2i, amount: float) -> void:
 # --- atlas painting ---------------------------------------------------------
 
 static func _build() -> TileSet:
-	var rows := _total_rows()
+	var rows := _total_rows() + 1   # the last one is _hidden_row(), left transparent
 	var image := Image.create(TILE * VARIANTS, TILE * rows, false, Image.FORMAT_RGBA8)
 	var rng := RandomNumberGenerator.new()
-	for row in rows:
+	for row in _total_rows():
 		var terrain := _terrain_for_row(row)
 		var theme := _theme_for_row(row)
 		for v in VARIANTS:
@@ -241,7 +260,7 @@ static func _build() -> TileSet:
 		for v in VARIANTS:
 			var coords := Vector2i(v, row)
 			source.create_tile(coords)
-			if is_solid(_terrain_for_row(row)):
+			if row == _hidden_row() or is_solid(_terrain_for_row(row)):
 				var data := source.get_tile_data(coords, 0)
 				data.add_collision_polygon(0)
 				data.set_collision_polygon_points(0, 0, square)

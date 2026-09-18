@@ -647,3 +647,51 @@ self removes the possibility of forgetting.
 correct data is a draw-order bug, not a logic bug — check what actually
 controls sibling z-ordering (`y_sort_enabled` on the *parent*) before
 re-checking the logic that already proved itself correct.
+
+## D-028 — A whole-building sprite owns its own footprint, porch included
+
+**Decision.** Three changes that together make a drawn building and the map
+agree, after the user reported brickwork behind finished houses, doors you
+could not line up with, and porches you could not walk onto:
+
+1. **A covered building draws no per-cell tiles.** `BuildingArt.covers()` says
+   whether a cell is inside a building drawn as one whole sprite;
+   `RegionTiles.coords_for()` then returns `hidden_coords()` — one extra atlas
+   row that is fully transparent but carries the same collision box as the
+   wall it stands in for. The cells still block, still path and still collide;
+   they simply draw nothing.
+2. **The art dictates the door column.** `BuildingArt.door_column(kind)` is
+   where that building draws its own front door (2 for the villa, 4 for the
+   storefront), and `test_building_art` fails if an authored building whose
+   rect matches the art puts its door anywhere else. Six homes moved a column.
+3. **A porch is not part of the building.** `BuildingArt` splits the image's
+   `cells` from the `footprint()` a map authors: `porch_rows` (2 for the
+   villa, 0 for the storefront) are drawn by the sprite *below* the rect and
+   stay ordinary walkable ground. The six villa-sized homes shrank from 8x13
+   to 8x11, the sprite still draws all thirteen rows, and the two it now
+   overhangs are the decking someone walks up to reach the door.
+
+**Why the brickwork was there at all.** A pitched roof is not a rectangle:
+`home_1.png`'s top row is 0-75% opaque across its eight columns and its second
+row 25-100%. D-024 stamped `Terrain.ROOF` across the building's whole rect and
+drew the sprite over it, so the generic red shingle showed through exactly
+where the villa's roof sloped away — reading, correctly, as the ruins of an
+older building behind the new one.
+
+**Why not simply skip the cell.** Those cells are what make a building solid:
+the tile's collision polygon is the physics the player walks into. Dropping
+them would have meant rebuilding collision somewhere else (a body per
+building) for no gain. A transparent tile keeps one rule — `coords_for()` says
+what a cell looks like — and changes only the pixels.
+
+**Why the porch is walkable and the door sits on the drawn door.** D-025 put
+the interactive door at the *bottom* of the porch, so the whole rect was solid
+and the porch was scenery you could not step on; the door you pressed was two
+rows below the door you could see. Making the porch ordinary ground fixes both
+at once, and costs only that someone standing on it draws in front of the
+railing they are technically behind.
+
+**Consequence to respect.** `footprint()`, not the image size, is what a map
+authors. Anyone adding a building kind with art must give it `cells`,
+`porch_rows` and `door_column`, and `test_building_art` will hold the map to
+all three.

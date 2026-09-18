@@ -103,20 +103,32 @@ func test_atlas_has_a_row_per_plain_terrain_plus_one_per_themed_pair() -> void:
 	# — test_region_map.gd exercises the drawing/collision contract itself.
 	var source: TileSetAtlasSource = RegionTiles.tile_set().get_source(RegionTiles.SOURCE_ID)
 	var expected_rows := DistrictMap.Terrain.size() - 1 + RegionTiles.THEMED_ROWS.size()
-	assert_eq(source.get_atlas_grid_size(), Vector2i(RegionTiles.VARIANTS, expected_rows))
 	assert_eq(expected_rows, RegionTiles._total_rows())
+	# Plus the trailing transparent-but-solid row a whole-building sprite
+	# covers its own cells with (D-028).
+	assert_eq(source.get_atlas_grid_size(), Vector2i(RegionTiles.VARIANTS, expected_rows + 1))
+	assert_eq(RegionTiles.hidden_coords(), Vector2i(0, expected_rows))
 
 
 func test_a_themed_buildings_wall_and_door_differ_from_a_plain_one() -> void:
-	var data := DataRegistry.new()
-	data.load_all()
-	var world := WorldState.new()
-	world.build_from(data)
-	var map := world.map_for("harbourside")
-	assert_not_null(map)
-	# loc_corner_shop (kind "shop") and loc_player_flat (kind "home", no theme).
-	var shop_door: Vector2i = map.buildings["loc_corner_shop"]["door"]
-	var home_door: Vector2i = map.buildings["loc_player_flat"]["door"]
+	# Deliberately not the authored map: every building there is exactly the
+	# size of a whole-building sprite, and a covered building draws no per-cell
+	# tiles at all (D-028). Theming is what a building of any *other* size
+	# still gets — and what every building gets without the art installed.
+	var built := DistrictMap.from_data({
+		"id": "themed", "region": "harbourside", "width": 20, "height": 12,
+		"fill": "grass", "spawn": [1, 11],
+		"buildings": [
+			{"location": "loc_shop", "rect": [2, 2, 4, 6], "door": [3, 7]},
+			{"location": "loc_home", "rect": [10, 2, 4, 6], "door": [11, 7]},
+		],
+	})
+	assert_ok(built)
+	var map: DistrictMap = built.value
+	map.building_kind = {"loc_shop": "shop", "loc_home": "home"}
+	var shop_door: Vector2i = map.buildings["loc_shop"]["door"]
+	var home_door: Vector2i = map.buildings["loc_home"]["door"]
+	assert_false(BuildingArt.covers(map, shop_door), "this building is the wrong size for whole art")
 	assert_eq(map.kind_at(shop_door), "shop")
 	assert_eq(map.kind_at(home_door), "home")
 	var shop_wall := RegionTiles.coords_for(map, shop_door + Vector2i.UP, true)

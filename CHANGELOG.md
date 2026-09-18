@@ -32,6 +32,9 @@ versions are milestones rather than releases until there is something to release
   scene to remember the override; without it, whole-building sprites lost
   the draw order against later-streamed tile chunks and showed the plain
   per-cell tiles behind them instead (D-027)
+- A building drawn as one whole sprite draws no per-cell tiles at all, puts
+  its door on the column the art draws one in, and keeps its porch as
+  walkable ground outside the rect so the door can be reached (D-028)
 
 ### Added
 - `tools/import_limezu.py`: builds the local, git-ignored `art/vendor/limezu/`
@@ -146,6 +149,12 @@ versions are milestones rather than releases until there is something to release
   building's later-streamed tile chunks in `region_preview.tscn` (not
   `world.tscn`, which happened to override the setting), reading as leftover
   plain construction behind the real house/storefront art (D-027)
+- The generic red roof showed through a villa's pitched-roof corners as
+  stray brickwork behind every finished house; the six villa-sized homes had
+  their door a column off the drawn door, and their porch was solid, so the
+  door could not be walked up to (D-028)
+- `region_preview.tscn` takes `--at=x,y` and `--zoom=z`, so a whole district
+  can be judged in one screenshot instead of a doorway at a time
 - The player's sprite stuttered slightly while moving: physics runs at a
   fixed 30 Hz but the display renders faster, so `physics/common/
   physics_interpolation` is now on project-wide, with
