@@ -1,9 +1,9 @@
 # Project status
 
 **Updated:** 2026-09-19
-**Milestone:** M2 — The world you can see and walk — **complete** (0.2.0). Next: M3 — Conversation.
-**Build:** green. 432 tests, 7444 assertions with the LimeZu art installed,
-~6.5 s.
+**Milestone:** M3 — Conversation — **in progress** (step 1 of 5 done). M2 complete (0.2.0).
+**Build:** green. 457 tests, 7654 assertions with the LimeZu art installed,
+~7 s.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
@@ -18,18 +18,23 @@ your bed to the next morning — which saves, so Continue on the title screen
 brings you back. Day and night tint the world and light the street lamps.
 The whole story is in DECISIONS.md D-019 to D-034 and the 0.2.0 changelog.
 
-**Next: M3 — Conversation** (ROADMAP.md). Not yet split into steps; the
-shape, so the next session does not start cold:
+**M3 step 1 is done (D-035): talking to people, offline.** Face someone and
+press E: the simulation decides whether they can be talked to, the dialogue
+box opens, and typed lines are answered from authored lines by topic, in
+English and Finnish. Every story NPC has their own voice; people only know
+who they know; names are learned; time stands still while talking.
 
-1. **Dialogue UI** as a real scene in the house theme: portrait upper left,
+**Next: M3 step 2 — the model behind the same `say()`.** The steps as
+planned:
+
+1. ~~**Dialogue UI**~~ — done (D-035). As designed: a real scene in the house theme: portrait upper left,
    name, typewriter reveal, free text entry at the bottom, optional quick
    replies that never replace typing. Opened by `interact` on a person —
    which needs "who is standing on the faced cell" answered from the
    simulation (D-017: never from the bodies).
-2. **Authored fallback lines first.** Build the whole conversation loop
-   against `NullProvider` and authored lines per NPC before any live call, so
-   offline play is the default that works and the LLM is the enhancement.
-3. **Prompt assembly**: identity, present circumstance, selected memories,
+2. ~~Authored fallback lines first~~ — done with step 1.
+3. **Prompt assembly** (next, with a settings screen for the provider and the
+   player's own key, and `say()` trying the model before the authored line): identity, present circumstance, selected memories,
    the relationship, and only what this person actually knows
    (`KnowledgeNetwork`) — tested as a pure function of world state.
 4. **Intent interpretation on the cheap model; validation in Godot.** The

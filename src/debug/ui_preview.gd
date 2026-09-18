@@ -46,7 +46,35 @@ func _ready() -> void:
 		# the next line — and one more press would already be leaving.
 		for i in maxi(int(args.get("lines", "1")) * 2 - 1, 0):
 			(screen as Opening).advance()
+	elif which == "world" and args.has("talk"):
+		_drive_talk(screen as WorldView, str(args["talk"]), str(args.get("say", "")))
 	DevCapture.maybe_capture(self)
+
+
+## `--talk=npc_id [--say=text]`: puts that person on the quay with the
+## player in front of them and opens a conversation, so the dialogue box can
+## be looked at in place.
+func _drive_talk(view: WorldView, npc_id: String, text: String) -> void:
+	var npc := Game.npcs.get_npc(npc_id)
+	if npc == null:
+		return
+	npc.activity = "work"
+	npc.location = "loc_harbour"
+	var map := Game.world.map_for(Game.player.region)
+	var stand := map.standing_cell("loc_harbour", npc_id) + Vector2i.DOWN
+	# Placing the player before the area is shown lets it snap the camera there.
+	Game.player.interior = ""
+	Game.player.position = DistrictMap.cell_to_world(stand)
+	view.show_current_area()
+	var body := view.npc_bodies().body_for(npc_id)
+	if body == null:
+		Log.warn("ui_preview", "No body to talk to", {"npc": npc_id})
+		return
+	view.player_body().facing = Vector2i.UP
+	view.talk_to(body)
+	if text != "":
+		view.dialogue_box().submit(text)
+	view.dialogue_box().finish_reveal()
 
 
 func _drive_creation(creation: CharacterCreation, args: Dictionary, background: String) -> void:

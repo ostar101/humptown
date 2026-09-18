@@ -3,6 +3,26 @@
 All notable changes to Humptown. Format loosely follows Keep a Changelog;
 versions are milestones rather than releases until there is something to release.
 
+## [Unreleased] — Milestone 3: conversation
+
+### Decided
+- M3 step 1: talking to people works offline first. Interact while facing
+  someone opens a conversation the simulation has to allow; a dialogue box in
+  the house style; typed lines recognised by topic in English and Finnish and
+  answered from authored lines, a voice for every story NPC; people only know
+  who they know; time stands still while talking (D-035)
+
+### Added
+- `DialogueDirector` (`Game.dialogue`), `Conversation`, `OfflineTopics`,
+  `DialogueLines`; `Game.start_conversation()`, `say_to_npc()`,
+  `end_conversation()`
+- `DialogueBox` scene in the world; `NpcBodies.body_at()`, `NpcBody.hold()`
+  and `resume()`; a "Talk to …" prompt
+- Authored lines for all ten story NPCs and for everyone else, in English
+  and Finnish
+- `test_dialogue`: 26 tests
+- `ui_preview.tscn -- --screen=world --talk=npc_id [--say=text]`
+
 ## [0.2.0] — 2026-09-19 — Milestone 2: the world you can see and walk
 
 You can start a character, walk Harbourside, watch its people keep their

@@ -28,6 +28,7 @@ var player := PlayerState.new()
 var saves := SaveManager.new()
 var rng := RngStreams.new()
 var llm: LlmClient = null
+var dialogue := DialogueDirector.new()
 
 var running: bool = false
 ## Directory tier reassignment cadence, in game minutes. Cheap, but not free.
@@ -44,6 +45,9 @@ const SLEEP_THRESHOLD := 0.75
 var save_slot: String = "main"
 
 var _last_retier: int = -999
+## Whether the clock was already paused when a conversation began, so ending
+## it restores what was there rather than always unpausing.
+var _time_paused_before_talk := false
 ## What the player's body is doing as hours pass; "sleep" during a night.
 var _player_activity := "idle"
 
@@ -94,6 +98,7 @@ func new_game(background_id: String = "", world_seed: int = 0) -> Result:
 
 	_seed_relationships()
 	_apply_background(background_id)
+	dialogue.setup(npcs, world, player, relationships)
 	_connect_simulation()
 
 	# Open the starting region and place the player.
@@ -171,6 +176,8 @@ func unload() -> void:
 	world = WorldState.new()
 	npcs = NpcRegistry.new()
 	director = NpcDirector.new()
+	dialogue = DialogueDirector.new()
+	_time_paused_before_talk = false
 	world_unloaded.emit()
 
 
@@ -388,6 +395,48 @@ func _sleep_in_bed(proposal: Dictionary, location_id: String) -> Result:
 	if saved.is_err():
 		Log.warn("game", "Could not save after sleeping", {"reason": saved.message})
 	return Result.success({"kind": "slept", "minutes": minutes, "saved": saved.is_ok()})
+
+
+# --- conversation -------------------------------------------------------------
+
+## Starts talking to someone the player is facing (D-035). Refusals are
+## rejected proposals like any other: `already_talking`, `nobody_there`,
+## `asleep`, `on_their_way`. Time stands still while two people talk; the
+## minutes it took are paid in one step when it ends.
+func start_conversation(npc_id: String) -> Result:
+	if not is_running():
+		return Result.failure("no_world")
+	var started := dialogue.start(npc_id, clock.total_minutes)
+	if started.is_err():
+		return _reject({"kind": "talk", "npc": npc_id}, started.code)
+	_time_paused_before_talk = clock.paused
+	clock.paused = true
+	var opening: Dictionary = started.value
+	Events.dialogue_started.emit(npc_id)
+	Events.dialogue_line.emit(npc_id, str(opening["text"]))
+	return started
+
+
+## The player says something to whoever they are talking to; returns the
+## reply as `DialogueDirector.say()` describes it.
+func say_to_npc(text: String) -> Result:
+	var said := dialogue.say(text)
+	if said.is_ok():
+		var reply: Dictionary = said.value
+		Events.dialogue_line.emit(PlayerState.ID, text.strip_edges())
+		Events.dialogue_line.emit(dialogue.conversation.npc_id, str(reply["text"]))
+	return said
+
+
+func end_conversation() -> Result:
+	var ended := dialogue.end()
+	if ended.is_err():
+		return ended
+	var outcome: Dictionary = ended.value
+	clock.paused = _time_paused_before_talk
+	advance_time(maxi(int(outcome["exchanges"]), 1))
+	Events.dialogue_ended.emit(str(outcome["npc"]))
+	return ended
 
 
 func _reject(proposal: Dictionary, code: String) -> Result:

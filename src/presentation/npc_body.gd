@@ -64,6 +64,24 @@ func is_walking() -> bool:
 	return _next < _route.size()
 
 
+## Stops mid-route and turns to face someone — a person being talked to
+## (D-035). The route is kept; `resume()` carries on along it.
+func hold(facing: Vector2i) -> void:
+	set_process(false)
+	_figure.moving = false
+	_figure.facing = facing
+
+
+func resume() -> void:
+	if is_walking():
+		_figure.moving = true
+		set_process(true)
+
+
+func facing() -> Vector2i:
+	return _figure.facing
+
+
 func current_cell() -> Vector2i:
 	return DistrictMap.world_to_cell(position)
 

@@ -962,3 +962,52 @@ the runner resumes.
 **Not done.** Interiors are still generic tiles (the flat you wake up in
 included); a settings screen (language, AI provider) and multiple save slots
 are later.
+
+## D-035 — Talking to people works offline first; the rules decide who can be talked to
+
+**Decision.** M3 step 1. Pressing interact while facing someone opens a
+conversation: `WorldView` finds the body on the faced cell (presentation's
+half), `Game.start_conversation(npc_id)` decides whether that person can be
+talked to (the simulation's half), and `DialogueBox` shows it the way the
+design plan describes — portrait and name upper left, words appearing a
+letter at a time, free text at the bottom, a few quick replies that never
+replace typing. With no model involved at all, `OfflineTopics` recognises
+what a typed line is about (a greeting, a goodbye, thanks, who someone is,
+what they do, a person, a place — in English and Finnish) and
+`DialogueLines` answers from authored lines: every story NPC has a voice of
+their own, everyone else speaks generically.
+
+**Why offline first.** The roadmap's "done when" includes unplugging the
+network without breaking the game, and the plan asks that the game remain
+functional with no key, no provider and no connection. Building the whole
+loop — who can be talked to, what they say, what it changes, how it looks —
+against authored lines means the model, when it arrives, is an enhancement
+behind the same `say()`, and offline play is the version that already works
+rather than an error path.
+
+**Who can be talked to is the simulation's call (D-017).** Someone asleep
+stays asleep. Someone the simulation already has inside a building, while
+their body is still walking there, is "on their way somewhere and doesn't
+stop" — which is both true and a reasonable thing for a person to do.
+Refusals are rejected proposals like any other and emit `action_rejected`.
+
+**Even offline, people only know who they know.** Asked about another person,
+someone answers from their own relationship to them: Ida knows Tuomas, and
+says so; she has never met Joonas, and says that. It is the knowledge rule in
+its smallest form, and it holds before any model is involved.
+
+**Names are learned.** The prompt and the dialogue box call someone by name
+only once the player knows it — a background contact, or someone met and
+introduced (asking who they are is an introduction). Until then they are
+their occupation, or simply "someone".
+
+**Time stands still while two people talk.** The clock pauses for the
+conversation and the minutes it took — one per thing said — are paid in one
+step when it ends, the way sleep and travel are (D-005). Talking at all makes
+both people a little more familiar with each other.
+
+**Cost accepted.** The offline recogniser is deliberately modest: it notices
+words, it does not understand sentences, and it will sometimes take a
+question for small talk. It exists to be the floor, not to compete with the
+model. Finnish inflection is handled by matching the first five letters of
+longer place names ("satamassa" is the harbour), which is crude and enough.

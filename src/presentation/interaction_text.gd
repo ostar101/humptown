@@ -9,6 +9,7 @@ extends RefCounted
 ## nothing.
 const EXPLAINED_REFUSALS: Array[String] = [
 	"locked", "private", "closed", "no_interior", "nobody_serving", "not_your_bed", "not_tired",
+	"asleep", "on_their_way", "nobody_there", "already_talking",
 ]
 
 
@@ -26,6 +27,12 @@ static func prompt_for(interaction: Dictionary) -> String:
 			return Localization.t("ui.prompt.sleep")
 		"sign":
 			return Localization.t("ui.prompt.read")
+		"person":
+			# A name only once the player knows it (D-035).
+			if Game.is_running() and Game.dialogue.knows_name(target):
+				var npc := Game.npcs.get_npc(target)
+				return Localization.t("ui.prompt.talk", {"name": npc.name if npc != null else target})
+			return Localization.t("ui.prompt.talk_stranger")
 	return ""
 
 

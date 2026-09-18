@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://src/presentation/world_view.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/world/region_view.tscn" id="2"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://src/presentation/player_camera.gd" id="4"]
 [ext_resource type="Script" path="res://src/presentation/npc_bodies.gd" id="5"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="6"]
+[ext_resource type="PackedScene" path="res://scenes/ui/dialogue_box.tscn" id="7"]
 
 [node name="World" type="Node2D"]
 script = ExtResource("1")
@@ -25,5 +26,7 @@ script = ExtResource("5")
 script = ExtResource("4")
 
 [node name="Daylight" type="CanvasModulate" parent="."]
+
+[node name="Dialogue" parent="." instance=ExtResource("7")]
 
 [node name="Hud" parent="." instance=ExtResource("6")]

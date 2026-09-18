@@ -53,6 +53,17 @@ func body_for(npc_id: String) -> NpcBody:
 	return _bodies.get(npc_id)
 
 
+## Whoever's body stands on this cell, or null. Presentation's half of
+## talking to someone: it names who the player is facing; whether that person
+## can actually be talked to is the simulation's call (DialogueDirector).
+func body_at(cell: Vector2i) -> NpcBody:
+	for npc_id in _bodies:
+		var body: NpcBody = _bodies[npc_id]
+		if body.current_cell() == cell:
+			return body
+	return null
+
+
 func visible_count() -> int:
 	return _bodies.size()
 

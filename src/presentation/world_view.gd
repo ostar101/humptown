@@ -16,12 +16,17 @@ extends Node2D
 ## The time-of-day tint over everything drawn in the world (DayNight, D-032).
 ## The HUD is its own CanvasLayer and is not affected.
 @onready var _daylight: CanvasModulate = $Daylight
+@onready var _dialogue: DialogueBox = $Dialogue
 
 const NO_CELL := Vector2i(-99999, -99999)
 
 var _last_accepted := Vector2.ZERO
-## The cell the player faced when the prompt was last worked out.
+## The cell the player faced when the prompt was last worked out, and who
+## was standing on it — people move, so the prompt must notice them arrive.
 var _front := NO_CELL
+var _front_person := ""
+## The body of whoever the player is talking to, held still until it ends.
+var _talking_body: NpcBody = null
 
 
 func _ready() -> void:
@@ -35,6 +40,7 @@ func _ready() -> void:
 	Events.minute_passed.connect(_on_minute_passed)
 	Events.time_skipped.connect(_on_time_skipped)
 	Events.game_loaded.connect(refresh_daylight)
+	_dialogue.closed.connect(_on_dialogue_closed)
 	show_current_area()
 	DevCapture.maybe_capture(self)
 
@@ -107,10 +113,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		interact()
 
 
-## Uses whatever the player is facing. Public so tests and scripted scenes can
-## press the button.
+## Uses whatever the player is facing — a person first, then whatever is on
+## the cell. Public so tests and scripted scenes can press the button.
 func interact() -> Result:
 	var cell := _player.current_cell() + _player.facing
+	var person := _npcs.body_at(cell)
+	if person != null:
+		return talk_to(person)
 	var what := Game.interaction_at(cell)
 	var result := Game.interact_at(cell)
 	_hud.show_message(InteractionText.outcome_text(what, result))
@@ -120,6 +129,25 @@ func interact() -> Result:
 			show_current_area()
 	_front = NO_CELL
 	return result
+
+
+## Opens a conversation with the person this body is. Whether they can be
+## talked to is Game's decision (D-035); a refusal is shown, and nothing else
+## changes.
+func talk_to(body: NpcBody) -> Result:
+	var opened := _dialogue.open(body.npc_id)
+	if opened.is_err():
+		_hud.show_message(InteractionText.outcome_text({"kind": "person", "target": body.npc_id}, opened))
+		return opened
+	_talking_body = body
+	body.hold(-_player.facing)
+	_player.input_enabled = false
+	_hud.set_prompt("")
+	return opened
+
+
+func dialogue_box() -> DialogueBox:
+	return _dialogue
 
 
 func player_body() -> PlayerBody:
@@ -138,13 +166,30 @@ func hud() -> Hud:
 	return _hud
 
 
-## Works out the prompt only when the faced cell changes, not every frame.
+## Works out the prompt only when the faced cell, or who is standing on it,
+## changes — not every frame.
 func _refresh_prompt() -> void:
+	if _dialogue.is_open():
+		return
 	var front := _player.current_cell() + _player.facing
-	if front == _front:
+	var body := _npcs.body_at(front)
+	var person := body.npc_id if body != null else ""
+	if front == _front and person == _front_person:
 		return
 	_front = front
-	_hud.set_prompt(InteractionText.prompt_for(Game.interaction_at(front)))
+	_front_person = person
+	if person != "":
+		_hud.set_prompt(InteractionText.prompt_for({"kind": "person", "target": person}))
+	else:
+		_hud.set_prompt(InteractionText.prompt_for(Game.interaction_at(front)))
+
+
+func _on_dialogue_closed() -> void:
+	_player.input_enabled = true
+	if _talking_body != null and _talking_body.npc_id != "":
+		_talking_body.resume()
+	_talking_body = null
+	_front = NO_CELL
 
 
 func _on_player_cell_changed(_cell: Vector2i) -> void:
