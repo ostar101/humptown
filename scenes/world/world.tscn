@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://src/presentation/world_view.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/world/region_view.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://scenes/world/player_body.tscn" id="3"]
 [ext_resource type="Script" path="res://src/presentation/player_camera.gd" id="4"]
+[ext_resource type="Script" path="res://src/presentation/npc_bodies.gd" id="5"]
 
 [node name="World" type="Node2D"]
 script = ExtResource("1")
@@ -13,6 +14,10 @@ y_sort_enabled = true
 
 [node name="RegionView" parent="Actors" instance=ExtResource("2")]
 y_sort_enabled = true
+
+[node name="NpcBodies" type="Node2D" parent="Actors"]
+y_sort_enabled = true
+script = ExtResource("5")
 
 [node name="Player" parent="Actors" instance=ExtResource("3")]
 

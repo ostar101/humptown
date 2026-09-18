@@ -36,7 +36,8 @@ src/llm/       LlmClient, LlmRouter, LlmBudget, LlmRequest/Response, SecretStore
 src/save/      SaveManager, SaveMigrations
 src/loc/       Localization
 src/presentation/ WorldView, RegionView, RegionTiles, PlayerBody, PlayerCamera,
-               CharacterFigure — draws state and emits intent, never mutates
+               CharacterFigure, NpcBodies, NpcBody, NpcLook — draws state and
+               emits intent, never mutates
 src/debug/     SimViewer, RegionPreview, DevCapture (--screenshot)
 data/          authored content (JSON)
 locale/        en.json, fi.json

@@ -29,11 +29,24 @@ versions are milestones rather than releases until there is something to release
 - `DevCapture`: `--screenshot` and `--walk` for any scene
 - `test_player_movement`: 12 tests, three of them driving a real body with
   physics
+- NPC bodies: `NpcBodies` pools a `NpcBody` per ACTIVE/FOCUS person who is
+  outdoors in the shown region, driven by `npc_tier_changed`,
+  `location_entered`, `time_skipped` and `game_loaded` — never polled. People
+  indoors have no body until interiors exist (D-017).
+- `DistrictMap.find_path()` (AStarGrid2D, built once per map, no corner
+  cutting), `standing_cell()` (a per-person spot at a place), `edge_cell()`,
+  `is_building()`
+- `NpcLook` and an optional authored `look` on NPCs; every named and story NPC
+  has one, background people get a stable generated outfit
+- `DevCapture`: `--advance=minutes` and `--at=x,y`
+- `test_npc_bodies`: 15 tests
 
 ### Changed
 - The test runner fails a test during which the engine logs an error, and
   awaits coroutine tests. Previously a crashing test was reported as passed.
 - `PlayerState.position` is now the position on the region map
+- `PlayerBody.facing_for()` moved to `CharacterFigure.facing_for()`; the old
+  name forwards
 
 ### Fixed
 - `SimViewer` failed to compile under the strict warning settings (untyped

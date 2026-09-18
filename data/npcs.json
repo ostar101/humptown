@@ -11,6 +11,7 @@
     "traits": ["blunt", "observant", "keeps_accounts"],
     "groups": ["harbourside_traders"],
     "portrait": "ida",
+    "look": {"skin": "#e8c4a0", "hair": "#6b4a2e", "shirt": "#8c3b3b", "trousers": "#3a3a44", "shoes": "#2a2420"},
     "relationships": [
       {"to": "npc_elias", "kind": "family", "trust": 0.8, "affection": 0.9, "familiarity": 1.0},
       {"to": "npc_tuomas", "kind": "friend", "trust": 0.6, "affection": 0.4, "familiarity": 0.8},
@@ -29,6 +30,7 @@
     "traits": ["restless", "eager", "in_debt"],
     "groups": ["harbourside_traders"],
     "portrait": "elias",
+    "look": {"skin": "#e8c4a0", "hair": "#c9a15a", "shirt": "#4f7a3a", "trousers": "#2e4a6b", "shoes": "#e6e6e6"},
     "relationships": [
       {"to": "npc_ida", "kind": "family", "trust": 0.7, "affection": 0.6, "familiarity": 1.0},
       {"to": "npc_rauno", "kind": "acquaintance", "trust": 0.3, "fear": 0.4, "familiarity": 0.5}
@@ -46,6 +48,7 @@
     "traits": ["steady", "loyal", "drinks_too_much"],
     "groups": ["harbour_crew"],
     "portrait": "veikko",
+    "look": {"skin": "#d9a882", "hair": "#2e2622", "shirt": "#d9812b", "trousers": "#34404f", "shoes": "#3b2a1e"},
     "relationships": [
       {"to": "npc_tuomas", "kind": "friend", "trust": 0.7, "affection": 0.5, "familiarity": 0.9},
       {"to": "npc_rauno", "kind": "colleague", "trust": 0.2, "respect": 0.4, "familiarity": 0.7},
@@ -64,6 +67,7 @@
     "traits": ["hears_everything", "discreet", "dry_humour"],
     "groups": ["harbourside_traders"],
     "portrait": "tuomas",
+    "look": {"skin": "#d8a47f", "hair": "#9a9a9a", "shirt": "#1f1f24", "trousers": "#2b2b30", "shoes": "#1a1a1a"},
     "relationships": [
       {"to": "npc_veikko", "kind": "friend", "trust": 0.6, "affection": 0.5, "familiarity": 0.9},
       {"to": "npc_ida", "kind": "friend", "trust": 0.7, "affection": 0.4, "familiarity": 0.8},
@@ -82,6 +86,7 @@
     "traits": ["patient", "tired", "notices_injuries"],
     "groups": ["clinic_staff"],
     "portrait": "sanna",
+    "look": {"skin": "#f0cfb0", "hair": "#a0522d", "shirt": "#7fb7c9", "trousers": "#7fb7c9", "shoes": "#f2f2f2"},
     "relationships": [
       {"to": "npc_marika", "kind": "friend", "trust": 0.6, "affection": 0.5, "familiarity": 0.7},
       {"to": "npc_veikko", "kind": "acquaintance", "trust": 0.3, "familiarity": 0.4}
@@ -99,6 +104,7 @@
     "traits": ["by_the_book", "long_memory", "unhurried"],
     "groups": ["police_harbour"],
     "portrait": "marika",
+    "look": {"skin": "#e8c4a0", "hair": "#e0c080", "shirt": "#1e3a5f", "trousers": "#1a2233", "shoes": "#111111"},
     "relationships": [
       {"to": "npc_sanna", "kind": "friend", "trust": 0.6, "affection": 0.4, "familiarity": 0.7},
       {"to": "npc_rauno", "kind": "rival", "trust": -0.7, "respect": 0.3, "familiarity": 0.8}
@@ -116,6 +122,7 @@
     "traits": ["calculating", "generous_when_useful", "never_writes_anything_down"],
     "groups": ["harbour_crew"],
     "portrait": "rauno",
+    "look": {"skin": "#c99a74", "hair": "#1a1a1a", "shirt": "#5a4a3a", "trousers": "#2a2a2a", "shoes": "#1a1a1a"},
     "relationships": [
       {"to": "npc_marika", "kind": "rival", "trust": -0.6, "respect": 0.4, "familiarity": 0.8},
       {"to": "npc_elias", "kind": "acquaintance", "trust": 0.1, "respect": -0.2, "familiarity": 0.5},
@@ -134,6 +141,7 @@
     "traits": ["talks_to_everyone", "remembers_the_old_harbour", "poor_eyesight"],
     "groups": [],
     "portrait": "pirjo",
+    "look": {"skin": "#f0d0b8", "hair": "#d8d8d8", "shirt": "#a45a8c", "trousers": "#5a4a5a", "shoes": "#4a3a30"},
     "relationships": [
       {"to": "npc_sanna", "kind": "family", "trust": 0.9, "affection": 0.9, "familiarity": 1.0},
       {"to": "npc_ida", "kind": "acquaintance", "trust": 0.5, "familiarity": 0.7},

@@ -71,9 +71,6 @@ func _wanted_direction() -> Vector2:
 	return Input.get_vector("move_left", "move_right", "move_up", "move_down")
 
 
-## Four-way facing from any direction. Horizontal wins ties so diagonal walking
-## shows the profile, which reads better than the back of a head.
+## Four-way facing from any direction. See CharacterFigure.facing_for.
 static func facing_for(direction: Vector2) -> Vector2i:
-	if absf(direction.x) >= absf(direction.y):
-		return Vector2i.RIGHT if direction.x > 0.0 else Vector2i.LEFT
-	return Vector2i.DOWN if direction.y > 0.0 else Vector2i.UP
+	return CharacterFigure.facing_for(direction)

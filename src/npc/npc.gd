@@ -27,6 +27,9 @@ var traits: Array[String] = []
 ## Group memberships (workplace, family, faction) by id.
 var groups: Array[String] = []
 var portrait: String = ""
+## Authored appearance for recognisable people: CharacterFigure palette keys
+## to colour strings. Empty for background NPCs, whose look is generated.
+var look: Dictionary = {}
 
 # --- runtime state (saved) --------------------------------------------------
 var location: String = ""
@@ -57,6 +60,9 @@ static func from_data(d: Dictionary) -> Npc:
 	n.workplace = str(d.get("workplace", ""))
 	n.schedule_id = str(d.get("schedule", ""))
 	n.portrait = str(d.get("portrait", ""))
+	var raw_look: Variant = d.get("look", {})
+	if raw_look is Dictionary:
+		n.look = raw_look
 	n.life_stage = n._stage_for_age(n.age)
 
 	var imp := str(d.get("importance", "background"))

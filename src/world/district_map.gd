@@ -47,6 +47,8 @@ var exits: Array[Dictionary] = []
 
 var _ground := PackedByteArray()
 var _structure := PackedByteArray()   # stores Terrain + 1 so NONE fits in a byte
+## Built on the first path request and kept: maps do not change at runtime.
+var _astar: AStarGrid2D = null
 
 
 ## Builds a map from its content entry. Every problem found is reported rather
@@ -215,6 +217,54 @@ func reachable_from(start: Vector2i) -> Dictionary:
 	return seen
 
 
+## Shortest walkable route between two cells, both ends included. Empty when
+## either end is blocked or nothing connects them. Diagonal steps are taken
+## only where neither side cell is blocked, so a route never clips a corner.
+## Meant to be called when someone decides to go somewhere, not per frame.
+func find_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	if is_blocked(from) or is_blocked(to):
+		return out
+	if _astar == null:
+		_build_astar()
+	out.assign(_astar.get_id_path(from, to))
+	return out
+
+
+## Where a particular person stands at a location. At a building, in front of
+## its door. At an open-air place, a walkable cell chosen from the person's id,
+## so a crowd spreads over the place and each person returns to the same spot.
+## (-1, -1) if the location is not on this map.
+func standing_cell(location_id: String, who: String) -> Vector2i:
+	if not places.has(location_id):
+		return anchor_of(location_id)
+	var open: Array[Vector2i] = []
+	for rect: Rect2i in places[location_id]["rects"]:
+		for y in range(rect.position.y, rect.end.y):
+			for x in range(rect.position.x, rect.end.x):
+				if not is_blocked(Vector2i(x, y)):
+					open.append(Vector2i(x, y))
+	if open.is_empty():
+		return anchor_of(location_id)
+	return open[posmod(who.hash(), open.size())]
+
+
+func is_building(location_id: String) -> bool:
+	return buildings.has(location_id)
+
+
+## A walkable cell inside the first exit, where someone arriving from or
+## leaving for another region appears. The spawn when the map has no exits.
+func edge_cell() -> Vector2i:
+	for e in exits:
+		var rect: Rect2i = e["rect"]
+		for y in range(rect.position.y, rect.end.y):
+			for x in range(rect.position.x, rect.end.x):
+				if not is_blocked(Vector2i(x, y)):
+					return Vector2i(x, y)
+	return spawn
+
+
 static func cell_to_world(cell: Vector2i) -> Vector2:
 	return (Vector2(cell) + Vector2(0.5, 0.5)) * CELL_PIXELS
 
@@ -243,6 +293,19 @@ func chunk_rect(chunk: Vector2i) -> Rect2i:
 
 func _index(cell: Vector2i) -> int:
 	return cell.y * size.x + cell.x
+
+
+func _build_astar() -> void:
+	_astar = AStarGrid2D.new()
+	_astar.region = Rect2i(Vector2i.ZERO, size)
+	_astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
+	_astar.default_compute_heuristic = AStarGrid2D.HEURISTIC_OCTILE
+	_astar.default_estimate_heuristic = AStarGrid2D.HEURISTIC_OCTILE
+	_astar.update()
+	for y in size.y:
+		for x in size.x:
+			if is_blocked(Vector2i(x, y)):
+				_astar.set_point_solid(Vector2i(x, y))
 
 
 func _contains_rect(rect: Rect2i) -> bool:

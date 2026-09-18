@@ -1,34 +1,32 @@
 # Project status
 
 **Updated:** 2026-09-18
-**Milestone:** M2 — The world you can see and walk — **in progress** (steps 1–2 of 5 done)
-**Build:** green. 296 tests, 5915 assertions, ~3 s (physics tests included).
+**Milestone:** M2 — The world you can see and walk — **in progress** (steps 1–3 of 5 done)
+**Build:** green. 311 tests, 6129 assertions, ~3.5 s (physics tests included).
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
 
 ## Next task
 
-**Continue M2 at step 3: `NpcBody`.** Done so far: region map + chunk
-streaming (step 1); player body, camera and movement rules (step 2).
+**Continue M2 at step 4: interaction.** Done so far: region map + chunk
+streaming (step 1); player body, camera and movement rules (step 2); pooled
+NPC bodies that walk routes between places (step 3, D-017).
 
-3. `NpcBody` — a pooled visual body for `ACTIVE` NPCs, driven by
-   `npc_tier_changed` (do not poll). Reuse `CharacterFigure` with a palette
-   per NPC (important NPCs recognisable; ordinary ones from a small generated
-   set). Place at `DistrictMap.anchor_of(npc.location)`; every harbourside
-   location has one. Put bodies under `World/Actors` so they y-sort with the
-   player and the structures. Walking between anchors needs a path over
-   `DistrictMap.is_blocked` — a grid A* limited to the region, computed when
-   the NPC's routine block changes, never per frame.
 4. Interaction: doors (door cells are solid; interact from the anchor cell
-   below), shop counters, objects. Add an `interact` input action.
+   below), shop counters, objects. Add an `interact` input action. Interiors
+   are what will make people indoors visible again (D-017): today anyone whose
+   location is a building has no body. "Who is here" must be answered from
+   the simulation (`NpcRegistry`), never from the bodies, which lag it.
 5. Main scene becomes the world; `SimViewer` goes behind developer mode.
    Region exits (`DistrictMap.exit_at`) and region travel belong here too.
 
 **Running it.** `godot --path . res://scenes/world/world.tscn` — WASD/arrows,
 Shift runs. The main scene is still the SimViewer until step 5.
-`-- --screenshot=<path> [--walk=x,y,seconds]` saves a frame and quits (any
-scene that calls `DevCapture.maybe_capture`). The map alone:
+`-- --screenshot=<path> [--advance=minutes] [--at=x,y] [--walk=x,y,seconds]`
+saves a frame and quits (any scene that calls `DevCapture.maybe_capture`).
+At the 07:00 start everyone is indoors; `--advance=180 --at=40,33` shows the
+harbour mid-morning. The map alone:
 `res://scenes/debug/region_preview.tscn`.
 
 **Test runner.** A test fails if the engine logs an error during it (D-015),
@@ -55,6 +53,7 @@ Choosing an art direction is the user's call; ask before importing assets.
 | `DistrictMap` (maps as JSON rectangles), `ChunkStreamer` | done |
 | `RegionView` + `RegionTiles` (code-painted atlas), `RegionPreview` | done |
 | `WorldView`, `PlayerBody`, `PlayerCamera`, `CharacterFigure`, `Game.move_player` | done |
+| `NpcBodies` (pooled `NpcBody`), `NpcLook`, `DistrictMap.find_path` | done |
 | `DataRegistry` — JSON content, validated, cross-referenced | done |
 | `Npc`, `NpcRegistry`, `NpcSchedule`, `NpcNeeds` | done |
 | `SimLod` + `NpcDirector` — four tiers, budgeted, region-indexed | done |
@@ -69,15 +68,15 @@ Choosing an art direction is the user's call; ask before importing assets.
 | `SimViewer` debug screen | done |
 | Test suite + benchmark | done |
 
-**Not started, by design:** NPC bodies, interaction, dialogue UI,
+**Not started, by design:** interiors, interaction, dialogue UI,
 live LLM calls, quests, phone, combat, crime and police. See `ROADMAP.md`.
 
 ---
 
 ## Size
 
-- 50 source files in `src/`
-- 16 test suites
+- 53 source files in `src/`
+- 17 test suites
 - 10 authored NPCs, 19 locations, 3 regions (1 mapped), 8 schedules, 4 backgrounds
 
 ---
@@ -97,9 +96,10 @@ performs. Re-run after any change under `src/npc/`, `src/time/` or `src/world/`.
     3000       60      3000       2405.8        14.41%        30.96
 ```
 
-Re-measured 2026-09-18 on the user's Windows machine after M2 step 1: numbers
-there run ~30-40% above the table (different hardware), and the pre-change
-commit measured the same on that machine, so no regression.
+Re-measured 2026-09-18 on the user's Windows machine after M2 steps 1 and 3:
+numbers there run ~30-45% above the table (different hardware), and the
+pre-change commit measured the same on that machine both times, so no
+regression. Bodies and pathing are presentation-side and not in the benchmark.
 
 The number that matters: cost per simulated minute is roughly flat in total
 population once the local population is fixed, because dormant people are never
@@ -127,8 +127,12 @@ wants anyway — not a cleverer director.
 2. **`NpcDirector.assign_tiers` fills `ACTIVE` in dictionary order.** With more
    than 60 people genuinely present in one region, the same 60 are always
    chosen. Not visible yet — no district is that crowded — but it will read as
-   "the same crowd is always animated" once there are bodies. Fix when M2 makes
-   it observable; prioritise by distance and existing tier for stability.
+   "the same crowd is always animated" once there are bodies. Bodies now
+   exist, but ten residents cannot show it; fix when a district is crowded
+   enough to see. Prioritise by distance and existing tier for stability.
+6. **NPC bodies do not collide** with the player or each other, and two people
+   whose ids hash to the same spot at a place stand on one cell. Cosmetic;
+   revisit with interaction (step 4) or when crowds grow.
 3. **Finnish translation is ~80% complete.** Deliberate: it exercises the
    fallback path and a test measures the gap. Finish it when the UI settles,
    not before.

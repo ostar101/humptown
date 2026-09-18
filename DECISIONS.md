@@ -232,3 +232,26 @@ decides, and a refused move snaps the body back to the last accepted spot.
 
 **Physics tests** run at 8x time scale with 8x the tick rate, so each step is
 still the game's own 1/30 s — the same collision behaviour, an eighth of the wait.
+
+## D-017 — NPC bodies trail the simulation, and indoors means unseen
+
+**Decision.** A body exists only for an ACTIVE or FOCUS person whose location
+is an open-air place in the shown region, or who is walking between places.
+When a routine moves someone, `NpcRegistry.move_to` changes their location at
+once; `NpcBodies` hears `location_entered`, plans one route with
+`DistrictMap.find_path` from where the body is (or from the door they leave),
+and the body walks it. Arriving at a building or the region's edge returns the
+body to the pool. After a time skip or a load, bodies are placed, not walked.
+
+**Why.** Simulation owns where people are; presentation only shows it, so the
+walk can lag the fact but never decide it. A route is planned once per
+location change, never per frame, and following it is a few vector steps for
+a body that is actually moving. Hiding people indoors is honest: until
+interiors exist (M2 step 4) the alternative is everyone standing at their own
+door all night.
+
+**Cost.** For a few seconds the world says someone is at the shop while their
+body is still on the pavement. Anything that asks "who is here" (dialogue,
+interaction) must use the simulation, not the bodies. Bodies do not collide
+with the player yet.
+

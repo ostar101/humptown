@@ -1,6 +1,6 @@
 class_name CharacterFigure
 extends Node2D
-## A person, drawn. Used for the player now and for NPC bodies next.
+## A person, drawn. Used for the player and for NPC bodies.
 ##
 ## Painted with draw calls for the same reason the tiles are (D-014): no art
 ## has been chosen. The contract a sprite replacement must keep is small —
@@ -103,6 +103,14 @@ func _draw() -> void:
 			draw_rect(Rect2(back * 3 - 4, -35, 8, 7), hair)
 			draw_rect(Rect2(facing.x * 3 - 1, -30, 2, 2), Color("1c1a1a"))
 	draw_set_transform(Vector2.ZERO)
+
+
+## Four-way facing from any direction. Horizontal wins ties so diagonal walking
+## shows the profile, which reads better than the back of a head.
+static func facing_for(direction: Vector2) -> Vector2i:
+	if absf(direction.x) >= absf(direction.y):
+		return Vector2i.RIGHT if direction.x > 0.0 else Vector2i.LEFT
+	return Vector2i.DOWN if direction.y > 0.0 else Vector2i.UP
 
 
 func _colour(key: String) -> Color:

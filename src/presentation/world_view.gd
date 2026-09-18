@@ -1,12 +1,14 @@
 class_name WorldView
 extends Node2D
-## The walkable world: the current region, the player's body and the camera.
+## The walkable world: the current region, its people, the player's body
+## and the camera.
 ##
 ## Composition only. It reads where the player should be from Game, forwards
 ## the body's cell changes to Game.move_player() for the rules to accept, and
 ## keeps the region's chunks streamed around the camera.
 
 @onready var _region: RegionView = $Actors/RegionView
+@onready var _npcs: NpcBodies = $Actors/NpcBodies
 @onready var _player: PlayerBody = $Actors/Player
 @onready var _camera: PlayerCamera = $Camera
 
@@ -32,6 +34,7 @@ func show_current_region() -> void:
 	if map == null:
 		Log.error("world", "Region has no map", {"region": Game.player.region})
 		return
+	_npcs.show_map(map)
 	_camera.set_bounds(_region.pixel_rect())
 	var start := Game.player_start_position()
 	_player.place_at(start)
@@ -52,6 +55,10 @@ func player_body() -> PlayerBody:
 
 func region_view() -> RegionView:
 	return _region
+
+
+func npc_bodies() -> NpcBodies:
+	return _npcs
 
 
 func _on_player_cell_changed(_cell: Vector2i) -> void:

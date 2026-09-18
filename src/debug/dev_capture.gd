@@ -5,14 +5,24 @@ extends RefCounted
 ##
 ##     godot --path . res://scenes/world/world.tscn -- --screenshot=user://w.png
 ##
-## Optional `--walk=x,y,seconds` drives the player first, where a scene has one.
+## Optional, where a scene has a player: `--advance=minutes` skips game time
+## first (the town at another hour), `--at=x,y` puts the player on that cell,
+## and `--walk=x,y,seconds` then drives them.
 
 
 static func maybe_capture(scene: Node) -> void:
 	var path := ""
 	var walk := Vector3.ZERO
+	var advance := 0
+	var at := Vector2i(-1, -1)
 	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with("--screenshot="):
+		if arg.begins_with("--advance="):
+			advance = int(arg.trim_prefix("--advance="))
+		elif arg.begins_with("--at="):
+			var cell := arg.trim_prefix("--at=").split(",")
+			if cell.size() == 2:
+				at = Vector2i(int(cell[0]), int(cell[1]))
+		elif arg.begins_with("--screenshot="):
 			path = arg.trim_prefix("--screenshot=")
 		elif arg.begins_with("--walk="):
 			var parts := arg.trim_prefix("--walk=").split(",")
@@ -20,6 +30,14 @@ static func maybe_capture(scene: Node) -> void:
 				walk = Vector3(float(parts[0]), float(parts[1]), float(parts[2]))
 	if path.is_empty():
 		return
+	if advance > 0:
+		Game.advance_time(advance)
+	if at.x >= 0 and scene.has_method("player_body"):
+		var player: PlayerBody = scene.call("player_body")
+		player.place_at(DistrictMap.cell_to_world(at))
+		Game.move_player(player.position)
+		if scene.has_method("show_current_region"):
+			scene.call("show_current_region")   # snaps the camera there
 	_capture(scene, path, walk)
 
 
