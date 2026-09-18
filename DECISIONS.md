@@ -695,3 +695,45 @@ railing they are technically behind.
 authors. Anyone adding a building kind with art must give it `cells`,
 `porch_rows` and `door_column`, and `test_building_art` will hold the map to
 all three.
+
+## D-029 — Street furniture is placed by what a cell is, not by a hash
+
+**Decision.** `StreetProps` no longer scatters a kind onto any pavement cell
+whose hash matches. Each kind has a reason to be where it is:
+
+- **lamp** — the back edge of a pavement strip (`is_back_of_pavement()`:
+  pavement that does not itself touch a road but neighbours pavement that
+  does), at a regular `LAMP_SPACING` interval along the street rather than a
+  hashed one, and only where it has the headroom not to reach over a
+  carriageway.
+- **hydrant** — the same back edge, far rarer, on its own offset.
+- **trash** — beside a building's entrance, two cells along the pavement from
+  the cell you stand on to open the door, never on it.
+
+`RegionView._prop_sprite()` also anchors a prop by its sprite's **bottom-left
+cell**, not its bottom centre, while keeping the y-sort key on the cell itself.
+
+**Why.** The user's report was that lamps, bins and hydrants stood in the
+middle of the road. Two separate causes, both real:
+
+1. `lamp.png` is two cells wide and four tall, with the pole in its left
+   column and the arm reaching right. Centring that texture on its cell put
+   the pole half a cell into the neighbouring tile — so every lamp was
+   literally standing off its own kerb.
+2. Even correctly anchored, a four-cell-tall prop drawn rising up the screen
+   covers the three cells above it. On the pavement *below* a carriageway
+   there is no cell it can stand on whose light does not land on the road.
+   `has_headroom()` refuses those, so a street is lit from whichever side has
+   the room — which is how plenty of real streets are lit anyway.
+
+**Why regular spacing instead of a hash.** A hashed interval clumps: the old
+`spacing: 6` produced runs of three lamps and then twenty empty cells, which
+reads as litter rather than lighting. `(x + y) % spacing` is regular along a
+row *and* along a column, so one rule lights a horizontal and a vertical
+street evenly without knowing which it is on.
+
+**Cost accepted.** The pavement south of the main road has no lamps at all,
+and bins only appear where a door's approach is genuinely pavement — today
+that is the bar and the warehouse, because the shop row's doors still open
+onto the carriageway. That is a map bug, fixed separately; the placement rule
+is right to refuse it.

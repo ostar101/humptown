@@ -150,17 +150,24 @@ func _populate(chunk: Vector2i) -> void:
 	chunk_shown.emit(chunk)
 
 
-## A lamp/trash-can/hydrant sprite, feet-anchored on its cell the same way
-## CharacterFigure anchors a person: the texture's bottom-centre sits at
-## `cell_to_world(cell)`, so a tall sprite rises above the tile it stands on
-## and still y-sorts correctly against whoever walks in front of it.
+## A lamp/trash-can/hydrant sprite standing on its cell. The sprite's
+## bottom-left cell is its footing, because that is where these props are
+## drawn from: the street lamp is two cells wide and four tall, with the pole
+## in its left column and the arm reaching right, so centring the texture put
+## the pole half a cell into the neighbouring tile and the light out over the
+## carriageway (D-029). Its y-sort key stays on the cell itself, the way
+## CharacterFigure anchors a person, so someone walking past sorts against the
+## lamp's base rather than its head.
 func _prop_sprite(prop: Dictionary) -> Sprite2D:
 	var sprite := Sprite2D.new()
 	sprite.texture = load(prop["file"])
 	sprite.centered = false
-	var feet: Vector2 = DistrictMap.cell_to_world(prop["cell"])
+	var cell: Vector2i = prop["cell"]
+	var feet := DistrictMap.cell_to_world(cell)
 	var size := sprite.texture.get_size()
-	sprite.position = feet - Vector2(size.x / 2.0, size.y)
+	var top_left := Vector2(cell) * float(TILE) - Vector2(0.0, size.y - TILE)
+	sprite.position = feet
+	sprite.offset = top_left - feet
 	return sprite
 
 
