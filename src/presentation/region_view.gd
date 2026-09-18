@@ -139,7 +139,8 @@ func _populate(chunk: Vector2i) -> void:
 	for y in range(rect.position.y, rect.end.y):
 		for x in range(rect.position.x, rect.end.x):
 			var cell := Vector2i(x, y)
-			ground.set_cell(cell, RegionTiles.SOURCE_ID, RegionTiles.coords_for(map, cell, false))
+			var floor_tile := RegionTiles.ground_tile(map, cell)
+			ground.set_cell(cell, floor_tile.x, Vector2i(floor_tile.y, floor_tile.z))
 			var top := RegionTiles.coords_for(map, cell, true)
 			if top.x >= 0:
 				structures.set_cell(cell, RegionTiles.SOURCE_ID, top)

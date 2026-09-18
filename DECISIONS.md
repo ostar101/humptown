@@ -785,3 +785,57 @@ through, exactly as a lamp post can (D-022). Worth revisiting when there is a
 reason for trees to be solid; not worth a new solid terrain today. The
 harbour quay is still a large empty apron, and every terrain boundary is a
 hard straight line — both of those are the next job, not this one.
+
+## D-031 — Ground terrain is real art, and meets its neighbours
+
+**Decision.** Three related changes, all to how the ground is drawn:
+
+1. **Real plain tiles** for `GRASS`, `SAND` and `DOCK`, from
+   `tools/import_limezu_terrain.py`. This closes the part of D-021 that left
+   them code-painted.
+2. **Edge sets.** A terrain that has to meet a different one gets its own
+   `TileSetAtlasSource` holding a 4x4 block: column 0 its western edge, column
+   3 its eastern, row 0 its northern, row 3 its southern, and the four middle
+   cells its open interior. `RegionTiles.edge_coords()` picks one from a
+   four-neighbour test. Three sets today: the sea against a beach, the sea
+   against the quay, and asphalt against a pavement kerb.
+3. **The sea moves.** LimeZu's sea tileset is eight animation frames of that
+   same 4x4 block, laid out one block apart, so the whole animation is
+   `set_tile_animation_separation(coords, (3, 0))` and a frame count —
+   Godot plays it with no code of ours per frame.
+
+**Why edge sets are separate sources rather than more atlas rows.** Sixteen
+tiles times eight frames is 128 columns; widening the shared procedural atlas
+to hold them would make it around 4096 px wide, which is the texture limit on
+the integrated graphics D-002 targets, for the sake of one terrain. A source
+per set costs nothing and keeps the procedural atlas exactly as it was.
+`RegionTiles.ground_tile()` returns `(source, column, row)` so one call
+answers both halves of `set_cell()`.
+
+**Why a four-bit mask and not Godot's terrain system.** `set_cells_terrain_connect`
+wants to own the TileMapLayer's contents and works from a painted map;
+Humptown rasterises its map from rectangles every load (D-012) and decides
+per cell what to draw. A mask computed in `coords_for()`'s neighbour is the
+same idea at a fraction of the coupling. The cost is that inner corners — a
+diagonal neighbour differing while all four orthogonals match — have no tile
+of their own; LimeZu draws those, and they can be added when a map has a
+shape that needs them.
+
+**Out of bounds counts as the same terrain,** so the sea runs off the edge of
+the world rather than washing up against an invisible wall at the map border.
+
+**The wrong tile, found while doing this.** `import_limezu_tiles.py` had been
+importing `Sidewalk_N_10` as the pavement since D-021. In a Sidewalk set,
+piece 9 is the pavement and piece 10 is the asphalt it borders — so every
+pavement in town had been drawn in road grey (luminance 82 against the real
+pavement's 204), which is why the streets read as one undifferentiated
+expanse. All four variants now come from `Sidewalk_1_9`, the same set the
+kerb pieces are cut from, because a kerb running into a differently-coloured
+slab reads as a mistake.
+
+**Also chosen by looking rather than guessing:** only `Props_Grass_9` and
+above are transparent clumps — 1 to 8 are whole tiles with a patch drawn in,
+which tile into a chequerboard — so one clump goes on one grass variant in
+four. And the quay uses a single plank tile: the pier set's four decks differ
+in which planks are darker, and picking among them per cell turned a
+boardwalk into vertical stripes.

@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-18
 **Milestone:** M2 — The world you can see and walk — **in progress** (steps 1–5 of 5 done; the rest of M2's list is unscheduled, see below)
-**Build:** green. 383 tests, 7081 assertions with the LimeZu art installed,
+**Build:** green. 391 tests, 7127 assertions with the LimeZu art installed,
 ~5 s.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
@@ -56,37 +56,25 @@ road. Three new open-air places — a basketball court, Ropewalk Park and a
 worksite — are furnished by `PlaceArt` from
 `python tools/import_limezu_places.py`.
 
-**Still open from that list, and the next job: terrain edges and water.**
-Every boundary between grass, pavement, sand and water is a hard straight
-line, because D-021 left ground terrain code-painted: LimeZu draws it as
-edge-aware autotiles and `RegionTiles` picks a variant per cell from a hash,
-with no idea what is next door. The art for doing it properly has been found,
-so start from here rather than searching again:
+**Terrain edges and the sea are done (D-031).** Grass, sand and dock are
+real LimeZu tiles now; a terrain that meets a different one picks from a 4x4
+edge set with a four-neighbour mask, in its own atlas source, and the sea's
+set carries LimeZu's eight animation frames so the water moves on its own.
+The shoreline knows the difference between a beach and the quay. Doing this
+turned up the wrong-tile the user predicted: since D-021 the pavement had
+been imported from piece 10 of each Sidewalk set, which is the *asphalt* a
+pavement borders — every pavement in town was road grey. Both now come from
+the same Sidewalk_1 family the kerbs are cut from.
 
-- `Animated_32x32/Animated_Terrains_32x32/Sea_Water_Tileset_Basic_32x32.png`
-  is 32x4 cells = **eight animation frames of one 4x4 block**. Each block is a
-  water blob in sand: corners and edges on the outside, four interior water
-  variants in the middle. That is exactly a 4-bit "is my neighbour also
-  water" mask — `col = 0 if west is not water else 3 if east is not water
-  else 1|2`, and the same for `row` with north/south. Shore *and* animation
-  from one sheet.
-- `..._No_Sand_Basic_32x32.png` is the same thing without the sand, which is
-  what the water wants where it meets the dock rather than the beach.
-- `1_Terrains_and_Fences_Singles_32x32` has `Grass_1..4` (22 pieces each) and
-  `Grass_Water_1..4` sets for the grass edges.
-- `2_City_Terrains_Singles_32x32`'s `Sidewalk_N_1..16` are road/pavement kerb
-  pieces: 9 is plain pavement, 10 plain asphalt, 2/4/6/8 the four kerb edges,
-  1/3/5/7 corner nubs, 11-16 the corners.
+**What is still a hard edge, and why.** Grass meeting pavement. LimeZu has
+no transition art for that pair — its grass sets transition to dirt or to
+water — and a real path does meet a lawn at a straight line, so this is left
+as it is rather than invented. If it ever wants softening, `Grass_1..4`'s
+grass-to-dirt ring plus a dirt terrain would do it, and would suit the
+worksite (which sits on lawn today) at the same time.
 
-The shape of the work: `RegionTiles.coords_for()` already takes the map and
-the cell, so a neighbour mask belongs there; the atlas needs more than
-`VARIANTS` columns for a 16-entry edge set, and animation needs frames laid
-out horizontally, which probably means a second `TileSetAtlasSource` for
-water rather than widening the procedural atlas to 4096 px (D-002's target
-machine has integrated graphics). `RegionView._populate()` would then need to
-know which source a cell uses.
-
-The harbour quay is also still a large empty apron.
+**The harbour quay** is still a large empty apron; the pier set has crates,
+barrels, bollards and mooring posts for it whenever that is worth a pass.
 
 **Next after that: whatever's left of M2's list, not yet split into steps** — day/night
 lighting; title screen, background selection, character creation, the
@@ -99,7 +87,7 @@ flow before it's true even though the world itself is walkable now.
 Exteriors (Modern Office not yet) and downloaded Serene Village (CC-BY 4.0).
 The zips sit in the project root (git-ignored as `*.zip`). The 32 px sheets
 are extracted to `art/_limezu_source/` (has `.gdignore`, so Godot skips its
-~30 000 files). Five importers build `art/vendor/limezu/` from it:
+~30 000 files). Six importers build `art/vendor/limezu/` from it:
 `python tools/import_limezu.py` (character layers, D-020),
 `python tools/import_limezu_tiles.py` (ground/wall/roof tiles + building
 themes, D-021/D-022), `python tools/import_limezu_props.py` (street
@@ -123,7 +111,8 @@ a y-sort fix so those sprites always draw correctly regardless of which scene
 embeds `RegionView` (D-027); a covered building drawing none of its own tiles,
 with its door on the drawn door and its porch walkable (D-028); street
 furniture placed by what a cell is (D-029); and Harbourside relaid at 96x72
-with a court, a park and a worksite on it (D-030).
+with a court, a park and a worksite on it (D-030); real ground terrain with
+neighbour-aware edges and an animated sea (D-031).
 
 **Interaction, briefly.** `Game.interaction_at(cell)` describes,
 `Game.interact_at(cell)` acts (D-018). Buying and selling at counters is M4;

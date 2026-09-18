@@ -41,6 +41,9 @@ versions are milestones rather than releases until there is something to release
 - Harbourside is relaid at 96x72 with a second street, so the shop row's
   doors open onto a pavement instead of the carriageway; a basketball court,
   a park and a worksite are placed on it, furnished by `PlaceArt` (D-030)
+- Grass, sand and dock are real LimeZu tiles; terrain that meets a different
+  terrain picks from a 4x4 edge set by a four-neighbour mask, in its own
+  atlas source, which also carries the sea's eight animation frames (D-031)
 
 ### Added
 - `tools/import_limezu.py`: builds the local, git-ignored `art/vendor/limezu/`
@@ -72,6 +75,11 @@ versions are milestones rather than releases until there is something to release
   the same way it already did to a building's `entered`/`exited` (D-023)
 - `test_player_movement`: 4 new tests for region exits, including the full
   success path against a throwaway destination map
+- `tools/import_limezu_terrain.py`: builds the local, git-ignored
+  `art/vendor/limezu/terrain/` (grass, sand, dock, and the shoreline and kerb
+  edge sets) from the purchased packs
+- `RegionTiles.ground_tile()` / `edge_coords()` / `edge_set_for()`: which
+  atlas source and tile a ground cell draws, by what its neighbours are
 - `tools/import_limezu_places.py`: builds the local, git-ignored
   `art/vendor/limezu/places/` (a basketball court, trees, benches, a building
   frame, an excavator, cones) from the purchased packs
@@ -166,6 +174,9 @@ versions are milestones rather than releases until there is something to release
   door could not be walked up to (D-028)
 - `region_preview.tscn` takes `--at=x,y` and `--zoom=z`, so a whole district
   can be judged in one screenshot instead of a doorway at a time
+- Every pavement in town had been drawn in road grey since D-021: the tile
+  importer took piece 10 of each LimeZu Sidewalk set, which is the asphalt a
+  pavement borders, where piece 9 is the pavement itself (D-031)
 - The player's sprite stuttered slightly while moving: physics runs at a
   fixed 30 Hz but the display renders faster, so `physics/common/
   physics_interpolation` is now on project-wide, with

@@ -52,9 +52,14 @@ def main() -> int:
         return 1
     OUT.mkdir(parents=True, exist_ok=True)
 
+    # Piece 9 of a Sidewalk set is its pavement; piece 10 is the asphalt it
+    # borders. This originally took 10, which made every pavement in town the
+    # colour of the road (D-031). All four variants stay in the Sidewalk_1
+    # family because that is the set `edge_road.png`'s kerbs are cut from, and
+    # a kerb that runs into a differently-coloured slab reads as a mistake.
     sidewalk = EXT / "2_City_Terrains_Singles_32x32"
-    for i, name in enumerate(["Sidewalk_1_10", "Sidewalk_2_10", "Sidewalk_3_10", "Sidewalk_6_1"]):
-        Image.open(sidewalk / f"ME_Singles_City_Terrains_32x32_{name}.png").convert("RGBA").save(
+    for i in range(4):
+        Image.open(sidewalk / "ME_Singles_City_Terrains_32x32_Sidewalk_1_9.png").convert("RGBA").save(
             OUT / f"pavement_{i}.png"
         )
 

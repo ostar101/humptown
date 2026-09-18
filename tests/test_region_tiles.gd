@@ -9,21 +9,23 @@ const T := DistrictMap.Terrain
 
 func test_curated_terrains_have_a_real_file_for_every_variant() -> void:
 	var curated: Array[DistrictMap.Terrain] = [
-		T.PAVEMENT, T.ROAD, T.ROAD_LINE, T.FLOOR, T.WALL, T.ROOF,
+		T.PAVEMENT, T.ROAD, T.ROAD_LINE, T.FLOOR, T.WALL, T.ROOF, T.GRASS, T.SAND, T.DOCK,
 	]
 	for terrain in curated:
 		for v in RegionTiles.VARIANTS:
 			var path: String = RegionTiles._real_file(terrain, v)
 			assert_ne(path, "", "%s variant %d has a real tile" % [terrain, v])
-			assert_true(path.begins_with(RegionTiles.REAL_DIR), path)
+			assert_true(path.begins_with(RegionTiles.REAL_DIR) or path.begins_with(RegionTiles.TERRAIN_DIR),
+				"%s comes from one of the two import folders: %s" % [terrain, path])
 
 
 func test_uncurated_terrains_have_no_real_file() -> void:
-	# Ground terrain LimeZu draws as edge-aware autotiles doesn't fit this
-	# atlas's per-cell-random-variant model; see DECISIONS.md D-021.
-	for terrain in [T.GRASS, T.WATER, T.SAND, T.DOCK, T.DOOR, T.COUNTER, T.SHELF, T.BED, T.TABLE, T.SIGN]:
+	# Interior objects are still code-painted (D-021). Water is not listed here
+	# because it has no plain tile at all: every water cell comes from an edge
+	# set instead, which is what lets it meet a shore and animate (D-031).
+	for terrain in [T.WATER, T.DOOR, T.COUNTER, T.SHELF, T.BED, T.TABLE, T.SIGN]:
 		for v in RegionTiles.VARIANTS:
-			assert_eq(RegionTiles._real_file(terrain, v), "", "%s stays code-painted" % terrain)
+			assert_eq(RegionTiles._real_file(terrain, v), "", "%s has no plain real tile" % terrain)
 
 
 func test_wall_variants_share_one_file_per_theme() -> void:
@@ -138,3 +140,125 @@ func test_a_themed_buildings_wall_and_door_differ_from_a_plain_one() -> void:
 	var home_door_coords := RegionTiles.coords_for(map, home_door, true)
 	assert_eq(home_door_coords.x, 0, "an unthemed kind still draws the default door")
 	assert_ne(shop_door_coords.x, home_door_coords.x, "a themed kind draws a different door variant")
+
+
+# --- edge sets (D-031) -------------------------------------------------------
+
+func _coast() -> DistrictMap:
+	# Sand along the top, the sea below it, and a road with pavement either
+	# side: both edge sets on one small map.
+	var built := DistrictMap.from_data({
+		"id": "coast", "region": "harbourside", "width": 12, "height": 14,
+		"fill": "grass", "spawn": [1, 1],
+		"areas": [
+			{"terrain": "pavement", "rect": [0, 2, 12, 1]},
+			{"terrain": "road", "rect": [0, 3, 12, 3]},
+			{"terrain": "road_line", "rect": [0, 4, 12, 1]},
+			{"terrain": "pavement", "rect": [0, 6, 12, 1]},
+			{"terrain": "sand", "rect": [0, 8, 12, 2]},
+			{"terrain": "water", "rect": [0, 10, 12, 4]},
+			{"terrain": "dock", "rect": [8, 8, 4, 2]},
+		],
+	})
+	assert_ok(built)
+	return built.value
+
+
+func test_every_edge_set_is_a_four_by_four_block() -> void:
+	for entry in RegionTiles.EDGE_SETS:
+		var path: String = RegionTiles.TERRAIN_DIR + str(entry["file"])
+		if not ResourceLoader.exists(path):
+			continue
+		var texture: Texture2D = load(path)
+		var cells := Vector2i(texture.get_size()) / RegionTiles.TILE
+		assert_eq(cells.y, RegionTiles.EDGE_BLOCK, "%s is not four rows tall" % entry["id"])
+		assert_eq(cells.x, RegionTiles.EDGE_BLOCK * int(entry["frames"]),
+			"%s does not hold %s blocks side by side" % [entry["id"], entry["frames"]])
+
+
+func test_a_shore_cell_draws_its_edge_and_open_water_does_not() -> void:
+	var map := _coast()
+	if RegionTiles.edge_set_for(map, Vector2i(2, 10), T.WATER) < 0:
+		assert_true(true, "art not installed on this machine; nothing to check")
+		return
+	# Row 10 is the first row of sea: sand above it, water below.
+	assert_eq(RegionTiles.edge_coords(map, Vector2i(2, 10), T.WATER).y, 0, "the shore is the block's top row")
+	# Row 12 has water on every side, so it is open sea.
+	var open := RegionTiles.edge_coords(map, Vector2i(2, 12), T.WATER)
+	assert_true(open.y == 1 or open.y == 2, "open water uses an interior row, got %s" % open)
+	assert_true(open.x == 1 or open.x == 2, "open water uses an interior column, got %s" % open)
+
+
+func test_the_sea_runs_off_the_edge_of_the_world_rather_than_ending() -> void:
+	var map := _coast()
+	if RegionTiles.edge_set_for(map, Vector2i(0, 13), T.WATER) < 0:
+		assert_true(true, "art not installed on this machine; nothing to check")
+		return
+	# Bottom-left corner: out of bounds on two sides, water on the others.
+	var corner := RegionTiles.edge_coords(map, Vector2i(0, 13), T.WATER)
+	assert_true(corner.x == 1 or corner.x == 2, "no shore against the map's west edge")
+	assert_true(corner.y == 1 or corner.y == 2, "no shore against the map's south edge")
+
+
+func test_water_picks_the_quay_set_where_it_meets_the_dock() -> void:
+	var map := _coast()
+	var beside_sand := RegionTiles.edge_set_for(map, Vector2i(2, 10), T.WATER)
+	var beside_dock := RegionTiles.edge_set_for(map, Vector2i(9, 10), T.WATER)
+	if beside_sand < 0:
+		assert_true(true, "art not installed on this machine; nothing to check")
+		return
+	assert_ne(beside_sand, beside_dock, "the sea meets a beach and a quay differently")
+	assert_eq(str(RegionTiles.EDGE_SETS[beside_dock]["id"]), "water_dock")
+
+
+func test_a_road_gets_a_kerb_where_the_pavement_is_and_not_in_its_middle() -> void:
+	var map := _coast()
+	if RegionTiles.edge_set_for(map, Vector2i(5, 3), T.ROAD) < 0:
+		assert_true(true, "art not installed on this machine; nothing to check")
+		return
+	assert_eq(RegionTiles.edge_coords(map, Vector2i(5, 3), T.ROAD).y, 0, "kerb along the road's north side")
+	assert_eq(RegionTiles.edge_coords(map, Vector2i(5, 5), T.ROAD).y, 3, "kerb along the road's south side")
+	# Row 4 is the centre line: still road as far as the kerb is concerned, so
+	# the rows either side of it must read as interior, not as another edge.
+	var middle := RegionTiles.edge_coords(map, Vector2i(5, 4), T.ROAD)
+	assert_true(middle.y == 1 or middle.y == 2, "the middle of a road has no kerb, got %s" % middle)
+
+
+func test_ground_tile_names_the_edge_source_for_water_and_the_atlas_otherwise() -> void:
+	var map := _coast()
+	var pavement := RegionTiles.ground_tile(map, Vector2i(5, 2))
+	assert_eq(pavement.x, RegionTiles.SOURCE_ID, "pavement comes from the procedural atlas")
+	var sea := RegionTiles.ground_tile(map, Vector2i(5, 12))
+	if RegionTiles.edge_set_for(map, Vector2i(5, 12), T.WATER) < 0:
+		assert_eq(sea.x, RegionTiles.SOURCE_ID, "art not installed; water falls back to the atlas")
+		return
+	assert_gt(float(sea.x), float(RegionTiles.SOURCE_ID), "water comes from its own source")
+	var source: TileSetAtlasSource = RegionTiles.tile_set().get_source(sea.x)
+	assert_true(source.has_tile(Vector2i(sea.y, sea.z)), "the tile that cell asks for exists")
+
+
+func test_the_sea_is_animated_and_the_kerb_is_not() -> void:
+	var tiles := RegionTiles.tile_set()
+	for i in RegionTiles.EDGE_SETS.size():
+		var entry: Dictionary = RegionTiles.EDGE_SETS[i]
+		var id := RegionTiles.EDGE_SOURCE_FIRST + i
+		if not tiles.has_source(id):
+			continue
+		var source: TileSetAtlasSource = tiles.get_source(id)
+		var frames := int(entry["frames"])
+		assert_eq(source.get_tile_animation_frames_count(Vector2i.ZERO), frames,
+			"%s animation frames" % entry["id"])
+		if frames > 1:
+			assert_almost(source.get_tile_animation_total_duration(Vector2i.ZERO),
+				frames * RegionTiles.EDGE_FRAME_SECONDS, 0.001, "%s runs for a full loop" % entry["id"])
+			assert_eq(source.get_tile_animation_separation(Vector2i.ZERO),
+				Vector2i(RegionTiles.EDGE_BLOCK - 1, 0), "frames sit one block apart in the sheet")
+
+
+func test_water_still_blocks_whichever_source_draws_it() -> void:
+	var map := _coast()
+	assert_true(map.is_blocked(Vector2i(5, 12)), "the sea is not walkable")
+	var sea := RegionTiles.ground_tile(map, Vector2i(5, 12))
+	var source: TileSetAtlasSource = RegionTiles.tile_set().get_source(sea.x)
+	var data := source.get_tile_data(Vector2i(sea.y, sea.z), 0)
+	assert_gt(float(data.get_collision_polygons_count(0)), 0.0, "water tiles carry collision")

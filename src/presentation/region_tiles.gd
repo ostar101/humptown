@@ -32,6 +32,33 @@ const VARIANTS := 4
 const SOURCE_ID := 0
 const COLLISION_LAYER := 1
 const REAL_DIR := "res://art/vendor/limezu/tiles/"
+const TERRAIN_DIR := "res://art/vendor/limezu/terrain/"
+
+## Edge sets (D-031): a terrain's sixteen ways of meeting a different one, each
+## in its own `TileSetAtlasSource` as a 4x4 block — column 0 its western edge,
+## column 3 its eastern, row 0 its northern, row 3 its southern, and the four
+## middle cells its open interior. `coords_for()`'s per-cell hash cannot do
+## this: which tile a cell wants depends on its neighbours, not on itself.
+##
+## They live in their own sources rather than in the procedural atlas because
+## of the sea: sixteen tiles times eight animation frames is 128 columns, and
+## widening the shared atlas to 4096 px to hold them would push the texture to
+## the limit of the hardware D-002 targets for the sake of one terrain.
+##
+## `frames` is LimeZu's own animation, whose frames sit one block apart in the
+## sheet — `EDGE_BLOCK - 1` columns of separation, which is all Godot needs to
+## play them. The order of this list fixes each set's source id: append, never
+## reorder.
+const EDGE_BLOCK := 4
+const EDGE_SOURCE_FIRST := 1
+const EDGE_FRAME_SECONDS := 0.4
+const EDGE_SETS: Array[Dictionary] = [
+	{"id": "water_sand", "file": "edge_water_sand.png", "frames": 8},
+	{"id": "water_dock", "file": "edge_water_dock.png", "frames": 8},
+	{"id": "road", "file": "edge_road.png", "frames": 1},
+]
+
+const NEIGHBOURS: Array[Vector2i] = [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]
 
 ## location `kind` -> theme name. Kinds not listed draw the plain row.
 const THEME_BY_KIND := {
@@ -164,6 +191,79 @@ static func is_solid(terrain: DistrictMap.Terrain) -> bool:
 	return SOLID.has(terrain)
 
 
+# --- edge sets ---------------------------------------------------------------
+
+## Which atlas source and tile a cell's ground draws, packed as
+## (source, column, row) so one call answers both halves of `set_cell()`.
+## Most terrain comes from the procedural atlas; a terrain with an installed
+## edge set uses that instead, so it meets its neighbours properly and — for
+## the sea — moves.
+static func ground_tile(map: DistrictMap, cell: Vector2i) -> Vector3i:
+	var terrain := map.ground_at(cell)
+	var index := edge_set_for(map, cell, terrain)
+	if index >= 0:
+		var edge := edge_coords(map, cell, terrain)
+		return Vector3i(EDGE_SOURCE_FIRST + index, edge.x, edge.y)
+	var plain := coords_for(map, cell, false)
+	return Vector3i(SOURCE_ID, plain.x, plain.y)
+
+
+## The edge set a cell uses, or -1 for the procedural atlas. The sea picks its
+## set by what it washes against: a beach on one side of the district, the
+## quay's planking on the other.
+static func edge_set_for(map: DistrictMap, cell: Vector2i, terrain: DistrictMap.Terrain) -> int:
+	match terrain:
+		DistrictMap.Terrain.WATER:
+			for dir in NEIGHBOURS:
+				if map.ground_at(cell + dir) == DistrictMap.Terrain.DOCK:
+					return _installed_set("water_dock")
+			return _installed_set("water_sand")
+		DistrictMap.Terrain.ROAD:
+			return _installed_set("road")
+	return -1
+
+
+## The cell within a 4x4 edge block. Out of bounds counts as the same terrain,
+## so the sea runs off the edge of the world instead of washing up against it.
+## A one-cell-wide channel (no neighbour on either side) draws its western
+## edge; nothing in this district is that thin, and a wrong tile there is
+## better than a branch nobody can see.
+##
+## The four interior cells are chosen by parity, not by the usual per-cell
+## hash: they are drawn as one 2x2 block whose waves run from tile to tile, so
+## laying them out as the artist arranged them keeps the sea continuous where
+## a hash would chop it up.
+static func edge_coords(map: DistrictMap, cell: Vector2i, terrain: DistrictMap.Terrain) -> Vector2i:
+	var col := 0
+	if _edge_same(map, cell + Vector2i.LEFT, terrain):
+		col = 3 if not _edge_same(map, cell + Vector2i.RIGHT, terrain) else 1 + posmod(cell.x, 2)
+	var row := 0
+	if _edge_same(map, cell + Vector2i.UP, terrain):
+		row = 3 if not _edge_same(map, cell + Vector2i.DOWN, terrain) else 1 + posmod(cell.y, 2)
+	return Vector2i(col, row)
+
+
+static func _edge_same(map: DistrictMap, cell: Vector2i, terrain: DistrictMap.Terrain) -> bool:
+	if not map.in_bounds(cell):
+		return true
+	var other := map.ground_at(cell)
+	if other == terrain:
+		return true
+	# The dashes down the middle of a road are still road to its kerb.
+	return terrain == DistrictMap.Terrain.ROAD and other == DistrictMap.Terrain.ROAD_LINE
+
+
+## The index of an edge set if its art is installed, else -1. Indices are
+## fixed by EDGE_SETS' order whether or not a set is installed, so a missing
+## file never shifts another set's source id.
+static func _installed_set(id: String) -> int:
+	for i in EDGE_SETS.size():
+		if str(EDGE_SETS[i]["id"]) != id:
+			continue
+		return i if ResourceLoader.exists(TERRAIN_DIR + str(EDGE_SETS[i]["file"])) else -1
+	return -1
+
+
 ## Cheap, stable per-cell hash so the same cell always shows the same variant.
 static func _hash(cell: Vector2i) -> int:
 	var h := (cell.x * 73856093) ^ (cell.y * 19349663)
@@ -180,6 +280,12 @@ static func _hash(cell: Vector2i) -> int:
 static func _real_file(terrain: DistrictMap.Terrain, v: int, theme: String = "") -> String:
 	var themed := theme if theme != "" else "home"
 	match terrain:
+		DistrictMap.Terrain.GRASS:
+			return TERRAIN_DIR + "grass_%d.png" % v
+		DistrictMap.Terrain.SAND:
+			return TERRAIN_DIR + "sand.png"
+		DistrictMap.Terrain.DOCK:
+			return TERRAIN_DIR + "dock_%d.png" % v
 		DistrictMap.Terrain.PAVEMENT:
 			return REAL_DIR + "pavement_%d.png" % v
 		DistrictMap.Terrain.ROAD:
@@ -264,7 +370,43 @@ static func _build() -> TileSet:
 				var data := source.get_tile_data(coords, 0)
 				data.add_collision_polygon(0)
 				data.set_collision_polygon_points(0, 0, square)
+
+	for i in EDGE_SETS.size():
+		_add_edge_source(tiles, i, square)
 	return tiles
+
+
+## One atlas source per installed edge set. Water still blocks, so its tiles
+## carry the same collision box they had in the procedural atlas; the road's
+## do not. Animation frames sit one block apart in LimeZu's sheet, which is
+## what `set_tile_animation_separation` describes.
+static func _add_edge_source(tiles: TileSet, index: int, square: PackedVector2Array) -> void:
+	var entry: Dictionary = EDGE_SETS[index]
+	var path: String = TERRAIN_DIR + str(entry["file"])
+	if not ResourceLoader.exists(path):
+		return
+	var source := TileSetAtlasSource.new()
+	source.texture = load(path)
+	source.texture_region_size = Vector2i(TILE, TILE)
+	# Added before its tiles are configured: a TileData's physics layers come
+	# from the TileSet the source belongs to, so collision cannot be set on a
+	# source that is still loose.
+	tiles.add_source(source, EDGE_SOURCE_FIRST + index)
+	var frames: int = entry["frames"]
+	var solid: bool = str(entry["id"]).begins_with("water")
+	for row in EDGE_BLOCK:
+		for col in EDGE_BLOCK:
+			var coords := Vector2i(col, row)
+			source.create_tile(coords)
+			if frames > 1:
+				source.set_tile_animation_separation(coords, Vector2i(EDGE_BLOCK - 1, 0))
+				source.set_tile_animation_frames_count(coords, frames)
+				for f in frames:
+					source.set_tile_animation_frame_duration(coords, f, EDGE_FRAME_SECONDS)
+			if solid:
+				var data := source.get_tile_data(coords, 0)
+				data.add_collision_polygon(0)
+				data.set_collision_polygon_points(0, 0, square)
 
 
 ## The window a wall-with-a-window shows, drawn onto whatever is already at
