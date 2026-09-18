@@ -17,12 +17,14 @@ an overlay sprite, for any building whose *rect exactly matches its size* —
 see BuildingArt.SPRITE_SIZE and DECISIONS.md D-024 for why "exactly" and not
 "close enough" (stretching pixel art distorts it).
 
-The Villa source is one 288x416 (9x13-cell) image with a transparent 9th
-column; only its top-left 8x11 cells are real art — the rest is an empty
-margin and, at the bottom, porch steps below the doorway that would otherwise
-push the visual door a cell lower than `DistrictMap`'s "the door is on the
-building's front row" rule expects. Cropping to that 8x11 keeps the door
-cell exactly aligned and loses only those steps.
+The Villa source is one 288x416 (9x13-cell) image, and only its 9th column
+is empty margin — every one of its 13 rows down to the porch steps is real
+art, so the crop drops only that column. The building's own door — the
+`DistrictMap` cell someone interacts with — is NOT the doorway drawn partway
+up the image; it is the cell at the *bottom* of the porch, one row past the
+visual door, where a person would actually stand to climb the steps. That
+keeps the whole porch on screen instead of cutting it off to force the visual
+door onto the building's front row.
 """
 
 from __future__ import annotations
@@ -41,7 +43,7 @@ VILLAS = (
 OUT = ROOT / "art/vendor/limezu/buildings"
 
 T = 32
-CROP = (0, 0, 8 * T, 11 * T)  # BuildingArt.SPRITE_SIZE, in pixels
+CROP = (0, 0, 8 * T, 13 * T)  # BuildingArt.SPRITE_SIZE, in pixels
 
 
 def main() -> int:

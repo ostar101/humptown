@@ -20,7 +20,7 @@ versions are milestones rather than releases until there is something to release
 - M2 step 5: the world is the main scene, `SimViewer` moves behind
   `developer_mode`, and region exits are walked rather than pressed; Old Town
   and Eastfield stay unmapped (that's M7), so travelling there refuses today (D-023)
-- A `home`-kind building the right size (8x11 cells) gets one whole,
+- A `home`-kind building the right size (8x13 cells) gets one whole,
   hand-drawn LimeZu house image instead of generic per-cell tiles; six of the
   seven homes were resized in `data/maps.json` to fit (the seventh's plot is
   too narrow); shops/civic/bar still use the generic per-cell art — no

@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-18
 **Milestone:** M2 — The world you can see and walk — **in progress** (steps 1–5 of 5 done; the rest of M2's list is unscheduled, see below)
-**Build:** green. 365 tests, 6911 assertions with the LimeZu art installed
-(6563 without), ~4-5 s.
+**Build:** green. 365 tests, 6908 assertions with the LimeZu art installed
+(6560 without), ~4-5 s.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
@@ -23,7 +23,7 @@ The user judged the generic per-cell buildings (D-021/D-022) ugly and asked
 to look at how LimeZu's own art is meant to be used. It is not built from
 reusable generic pieces at all — each house is one hand-drawn image with a
 pitched roof, a porch, a balcony. `BuildingArt` uses one whole, for a
-building whose `rect` is exactly its 8x11-cell size; `data/maps.json`'s six
+building whose `rect` is exactly its 8x13-cell size; `data/maps.json`'s six
 similarly-sized homes were resized to fit (`loc_tuomas_flat`'s plot is too
 narrow, so it alone keeps the generic look). Shops, civic buildings and the
 bar are still the D-021/D-022 generic per-cell art — no equivalent whole-shop
@@ -59,7 +59,7 @@ counters, beds, signs, the `interact` action and the HUD (step 4, D-018);
 art direction, the character/tile import pipeline, building themes, street
 furniture and the movement-jitter fix (D-019 through D-022); the world as the
 main scene, `SimViewer` behind developer mode, and region exits/travel
-(step 5, D-023); whole-house sprites for homes (D-024).
+(step 5, D-023); whole-house sprites for homes (D-024, corrected in D-025).
 
 **Interaction, briefly.** `Game.interaction_at(cell)` describes,
 `Game.interact_at(cell)` acts (D-018). Buying and selling at counters is M4;

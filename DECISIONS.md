@@ -517,3 +517,34 @@ proven by `test_building_art`, which runs, and asserts something, either way.
 **Not decided yet.** Sprites for the other kinds (shop/bar/civic/work);
 whether to also resize buildings of those kinds to fit whichever art is
 chosen for them, the same way home was resized here.
+
+## D-025 — Correction to D-024: the villa keeps its full porch
+
+**Decision.** `BuildingArt.SPRITE_SIZE` is 8x13, not 8x11: the crop in
+`tools/import_limezu_buildings.py` keeps the whole `Villa_N.png` (only its
+empty 9th column is dropped), and the interactive door — the `DistrictMap`
+cell someone presses interact on — is the cell at the *bottom* of the porch,
+one row past where the art draws the doorway, rather than the doorway's own
+row. The six resized homes in `data/maps.json` grew two rows taller
+(downward this time, since they already reached as far up as row 1); the
+street's pavement in front of them moved down to match, and the map's
+`spawn` (which sat in what became the middle of the extended
+`loc_player_flat`, silently blocking the whole map from building) moved with
+it.
+
+**Why.** D-024 shipped cropping off the bottom two rows so the visual
+doorway would land exactly on the building's required front row. The user
+tried it and pointed out the porch was missing — correctly: those two rows
+were the porch's decking and steps, not filler. Placing the interactive door
+one row further out than the drawn doorway costs nothing (a person walking
+up to a porch stands at its base regardless of exactly which row the door
+graphic occupies) and keeps the whole porch on screen.
+
+**Lesson for the next whole-building sprite.** Building a map that
+compensates for lost pixels (like D-024's original resize) is fragile
+against a fix in the *art* import step: this correction touched the map, the
+importer and `BuildingArt.SPRITE_SIZE` together, and separately, resizing a
+rect that is already used as a `spawn` reference needs the reference checked
+too — `DistrictMap.from_data()` and `test_region_map.test_every_authored_map_builds`
+report exactly this if a spawn ends up inside a building, but the fix itself
+is manual.

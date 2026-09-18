@@ -18,11 +18,10 @@ const FILES_BY_KIND := {
 	"home": {"prefix": "home_", "count": 5},
 }
 
-## Cell size the art was drawn at — the one building shape this covers.
-## `DECISIONS.md` D-024 explains why the source art was cropped to exactly
-## this (its door lines up with `DistrictMap`'s "door is on the front row"
-## rule at this size, no other).
-const SPRITE_SIZE := Vector2i(8, 11)
+## Cell size the art was drawn at — the one building shape this covers. The
+## interactive door is the cell at the *bottom* of the porch, not where the
+## art draws the doorway itself — see `tools/import_limezu_buildings.py`.
+const SPRITE_SIZE := Vector2i(8, 13)
 
 
 ## The overlay file for this building, or "" if its kind has no whole-building
