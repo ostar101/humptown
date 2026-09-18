@@ -17,6 +17,9 @@ versions are milestones rather than releases until there is something to release
   (shop/bar/civic/work); street furniture (lamps, trash cans, hydrants) on
   pavement next to a road; both real-art-only, code-painted fallback themed
   too for wall/roof/door; interiors do not theme yet (D-022)
+- M2 step 5: the world is the main scene, `SimViewer` moves behind
+  `developer_mode`, and region exits are walked rather than pressed; Old Town
+  and Eastfield stay unmapped (that's M7), so travelling there refuses today (D-023)
 
 ### Added
 - `tools/import_limezu.py`: builds the local, git-ignored `art/vendor/limezu/`
@@ -39,13 +42,16 @@ versions are milestones rather than releases until there is something to release
 - `DistrictMap.building_kind` / `kind_at()`; `RegionTiles.THEME_BY_KIND`,
   `THEMED_ROWS`, `DOOR_VARIANT_BY_THEME` give a themed building's WALL, ROOF
   and DOOR their own atlas rows/variants, real-art and code-painted alike
+- `Boot.destination_scene()`: `world.tscn` normally, `SimViewer` only under
+  `developer_mode` (D-023, M2 step 5); `test_boot`: 2 tests
+- Region exits are walked, not pressed: `Game.move_player()` checks
+  `DistrictMap.exit_at()` and travels to an unlocked, mapped neighbouring
+  region or refuses (`region_locked`/`region_unmapped`/`region_unknown`)
+  exactly like a blocked cell; `WorldView` reacts to a `"travelled"` result
+  the same way it already did to a building's `entered`/`exited` (D-023)
+- `test_player_movement`: 4 new tests for region exits, including the full
+  success path against a throwaway destination map
 
-### Fixed
-- The player's sprite stuttered slightly while moving: physics runs at a
-  fixed 30 Hz but the display renders faster, so `physics/common/
-  physics_interpolation` is now on project-wide, with
-  `PlayerBody.place_at()` resetting it on teleport so spawning/loading/
-  entering a building doesn't visibly glide from the old position
 - `data/maps.json` and `DistrictMap`: region layouts authored as rectangles
   (ground areas, buildings with doors, open-air places, exits), rasterised into
   a ground + structure grid with blocking, location lookup, anchors and
@@ -116,6 +122,11 @@ versions are milestones rather than releases until there is something to release
 ### Fixed
 - `SimViewer` failed to compile under the strict warning settings (untyped
   `slice()` element in the scheduled-events panel)
+- The player's sprite stuttered slightly while moving: physics runs at a
+  fixed 30 Hz but the display renders faster, so `physics/common/
+  physics_interpolation` is now on project-wide, with
+  `PlayerBody.place_at()` resetting it on teleport so spawning/loading/
+  entering a building doesn't visibly glide from the old position
 
 ## [0.1.0] — 2026-09-17 — Milestone 1: foundation and simulation spine
 

@@ -1,24 +1,38 @@
 # Project status
 
 **Updated:** 2026-09-18
-**Milestone:** M2 — The world you can see and walk — **in progress** (steps 1–4 of 5 done)
-**Build:** green. 354 tests, 6875 assertions with the LimeZu art installed
-(6523 without), ~4-5 s.
+**Milestone:** M2 — The world you can see and walk — **in progress** (steps 1–5 of 5 done; the rest of M2's list is unscheduled, see below)
+**Build:** green. 359 tests, 6890 assertions with the LimeZu art installed
+(6543 without), ~4-5 s.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
 
 ## Next task
 
-**Next: M2 step 5 (main scene becomes the world).** Art direction is chosen
-and mostly in: people (D-020), pavement/road/floor/wall/roof (D-021, themed
-by building kind since D-022), and street furniture (D-022) are real LimeZu
-art. Grass, water, sand, dock and the interior objects (door, counter, shelf,
-bed, table, sign) are still code-painted (D-021 explains why — they need real
-neighbour-aware tiling or per-building facades, not a tile swap) and can be
-picked up later without touching anything else. The player's movement jitter
-(physics/render tick mismatch) is fixed (D-022); interiors do not yet theme
-by kind (also D-022).
+**Step 5 is done (D-023).** `Boot.destination_scene()` sends everyone to
+`world.tscn`; `Settings.developer_mode` (default off) is the only way to
+`sim_viewer.tscn` now. Region exits are walked, not pressed:
+`Game.move_player()` checks `DistrictMap.exit_at(cell)` and either travels
+(unlocked, mapped destination) or refuses like a blocked cell would. Only
+Harbourside has a map, so Old Town and Eastfield refuse today — authoring
+them is M7 ("Old Town and Eastfield. Travel."), not this milestone.
+
+**Next: whatever's left of M2's list, not yet split into steps** — day/night
+lighting; title screen, background selection, character creation, the
+opening. These are UI-shaped, not engine-shaped, so plan the steps once you
+look at them rather than guessing here. M2's "done when" (start a character,
+walk Harbourside, watch routines, sleep to morning) needs the title/character
+flow before it's true even though the world itself is walkable now.
+
+Art direction is chosen and mostly in: people (D-020),
+pavement/road/floor/wall/roof (D-021, themed by building kind since D-022),
+and street furniture (D-022) are real LimeZu art. Grass, water, sand, dock
+and the interior objects (door, counter, shelf, bed, table, sign) are still
+code-painted (D-021 explains why — they need real neighbour-aware tiling or
+per-building facades, not a tile swap) and can be picked up later without
+touching anything else. The player's movement jitter (physics/render tick
+mismatch) is fixed (D-022); interiors do not yet theme by kind (also D-022).
 
 **The art is local only.** The user bought Modern Interiors and Modern
 Exteriors (Modern Office not yet) and downloaded Serene Village (CC-BY 4.0).
@@ -39,13 +53,9 @@ Done so far: region map + chunk streaming (step 1); player body, camera and
 movement rules (step 2); pooled NPC bodies (step 3, D-017); interiors, doors,
 counters, beds, signs, the `interact` action and the HUD (step 4, D-018);
 art direction, the character/tile import pipeline, building themes, street
-furniture and the movement-jitter fix (D-019 through D-022).
-
-5. Main scene becomes the world; `SimViewer` goes behind developer mode.
-   Region exits (`DistrictMap.exit_at`) and region travel belong here too.
-   The rest of the roadmap's M2 list (day/night lighting, title screen,
-   background selection, character customisation) is not yet scheduled into
-   steps; plan it after the art decision, since most of it is visual.
+furniture and the movement-jitter fix (D-019 through D-022); the world as the
+main scene, `SimViewer` behind developer mode, and region exits/travel
+(step 5, D-023).
 
 **Interaction, briefly.** `Game.interaction_at(cell)` describes,
 `Game.interact_at(cell)` acts (D-018). Buying and selling at counters is M4;
@@ -53,25 +63,23 @@ today a counter only tells you whether someone is serving. "Who is here" is
 answered from the simulation (`NpcRegistry`), never from the bodies, which lag
 it (D-017).
 
-**Running it.** `godot --path . res://scenes/world/world.tscn` — WASD/arrows,
-Shift runs. The main scene is still the SimViewer until step 5.
-E (or Space) interacts.
-`-- --screenshot=<path> [--advance=minutes] [--at=x,y] [--interact=dx,dy]
-[--walk=x,y,seconds]` saves a frame and quits (any scene that calls
-`DevCapture.maybe_capture`). At the 07:00 start everyone is indoors;
-`--advance=180 --at=40,33` shows the harbour mid-morning, and
-`--advance=120 --at=9,26 --interact=0,-1` walks into the corner shop. The map alone:
-`res://scenes/debug/region_preview.tscn`.
+**Running it.** `godot --path .` (the project itself: `boot.tscn` now goes
+straight to `world.tscn`) or `godot --path . res://scenes/world/world.tscn`
+directly — WASD/arrows, Shift runs, E (or Space) interacts. Walking onto
+either of Harbourside's two edge exits (top, near x=36-40; right, near
+y=26-34) refuses today (`region_locked`/`region_unmapped`) since Old Town and
+Eastfield have no map yet. Set `developer_mode: true` in
+`user://settings.json` (or via `Settings.set_value`) to boot into `SimViewer`
+instead. `-- --screenshot=<path> [--advance=minutes] [--at=x,y]
+[--interact=dx,dy] [--walk=x,y,seconds]` saves a frame and quits (any scene
+that calls `DevCapture.maybe_capture` — `SimViewer` does not). At the 07:00
+start everyone is indoors; `--advance=180 --at=40,33` shows the harbour
+mid-morning, and `--advance=120 --at=9,26 --interact=0,-1` walks into the
+corner shop. The map alone: `res://scenes/debug/region_preview.tscn`.
 
 **Test runner.** A test fails if the engine logs an error during it (D-015),
 and tests may `await`. Physics tests speed time up 8x (D-016); restore
 `Engine` settings in `after_each` if you write another.
-
-**Art is still undecided.** Tiles are painted in code (D-014). Local asset
-packs found in `~/Downloads` (Sunnyside-style farm pack in
-`godot-2d-topdown-template-main/Tekstuurit`, Craftpix "junkie-city"
-gangsters) are side-view and of unclear licence, so they were not used.
-Choosing an art direction is the user's call; ask before importing assets.
 
 ---
 
@@ -85,10 +93,12 @@ Choosing an art direction is the user's call; ask before importing assets.
 | `WorldEventQueue` — deterministic scheduled events | done |
 | `WorldState`, `Region`, `Location`, varied unlock requirements | done |
 | `DistrictMap` (maps as JSON rectangles), `ChunkStreamer` | done |
-| `RegionView` + `RegionTiles` (code-painted atlas), `RegionPreview` | done |
-| `WorldView`, `PlayerBody`, `PlayerCamera`, `CharacterFigure`, `Game.move_player` | done |
+| `RegionView` + `RegionTiles` (real LimeZu tiles, themed by building kind, code-painted fallback), `RegionPreview` | done |
+| `CharacterSprites`, `StreetProps` — real LimeZu people and street furniture | done |
+| `WorldView`, `PlayerBody`, `PlayerCamera`, `CharacterFigure`, `Game.move_player` (region exits too) | done |
 | `NpcBodies` (pooled `NpcBody`), `NpcLook`, `DistrictMap.find_path` | done |
 | Interiors, `Game.interact_at`, `Hud`, `InteractionText`, `interact` action | done |
+| `Boot` — world by default, `SimViewer` behind `developer_mode` | done |
 | `DataRegistry` — JSON content, validated, cross-referenced | done |
 | `Npc`, `NpcRegistry`, `NpcSchedule`, `NpcNeeds` | done |
 | `SimLod` + `NpcDirector` — four tiers, budgeted, region-indexed | done |
@@ -110,8 +120,8 @@ live LLM calls, quests, phone, combat, crime and police. See `ROADMAP.md`.
 
 ## Size
 
-- 55 source files in `src/`
-- 18 test suites
+- 62 source files in `src/`
+- 24 test suites
 - 10 authored NPCs, 19 locations, 3 regions (1 mapped), 6 interiors, 8 schedules, 4 backgrounds
 
 ---

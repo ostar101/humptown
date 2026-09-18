@@ -431,3 +431,36 @@ cream interior. Worth theming later; not done now.
 **Not decided yet.** A theme for every `Location.kind` (only shop/bar/civic
 have their own look; work borrows civic's). Whether interiors should theme
 too, and how, if so, DistrictMap would learn its own kind.
+
+## D-023 — M2 step 5: the world is the main scene; region exits are walked, not pressed
+
+**Decision.** `Boot.destination_scene()` picks `world.tscn` normally and
+`sim_viewer.tscn` only when `Settings.developer_mode` is true — a static,
+side-effect-free function so the choice is tested without instantiating
+either scene. Region travel is wired: `Game.move_player()` checks
+`DistrictMap.exit_at(cell)` before treating a move as ordinary, and if the
+cell is on an exit, `_travel_to_region()` checks the destination is a real,
+unlocked, mapped region and either moves the player there (spawn cell) or
+refuses (`region_locked` / `region_unmapped` / `region_unknown`) exactly like
+a blocked cell — `WorldView` snaps the player back on any refusal, no special
+case needed. `WorldView._on_player_cell_changed` calls `show_current_area()`
+when the result's kind is `"travelled"`, the same way it already does for a
+building's `entered`/`exited`.
+
+**Why walking, not a button.** A door is one cell you choose to open; a
+region exit is the width of the map edge — you are always going to cross it
+if you keep walking, so it behaves like stepping off the edge of the map, not
+like using an object.
+
+**Content-free on purpose.** Only Harbourside has an authored `DistrictMap`;
+Old Town and Eastfield exist as `Region`s (mostly locked) with no map, so
+walking to either of harbourside's two exits today reliably refuses with
+`region_unmapped` once unlocked, or `region_locked` before that — proven by a
+test that builds a throwaway destination map and confirms the success path
+too. Authoring those regions is M7 ("Old Town and Eastfield. Travel."), not
+this milestone; this is the plumbing that content will plug into.
+
+**Also fixed while touching movement:** Camera2D is auto-promoted to physics
+processing by Godot itself once `physics_interpolation` (D-022) is on
+project-wide — a one-line engine warning the first time it happens, not a
+bug; the camera's own lead/zoom smoothing in `_process()` is unaffected.

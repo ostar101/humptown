@@ -79,6 +79,52 @@ func test_moving_in_an_unmapped_region_is_refused() -> void:
 	assert_err(Game.move_player(Vector2(100, 100)), "region_unmapped")
 
 
+# --- region exits -------------------------------------------------------
+
+## Harbourside's own exits (data/maps.json), by destination.
+func _exit_cell(to: String) -> Vector2i:
+	for e in _map().exits:
+		if str(e["to"]) == to:
+			var rect: Rect2i = e["rect"]
+			return rect.position
+	fail("no exit to %s on harbourside" % to)
+	return Vector2i.ZERO
+
+
+func test_walking_onto_an_exit_to_a_locked_region_is_refused() -> void:
+	assert_false(Game.world.regions["old_town"].unlocked, "unlocked by default would invalidate this test")
+	var before := Game.player.position
+	var result := Game.move_player(DistrictMap.cell_to_world(_exit_cell("old_town")))
+	assert_err(result, "region_locked")
+	assert_eq(Game.player.position, before, "a refused travel changes nothing")
+	assert_eq(Game.player.region, "harbourside")
+
+
+func test_walking_onto_an_exit_to_an_unlocked_but_unmapped_region_is_refused() -> void:
+	Game.world.regions["old_town"].unlocked = true
+	assert_err(Game.move_player(DistrictMap.cell_to_world(_exit_cell("old_town"))), "region_unmapped")
+	assert_eq(Game.player.region, "harbourside", "still nowhere to go")
+
+
+func test_walking_onto_an_exit_to_an_unlocked_mapped_region_travels_there() -> void:
+	Game.world.regions["old_town"].unlocked = true
+	var built := DistrictMap.from_data({
+		"id": "old_town", "region": "old_town", "width": 10, "height": 10,
+		"fill": "grass", "spawn": [3, 3],
+		"places": [{"location": "loc_test_square", "rects": [[0, 0, 10, 10]]}],
+	})
+	assert_ok(built)
+	Game.world.maps["old_town"] = built.value
+
+	var result := Game.move_player(DistrictMap.cell_to_world(_exit_cell("old_town")))
+	assert_ok(result)
+	assert_eq(result.value, {"kind": "travelled", "region": "old_town"})
+	assert_eq(Game.player.region, "old_town")
+	assert_eq(Game.player.position, DistrictMap.cell_to_world(Vector2i(3, 3)), "placed at the new map's spawn")
+	assert_eq(Game.player.location, "loc_test_square")
+	assert_true(_entered.has("loc_test_square"))
+
+
 func test_open_town_ground_belongs_to_no_location() -> void:
 	# A grass cell between houses: in the region, at no particular place.
 	var result := Game.move_player(DistrictMap.cell_to_world(Vector2i(2, 16)))

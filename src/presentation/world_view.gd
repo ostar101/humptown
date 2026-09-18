@@ -108,6 +108,8 @@ func _on_player_cell_changed(_cell: Vector2i) -> void:
 	var result := Game.move_player(_player.position)
 	if result.is_ok():
 		_last_accepted = _player.position
+		if result.value is Dictionary and result.value.get("kind") == "travelled":
+			show_current_area()
 	else:
 		# The rules refused a place physics allowed. Rules win.
 		_player.place_at(_last_accepted)

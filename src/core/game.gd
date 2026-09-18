@@ -165,9 +165,32 @@ func move_player(world_position: Vector2) -> Result:
 	if map.is_blocked(cell):
 		return _reject(proposal, "cell_blocked")
 
+	var destination := map.exit_at(cell)
+	if not destination.is_empty():
+		return _travel_to_region(proposal, destination)
+
 	player.position = world_position
 	_set_player_location(map.location_at(cell))
 	return Result.success(player.location)
+
+
+## Walking onto a region's exit rect steps straight into the neighbouring
+## region — no button press, the way leaving a building needs one: an exit is
+## the size of a border, not a single door. Refused the same way a blocked
+## cell is: WorldView snaps the player back to where they stood.
+func _travel_to_region(proposal: Dictionary, destination: String) -> Result:
+	var region: Region = world.regions.get(destination)
+	if region == null:
+		return _reject(proposal, "region_unknown")
+	if not region.unlocked:
+		return _reject(proposal, "region_locked")
+	var dest_map := world.map_for(destination)
+	if dest_map == null:
+		return _reject(proposal, "region_unmapped")
+	player.region = destination
+	player.position = DistrictMap.cell_to_world(dest_map.spawn)
+	_set_player_location(dest_map.location_at(dest_map.spawn))
+	return Result.success({"kind": "travelled", "region": destination})
 
 
 ## The map the player stands on: the inside of a building, or the region.
