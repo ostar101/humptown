@@ -12,10 +12,18 @@ extends RefCounted
 
 const REAL_DIR := "res://art/vendor/limezu/buildings/"
 
-## kind -> (file name pattern, count). One choice per kind for now; more
-## kinds or more variety per kind both just extend this table.
+## kind -> (file name pattern, count). `home` has five colour variants of the
+## villa house; `shop`/`bar`/`civic`/`work` share one flat-roofed storefront
+## building (the same fixed size, D-024's `SPRITE_SIZE`), each with its own
+## sign colour repainted at import time rather than a different building —
+## nothing generic-looking enough to be a *different* building per kind was
+## found; see DECISIONS.md D-026.
 const FILES_BY_KIND := {
 	"home": {"prefix": "home_", "count": 5},
+	"shop": {"prefix": "shop_", "count": 1},
+	"bar": {"prefix": "bar_", "count": 1},
+	"civic": {"prefix": "civic_", "count": 1},
+	"work": {"prefix": "work_", "count": 1},
 }
 
 ## Cell size the art was drawn at — the one building shape this covers. The

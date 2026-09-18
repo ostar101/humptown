@@ -19,8 +19,8 @@
       {"terrain": "pavement", "rect": [34, 0, 2, 26]},
       {"terrain": "road", "rect": [36, 0, 4, 26]},
       {"terrain": "pavement", "rect": [40, 0, 2, 26]},
-      {"terrain": "pavement", "rect": [0, 14, 34, 2]},
-      {"terrain": "pavement", "rect": [42, 14, 38, 2]}
+      {"terrain": "pavement", "rect": [0, 14, 34, 1]},
+      {"terrain": "pavement", "rect": [42, 14, 38, 1]}
     ],
     "buildings": [
       {"location": "loc_player_flat", "rect": [4, 1, 8, 13], "door": [7, 13]},
@@ -30,15 +30,15 @@
       {"location": "loc_marika_flat", "rect": [43, 1, 8, 13], "door": [46, 13]},
       {"location": "loc_sanna_house", "rect": [54, 1, 8, 13], "door": [57, 13]},
       {"location": "loc_rauno_room", "rect": [67, 1, 8, 13], "door": [70, 13]},
-      {"location": "loc_corner_shop", "rect": [4, 18, 10, 8], "door": [9, 25]},
-      {"location": "loc_cafe_kaisla", "rect": [17, 18, 10, 8], "door": [22, 25]},
-      {"location": "loc_clinic", "rect": [44, 16, 12, 10], "door": [50, 25]},
-      {"location": "loc_police_post", "rect": [60, 18, 10, 8], "door": [65, 25]},
-      {"location": "loc_anchor_bar", "rect": [6, 36, 12, 8], "door": [12, 43]},
-      {"location": "loc_warehouse_9", "rect": [60, 36, 14, 8], "door": [66, 43]}
+      {"location": "loc_corner_shop", "rect": [4, 15, 8, 13], "door": [8, 27]},
+      {"location": "loc_cafe_kaisla", "rect": [17, 15, 8, 13], "door": [21, 27]},
+      {"location": "loc_clinic", "rect": [44, 15, 8, 13], "door": [48, 27]},
+      {"location": "loc_police_post", "rect": [60, 15, 8, 13], "door": [64, 27]},
+      {"location": "loc_anchor_bar", "rect": [6, 32, 8, 13], "door": [10, 44]},
+      {"location": "loc_warehouse_9", "rect": [60, 32, 8, 13], "door": [64, 44]}
     ],
     "places": [
-      {"location": "loc_dock_street", "rects": [[0, 26, 80, 8], [0, 12, 34, 2], [42, 12, 38, 2]]},
+      {"location": "loc_dock_street", "rects": [[0, 26, 80, 8], [0, 14, 34, 1], [42, 14, 38, 1]]},
       {"location": "loc_harbour", "rects": [[24, 34, 56, 18]]},
       {"location": "loc_bus_stop", "rects": [[40, 22, 2, 4]]}
     ],

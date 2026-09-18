@@ -548,3 +548,57 @@ rect that is already used as a `spawn` reference needs the reference checked
 too — `DistrictMap.from_data()` and `test_region_map.test_every_authored_map_builds`
 report exactly this if a spawn ends up inside a building, but the fix itself
 is manual.
+
+## D-026 — Shop, bar, civic and work buildings get a whole sprite too
+
+**Decision.** `shop`, `bar`, `civic` and `work` share a second whole-building
+sprite (`BuildingArt.FILES_BY_KIND`): a flat-roofed modern storefront from
+Modern Exteriors' "Post Office" set, which happens to be exactly the same
+8x13-cell size as the villa (D-024/D-025). Its signage says "POST OFFICE" in
+every one of its four source colour variants, which is wrong on any other
+building, so `tools/import_limezu_buildings.py` repaints the sign's accent
+stripe and plate flat, in a colour per kind (`SIGN_COLOURS`), the same idea
+`RegionTiles.THEME_WALL_COLOR` already used for the per-cell fallback, one
+level up. The six affected buildings in `data/maps.json` (`loc_corner_shop`,
+`loc_cafe_kaisla`, `loc_clinic`, `loc_police_post`, `loc_anchor_bar`,
+`loc_warehouse_9`) were resized to 8x13 the same way the homes were; their
+new doors sit at column 4 of the rect, where this building's entrance is
+(the villa's was column 3 — a different building, a different column).
+
+**Why one shared building, not four different ones.** Every whole-building
+image found elsewhere in Modern Exteriors is either a specific, named shop
+(Hardware Store, the Post Office itself) with the name baked into the art —
+wrong for a building that plays a different role in this town — or, like the
+`Ground_Floor_*_Modular` sets D-021 already ruled out, themed pieces with no
+plain, reusable wall a building of arbitrary width can be built from. This
+storefront was the one clean, unbranded exception once its sign was
+repainted; sharing it across four kinds, distinguished only by colour, was
+judged better than leaving three of them on the flatter D-021/D-022 look.
+
+**Homes and shops share one street, and both grew.** Every building in this
+row sits on the same north-south streets as the row of homes above or below
+it, so resizing both rows to 13-cell-tall buildings ran the two into each
+other in the middle — first caught as a map-build failure naming the exact
+blocked cell, twice (once for the homes' own spawn point in D-025, once here
+for the shops overlapping the homes). The fix both times was the same shape:
+shrink the shared street to the one row of pavement the doorway actually
+needs, and place each row of buildings to just clear the other, rather than
+guessing at a gap. `test_region_map.test_every_authored_map_builds` and
+`test_mapped_regions_place_every_location_and_reach_every_door` catch this
+class of mistake immediately and by name; still, expect it again the next
+time two authored building rows share a corridor and one of them grows.
+
+**anchor_bar and loc_warehouse_9 sit against the main east-west road, not a
+side street**, so unlike the shops they could not extend upward into it;
+they extend downward instead, past their old front row by one cell, into
+what was open ground (or, for the bar, the edge of the beach — a dockside bar
+backing onto the sand is not an unreasonable thing to have built anyway).
+
+**Fallback and scope, as before.** No installed file, and both the D-021/
+D-022 per-cell tiles and the door's own themed colour still work exactly as
+they did before this file existed. Nothing about `RegionTiles`' seam
+changed; this is `BuildingArt` gaining more entries, not a new mechanism.
+
+**Not decided yet.** A second building per kind for repeat visual variety
+(today's five villas vs one storefront per other kind); theming interiors to
+match (D-022's own "not decided yet").

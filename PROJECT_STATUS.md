@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-18
 **Milestone:** M2 — The world you can see and walk — **in progress** (steps 1–5 of 5 done; the rest of M2's list is unscheduled, see below)
-**Build:** green. 365 tests, 6908 assertions with the LimeZu art installed
-(6560 without), ~4-5 s.
+**Build:** green. 366 tests, 6934 assertions with the LimeZu art installed
+(6578 without), ~4-5 s.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
@@ -18,17 +18,21 @@
 Harbourside has a map, so Old Town and Eastfield refuse today — authoring
 them is M7 ("Old Town and Eastfield. Travel."), not this milestone.
 
-**Homes now use LimeZu's actual house art, whole (D-024), not generic tiles.**
-The user judged the generic per-cell buildings (D-021/D-022) ugly and asked
-to look at how LimeZu's own art is meant to be used. It is not built from
-reusable generic pieces at all — each house is one hand-drawn image with a
-pitched roof, a porch, a balcony. `BuildingArt` uses one whole, for a
-building whose `rect` is exactly its 8x13-cell size; `data/maps.json`'s six
-similarly-sized homes were resized to fit (`loc_tuomas_flat`'s plot is too
-narrow, so it alone keeps the generic look). Shops, civic buildings and the
-bar are still the D-021/D-022 generic per-cell art — no equivalent whole-shop
-LimeZu asset was found generic enough to reuse across different buildings;
-see D-024 for what was tried and ruled out.
+**Every building kind now uses a whole LimeZu sprite, not generic per-cell
+tiles (D-024, D-025, D-026).** The user judged the generic per-cell buildings
+(D-021/D-022) ugly and asked to look at how LimeZu's own art is meant to be
+used. `BuildingArt` overlays one whole hand-drawn image on a building whose
+`rect` is exactly the art's fixed 8x13-cell size: homes get the villa (a
+pitched roof, a porch, a balcony — D-024, corrected in D-025 to keep the
+whole porch, not just the doorway); shop/bar/civic/work share a second
+building, a flat-roofed storefront with its sign recoloured per kind since
+its own signage said "POST OFFICE" (D-026). Twelve of the thirteen buildings
+in `data/maps.json` were resized to fit; `loc_tuomas_flat`'s plot is too
+narrow (the road is immediately east of it) and alone keeps the generic
+look. Fitting two grown, differently-sized rows of buildings into the same
+street corridor caused two real map-build failures along the way (D-025,
+D-026) — both caught immediately, by name, by
+`test_region_map.test_every_authored_map_builds`.
 
 **Next: whatever's left of M2's list, not yet split into steps** — day/night
 lighting; title screen, background selection, character creation, the
@@ -45,8 +49,9 @@ are extracted to `art/_limezu_source/` (has `.gdignore`, so Godot skips its
 `python tools/import_limezu.py` (character layers, D-020),
 `python tools/import_limezu_tiles.py` (ground/wall/roof tiles + building
 themes, D-021/D-022), `python tools/import_limezu_props.py` (street
-furniture, D-022) and `python tools/import_limezu_buildings.py` (whole-house
-sprites, D-024); run all four, then `godot --headless --path . --import`.
+furniture, D-022) and `python tools/import_limezu_buildings.py`
+(whole-building sprites, D-024/D-025/D-026); run all four, then
+`godot --headless --path . --import`.
 Both `art/` folders are git-ignored: the licences forbid redistribution.
 Without them the game and the tests fall back to the code-painted art (street
 props just don't appear — they have no fallback, see D-022). Credit LimeZu
@@ -59,7 +64,7 @@ counters, beds, signs, the `interact` action and the HUD (step 4, D-018);
 art direction, the character/tile import pipeline, building themes, street
 furniture and the movement-jitter fix (D-019 through D-022); the world as the
 main scene, `SimViewer` behind developer mode, and region exits/travel
-(step 5, D-023); whole-house sprites for homes (D-024, corrected in D-025).
+(step 5, D-023); whole-building sprites for every kind (D-024 through D-026).
 
 **Interaction, briefly.** `Game.interaction_at(cell)` describes,
 `Game.interact_at(cell)` acts (D-018). Buying and selling at counters is M4;

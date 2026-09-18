@@ -23,8 +23,11 @@ versions are milestones rather than releases until there is something to release
 - A `home`-kind building the right size (8x13 cells) gets one whole,
   hand-drawn LimeZu house image instead of generic per-cell tiles; six of the
   seven homes were resized in `data/maps.json` to fit (the seventh's plot is
-  too narrow); shops/civic/bar still use the generic per-cell art — no
-  reusable whole-building LimeZu asset was found for them (D-024)
+  too narrow) (D-024, corrected in D-025 to keep the whole porch)
+- `shop`/`bar`/`civic`/`work` share a second whole building (a flat-roofed
+  storefront, sign recoloured per kind since its own said "POST OFFICE"); six
+  more buildings resized to fit, sharing a street with the resized homes
+  forced two of them further along it than originally authored (D-026)
 
 ### Added
 - `tools/import_limezu.py`: builds the local, git-ignored `art/vendor/limezu/`
@@ -57,12 +60,13 @@ versions are milestones rather than releases until there is something to release
 - `test_player_movement`: 4 new tests for region exits, including the full
   success path against a throwaway destination map
 - `tools/import_limezu_buildings.py`: builds the local, git-ignored
-  `art/vendor/limezu/buildings/` (five house sprites) from the purchased packs
+  `art/vendor/limezu/buildings/` (five house sprites, plus one storefront per
+  kind with its sign repainted) from the purchased packs
 - `BuildingArt`: whether a building's kind and size match a whole LimeZu
   sprite, and which one (varied per building, stable per building);
   `RegionView._build_building_art()` draws it, y-sorted to always win against
   its own covered wall/door tiles; `DistrictMap.kind_of()`
-- `test_building_art`: 6 tests, including a `RegionView` integration check
+- `test_building_art`: 7 tests, including a `RegionView` integration check
 
 - `data/maps.json` and `DistrictMap`: region layouts authored as rectangles
   (ground areas, buildings with doors, open-air places, exits), rasterised into
