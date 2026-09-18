@@ -44,6 +44,9 @@ versions are milestones rather than releases until there is something to release
 - Grass, sand and dock are real LimeZu tiles; terrain that meets a different
   terrain picks from a 4x4 edge set by a four-neighbour mask, in its own
   atlas source, which also carries the sea's eight animation frames (D-031)
+- M2 step 6, day and night: the outdoor world is tinted by the time of day
+  through a `CanvasModulate`, and street lamps are real lights that come on as
+  it gets dark; indoors is never darkened (D-032)
 
 ### Added
 - `tools/import_limezu.py`: builds the local, git-ignored `art/vendor/limezu/`
@@ -75,6 +78,9 @@ versions are milestones rather than releases until there is something to release
   the same way it already did to a building's `entered`/`exited` (D-023)
 - `test_player_movement`: 4 new tests for region exits, including the full
   success path against a throwaway destination map
+- `DayNight`: the tint and the lamp brightness for any minute of the day;
+  `WorldView.refresh_daylight()`, `RegionView.set_lamp_energy()`;
+  `test_day_night`: 12 tests
 - `tools/import_limezu_terrain.py`: builds the local, git-ignored
   `art/vendor/limezu/terrain/` (grass, sand, dock, and the shoreline and kerb
   edge sets) from the purchased packs

@@ -13,6 +13,9 @@ extends Node2D
 @onready var _player: PlayerBody = $Actors/Player
 @onready var _camera: PlayerCamera = $Camera
 @onready var _hud: Hud = $Hud
+## The time-of-day tint over everything drawn in the world (DayNight, D-032).
+## The HUD is its own CanvasLayer and is not affected.
+@onready var _daylight: CanvasModulate = $Daylight
 
 const NO_CELL := Vector2i(-99999, -99999)
 
@@ -29,8 +32,18 @@ func _ready() -> void:
 			return
 	_player.cell_changed.connect(_on_player_cell_changed)
 	_camera.target = _player
+	Events.minute_passed.connect(_on_minute_passed)
+	Events.time_skipped.connect(_on_time_skipped)
+	Events.game_loaded.connect(refresh_daylight)
 	show_current_area()
 	DevCapture.maybe_capture(self)
+
+
+func _exit_tree() -> void:
+	if Events.minute_passed.is_connected(_on_minute_passed):
+		Events.minute_passed.disconnect(_on_minute_passed)
+		Events.time_skipped.disconnect(_on_time_skipped)
+		Events.game_loaded.disconnect(refresh_daylight)
 
 
 ## (Re)builds the view for wherever the player is: the region, or the inside
@@ -51,6 +64,36 @@ func show_current_area() -> void:
 	_camera.snap()
 	_region.focus_on(_camera.get_screen_center_position())
 	_front = NO_CELL
+	refresh_daylight()
+
+
+## Tints the world for the time of day and sets the street lamps to match.
+## Indoors the lights are on whatever the hour, so a room is never darkened.
+## Called per game minute — a minute's change in the tint is far below what
+## anyone can see, so there is nothing to gain from doing it per frame.
+func refresh_daylight() -> void:
+	if not Game.is_running():
+		return
+	var map := Game.current_map()
+	if map != null and map.is_interior():
+		_daylight.color = Color.WHITE
+		_region.set_lamp_energy(0.0)
+		return
+	var tint := DayNight.tint_at(Game.clock.minute_of_day())
+	_daylight.color = tint
+	_region.set_lamp_energy(DayNight.lamp_energy_for(tint))
+
+
+func daylight() -> CanvasModulate:
+	return _daylight
+
+
+func _on_minute_passed(_total_minutes: int) -> void:
+	refresh_daylight()
+
+
+func _on_time_skipped(_from_minutes: int, _to_minutes: int) -> void:
+	refresh_daylight()
 
 
 func _process(_delta: float) -> void:

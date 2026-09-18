@@ -52,7 +52,8 @@ static func available() -> bool:
 	return false
 
 
-## Every decoration in this cell range: {"cell": Vector2i, "file": String}.
+## Every decoration in this cell range: {"cell": Vector2i, "file": String,
+## "kind": String}. The kind is how RegionView knows which ones to light.
 static func props_in(map: DistrictMap, rect: Rect2i) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	if not available():
@@ -65,7 +66,7 @@ static func props_in(map: DistrictMap, rect: Rect2i) -> Array[Dictionary]:
 				continue
 			var file: String = REAL_DIR + str(KINDS[kind]["file"])
 			if ResourceLoader.exists(file):
-				out.append({"cell": cell, "file": file})
+				out.append({"cell": cell, "file": file, "kind": kind})
 	return out
 
 

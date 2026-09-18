@@ -19,14 +19,31 @@ signal chunk_hidden(chunk: Vector2i)
 
 const TILE := RegionTiles.TILE
 
+## A street lamp's pool of light (D-032). Warm, about seven cells across, and
+## centred on the ground below the lamp's head — the head is on an arm a cell
+## to the right of the pole, and in this view the ground under it is on the
+## pole's own row.
+const LAMP_LIGHT_COLOR := Color(1.0, 0.85, 0.56)
+const LAMP_LIGHT_ENERGY := 0.85
+const LAMP_LIGHT_RADIUS_CELLS := 3.5
+const LAMP_LIGHT_OFFSET := Vector2(36.0, 0.0)
+
 ## Chunks kept resident in each direction around the focus chunk. Two covers
 ## a 1280x720 view at any sensible zoom with a chunk of margin for movement.
 @export var load_radius: int = 2
+
+## How brightly the street lamps burn, 0-1 (DayNight.lamp_energy_for()).
+## Kept here rather than asked for, so a chunk streamed in at midnight is lit
+## the moment it appears.
+var lamp_energy: float = 0.0
+
+static var _lamp_texture: GradientTexture2D = null
 
 var map: DistrictMap = null
 
 var _streamer := ChunkStreamer.new()
 var _chunks: Dictionary = {}        # Vector2i -> Node2D
+var _lamp_lights: Dictionary = {}   # Vector2i -> Array[PointLight2D]
 var _bounds: StaticBody2D = null
 ## Whole-building sprites (BuildingArt, D-024) and open-air place decoration
 ## (PlaceArt, D-030). Few enough per map — a couple dozen buildings and a
@@ -100,6 +117,25 @@ func chunk_node(chunk: Vector2i) -> Node2D:
 	return _chunks.get(chunk)
 
 
+## Sets how brightly every street lamp burns, now and in every chunk streamed
+## in afterwards. A lamp at zero is disabled rather than merely dark, so the
+## daytime town pays nothing for lights nobody can see.
+func set_lamp_energy(energy: float) -> void:
+	lamp_energy = clampf(energy, 0.0, 1.0)
+	for lights: Array in _lamp_lights.values():
+		for light: PointLight2D in lights:
+			_apply_lamp_energy(light)
+
+
+## Every lamp light in the resident chunks. For tests and debugging.
+func lamp_lights() -> Array[PointLight2D]:
+	var out: Array[PointLight2D] = []
+	for lights: Array in _lamp_lights.values():
+		for light: PointLight2D in lights:
+			out.append(light)
+	return out
+
+
 static func cell_to_world(cell: Vector2i) -> Vector2:
 	return DistrictMap.cell_to_world(cell)
 
@@ -145,11 +181,18 @@ func _populate(chunk: Vector2i) -> void:
 			if top.x >= 0:
 				structures.set_cell(cell, RegionTiles.SOURCE_ID, top)
 
+	var lights: Array[PointLight2D] = []
 	for prop in StreetProps.props_in(map, rect):
-		root.add_child(_prop_sprite(prop))
+		var sprite := _prop_sprite(prop)
+		if prop["kind"] == "lamp":
+			var light := _lamp_light()
+			sprite.add_child(light)
+			lights.append(light)
+		root.add_child(sprite)
 
 	add_child(root)
 	_chunks[chunk] = root
+	_lamp_lights[chunk] = lights
 	chunk_shown.emit(chunk)
 
 
@@ -172,6 +215,42 @@ func _prop_sprite(prop: Dictionary) -> Sprite2D:
 	sprite.position = feet
 	sprite.offset = top_left - feet
 	return sprite
+
+
+## The pool of light under a street lamp, a child of the lamp's sprite so it
+## is freed with its chunk. The sprite's origin is the cell the pole stands on.
+func _lamp_light() -> PointLight2D:
+	var light := PointLight2D.new()
+	light.name = "Light"
+	light.texture = _lamp_light_texture()
+	light.texture_scale = LAMP_LIGHT_RADIUS_CELLS * 2.0 * TILE / float(light.texture.get_width())
+	light.color = LAMP_LIGHT_COLOR
+	light.position = LAMP_LIGHT_OFFSET
+	_apply_lamp_energy(light)
+	return light
+
+
+func _apply_lamp_energy(light: PointLight2D) -> void:
+	light.energy = lamp_energy * LAMP_LIGHT_ENERGY
+	light.enabled = lamp_energy > 0.001
+
+
+## One soft radial falloff shared by every lamp, built once.
+static func _lamp_light_texture() -> GradientTexture2D:
+	if _lamp_texture == null:
+		var gradient := Gradient.new()
+		gradient.set_color(0, Color(1, 1, 1, 1))
+		gradient.set_color(1, Color(1, 1, 1, 0))
+		gradient.add_point(0.45, Color(1, 1, 1, 0.55))
+		var texture := GradientTexture2D.new()
+		texture.gradient = gradient
+		texture.fill = GradientTexture2D.FILL_RADIAL
+		texture.fill_from = Vector2(0.5, 0.5)
+		texture.fill_to = Vector2(1.0, 0.5)
+		texture.width = 128
+		texture.height = 128
+		_lamp_texture = texture
+	return _lamp_texture
 
 
 ## One overlay sprite per building whose rect matches a whole-building art
@@ -231,6 +310,7 @@ func _release(chunk: Vector2i) -> void:
 	if root == null:
 		return
 	_chunks.erase(chunk)
+	_lamp_lights.erase(chunk)
 	remove_child(root)
 	root.queue_free()
 	chunk_hidden.emit(chunk)

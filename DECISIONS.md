@@ -839,3 +839,38 @@ which tile into a chequerboard — so one clump goes on one grass variant in
 four. And the quay uses a single plank tile: the pier set's four decks differ
 in which planks are darker, and picking among them per cell turned a
 boardwalk into vertical stripes.
+
+## D-032 — Day and night: a tint from the clock, and lamps that are lights
+
+**Decision.** M2 step 6. `DayNight` is a pure function from the minute of day
+to a colour, laid over the outdoor world by a `CanvasModulate` in
+`world.tscn`; street lamps carry a `PointLight2D` whose energy follows how
+dark that tint is. `WorldView.refresh_daylight()` applies both on every game
+minute, on a time skip, on load and whenever the shown area changes. Inside a
+building the tint is white and the lamps are off.
+
+**Why a CanvasModulate and lights, rather than a darkening overlay.** A
+`CanvasModulate` multiplies everything drawn in the world and leaves the HUD's
+own `CanvasLayer` alone, which is exactly the split wanted. Lights are the one
+thing it does not dim, so a lamp is a real light pooling on the pavement
+rather than a painted glow that would itself be darkened by the night. Nothing
+is stored or saved: a game loaded at 23:00 is dark because it is 23:00.
+
+**Why lamps follow the tint and not the clock.** `lamp_energy_for(tint)` ramps
+from off to full as the tint's brightness falls from 0.86 to 0.45. Tying the
+lamps to the darkness instead of to their own hours means no lamp can burn in
+daylight or sit dark under a night sky however the keyframes are retuned, and
+a test proves it for every five minutes of the day.
+
+**Cost.** A lamp at zero energy is *disabled*, not merely dark, so the daytime
+town pays nothing for lights nobody can see. At night each resident chunk has
+a handful of lights (lamps stand ten cells apart); refreshing them is once a
+game minute, never per frame, which the performance rules ask for.
+
+**The keyframes** suit the calendar the game starts on — early March at
+sixty degrees north: light by seven, golden around half past six in the
+evening, properly dark by nine. `test_day_night` holds them to a
+per-minute change no larger than 0.02 in any channel so nothing ever flashes.
+
+**Not done.** Windows lit from inside at night, and the region preview tool
+(which shows the map, not a moment in time) stays in daylight.
