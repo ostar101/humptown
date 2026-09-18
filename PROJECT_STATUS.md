@@ -56,13 +56,37 @@ road. Three new open-air places — a basketball court, Ropewalk Park and a
 worksite — are furnished by `PlaceArt` from
 `python tools/import_limezu_places.py`.
 
-**Still open from that list: terrain edges.** Every boundary between grass,
-pavement, sand and water is a hard straight line, because D-021 left ground
-terrain code-painted: LimeZu draws it as edge-aware autotiles and
-`RegionTiles` picks a variant per cell from a hash, with no idea what is next
-door. Doing it properly means a neighbour-aware tiling pass — the water also
-wants its animation. That is the next job. The harbour quay is a large empty
-apron until it gets one too.
+**Still open from that list, and the next job: terrain edges and water.**
+Every boundary between grass, pavement, sand and water is a hard straight
+line, because D-021 left ground terrain code-painted: LimeZu draws it as
+edge-aware autotiles and `RegionTiles` picks a variant per cell from a hash,
+with no idea what is next door. The art for doing it properly has been found,
+so start from here rather than searching again:
+
+- `Animated_32x32/Animated_Terrains_32x32/Sea_Water_Tileset_Basic_32x32.png`
+  is 32x4 cells = **eight animation frames of one 4x4 block**. Each block is a
+  water blob in sand: corners and edges on the outside, four interior water
+  variants in the middle. That is exactly a 4-bit "is my neighbour also
+  water" mask — `col = 0 if west is not water else 3 if east is not water
+  else 1|2`, and the same for `row` with north/south. Shore *and* animation
+  from one sheet.
+- `..._No_Sand_Basic_32x32.png` is the same thing without the sand, which is
+  what the water wants where it meets the dock rather than the beach.
+- `1_Terrains_and_Fences_Singles_32x32` has `Grass_1..4` (22 pieces each) and
+  `Grass_Water_1..4` sets for the grass edges.
+- `2_City_Terrains_Singles_32x32`'s `Sidewalk_N_1..16` are road/pavement kerb
+  pieces: 9 is plain pavement, 10 plain asphalt, 2/4/6/8 the four kerb edges,
+  1/3/5/7 corner nubs, 11-16 the corners.
+
+The shape of the work: `RegionTiles.coords_for()` already takes the map and
+the cell, so a neighbour mask belongs there; the atlas needs more than
+`VARIANTS` columns for a 16-entry edge set, and animation needs frames laid
+out horizontally, which probably means a second `TileSetAtlasSource` for
+water rather than widening the procedural atlas to 4096 px (D-002's target
+machine has integrated graphics). `RegionView._populate()` would then need to
+know which source a cell uses.
+
+The harbour quay is also still a large empty apron.
 
 **Next after that: whatever's left of M2's list, not yet split into steps** — day/night
 lighting; title screen, background selection, character creation, the
