@@ -85,3 +85,13 @@ func test_region_view_gives_correctly_sized_buildings_a_sprite_and_others_none()
 	view.clear()
 	assert_eq(view._buildings.size(), 0, "clear() frees the building sprites too")
 	view.free()
+
+
+## Regression for D-027: a building sprite and a later-streamed chunk are
+## siblings under RegionView, so Godot only draws by y-position, not child
+## order, if RegionView itself is y-sorted. This must not depend on whatever
+## scene happens to embed RegionView remembering to set it.
+func test_region_view_y_sorts_itself() -> void:
+	var view := RegionView.new()
+	assert_true(view.y_sort_enabled, "RegionView must y-sort so building art and streamed chunks layer correctly")
+	view.free()

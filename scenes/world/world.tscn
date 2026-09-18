@@ -14,7 +14,6 @@ script = ExtResource("1")
 y_sort_enabled = true
 
 [node name="RegionView" parent="Actors" instance=ExtResource("2")]
-y_sort_enabled = true
 
 [node name="NpcBodies" type="Node2D" parent="Actors"]
 y_sort_enabled = true

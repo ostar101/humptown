@@ -33,6 +33,21 @@ var _bounds: StaticBody2D = null
 var _buildings: Array[Node2D] = []
 
 
+## Y-sort must be enabled here, not just on the nested chunk roots: a building
+## sprite and a Chunk_X_Y root are SIBLINGS under this node, and Godot only
+## compares siblings by position when their shared parent is itself y-sorted
+## (nested y-sort composes; it does not start partway down the tree). Without
+## this, a chunk streamed in after `show_map()` built the building sprites
+## simply draws on top of them in child order regardless of position, and the
+## building's own plain WALL/ROOF/DOOR cells (kept for collision) show
+## through where the whole-building art should be. This used to be set only
+## by the embedding scene (`world.tscn` did; `region_preview.tscn` forgot to,
+## which is exactly what made buildings there look unfinished) — setting it
+## here means every scene that instances RegionView gets it right (D-027).
+func _init() -> void:
+	y_sort_enabled = true
+
+
 ## Switches to a new map, releasing everything from the previous one. Nothing
 ## is drawn until the first focus_on().
 func show_map(new_map: DistrictMap) -> void:

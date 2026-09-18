@@ -28,6 +28,10 @@ versions are milestones rather than releases until there is something to release
   storefront, sign recoloured per kind since its own said "POST OFFICE"); six
   more buildings resized to fit, sharing a street with the resized homes
   forced two of them further along it than originally authored (D-026)
+- `RegionView` y-sorts itself in code instead of relying on the embedding
+  scene to remember the override; without it, whole-building sprites lost
+  the draw order against later-streamed tile chunks and showed the plain
+  per-cell tiles behind them instead (D-027)
 
 ### Added
 - `tools/import_limezu.py`: builds the local, git-ignored `art/vendor/limezu/`
@@ -138,6 +142,10 @@ versions are milestones rather than releases until there is something to release
 ### Fixed
 - `SimViewer` failed to compile under the strict warning settings (untyped
   `slice()` element in the scheduled-events panel)
+- Whole-building sprites (D-024 through D-026) drew behind their own
+  building's later-streamed tile chunks in `region_preview.tscn` (not
+  `world.tscn`, which happened to override the setting), reading as leftover
+  plain construction behind the real house/storefront art (D-027)
 - The player's sprite stuttered slightly while moving: physics runs at a
   fixed 30 Hz but the display renders faster, so `physics/common/
   physics_interpolation` is now on project-wide, with

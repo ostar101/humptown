@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-18
 **Milestone:** M2 — The world you can see and walk — **in progress** (steps 1–5 of 5 done; the rest of M2's list is unscheduled, see below)
-**Build:** green. 366 tests, 6934 assertions with the LimeZu art installed
-(6578 without), ~4-5 s.
+**Build:** green. 367 tests, 6935 assertions with the LimeZu art installed
+(6579 without), ~4-5 s.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
@@ -33,6 +33,17 @@ look. Fitting two grown, differently-sized rows of buildings into the same
 street corridor caused two real map-build failures along the way (D-025,
 D-026) — both caught immediately, by name, by
 `test_region_map.test_every_authored_map_builds`.
+
+**Fixed: buildings looked unfinished in `region_preview` (D-027).** The user
+reported "remnants of an old house" behind the buildings. Not an art or
+assignment bug — `BuildingArt.sprite_for()` was always returning the right
+file. `RegionView` never y-sorted itself, only `world.tscn` remembered to
+override it on the instance; `region_preview.tscn` didn't, so its
+later-streamed tile chunks drew over the whole-building sprites in plain
+child order instead of by position. Fixed by setting `y_sort_enabled = true`
+in `RegionView._init()` so it can't depend on the embedding scene again;
+`world.tscn`'s now-redundant override was removed. Guarded by a new
+regression test (`test_region_view_y_sorts_itself`).
 
 **Next: whatever's left of M2's list, not yet split into steps** — day/night
 lighting; title screen, background selection, character creation, the
@@ -64,7 +75,9 @@ counters, beds, signs, the `interact` action and the HUD (step 4, D-018);
 art direction, the character/tile import pipeline, building themes, street
 furniture and the movement-jitter fix (D-019 through D-022); the world as the
 main scene, `SimViewer` behind developer mode, and region exits/travel
-(step 5, D-023); whole-building sprites for every kind (D-024 through D-026).
+(step 5, D-023); whole-building sprites for every kind (D-024 through D-026);
+a y-sort fix so those sprites always draw correctly regardless of which scene
+embeds `RegionView` (D-027).
 
 **Interaction, briefly.** `Game.interaction_at(cell)` describes,
 `Game.interact_at(cell)` acts (D-018). Buying and selling at counters is M4;

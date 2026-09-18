@@ -602,3 +602,48 @@ changed; this is `BuildingArt` gaining more entries, not a new mechanism.
 **Not decided yet.** A second building per kind for repeat visual variety
 (today's five villas vs one storefront per other kind); theming interiors to
 match (D-022's own "not decided yet").
+
+## D-027 — Fix: RegionView y-sorts itself, in code, not per embedding scene
+
+**Decision.** `RegionView._init()` now sets `y_sort_enabled = true` on itself.
+Previously this was set only in `world.tscn`'s override of the `RegionView`
+instance (now removed as redundant); `scenes/debug/region_preview.tscn`
+instances the same scene without the override, and never got it.
+
+**Symptom, and why it looked like an art bug.** The user reported "there are
+remnants of an old house behind the buildings" from a `region_preview`
+screenshot: villas and storefronts showed the plain per-cell WALL/ROOF/DOOR
+tiles (D-021/D-022's real, themed tiles, not the D-014 fallback — it only
+*read* as leftover construction) with no whole-building sprite over them,
+even though a debug log confirmed `BuildingArt.sprite_for()` was returning
+the correct file for every one of them. The sprite nodes existed; they just
+weren't drawing on top.
+
+**Root cause.** `RegionView._build_building_art()` adds one `Sprite2D` per
+qualifying building directly as its own child, once, in `show_map()`. Chunk
+roots (`Chunk_X_Y`, holding the per-cell `TileMapLayer`s) are added later,
+as the streamer loads them around the camera, in `_populate()` — also as
+`RegionView`'s own children. Godot only compares siblings by y-position when
+their *shared parent* has `y_sort_enabled` on; nested y-sort composes down
+the tree, but does not start partway down it. With `RegionView` itself not
+y-sorted, its direct children draw in child order, i.e. whichever was
+`add_child`-ed most recently wins — so any chunk streamed in after a
+building's sprite was created simply painted over it, regardless of the
+sprite's carefully-placed sort key (D-024's `sort_y` comment). `world.tscn`
+happened to override `y_sort_enabled` on its `RegionView` instance, which is
+the only reason the real game (`world.tscn`) never showed this; the
+developer-only `region_preview.tscn` did not, and did.
+
+**Why fix it in `_init()`, not by adding the override to `region_preview.tscn`
+too.** The missing override was the actual bug: nothing before this made it
+part of `RegionView`'s own contract that it must be embedded with y-sort on,
+so the next new scene that instances it (or a forgetful edit to an existing
+one) reproduces the exact same failure silently — no test caught this,
+because `test_building_art`'s integration test only checks that the sprite
+*node* was created, not how it draws relative to its siblings. Setting it on
+self removes the possibility of forgetting.
+
+**Lesson.** A visual bug that survives a passing debug log pointing at the
+correct data is a draw-order bug, not a logic bug — check what actually
+controls sibling z-ordering (`y_sort_enabled` on the *parent*) before
+re-checking the logic that already proved itself correct.
