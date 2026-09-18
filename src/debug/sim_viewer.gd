@@ -170,7 +170,7 @@ func _refresh_events(clock: GameClock) -> void:
 	if pending.is_empty():
 		lines += "[color=#777777]nothing scheduled[/color]\n"
 	for event in pending.slice(0, 18):
-		var minutes_away := event.at - clock.total_minutes
+		var minutes_away: int = event.at - clock.total_minutes
 		lines += "+%4d min  %-20s %s\n" % [
 			minutes_away, event.kind, JSON.stringify(event.payload),
 		]
