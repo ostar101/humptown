@@ -306,3 +306,33 @@ are used.
 folder is the likely answer, since the GitHub remote may be public) and how tiles map onto
 `RegionTiles` — both belong to the import step, after the user has bought the
 packs.
+
+## D-020 — People are LimeZu generator layers, chosen, never stored
+
+**Decision.** `CharacterFigure` draws four layers from LimeZu's character
+generator (body, eyes, outfit, hair) when the art is installed. Which layers a
+person wears is computed by `CharacterSprites.look_for(id, palette)`: the id
+picks the outfit and hair *style* (one hash per layer), and the palette NpcLook
+already produces (authored for recognisable people, generated for everyone
+else) picks the closest *colour variant* and the body's skin tone. Nothing new
+is saved. The art lives in git-ignored `art/vendor/limezu/`, built by
+`tools/import_limezu.py` from the purchased packs with a manifest, because the
+licences forbid redistribution and an export cannot list `res://` folders.
+
+**Why.** It keeps every existing look meaningful: an authored `look` in
+`npcs.json` still says "red shirt, grey hair", and the sprite honours it. One
+rule serves the player and every NPC. Four draw calls per visible person is
+negligible; nothing composites images at runtime, which the headless test
+renderer cannot do.
+
+**Adults only.** The importer never copies the children's layers
+(`*_kids`), and a test fails if any imported layer name mentions a kid. Also
+left out: fantasy skins, animal-ear hair and the burglar mask, so a random
+stranger never wears a costume.
+
+**Fallback.** With no manifest, `look_for` returns `{}` and the figure is the
+code-painted one from D-014. Tests pass either way.
+
+**Colour matching note.** Layer colours are the mean of the front frame's
+non-outline pixels. LimeZu's black hair is drawn blue-grey, so the importer
+records blue-tinted hair as black; otherwise black hair came out brown.

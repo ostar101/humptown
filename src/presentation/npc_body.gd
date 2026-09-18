@@ -29,6 +29,7 @@ func _init() -> void:
 func assume(p_npc_id: String, palette: Dictionary, world_position: Vector2) -> void:
 	npc_id = p_npc_id
 	_figure.palette = palette
+	_figure.look = CharacterSprites.look_for(p_npc_id, palette)
 	_figure.facing = Vector2i.DOWN
 	stand_at(world_position)
 	visible = true

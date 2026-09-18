@@ -2,19 +2,33 @@
 
 **Updated:** 2026-09-18
 **Milestone:** M2 — The world you can see and walk — **in progress** (steps 1–4 of 5 done)
-**Build:** green. 332 tests, 6296 assertions, ~4 s (physics tests included).
+**Build:** green. 339 tests, 6704 assertions with the LimeZu art installed (6371 without), ~5 s.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
 
 ## Next task
 
-**Next: import LimeZu art, then M2 step 5.** Art direction is chosen (D-019):
-LimeZu's Modern Interiors / Exteriors / Office, 32 px, 2D. The user buys the
-packs; wait for them before importing anything. Then replace the code-painted
-placeholders behind the two seams: `RegionTiles` (the atlas) and
-`CharacterFigure` (people, from the Modern Interiors character generator).
-Credit LimeZu; keep the raw pack files out of the repository (redistribution is forbidden).
+**Next: LimeZu tiles behind `RegionTiles`, then M2 step 5.** Art direction is
+D-019. People are done (D-020): `CharacterFigure` draws LimeZu character-
+generator layers chosen by `CharacterSprites`. The ground, buildings and
+furniture are still code-painted; replace them behind `RegionTiles` next.
+
+**The art is local only.** The user bought Modern Interiors and Modern
+Exteriors (Modern Office not yet) and downloaded Serene Village (CC-BY 4.0).
+The zips sit in the project root (git-ignored as `*.zip`). The 32 px sheets
+are extracted to `art/_limezu_source/` (has `.gdignore`, so Godot skips its
+~30 000 files); `python tools/import_limezu.py` builds `art/vendor/limezu/`
+from it, then `godot --headless --path . --import`. Both folders are
+git-ignored: the licences forbid redistribution. Without them the game and
+the tests fall back to the code-painted art. Credit LimeZu (`CREDITS.md`).
+`Character Generator 2.0 Setup.exe` in the root is the user's LimeZu tool;
+it has not been run.
+
+**Tile sheets to use** (in `art/_limezu_source/`): exteriors
+`Modern_Exteriors_32x32/ME_Theme_Sorter_32x32/` (terrains, city props,
+buildings), interiors `1_Interiors/32x32/Room_Builder_32x32.png` and
+`Theme_Sorter_32x32/`. Reference layouts: `interiors/6_Home_Designs/`.
 
 Done so far: region map + chunk streaming (step 1); player body, camera and
 movement rules (step 2); pooled NPC bodies (step 3, D-017); interiors, doors,

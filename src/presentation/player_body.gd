@@ -31,6 +31,7 @@ func _ready() -> void:
 	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	collision_mask = RegionTiles.COLLISION_LAYER
 	_cell = DistrictMap.world_to_cell(position)
+	_figure.look = CharacterSprites.look_for("player", _figure.palette)
 
 
 ## Puts the body somewhere without walking there (spawn, load, travel).

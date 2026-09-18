@@ -32,3 +32,8 @@ RESTORE_GIT.md
 # (absolute paths, a venv) and personal, so never versioned. See CLAUDE.md.
 Humptown-Claude-Memory/
 .mcp.json
+
+# Third-party art (LimeZu, D-019). The licences forbid redistributing the
+# packs, so the extracted source and the curated sheets stay local.
+art/_limezu_source/
+art/vendor/

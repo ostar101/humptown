@@ -7,8 +7,16 @@ versions are milestones rather than releases until there is something to release
 
 ### Decided
 - Art direction: LimeZu's Modern pixel-art series at 32 px, staying 2D (D-019)
+- People are drawn from LimeZu's character-generator layers, chosen per person
+  from their id and palette; adults only; code-painted fallback (D-020)
 
 ### Added
+- `tools/import_limezu.py`: builds the local, git-ignored `art/vendor/limezu/`
+  (character layers + manifest) from the purchased packs
+- `CharacterSprites`: picks a person's body, eyes, outfit and hair layers and
+  the sheet frame for a facing; `CharacterFigure` draws them when present
+- `test_character_sprites`: 7 tests, runnable with or without the art
+- `CREDITS.md`
 - `data/maps.json` and `DistrictMap`: region layouts authored as rectangles
   (ground areas, buildings with doors, open-air places, exits), rasterised into
   a ground + structure grid with blocking, location lookup, anchors and
