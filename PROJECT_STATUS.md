@@ -191,6 +191,23 @@ numbers there run ~30-45% above the table (different hardware), and the
 pre-change commit measured the same on that machine both times, so no
 regression. Bodies and pathing are presentation-side and not in the benchmark.
 
+Re-measured again after D-030 relaid the map, back to back with the previous
+commit on the same machine:
+
+```
+  people    before     after
+      50     666.9     706.4   us/minute
+     200     935.5    1084.2
+    1000    1748.5    2051.7
+    3000    3851.8    3980.0
+```
+
+3-17% dearer, from Harbourside gaining three locations (16 -> 19 in that
+region): resolving where someone is walks the region's locations. The
+property that matters is intact — cost per simulated minute is still flat in
+total population. Worth remembering that adding places to a district is not
+free, and that it is the *local* location count, not the world's, that pays.
+
 The number that matters: cost per simulated minute is roughly flat in total
 population once the local population is fixed, because dormant people are never
 ticked and their positions are cached. A realistic district of ~200 residents
