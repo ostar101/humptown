@@ -80,24 +80,52 @@ func test_a_look_may_only_hold_colours_and_style_ids() -> void:
 	assert_err(d.validate(_data), "bad_appearance")
 
 
-func test_moving_a_point_never_produces_a_draft_validate_would_refuse() -> void:
+func test_a_point_must_be_taken_before_it_can_be_given() -> void:
 	var d := _draft()
 	var bg := _background("bg_dockhand")
-	assert_true(d.move_point(bg, "strength", "wits"))
-	assert_true(d.move_point(bg, "endurance", "charisma"))
-	assert_false(d.move_point(bg, "agility", "wits"), "the third point is refused")
-	assert_eq(d.points_used(), CharacterDraft.ATTRIBUTE_POINTS)
-	assert_true(d.move_point(bg, "wits", "strength"), "moving a point back frees it")
-	assert_eq(d.points_used(), 1)
+	assert_false(d.raise(bg, "wits"), "nothing has been freed yet")
+	assert_true(d.lower(bg, "strength"))
+	assert_eq(d.unspent(), 1)
+	assert_err(d.validate(_data), "attributes_unbalanced", "a freed point must be placed")
+	assert_true(d.raise(bg, "wits"))
+	assert_eq(d.unspent(), 0)
+	assert_ok(d.validate(_data))
+
+
+func test_no_more_than_two_points_can_be_taken() -> void:
+	var d := _draft()
+	var bg := _background("bg_dockhand")
+	assert_true(d.lower(bg, "strength"))
+	assert_true(d.lower(bg, "endurance"))
+	assert_false(d.lower(bg, "agility"), "the third point is refused")
+	assert_true(d.raise(bg, "wits"))
+	assert_true(d.raise(bg, "charisma"))
+	assert_false(d.raise(bg, "resolve"), "both freed points are spent")
 	assert_ok(d.validate(_data))
 	assert_eq(d.attributes(bg)["charisma"], int(bg["attributes"]["charisma"]) + 1)
 
 
-func test_a_point_cannot_push_an_attribute_past_its_bounds() -> void:
+func test_undoing_a_change_gives_the_point_back() -> void:
 	var d := _draft()
 	var bg := _background("bg_dockhand")
-	assert_true(d.move_point(bg, "wits", "strength"))
-	assert_false(d.move_point(bg, "charisma", "strength"), "strength 7 +2 would be 9")
+	assert_true(d.lower(bg, "strength"))
+	assert_true(d.raise(bg, "strength"), "putting it back is always allowed")
+	assert_eq(d.attribute_shifts, {}, "and leaves no trace")
+	assert_true(d.lower(bg, "strength"))
+	assert_true(d.raise(bg, "wits"))
+	assert_true(d.lower(bg, "wits"), "taking back what was given")
+	assert_eq(d.unspent(), 1)
+
+
+func test_no_button_can_push_an_attribute_past_its_bounds() -> void:
+	var d := _draft()
+	var bg := _background("bg_dockhand")
+	assert_true(d.lower(bg, "wits"))
+	assert_false(d.lower(bg, "wits"), "wits 4 cannot go below 3")
+	assert_true(d.lower(bg, "charisma"))
+	assert_true(d.raise(bg, "strength"))
+	assert_false(d.raise(bg, "strength"), "strength 7 +2 would be 9")
+	assert_true(d.raise(bg, "agility"))
 	assert_ok(d.validate(_data))
 
 
@@ -172,15 +200,42 @@ func test_a_look_turns_hex_choices_into_the_figures_palette() -> void:
 
 func test_cycling_a_choice_wraps_round_and_stays_valid() -> void:
 	var look := PlayerLook.default_appearance()
-	var hair_colours := PlayerLook.options("hair")
+	var hair_colours := PlayerLook.options("hair", look)
+	assert_false(hair_colours.is_empty(), "there is always a hair colour to choose")
 	for i in hair_colours.size():
 		look = PlayerLook.cycle(look, "hair", 1)
 	assert_eq(look["hair"], PlayerLook.default_appearance()["hair"], "a full lap comes back round")
 	look = PlayerLook.cycle(look, "hair", -1)
 	assert_eq(str(look["hair"]).trim_prefix("#"), hair_colours[hair_colours.size() - 1])
+	for key in ["skin", "hair_style", "outfit_style", "shirt", "trousers"]:
+		look = PlayerLook.cycle(look, key, 3)
 	var d := _draft()
 	d.appearance = look
 	assert_ok(d.validate(_data), "whatever the screen can pick, Game accepts")
+
+
+func test_every_colour_offered_is_one_the_chosen_style_is_drawn_in() -> void:
+	if not CharacterSprites.available():
+		assert_true(true, "art not installed on this machine; colours are free choices")
+		return
+	var look := PlayerLook.cycle(PlayerLook.default_appearance(), "outfit_style", 7)
+	for colour in PlayerLook.options("shirt", look):
+		var worn := PlayerLook.look(look.merged({"shirt": "#" + colour}, true))
+		assert_true(str(worn["outfits"]).contains("_%s_" % look["outfit_style"]),
+			"%s is a version of the chosen outfit" % colour)
+	assert_true(PlayerLook.options("trousers", look).is_empty(),
+		"LimeZu outfits include trousers; a separate choice would change nothing")
+
+
+func test_changing_a_style_keeps_the_colour_as_close_as_it_can() -> void:
+	if not CharacterSprites.available():
+		assert_true(true, "art not installed on this machine; nothing to check")
+		return
+	var look := PlayerLook.default_appearance()
+	look["shirt"] = "#8c3f4a"   # a red
+	var next := PlayerLook.cycle(look, "outfit_style", 1)
+	assert_true(PlayerLook.options("shirt", next).has(str(next["shirt"]).trim_prefix("#")),
+		"the colour is one the new style has")
 
 
 func test_a_chosen_style_is_worn_when_the_art_has_it() -> void:

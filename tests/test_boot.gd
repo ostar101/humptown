@@ -1,7 +1,7 @@
 extends TestCase
-## Boot: which scene the game hands off to (M2 step 5). SimViewer is a
-## developer tool now, reached only through developer mode; everyone else
-## starts in the world.
+## Boot: which scene the game hands off to. Everyone starts at the title
+## screen (D-034); SimViewer is a developer tool, reached only through
+## developer mode (M2 step 5).
 
 var _developer_mode_before: bool = false
 
@@ -14,9 +14,10 @@ func after_each() -> void:
 	Settings.set_value("developer_mode", _developer_mode_before, false)
 
 
-func test_normally_the_world_is_the_destination() -> void:
+func test_normally_the_title_screen_is_the_destination() -> void:
 	Settings.set_value("developer_mode", false, false)
-	assert_eq(Boot.destination_scene(), Boot.WORLD)
+	assert_eq(Boot.destination_scene(), Boot.TITLE)
+	assert_true(ResourceLoader.exists(Boot.TITLE), "and it exists")
 
 
 func test_developer_mode_reaches_the_sim_viewer_instead() -> void:

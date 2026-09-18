@@ -53,17 +53,29 @@ static func skin_options() -> Array[String]:
 	return out
 
 
-static func options(key: String) -> Array[String]:
+## What a choice can be, given the rest of the look. Where the art is
+## installed, a hair or outfit colour is one the *chosen style* is actually
+## drawn in — a swatch the sprite cannot wear would be a promise the preview
+## breaks. Trousers are only offered without the art: LimeZu's outfits are
+## whole outfits, legs included, so a separate trouser colour would change
+## nothing on screen.
+static func options(key: String, appearance: Dictionary = {}) -> Array[String]:
 	var out: Array[String] = []
+	var art := CharacterSprites.available()
 	match key:
 		"skin":
 			return skin_options()
 		"hair":
+			if art:
+				return _style_colours("hairstyles", str(appearance.get("hair_style", "")))
 			out.assign(HAIR_COLOURS)
 		"shirt":
+			if art:
+				return _style_colours("outfits", str(appearance.get("outfit_style", "")))
 			out.assign(SHIRT_COLOURS)
 		"trousers":
-			out.assign(TROUSER_COLOURS)
+			if not art:
+				out.assign(TROUSER_COLOURS)
 		"hair_style":
 			return CharacterSprites.styles("hairstyles")
 		"outfit_style":
@@ -75,20 +87,22 @@ static func options(key: String) -> Array[String]:
 ## and unremarkable person — the player makes them someone.
 static func default_appearance() -> Dictionary:
 	var out := {}
-	for key in ["skin", "hair", "shirt", "trousers"]:
-		var choices := options(key)
-		if not choices.is_empty():
-			out[key] = "#" + choices[0]
 	for key in ["hair_style", "outfit_style"]:
 		var choices := options(key)
 		if not choices.is_empty():
 			out[key] = choices[0]
+	for key in ["skin", "hair", "shirt", "trousers"]:
+		var choices := options(key, out)
+		if not choices.is_empty():
+			out[key] = "#" + choices[0]
 	return out
 
 
 ## Steps one choice forwards or backwards through its options, wrapping.
+## Changing a style keeps the colour as close as the new style allows, so a
+## red jacket becomes the reddest version of the next cut, not its first.
 static func cycle(appearance: Dictionary, key: String, step: int) -> Dictionary:
-	var choices := options(key)
+	var choices := options(key, appearance)
 	var out := appearance.duplicate()
 	if choices.is_empty():
 		return out
@@ -97,4 +111,33 @@ static func cycle(appearance: Dictionary, key: String, step: int) -> Dictionary:
 	var index := choices.find(current)
 	index = posmod((index if index >= 0 else 0) + step, choices.size())
 	out[key] = ("#" + choices[index]) if colour else choices[index]
+	var follows: String = {"hair_style": "hair", "outfit_style": "shirt"}.get(key, "")
+	if follows != "":
+		out[follows] = "#" + _closest(options(follows, out), str(appearance.get(follows, "")))
 	return out
+
+
+## The colours a layer's style is drawn in, without the '#', in sheet order.
+static func _style_colours(layer: String, style: String) -> Array[String]:
+	var out: Array[String] = []
+	for entry: Dictionary in CharacterSprites.manifest().get(layer, []):
+		if str(entry.get("style", "")) == style:
+			out.append(str(entry.get("colour", "")).trim_prefix("#"))
+	return out
+
+
+static func _closest(choices: Array[String], wanted: String) -> String:
+	if choices.is_empty():
+		return wanted.trim_prefix("#")
+	if not Color.html_is_valid(wanted):
+		return choices[0]
+	var target := Color(wanted)
+	var best := choices[0]
+	var best_distance := INF
+	for choice in choices:
+		var c := Color(choice)
+		var distance := Vector3(c.r - target.r, c.g - target.g, c.b - target.b).length_squared()
+		if distance < best_distance:
+			best_distance = distance
+			best = choice
+	return best

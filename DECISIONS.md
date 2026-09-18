@@ -874,3 +874,91 @@ per-minute change no larger than 0.02 in any channel so nothing ever flashes.
 
 **Not done.** Windows lit from inside at night, and the region preview tool
 (which shows the map, not a moment in time) stays in daylight.
+
+## D-033 — A character is a validated draft; your own bed is the save point
+
+**Decision.** Everything the player chooses before the world exists is a
+`CharacterDraft`: a background, a name, pronouns (they/she/he), a look, and a
+reshuffle of the background's attributes — at most two points taken and
+given back elsewhere, none leaving [3, 8]. `Game.new_game_from(draft)`
+validates it against the content before building anything, and a refused
+draft builds nothing. A new life starts indoors in the player's own flat.
+Sleeping in your own bed now writes the life's one save (`Game.save_slot`),
+which the title screen's Continue reads.
+
+**Why a draft and not a screen that writes PlayerState.** The creation
+screens are input; the layering rule says input proposes and Godot decides.
+The draft also has the rules for editing it (`lower`, `raise`), so the screen
+can never display a combination `validate()` would refuse — only an
+unfinished one, which Next will not pass.
+
+**Why only a reshuffle.** The plan says a background may be customised
+"within reasonable limits". Two points is enough to make a dockhand a clever
+one and not enough to stop them being a dockhand; backgrounds stay distinct
+starting lives rather than presets to be optimised away.
+
+**Why the look is colours and style ids, not sprite files.** An appearance is
+`{"skin": "#…", "hair": "#…", "shirt": "#…", "hair_style": "05",
+"outfit_style": "12"}` — the vocabulary an NPC's authored `look` already
+uses. It means the same thing with the LimeZu art installed or not (the
+code-painted figure wears the colours) and survives the art being re-imported
+under other file names. Where the art is installed, the colours offered are
+the ones the chosen style is actually drawn in, so a swatch never promises
+something the sprite cannot wear, and trousers are not offered at all
+because LimeZu's outfits include them.
+
+**Why the bed.** D-010 says saving is manual and tied to places, so that
+consequences stick. Your own bed is the most natural such place, it is
+already the only thing that ends a day, and it makes Continue mean something
+in M2 rather than a button that never lights up. One slot, for now; more is a
+settings-screen question, not an M2 one.
+
+**Tests never save over the player's life.** The runner points
+`Game.save_slot` at a test slot and deletes it at the end, and a test fails
+if that ever stops being true.
+
+## D-034 — The way in: title, creation, opening; a project-wide UI theme
+
+**Decision.** M2's last item, as the design plan orders it:
+`Title -> Choose Background -> Customise -> Confirm -> Short Opening -> Free
+World`. `Boot` now hands off to `title_screen.tscn` (SimViewer stays behind
+developer mode). The title and creation screens sit over `TitleBackdrop` —
+Harbourside itself at dusk, drawn by the real `RegionView` from content,
+without starting the simulation, the camera drifting down the main street.
+The opening is a few authored lines per background, one per key press,
+ending on a shared line, then a fade into the world. A project-wide `Theme`
+(`scenes/ui/humptown_theme.tres`, set in `gui/theme/custom`) styles every
+Control, the HUD included.
+
+**Layout in scenes, rows from content.** PROJECT_STATUS has long said SimViewer's
+built-in-code UI is not a pattern for real screens. The creation screen's
+layout is entirely in its `.tscn`; the repeated pieces — a card per
+background, a row per look choice and per attribute — are hidden templates
+in that scene, copied and filled from content. Adding a background needs no
+code.
+
+**The theme borrows LimeZu's own UI colours.** `UI_32x32.png` is speech
+bubbles, cursors and icons rather than panels, so the theme is flat
+StyleBoxes in the same lavender-white and ink as those bubbles, pixel-crisp
+(no anti-aliasing), with a gold focus ring so the whole front end can be
+driven by keyboard. The title screen carries the LimeZu credit line
+CREDITS.md asks the game itself to show.
+
+**Scene changes are injectable.** Each screen changes scene through `_go()`,
+which a test replaces with a recorder. Without that, pressing Begin in a test
+would replace the test runner's own scene.
+
+**Opening text is authored, not generated.** It is the first thing anyone
+reads; it has to be right offline, on the first run, before any provider is
+configured.
+
+**A test-order hazard found on the way.** `SceneTree.process_frame` fires
+*before* the frame's `_process` calls, so a test that awaits it once only
+sees a `_process` pass if the runner happened to resume it after the previous
+frame's. A new test awaiting a timer shifted that phase and broke an old
+world-scene test; the old test now awaits two frames, which holds wherever
+the runner resumes.
+
+**Not done.** Interiors are still generic tiles (the flat you wake up in
+included); a settings screen (language, AI provider) and multiple save slots
+are later.

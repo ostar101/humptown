@@ -27,6 +27,10 @@ window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/vsync/vsync_mode=1
 
+[gui]
+
+theme/custom="res://scenes/ui/humptown_theme.tres"
+
 [input]
 
 move_left={

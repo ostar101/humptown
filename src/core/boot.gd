@@ -1,14 +1,14 @@
 class_name Boot
 extends Node
-## First scene. Loads content, then hands off to the world — or, in
-## developer mode, to the debug simulation viewer instead (M2 step 5:
-## SimViewer is a developer tool now, not where the game starts).
+## First scene. Hands off to the title screen — or, in developer mode, to the
+## debug simulation viewer instead (M2 step 5: SimViewer is a developer tool,
+## not where the game starts).
 ##
-## Milestone 2 later replaces the world hand-off with a title screen and
-## character creation flow; keeping the entry point separate from those
-## means neither has to know about the other.
+## The title screen leads on to character creation and the opening (D-034);
+## keeping the entry point separate from those means none of them has to
+## know about the others.
 
-const WORLD := "res://scenes/world/world.tscn"
+const TITLE := "res://scenes/ui/title_screen.tscn"
 const SIM_VIEWER := "res://scenes/debug/sim_viewer.tscn"
 
 
@@ -28,4 +28,4 @@ func _enter_world() -> void:
 ## Which scene to hand off to. A static, side-effect-free decision so it can
 ## be tested without instantiating either scene.
 static func destination_scene() -> String:
-	return SIM_VIEWER if Settings.get_value("developer_mode") else WORLD
+	return SIM_VIEWER if Settings.get_value("developer_mode") else TITLE

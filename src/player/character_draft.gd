@@ -62,29 +62,55 @@ func attributes(background: Dictionary) -> Dictionary:
 	return out
 
 
-## Points already moved, counted once (what one attribute gained).
-func points_used() -> int:
-	var used := 0
+## Points taken from attributes so far.
+func lowered() -> int:
+	var total := 0
 	for attribute in attribute_shifts:
-		used += maxi(int(attribute_shifts[attribute]), 0)
-	return used
+		total += maxi(-int(attribute_shifts[attribute]), 0)
+	return total
 
 
-## Moves one point from `from` to `to` if that stays within the rules, and
-## says whether it did. The creation screen's arrows go through this, so the
-## screen can never show a draft that `validate()` would refuse.
-func move_point(background: Dictionary, from: String, to: String) -> bool:
-	if from == to:
+## Points given to attributes so far.
+func points_used() -> int:
+	var total := 0
+	for attribute in attribute_shifts:
+		total += maxi(int(attribute_shifts[attribute]), 0)
+	return total
+
+
+## Points taken and not yet given anywhere. A draft with any is unbalanced.
+func unspent() -> int:
+	return lowered() - points_used()
+
+
+## Takes a point from an attribute, or hands back one it was given. Says
+## whether it could. The creation screen's minus button is this, so the
+## screen can never show a draft that breaks the rules — only an unfinished
+## one, with points still to place.
+func lower(background: Dictionary, attribute: String) -> bool:
+	return _try_shift(background, attribute, -1)
+
+
+## Gives an attribute a point that was taken elsewhere, or returns one taken
+## from it. Says whether it could.
+func raise(background: Dictionary, attribute: String) -> bool:
+	return _try_shift(background, attribute, 1)
+
+
+func _try_shift(background: Dictionary, attribute: String, step: int) -> bool:
+	var base: Dictionary = background.get("attributes", {})
+	if not base.has(attribute):
 		return false
 	var trial := attribute_shifts.duplicate()
-	trial[from] = int(trial.get(from, 0)) - 1
-	trial[to] = int(trial.get(to, 0)) + 1
-	for key in [from, to]:
-		if int(trial[key]) == 0:
-			trial.erase(key)
+	trial[attribute] = int(trial.get(attribute, 0)) + step
+	if int(trial[attribute]) == 0:
+		trial.erase(attribute)
+	var value := int(base[attribute]) + int(trial.get(attribute, 0))
+	if value < ATTRIBUTE_MIN or value > ATTRIBUTE_MAX:
+		return false
 	var saved := attribute_shifts
 	attribute_shifts = trial
-	if _check_shifts(background).is_err():
+	if lowered() > ATTRIBUTE_POINTS or points_used() > lowered():
 		attribute_shifts = saved
 		return false
 	return true

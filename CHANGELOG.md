@@ -3,7 +3,11 @@
 All notable changes to Humptown. Format loosely follows Keep a Changelog;
 versions are milestones rather than releases until there is something to release.
 
-## [Unreleased] — Milestone 2: the world you can see and walk
+## [0.2.0] — 2026-09-19 — Milestone 2: the world you can see and walk
+
+You can start a character, walk Harbourside, watch its people keep their
+routines around you, and sleep to the next morning. 432 tests, 7444
+assertions.
 
 ### Decided
 - Art direction: LimeZu's Modern pixel-art series at 32 px, staying 2D (D-019)
@@ -47,6 +51,13 @@ versions are milestones rather than releases until there is something to release
 - M2 step 6, day and night: the outdoor world is tinted by the time of day
   through a `CanvasModulate`, and street lamps are real lights that come on as
   it gets dark; indoors is never darkened (D-032)
+- A character is a `CharacterDraft` that Game validates before building a
+  world from it: background, name, pronouns, a look, and at most two
+  attribute points moved. A new life starts at home, indoors. Sleeping in your
+  own bed is the save point (D-033)
+- The way in: title screen over Harbourside at dusk, then background,
+  appearance and confirmation, then a short authored opening per background,
+  then the world. A project-wide UI theme in LimeZu's UI colours (D-034)
 
 ### Added
 - `tools/import_limezu.py`: builds the local, git-ignored `art/vendor/limezu/`
@@ -78,6 +89,17 @@ versions are milestones rather than releases until there is something to release
   the same way it already did to a building's `entered`/`exited` (D-023)
 - `test_player_movement`: 4 new tests for region exits, including the full
   success path against a throwaway destination map
+- `TitleScreen`, `CharacterCreation`, `Opening`, `TitleBackdrop` and their
+  scenes; `scenes/ui/humptown_theme.tres`; `Boot` hands off to the title
+- `CharacterDraft`, `Game.new_game_from()`, `Game.has_saved_game()`,
+  `Game.continue_game()`, `Game.save_slot`; `PlayerLook` (appearance to
+  palette and sprite layers, and what there is to choose from);
+  `CharacterSprites.look_for()` takes chosen styles, `styles()`
+- `scenes/debug/ui_preview.tscn`: any front-end screen at any step, for
+  screenshots
+- `test_character_draft` (20), `test_front_end` (9)
+- Opening lines for every background, in English and Finnish; Finnish for
+  every new screen
 - `DayNight`: the tint and the lamp brightness for any minute of the day;
   `WorldView.refresh_daylight()`, `RegionView.set_lamp_energy()`;
   `test_day_night`: 12 tests
@@ -168,6 +190,10 @@ versions are milestones rather than releases until there is something to release
   sleeping) instead of always idle
 
 ### Fixed
+- Seven Finnish strings had lost their ä and ö ("Ruumiillinen tyo",
+  "Patevoitynyt"); restored
+- A world-scene test only passed when the runner happened to resume it before
+  a frame's `_process` calls; it now waits for a full pass (D-034)
 - `SimViewer` failed to compile under the strict warning settings (untyped
   `slice()` element in the scheduled-events panel)
 - Whole-building sprites (D-024 through D-026) drew behind their own

@@ -321,6 +321,10 @@ func test_walking_into_the_shop_and_out_again_in_the_world_scene() -> void:
 	var view := _spawn_world()
 	var tree := Engine.get_main_loop() as SceneTree
 	_face(view, _outside().anchor_of("loc_corner_shop"), Vector2i.UP)
+	# `process_frame` fires *before* the frame's _process calls, so one await
+	# only guarantees a _process pass if this test happened to start after the
+	# previous frame's. Two make it true wherever the runner resumes from.
+	await tree.process_frame
 	await tree.process_frame
 	assert_true(view.hud().prompt_text().contains(InteractionText.place_name("loc_corner_shop")),
 		"prompt: " + view.hud().prompt_text())

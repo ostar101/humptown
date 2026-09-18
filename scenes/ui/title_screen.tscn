@@ -1,0 +1,115 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://src/ui/title_screen.gd" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/ui/title_backdrop.tscn" id="2"]
+
+[sub_resource type="Gradient" id="shade_gradient"]
+offsets = PackedFloat32Array(0, 0.55, 1)
+colors = PackedColorArray(0.07, 0.07, 0.13, 0.78, 0.07, 0.07, 0.13, 0.42, 0.07, 0.07, 0.13, 0)
+
+[sub_resource type="GradientTexture2D" id="shade"]
+gradient = SubResource("shade_gradient")
+width = 256
+height = 4
+
+[node name="TitleScreen" type="Node"]
+script = ExtResource("1")
+
+[node name="Backdrop" parent="." instance=ExtResource("2")]
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="Root" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Shade" type="TextureRect" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_right = 760.0
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("shade")
+expand_mode = 1
+
+[node name="Column" type="VBoxContainer" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_left = 84.0
+offset_top = 96.0
+offset_right = 620.0
+offset_bottom = -60.0
+grow_vertical = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="UI/Root/Column"]
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+text = "Humptown"
+auto_translate_mode = 2
+
+[node name="Tagline" type="Label" parent="UI/Root/Column"]
+layout_mode = 2
+theme_type_variation = &"NarrationLabel"
+theme_override_font_sizes/font_size = 22
+text = "ui.title.tagline"
+autowrap_mode = 3
+
+[node name="Gap" type="Control" parent="UI/Root/Column"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+
+[node name="Menu" type="PanelContainer" parent="UI/Root/Column"]
+custom_minimum_size = Vector2(320, 0)
+layout_mode = 2
+size_flags_horizontal = 0
+
+[node name="Buttons" type="VBoxContainer" parent="UI/Root/Column/Menu"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="NewGame" type="Button" parent="UI/Root/Column/Menu/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "ui.new_game"
+
+[node name="Continue" type="Button" parent="UI/Root/Column/Menu/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "ui.continue"
+
+[node name="Quit" type="Button" parent="UI/Root/Column/Menu/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "ui.quit"
+
+[node name="Message" type="Label" parent="UI/Root/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"NarrationLabel"
+theme_override_font_sizes/font_size = 18
+autowrap_mode = 3
+
+[node name="Credit" type="Label" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -760.0
+offset_top = -44.0
+offset_right = -24.0
+offset_bottom = -16.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_type_variation = &"NarrationLabel"
+theme_override_font_sizes/font_size = 14
+text = "ui.title.credit"
+horizontal_alignment = 2
