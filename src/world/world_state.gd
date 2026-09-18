@@ -13,6 +13,8 @@ var flags: Dictionary = {}         # story/world flags: name -> Variant
 var current_region: String = ""
 ## region_id -> DistrictMap. Derived from content, so never saved.
 var maps: Dictionary = {}
+## location_id -> DistrictMap of the inside of that building. Also derived.
+var interiors: Dictionary = {}
 
 var _locations_by_region: Dictionary = {}   # region_id -> Array[String]
 
@@ -40,6 +42,18 @@ func build_from(registry: DataRegistry) -> void:
 		var map: DistrictMap = built.value
 		maps[map.region] = map
 
+	interiors.clear()
+	for id in registry.ids("interiors"):
+		var entry := registry.get_entry("interiors", id)
+		var built := DistrictMap.from_data(entry)
+		if built.is_err():
+			Log.error("world", "Interior rejected", {"interior": id, "reason": built.message})
+			continue
+		var inside: DistrictMap = built.value
+		var location: Location = locations.get(inside.interior_of)
+		inside.region = location.region if location != null else ""
+		interiors[inside.interior_of] = inside
+
 
 # --- queries ----------------------------------------------------------------
 
@@ -50,6 +64,11 @@ func get_region(id: String) -> Region:
 ## The physical layout of a region, or null for regions not yet mapped.
 func map_for(region_id: String) -> DistrictMap:
 	return maps.get(region_id)
+
+
+## The inside of a building, or null for buildings nobody can enter.
+func interior_for(location_id: String) -> DistrictMap:
+	return interiors.get(location_id)
 
 
 func get_location(id: String) -> Location:

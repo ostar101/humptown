@@ -42,6 +42,10 @@
       {"location": "loc_harbour", "rects": [[24, 34, 56, 18]]},
       {"location": "loc_bus_stop", "rects": [[40, 22, 2, 4]]}
     ],
+    "objects": [
+      {"id": "obj_bus_timetable", "kind": "sign", "cell": [40, 22], "text_key": "obj.bus_timetable.text"},
+      {"id": "obj_harbour_notice", "kind": "sign", "cell": [30, 34], "text_key": "obj.harbour_notice.text"}
+    ],
     "exits": [
       {"to": "old_town", "rect": [36, 0, 4, 1]},
       {"to": "eastfield", "rect": [79, 26, 1, 8]}

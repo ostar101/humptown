@@ -20,8 +20,12 @@ var appearance: Dictionary = {}
 var region: String = ""
 ## Empty while the player is out in the region but in no particular place.
 var location: String = ""
-## World position on the current region's map (DistrictMap units). ZERO means
-## "not placed yet"; Game.player_start_position() then picks a spot.
+## The building the player is inside, or empty when out in the region. While
+## inside, `position` is on that building's interior map.
+var interior: String = ""
+## World position on the current map (DistrictMap units): the region's, or the
+## interior's while inside. ZERO means "not placed yet";
+## Game.player_start_position() then picks a spot.
 var position: Vector2 = Vector2.ZERO
 
 # --- systems ----------------------------------------------------------------
@@ -110,6 +114,7 @@ func to_dict() -> Dictionary:
 		"appearance": appearance,
 		"region": region,
 		"location": location,
+		"interior": interior,
 		"position": {"x": position.x, "y": position.y},
 		"stats": stats.to_dict(),
 		"skills": skills.to_dict(),
@@ -129,6 +134,8 @@ func from_dict(d: Dictionary) -> void:
 	appearance = d.get("appearance", {})
 	region = str(d.get("region", ""))
 	location = str(d.get("location", ""))
+	# Absent in saves from before interiors, which were all made outdoors.
+	interior = str(d.get("interior", ""))
 	var pos: Dictionary = d.get("position", {})
 	position = Vector2(float(pos.get("x", 0.0)), float(pos.get("y", 0.0)))
 	stats.from_dict(d.get("stats", {}))

@@ -32,8 +32,14 @@ var llm: LlmClient = null
 var running: bool = false
 ## Directory tier reassignment cadence, in game minutes. Cheap, but not free.
 const RETIER_INTERVAL := 5
+## Minute of the day the player wakes after sleeping.
+const WAKE_MINUTE := 7 * 60
+## Above this much rest the player is not tired enough to sleep.
+const SLEEP_THRESHOLD := 0.75
 
 var _last_retier: int = -999
+## What the player's body is doing as hours pass; "sleep" during a night.
+var _player_activity := "idle"
 
 
 func _ready() -> void:
@@ -152,7 +158,7 @@ func move_player(world_position: Vector2) -> Result:
 	var proposal := {"kind": "move_player", "x": world_position.x, "y": world_position.y}
 	if not is_running():
 		return _reject(proposal, "no_world")
-	var map := world.map_for(player.region)
+	var map := current_map()
 	if map == null:
 		return _reject(proposal, "region_unmapped")
 	var cell := DistrictMap.world_to_cell(world_position)
@@ -160,22 +166,22 @@ func move_player(world_position: Vector2) -> Result:
 		return _reject(proposal, "cell_blocked")
 
 	player.position = world_position
-	var now_at := map.location_at(cell)
-	if now_at != player.location:
-		var was_at := player.location
-		player.location = now_at
-		if not was_at.is_empty():
-			Events.location_exited.emit(PlayerState.ID, was_at)
-		if not now_at.is_empty():
-			Events.location_entered.emit(PlayerState.ID, now_at)
-	return Result.success(now_at)
+	_set_player_location(map.location_at(cell))
+	return Result.success(player.location)
+
+
+## The map the player stands on: the inside of a building, or the region.
+func current_map() -> DistrictMap:
+	if player.interior.is_empty():
+		return world.map_for(player.region)
+	return world.interior_for(player.interior)
 
 
 ## Where the player's body should appear when the region is shown: the saved
 ## position if it is still valid ground, otherwise in front of their current
 ## location, otherwise the map's spawn.
 func player_start_position() -> Vector2:
-	var map := world.map_for(player.region)
+	var map := current_map()
 	if map == null:
 		return Vector2.ZERO
 	if player.position != Vector2.ZERO and not map.is_blocked(DistrictMap.world_to_cell(player.position)):
@@ -184,6 +190,132 @@ func player_start_position() -> Vector2:
 	if anchor.x >= 0 and not map.is_blocked(anchor):
 		return DistrictMap.cell_to_world(anchor)
 	return DistrictMap.cell_to_world(map.spawn)
+
+
+func _set_player_location(now_at: String) -> void:
+	if now_at == player.location:
+		return
+	var was_at := player.location
+	player.location = now_at
+	if not was_at.is_empty():
+		Events.location_exited.emit(PlayerState.ID, was_at)
+	if not now_at.is_empty():
+		Events.location_entered.emit(PlayerState.ID, now_at)
+
+
+# --- interaction ------------------------------------------------------------
+
+## What the player could do with whatever is on this cell of the current map,
+## without doing it: {"kind", "target", ...}, or empty. Presentation asks this
+## to show a prompt. Kinds: door, exit, counter, bed, sign.
+func interaction_at(cell: Vector2i) -> Dictionary:
+	if not is_running():
+		return {}
+	var map := current_map()
+	if map == null:
+		return {}
+	if map.is_interior() and cell == map.exit_door:
+		return {"kind": "exit", "target": map.interior_of}
+	var building := map.building_with_door(cell)
+	if not building.is_empty():
+		return {"kind": "door", "target": building}
+	var thing := map.object_at(cell)
+	if not thing.is_empty():
+		return {"kind": str(thing["kind"]), "target": str(thing["id"]), "text_key": str(thing["text_key"])}
+	return {}
+
+
+## The player uses whatever is on this cell. The cell must touch the player's
+## own; what happens is decided here, from the world as it is. On success the
+## value is a dictionary whose "kind" says what happened: entered, exited,
+## served, slept or read.
+func interact_at(cell: Vector2i) -> Result:
+	var proposal := {"kind": "interact", "x": cell.x, "y": cell.y}
+	if not is_running():
+		return _reject(proposal, "no_world")
+	var map := current_map()
+	if map == null:
+		return _reject(proposal, "region_unmapped")
+	var offset := cell - DistrictMap.world_to_cell(player.position)
+	if absi(offset.x) + absi(offset.y) != 1:
+		return _reject(proposal, "out_of_reach")
+	var what := interaction_at(cell)
+	match str(what.get("kind", "")):
+		"door":
+			return _enter_building(proposal, str(what["target"]))
+		"exit":
+			return _leave_building(proposal)
+		"counter":
+			return _use_counter(proposal, map.interior_of)
+		"bed":
+			return _sleep_in_bed(proposal, map.interior_of)
+		"sign":
+			return Result.success({"kind": "read", "text_key": what["text_key"]})
+	return _reject(proposal, "nothing_there")
+
+
+## Who is working behind the counter of this place right now, according to
+## the simulation. Empty when nobody is.
+func staff_serving(location_id: String) -> String:
+	for npc_id in npcs.living_ids():
+		var npc := npcs.get_npc(npc_id)
+		if npc.workplace == location_id and npc.location == location_id and npc.activity == "work":
+			return npc_id
+	return ""
+
+
+func _enter_building(proposal: Dictionary, location_id: String) -> Result:
+	var location := world.get_location(location_id)
+	if location == null:
+		return _reject(proposal, "no_such_location")
+	if location_id != player.home_location:
+		if location.is_locked():
+			return _reject(proposal, "locked")
+		if location.access == Location.Access.PRIVATE:
+			return _reject(proposal, "private")
+		if not location.is_open_at(clock.minute_of_day()):
+			return _reject(proposal, "closed")
+	var inside := world.interior_for(location_id)
+	if inside == null:
+		return _reject(proposal, "no_interior")
+	player.interior = location_id
+	player.position = DistrictMap.cell_to_world(inside.entry_cell())
+	_set_player_location(location_id)
+	return Result.success({"kind": "entered", "location": location_id})
+
+
+func _leave_building(proposal: Dictionary) -> Result:
+	var outside := world.map_for(player.region)
+	if outside == null:
+		return _reject(proposal, "region_unmapped")
+	var left := player.interior
+	var anchor := outside.anchor_of(left)
+	player.interior = ""
+	player.position = DistrictMap.cell_to_world(anchor)
+	_set_player_location(outside.location_at(anchor))
+	return Result.success({"kind": "exited", "location": left})
+
+
+func _use_counter(proposal: Dictionary, location_id: String) -> Result:
+	var staff := staff_serving(location_id)
+	if staff.is_empty():
+		return _reject(proposal, "nobody_serving")
+	return Result.success({"kind": "served", "npc": staff})
+
+
+## Sleeps until the next WAKE_MINUTE, in one batched jump.
+func _sleep_in_bed(proposal: Dictionary, location_id: String) -> Result:
+	if location_id != player.home_location:
+		return _reject(proposal, "not_your_bed")
+	if player.stats.sleep > SLEEP_THRESHOLD:
+		return _reject(proposal, "not_tired")
+	var minutes := posmod(WAKE_MINUTE - clock.minute_of_day(), GameClock.MINUTES_PER_DAY)
+	if minutes == 0:
+		minutes = GameClock.MINUTES_PER_DAY
+	_player_activity = "sleep"
+	advance_time(minutes)
+	_player_activity = "idle"
+	return Result.success({"kind": "slept", "minutes": minutes})
 
 
 func _reject(proposal: Dictionary, code: String) -> Result:
@@ -277,7 +409,7 @@ func _on_minute(total_minutes: int) -> void:
 
 func _on_hour(hour_of_day: int) -> void:
 	Events.hour_passed.emit(hour_of_day)
-	player.stats.drift(60, "idle")
+	player.stats.drift(60, _player_activity)
 
 
 func _on_day(day: int) -> void:

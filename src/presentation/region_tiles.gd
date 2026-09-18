@@ -21,6 +21,11 @@ const SOLID := [
 	DistrictMap.Terrain.ROOF,
 	DistrictMap.Terrain.WALL,
 	DistrictMap.Terrain.DOOR,
+	DistrictMap.Terrain.COUNTER,
+	DistrictMap.Terrain.SHELF,
+	DistrictMap.Terrain.BED,
+	DistrictMap.Terrain.TABLE,
+	DistrictMap.Terrain.SIGN,
 ]
 
 ## Wall variants: the facade's upper row carries windows, the lower row a
@@ -28,6 +33,8 @@ const SOLID := [
 const WALL_UPPER := 0
 const WALL_UPPER_WINDOW := 1
 const WALL_LOWER := 2
+## Indoors, the side and front walls are seen from above: just their tops.
+const WALL_TOP := 3
 ## Roof variant for the eave row, which casts a shadow onto the facade.
 const ROOF_EAVE := 3
 
@@ -53,11 +60,16 @@ static func coords_for(map: DistrictMap, cell: Vector2i, structure_layer: bool) 
 			variant = ROOF_EAVE if below == DistrictMap.Terrain.WALL or below == DistrictMap.Terrain.DOOR \
 				else _hash(cell) % 3
 		DistrictMap.Terrain.WALL:
-			if map.structure_at(cell + Vector2i.UP) == DistrictMap.Terrain.ROOF:
+			if map.is_interior():
+				if cell.y >= DistrictMap.INTERIOR_TOP_WALL or cell.x == 0 or cell.x == map.size.x - 1:
+					variant = WALL_TOP
+				else:
+					variant = WALL_UPPER_WINDOW if cell.y == 0 and cell.x % 3 == 1 else 						(WALL_UPPER if cell.y == 0 else WALL_LOWER)
+			elif map.structure_at(cell + Vector2i.UP) == DistrictMap.Terrain.ROOF:
 				variant = WALL_UPPER_WINDOW if cell.x % 2 == 1 else WALL_UPPER
 			else:
 				variant = WALL_LOWER
-		DistrictMap.Terrain.DOOR:
+		DistrictMap.Terrain.DOOR, DistrictMap.Terrain.COUNTER, DistrictMap.Terrain.BED, DistrictMap.Terrain.SIGN:
 			variant = 0
 	return Vector2i(variant, int(terrain))
 
@@ -177,14 +189,58 @@ static func _paint(img: Image, terrain: DistrictMap.Terrain, v: int, o: Vector2i
 				img.fill_rect(Rect2i(o + Vector2i(10, 10), Vector2i(12, 14)), Color("7fb2d6"))
 				img.fill_rect(Rect2i(o + Vector2i(10, 10), Vector2i(5, 5)), Color("b5d6ea"))
 				img.fill_rect(Rect2i(o + Vector2i(15, 10), Vector2i(2, 14)), Color("6b5a44"))
-			if v == WALL_LOWER or v == 3:
+			if v == WALL_LOWER:
 				img.fill_rect(Rect2i(o + Vector2i(0, TILE - 6), Vector2i(TILE, 6)), Color("8b8172"))
+			if v == WALL_TOP:
+				_noise(img, o, Color("4a4038"), 0.03, rng)
+				img.fill_rect(Rect2i(o + Vector2i(2, 2), Vector2i(TILE - 4, TILE - 4)), Color("5a4e44"))
 		DistrictMap.Terrain.DOOR:
 			_noise(img, o, Color("d9cdb4"), 0.02, rng)
 			img.fill_rect(Rect2i(o + Vector2i(0, TILE - 6), Vector2i(TILE, 6)), Color("8b8172"))
 			img.fill_rect(Rect2i(o + Vector2i(6, 2), Vector2i(20, 30)), Color("4f3421"))
 			img.fill_rect(Rect2i(o + Vector2i(8, 4), Vector2i(16, 28)), Color("7a5334"))
 			img.fill_rect(Rect2i(o + Vector2i(20, 17), Vector2i(2, 2)), Color("e0c060"))
+		DistrictMap.Terrain.FLOOR:
+			_noise(img, o, Color("a57b4f"), 0.03, rng)
+			for plank in 4:
+				var y := plank * 8
+				for x in TILE:
+					img.set_pixelv(o + Vector2i(x, y), Color("7d5a38"))
+				var seam_x := (plank * 13 + v * 5) % TILE
+				for dy in range(1, 8):
+					img.set_pixelv(o + Vector2i(seam_x, y + dy), Color("8a6440"))
+		DistrictMap.Terrain.COUNTER:
+			_noise(img, o, Color("8a5a3a"), 0.02, rng)
+			img.fill_rect(Rect2i(o, Vector2i(TILE, 3)), Color("a8744c"))
+			img.fill_rect(Rect2i(o + Vector2i(0, 20), Vector2i(TILE, 12)), Color("5e3d26"))
+			img.fill_rect(Rect2i(o + Vector2i(0, 20), Vector2i(TILE, 1)), Color("3e281a"))
+		DistrictMap.Terrain.SHELF:
+			_noise(img, o, Color("5a3c24"), 0.02, rng)
+			for row in 3:
+				var y := 3 + row * 10
+				img.fill_rect(Rect2i(o + Vector2i(1, y + 7), Vector2i(TILE - 2, 2)), Color("3e281a"))
+				var x := 2
+				while x < TILE - 4:
+					var w := rng.randi_range(3, 6)
+					var goods := Color.from_hsv(rng.randf(), 0.5, 0.8)
+					img.fill_rect(Rect2i(o + Vector2i(x, y + rng.randi_range(0, 2)), Vector2i(w, 7 - rng.randi_range(0, 2))), goods)
+					x += w + 1
+		DistrictMap.Terrain.BED:
+			img.fill_rect(Rect2i(o + Vector2i(0, 2), Vector2i(TILE, 28)), Color("6b4a2e"))
+			img.fill_rect(Rect2i(o + Vector2i(1, 4), Vector2i(TILE - 2, 24)), Color("e8e2d4"))
+			img.fill_rect(Rect2i(o + Vector2i(1, 12), Vector2i(TILE - 2, 16)), Color("4a6a8c"))
+			img.fill_rect(Rect2i(o + Vector2i(1, 12), Vector2i(TILE - 2, 2)), Color("6a8aac"))
+		DistrictMap.Terrain.TABLE:
+			img.fill_rect(Rect2i(o + Vector2i(3, 6), Vector2i(TILE - 6, 18)), Color("8a5a3a"))
+			img.fill_rect(Rect2i(o + Vector2i(3, 6), Vector2i(TILE - 6, 2)), Color("a8744c"))
+			img.fill_rect(Rect2i(o + Vector2i(5, 24), Vector2i(3, 6)), Color("5e3d26"))
+			img.fill_rect(Rect2i(o + Vector2i(TILE - 8, 24), Vector2i(3, 6)), Color("5e3d26"))
+		DistrictMap.Terrain.SIGN:
+			img.fill_rect(Rect2i(o + Vector2i(14, 14), Vector2i(4, 17)), Color("4a4a4a"))
+			img.fill_rect(Rect2i(o + Vector2i(4, 2), Vector2i(24, 14)), Color("2f5f7a"))
+			img.fill_rect(Rect2i(o + Vector2i(6, 4), Vector2i(20, 10)), Color("e8e8e0"))
+			for line in 3:
+				img.fill_rect(Rect2i(o + Vector2i(8, 6 + line * 3), Vector2i(10 + (line * 5) % 7, 1)), Color("6a6a6a"))
 
 
 ## Fills a tile with a colour and per-pixel brightness jitter.

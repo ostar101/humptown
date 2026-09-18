@@ -255,3 +255,27 @@ body is still on the pavement. Anything that asks "who is here" (dialogue,
 interaction) must use the simulation, not the bodies. Bodies do not collide
 with the player yet.
 
+## D-018 — An interior is a DistrictMap; interaction is one rule entry point
+
+**Decision.** The inside of a building is authored in `data/interiors.json` and
+built into an ordinary `DistrictMap` whose floor is the building's location.
+`PlayerState.interior` says which map the player is on, and `Game.current_map()`
+returns it. Interaction goes through two calls: `Game.interaction_at(cell)`
+describes what is on a cell (for the prompt) and `Game.interact_at(cell)` acts,
+returning a `Result`. The cell must touch the player's; the thing is found on
+the map (door, interior exit, object) and its rule decides.
+
+**Why.** Reusing the map type means drawing, chunking, routes, NPC bodies and
+the movement rule work indoors with no second code path. One entry point keeps
+the layering rule obvious: the HUD shows what `InteractionText` makes of the
+result, and nothing in presentation decides whether a door opens.
+
+**Rules chosen.** Your own home opens at any hour. Other private homes refuse
+(`private`); invitations are M3/M4 material. Shops and civic places refuse
+outside their authored hours (`closed`). A counter serves only if the
+simulation has someone whose workplace it is, there, working; a person on a
+break does not serve. Sleeping needs rest at or below 0.75 and wakes at 07:00.
+
+**No save migration.** A save from before interiors has no `interior` field,
+and every such save was made outdoors, so the empty default is correct.
+

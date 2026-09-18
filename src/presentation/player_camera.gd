@@ -24,7 +24,12 @@ func _ready() -> void:
 	zoom = Vector2(base_zoom, base_zoom)
 
 
+## Keeps the view inside the map. A map smaller than the view (a small room)
+## is centred rather than pinned to the top-left corner.
 func set_bounds(rect: Rect2) -> void:
+	var widest_view := get_viewport_rect().size / minf(base_zoom, run_zoom)
+	var margin := (widest_view - rect.size).max(Vector2.ZERO) / 2.0
+	rect = rect.grow_individual(margin.x, margin.y, margin.x, margin.y)
 	limit_left = int(rect.position.x)
 	limit_top = int(rect.position.y)
 	limit_right = int(rect.end.x)

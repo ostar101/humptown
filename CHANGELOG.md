@@ -40,6 +40,27 @@ versions are milestones rather than releases until there is something to release
   has one, background people get a stable generated outfit
 - `DevCapture`: `--advance=minutes` and `--at=x,y`
 - `test_npc_bodies`: 15 tests
+- Interiors: `data/interiors.json` authors the inside of each enterable
+  building as a small `DistrictMap` (walls built around the edge, one door,
+  furniture as `solids`, a `staff` spot). Six so far: the player's flat, the
+  corner shop, Kaisla, the Anchor, the clinic and the police post.
+- `DistrictMap`: terrains `floor`, `counter`, `shelf`, `bed`, `table`, `sign`;
+  `objects` (counter, bed, sign) used from a neighbouring cell;
+  `building_with_door()`, `object_at()`, `entry_cell()`, `is_interior()`
+- `Game.interaction_at()` (describe) and `Game.interact_at()` (act): doors
+  refuse `locked`, `private` and `closed`; counters serve only when the
+  simulation has someone working there; your own bed sleeps you to 07:00 in
+  one batched jump, with rest drifting as sleep; signs read. Every refusal
+  emits `action_rejected`. `Game.current_map()`, `Game.staff_serving()`.
+- `PlayerState.interior` (saved; absent in older saves, which means outside)
+- `interact` input action (E, Space, pad A); `Hud` scene with a prompt that
+  names the key and a timed message line; `InteractionText` for the wording
+- NPC bodies inside: the people in the building you are in are shown, and
+  whoever works there stands at the staff spot
+- The camera centres a map smaller than the view (a room) instead of pinning
+  it to a corner
+- `DevCapture`: `--interact=dx,dy`
+- `test_interaction`: 21 tests
 
 ### Changed
 - The test runner fails a test during which the engine logs an error, and
@@ -47,6 +68,10 @@ versions are milestones rather than releases until there is something to release
 - `PlayerState.position` is now the position on the region map
 - `PlayerBody.facing_for()` moved to `CharacterFigure.facing_for()`; the old
   name forwards
+- `WorldView.show_current_region()` is now `show_current_area()`: it shows
+  whichever map the player is on
+- The player's hourly condition drift uses what they are doing (sleep while
+  sleeping) instead of always idle
 
 ### Fixed
 - `SimViewer` failed to compile under the strict warning settings (untyped

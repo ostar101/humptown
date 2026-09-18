@@ -10,10 +10,18 @@ extends RefCounted
 ## touches this file.
 ##
 ## Two layers per cell. `ground` always holds a terrain; `structure` holds a
-## building part or NONE. A cell is blocked if its ground is impassable or
-## anything stands on it.
+## building part, a piece of furniture or NONE. A cell is blocked if its ground
+## is impassable or anything stands on it.
+##
+## An interior is the same kind of map, authored in data/interiors.json: walls
+## are built around its edge, one door leads out, and its whole floor is the
+## building's location. Everything that works outdoors — drawing, routes,
+## bodies, the movement rule — works inside unchanged.
 
-enum Terrain { NONE = -1, GRASS, PAVEMENT, ROAD, ROAD_LINE, WATER, DOCK, SAND, ROOF, WALL, DOOR }
+enum Terrain {
+	NONE = -1, GRASS, PAVEMENT, ROAD, ROAD_LINE, WATER, DOCK, SAND, ROOF, WALL, DOOR,
+	FLOOR, COUNTER, SHELF, BED, TABLE, SIGN,
+}
 
 const CHUNK_SIZE := 16
 ## World units per cell. The physical scale of the world, shared by rules
@@ -31,7 +39,23 @@ const GROUND_NAMES := {
 	"water": Terrain.WATER,
 	"dock": Terrain.DOCK,
 	"sand": Terrain.SAND,
+	"floor": Terrain.FLOOR,
 }
+
+## Solid things that can be placed with `solids`. Signs are placed by their
+## object entry instead.
+const SOLID_NAMES := {
+	"wall": Terrain.WALL,
+	"counter": Terrain.COUNTER,
+	"shelf": Terrain.SHELF,
+	"bed": Terrain.BED,
+	"table": Terrain.TABLE,
+}
+
+## What a person can do something with. See Game.interact_at().
+const OBJECT_KINDS := ["counter", "bed", "sign"]
+## Rows of wall along the top of an interior: the far wall shows its face.
+const INTERIOR_TOP_WALL := 2
 
 var id: String = ""
 var region: String = ""
@@ -44,6 +68,15 @@ var buildings: Dictionary = {}
 var places: Dictionary = {}
 ## Each: {"to": region_id, "rect": Rect2i}
 var exits: Array[Dictionary] = []
+## cell -> {"id", "kind", "text_key"}. Objects stand on solid cells and are
+## used from a walkable cell beside them.
+var objects: Dictionary = {}
+
+## Interiors only: the building this is the inside of, its way out, and where
+## whoever works here stands. Empty / (-1, -1) on region maps.
+var interior_of: String = ""
+var exit_door := Vector2i(-1, -1)
+var staff_cell := Vector2i(-1, -1)
 
 var _ground := PackedByteArray()
 var _structure := PackedByteArray()   # stores Terrain + 1 so NONE fits in a byte
@@ -70,6 +103,12 @@ static func from_data(d: Dictionary) -> Result:
 	m._ground.fill(int(GROUND_NAMES.get(fill_name, Terrain.GRASS)))
 	m._structure.resize(cells)
 	m._structure.fill(0)
+
+	m.interior_of = str(d.get("interior_of", ""))
+	if m.is_interior():
+		if m.size.x < 4 or m.size.y < INTERIOR_TOP_WALL + 3:
+			return Result.failure("map_invalid", "%s: interior is too small" % m.id)
+		m._build_interior_shell(_cell_from(d.get("door")), problems)
 
 	for area in d.get("areas", []):
 		var terrain_name := str(area.get("terrain", ""))
@@ -115,6 +154,29 @@ static func from_data(d: Dictionary) -> Result:
 		m.buildings[loc_id] = {"rect": rect, "door": door}
 		m._stamp_building(rect, door)
 
+	for solid in d.get("solids", []):
+		var kind := str(solid.get("kind", ""))
+		var rect := _rect_from(solid.get("rect"))
+		if not SOLID_NAMES.has(kind):
+			problems.append("unknown solid '%s'" % kind)
+			continue
+		if not m._contains_rect(rect):
+			problems.append("%s %s lies outside the map" % [kind, rect])
+			continue
+		m._fill_structure(rect, int(SOLID_NAMES[kind]))
+
+	for raw_object in d.get("objects", []):
+		m._add_object(raw_object, problems)
+
+	if m.is_interior():
+		var staff_raw: Variant = d.get("staff")
+		if staff_raw != null:
+			m.staff_cell = _cell_from(staff_raw)
+			if m.is_blocked(m.staff_cell):
+				problems.append("staff spot %s is blocked" % m.staff_cell)
+		if m.in_bounds(m.exit_door) and m.is_blocked(m.entry_cell()):
+			problems.append("the cell inside the door is blocked")
+
 	for raw_exit in d.get("exits", []):
 		var rect := _rect_from(raw_exit.get("rect"))
 		if not m._contains_rect(rect):
@@ -122,7 +184,7 @@ static func from_data(d: Dictionary) -> Result:
 			continue
 		m.exits.append({"to": str(raw_exit.get("to", "")), "rect": rect})
 
-	m.spawn = _cell_from(d.get("spawn"))
+	m.spawn = m.entry_cell() if m.is_interior() else _cell_from(d.get("spawn"))
 	if not m.in_bounds(m.spawn):
 		problems.append("spawn %s lies outside the map" % m.spawn)
 	elif m.is_blocked(m.spawn):
@@ -184,6 +246,30 @@ func anchor_of(location_id: String) -> Vector2i:
 		var first: Rect2i = places[location_id]["rects"][0]
 		return first.get_center()
 	return Vector2i(-1, -1)
+
+
+func is_interior() -> bool:
+	return not interior_of.is_empty()
+
+
+## Interiors: the cell just inside the door, where you arrive and from which
+## you leave. (-1, -1) on region maps.
+func entry_cell() -> Vector2i:
+	if not is_interior():
+		return Vector2i(-1, -1)
+	return exit_door + Vector2i.UP
+
+
+func object_at(cell: Vector2i) -> Dictionary:
+	return objects.get(cell, {})
+
+
+## The building whose door is this cell, or empty.
+func building_with_door(cell: Vector2i) -> String:
+	for loc_id in buildings:
+		if buildings[loc_id]["door"] == cell:
+			return loc_id
+	return ""
 
 
 func has_location(location_id: String) -> bool:
@@ -255,7 +341,10 @@ func is_building(location_id: String) -> bool:
 
 ## A walkable cell inside the first exit, where someone arriving from or
 ## leaving for another region appears. The spawn when the map has no exits.
+## Inside a building, the cell by the door.
 func edge_cell() -> Vector2i:
+	if is_interior():
+		return entry_cell()
 	for e in exits:
 		var rect: Rect2i = e["rect"]
 		for y in range(rect.position.y, rect.end.y):
@@ -316,6 +405,58 @@ func _fill_ground(rect: Rect2i, terrain: int) -> void:
 	for y in range(rect.position.y, rect.end.y):
 		for x in range(rect.position.x, rect.end.x):
 			_ground[y * size.x + x] = terrain
+
+
+func _fill_structure(rect: Rect2i, terrain: int) -> void:
+	for y in range(rect.position.y, rect.end.y):
+		for x in range(rect.position.x, rect.end.x):
+			_structure[y * size.x + x] = terrain + 1
+
+
+## Walls on every side, the door in the bottom wall, and the floor inside
+## registered as the building's location.
+func _build_interior_shell(door: Vector2i, problems: Array[String]) -> void:
+	_fill_structure(Rect2i(0, 0, size.x, INTERIOR_TOP_WALL), Terrain.WALL)
+	_fill_structure(Rect2i(0, 0, 1, size.y), Terrain.WALL)
+	_fill_structure(Rect2i(size.x - 1, 0, 1, size.y), Terrain.WALL)
+	_fill_structure(Rect2i(0, size.y - 1, size.x, 1), Terrain.WALL)
+	var floor_rect := Rect2i(1, INTERIOR_TOP_WALL, size.x - 2, size.y - INTERIOR_TOP_WALL - 1)
+	var rects: Array[Rect2i] = [floor_rect]
+	places[interior_of] = {"rects": rects}
+	if door.y != size.y - 1 or door.x < 1 or door.x > size.x - 2:
+		problems.append("door %s is not in the bottom wall" % door)
+		return
+	exit_door = door
+	_structure[_index(door)] = Terrain.DOOR + 1
+
+
+func _add_object(raw: Variant, problems: Array[String]) -> void:
+	if typeof(raw) != TYPE_DICTIONARY:
+		problems.append("object entry is not a dictionary")
+		return
+	var entry: Dictionary = raw
+	var object_id := str(entry.get("id", ""))
+	var kind := str(entry.get("kind", ""))
+	var cell := _cell_from(entry.get("cell"))
+	if object_id.is_empty() or not (kind in OBJECT_KINDS):
+		problems.append("object '%s' has an unknown kind '%s'" % [object_id, kind])
+		return
+	if not in_bounds(cell):
+		problems.append("object '%s' lies outside the map" % object_id)
+		return
+	if kind == "sign":
+		_structure[_index(cell)] = Terrain.SIGN + 1
+	elif not is_blocked(cell):
+		problems.append("object '%s' is not on a piece of furniture" % object_id)
+		return
+	var reachable := false
+	for step: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+		if not is_blocked(cell + step):
+			reachable = true
+	if not reachable:
+		problems.append("object '%s' cannot be reached from any side" % object_id)
+		return
+	objects[cell] = {"id": object_id, "kind": kind, "text_key": str(entry.get("text_key", ""))}
 
 
 func _stamp_building(rect: Rect2i, door: Vector2i) -> void:

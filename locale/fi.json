@@ -97,5 +97,18 @@
   "activity.walk": "kavelee",
   "activity.shop": "ostoksilla",
   "activity.idle": "joutilaana",
-  "activity.patrol": "partioi"
+  "activity.patrol": "partioi",
+  "ui.prompt.enter": "Mene sisään: {place}",
+  "ui.prompt.leave": "Poistu: {place}",
+  "ui.prompt.counter": "Mene tiskille",
+  "ui.prompt.sleep": "Nuku",
+  "ui.prompt.read": "Lue",
+  "ui.msg.served": "{name} nostaa katseensa tiskin takaa.",
+  "ui.msg.slept": "Nukut ja heräät kello {time}.",
+  "ui.msg.refused.locked": "Ovi on lukossa.",
+  "ui.msg.refused.private": "{place} on jonkun koti. Sinne ei vain kävellä sisään.",
+  "ui.msg.refused.closed": "{place} on kiinni. Auki {from}–{until}.",
+  "ui.msg.refused.nobody_serving": "Tiskin takana ei ole ketään.",
+  "ui.msg.refused.not_your_bed": "Tämä ei ole sinun sänkysi.",
+  "ui.msg.refused.not_tired": "Et ole tarpeeksi väsynyt nukkumaan."
 }

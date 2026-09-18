@@ -1,0 +1,66 @@
+class_name InteractionText
+extends RefCounted
+## The player-facing words for interactions: the prompt before, the line
+## after. Kept apart from the rules that decide (Game.interact_at) and from the
+## HUD that shows them, so wording can change without touching either.
+
+## Refusals the player should be told about. Others (out_of_reach,
+## nothing_there, no_world) cannot come from pressing the button and say
+## nothing.
+const EXPLAINED_REFUSALS: Array[String] = [
+	"locked", "private", "closed", "no_interior", "nobody_serving", "not_your_bed", "not_tired",
+]
+
+
+## What pressing the interact button would do here, or empty.
+static func prompt_for(interaction: Dictionary) -> String:
+	var target := str(interaction.get("target", ""))
+	match str(interaction.get("kind", "")):
+		"door":
+			return Localization.t("ui.prompt.enter", {"place": place_name(target)})
+		"exit":
+			return Localization.t("ui.prompt.leave", {"place": place_name(target)})
+		"counter":
+			return Localization.t("ui.prompt.counter")
+		"bed":
+			return Localization.t("ui.prompt.sleep")
+		"sign":
+			return Localization.t("ui.prompt.read")
+	return ""
+
+
+## The line shown after an interaction, or empty when the change speaks for
+## itself (walking through a door).
+static func outcome_text(interaction: Dictionary, result: Result) -> String:
+	if not result.is_ok():
+		if not (result.code in EXPLAINED_REFUSALS):
+			return ""
+		var place := str(interaction.get("target", ""))
+		var location: Location = Game.world.get_location(place) if Game.is_running() else null
+		return Localization.t("ui.msg.refused." + result.code, {
+			"place": place_name(place),
+			"from": _clock_text(location.open_from if location != null else 0),
+			"until": _clock_text(location.open_until if location != null else 0),
+		})
+	var outcome: Dictionary = result.value
+	match str(outcome.get("kind", "")):
+		"served":
+			var npc := Game.npcs.get_npc(str(outcome.get("npc", "")))
+			return Localization.t("ui.msg.served", {"name": npc.name if npc != null else "?"})
+		"slept":
+			return Localization.t("ui.msg.slept", {"time": Game.clock.format_time()})
+		"read":
+			return Localization.t(str(outcome.get("text_key", "")))
+	return ""
+
+
+static func place_name(location_id: String) -> String:
+	if not Game.is_running():
+		return location_id
+	var location := Game.world.get_location(location_id)
+	return location.display_name() if location != null else location_id
+
+
+static func _clock_text(minute_of_day: int) -> String:
+	var m := posmod(minute_of_day, GameClock.MINUTES_PER_DAY)
+	return "%02d:%02d" % [m / 60, m % 60]

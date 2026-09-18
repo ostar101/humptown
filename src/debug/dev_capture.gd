@@ -7,7 +7,8 @@ extends RefCounted
 ##
 ## Optional, where a scene has a player: `--advance=minutes` skips game time
 ## first (the town at another hour), `--at=x,y` puts the player on that cell,
-## and `--walk=x,y,seconds` then drives them.
+## `--interact=dx,dy` faces that way and presses the interact button (through
+## the rules, as a player would), and `--walk=x,y,seconds` then drives them.
 
 
 static func maybe_capture(scene: Node) -> void:
@@ -15,6 +16,7 @@ static func maybe_capture(scene: Node) -> void:
 	var walk := Vector3.ZERO
 	var advance := 0
 	var at := Vector2i(-1, -1)
+	var interact := Vector2i.ZERO
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--advance="):
 			advance = int(arg.trim_prefix("--advance="))
@@ -22,6 +24,10 @@ static func maybe_capture(scene: Node) -> void:
 			var cell := arg.trim_prefix("--at=").split(",")
 			if cell.size() == 2:
 				at = Vector2i(int(cell[0]), int(cell[1]))
+		elif arg.begins_with("--interact="):
+			var towards := arg.trim_prefix("--interact=").split(",")
+			if towards.size() == 2:
+				interact = Vector2i(int(towards[0]), int(towards[1]))
 		elif arg.begins_with("--screenshot="):
 			path = arg.trim_prefix("--screenshot=")
 		elif arg.begins_with("--walk="):
@@ -36,8 +42,13 @@ static func maybe_capture(scene: Node) -> void:
 		var player: PlayerBody = scene.call("player_body")
 		player.place_at(DistrictMap.cell_to_world(at))
 		Game.move_player(player.position)
-		if scene.has_method("show_current_region"):
-			scene.call("show_current_region")   # snaps the camera there
+		if scene.has_method("show_current_area"):
+			scene.call("show_current_area")   # snaps the camera there
+	if interact != Vector2i.ZERO and scene.has_method("interact"):
+		var body: PlayerBody = scene.call("player_body")
+		body.facing = interact
+		var result: Result = scene.call("interact")
+		Log.info("capture", "Interacted", {"ok": result.ok, "code": result.code})
 	_capture(scene, path, walk)
 
 

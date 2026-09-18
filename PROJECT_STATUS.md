@@ -1,32 +1,44 @@
 # Project status
 
 **Updated:** 2026-09-18
-**Milestone:** M2 — The world you can see and walk — **in progress** (steps 1–3 of 5 done)
-**Build:** green. 311 tests, 6129 assertions, ~3.5 s (physics tests included).
+**Milestone:** M2 — The world you can see and walk — **in progress** (steps 1–4 of 5 done)
+**Build:** green. 332 tests, 6296 assertions, ~4 s (physics tests included).
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
 
 ## Next task
 
-**Continue M2 at step 4: interaction.** Done so far: region map + chunk
-streaming (step 1); player body, camera and movement rules (step 2); pooled
-NPC bodies that walk routes between places (step 3, D-017).
+**Next: choose the art direction with the user, then M2 step 5.** The user
+asked (2026-09-18) to finish step 4 first and then pick the graphics together.
+Tiles, furniture and figures are all code-painted placeholders behind two
+seams: `RegionTiles` (the atlas) and `CharacterFigure` (people). Ask before
+importing any asset pack; check licences.
 
-4. Interaction: doors (door cells are solid; interact from the anchor cell
-   below), shop counters, objects. Add an `interact` input action. Interiors
-   are what will make people indoors visible again (D-017): today anyone whose
-   location is a building has no body. "Who is here" must be answered from
-   the simulation (`NpcRegistry`), never from the bodies, which lag it.
+Done so far: region map + chunk streaming (step 1); player body, camera and
+movement rules (step 2); pooled NPC bodies (step 3, D-017); interiors, doors,
+counters, beds, signs, the `interact` action and the HUD (step 4, D-018).
+
 5. Main scene becomes the world; `SimViewer` goes behind developer mode.
    Region exits (`DistrictMap.exit_at`) and region travel belong here too.
+   The rest of the roadmap's M2 list (day/night lighting, title screen,
+   background selection, character customisation) is not yet scheduled into
+   steps; plan it after the art decision, since most of it is visual.
+
+**Interaction, briefly.** `Game.interaction_at(cell)` describes,
+`Game.interact_at(cell)` acts (D-018). Buying and selling at counters is M4;
+today a counter only tells you whether someone is serving. "Who is here" is
+answered from the simulation (`NpcRegistry`), never from the bodies, which lag
+it (D-017).
 
 **Running it.** `godot --path . res://scenes/world/world.tscn` — WASD/arrows,
 Shift runs. The main scene is still the SimViewer until step 5.
-`-- --screenshot=<path> [--advance=minutes] [--at=x,y] [--walk=x,y,seconds]`
-saves a frame and quits (any scene that calls `DevCapture.maybe_capture`).
-At the 07:00 start everyone is indoors; `--advance=180 --at=40,33` shows the
-harbour mid-morning. The map alone:
+E (or Space) interacts.
+`-- --screenshot=<path> [--advance=minutes] [--at=x,y] [--interact=dx,dy]
+[--walk=x,y,seconds]` saves a frame and quits (any scene that calls
+`DevCapture.maybe_capture`). At the 07:00 start everyone is indoors;
+`--advance=180 --at=40,33` shows the harbour mid-morning, and
+`--advance=120 --at=9,26 --interact=0,-1` walks into the corner shop. The map alone:
 `res://scenes/debug/region_preview.tscn`.
 
 **Test runner.** A test fails if the engine logs an error during it (D-015),
@@ -54,6 +66,7 @@ Choosing an art direction is the user's call; ask before importing assets.
 | `RegionView` + `RegionTiles` (code-painted atlas), `RegionPreview` | done |
 | `WorldView`, `PlayerBody`, `PlayerCamera`, `CharacterFigure`, `Game.move_player` | done |
 | `NpcBodies` (pooled `NpcBody`), `NpcLook`, `DistrictMap.find_path` | done |
+| Interiors, `Game.interact_at`, `Hud`, `InteractionText`, `interact` action | done |
 | `DataRegistry` — JSON content, validated, cross-referenced | done |
 | `Npc`, `NpcRegistry`, `NpcSchedule`, `NpcNeeds` | done |
 | `SimLod` + `NpcDirector` — four tiers, budgeted, region-indexed | done |
@@ -68,16 +81,16 @@ Choosing an art direction is the user's call; ask before importing assets.
 | `SimViewer` debug screen | done |
 | Test suite + benchmark | done |
 
-**Not started, by design:** interiors, interaction, dialogue UI,
+**Not started, by design:** buying and selling, dialogue UI,
 live LLM calls, quests, phone, combat, crime and police. See `ROADMAP.md`.
 
 ---
 
 ## Size
 
-- 53 source files in `src/`
-- 17 test suites
-- 10 authored NPCs, 19 locations, 3 regions (1 mapped), 8 schedules, 4 backgrounds
+- 55 source files in `src/`
+- 18 test suites
+- 10 authored NPCs, 19 locations, 3 regions (1 mapped), 6 interiors, 8 schedules, 4 backgrounds
 
 ---
 
@@ -132,7 +145,9 @@ wants anyway — not a cleverer director.
    enough to see. Prioritise by distance and existing tier for stability.
 6. **NPC bodies do not collide** with the player or each other, and two people
    whose ids hash to the same spot at a place stand on one cell. Cosmetic;
-   revisit with interaction (step 4) or when crowds grow.
+   revisit when crowds grow.
+7. **HUD panels use the default theme**, with no padding. Deliberately left
+   for the art pass, which should produce a UI theme alongside the tiles.
 3. **Finnish translation is ~80% complete.** Deliberate: it exercises the
    fallback path and a test measures the gap. Finish it when the UI settles,
    not before.

@@ -120,5 +120,21 @@
   "activity.walk": "walking",
   "activity.shop": "shopping",
   "activity.idle": "idle",
-  "activity.patrol": "on patrol"
+  "activity.patrol": "on patrol",
+  "ui.prompt.enter": "Enter {place}",
+  "ui.prompt.leave": "Leave {place}",
+  "ui.prompt.counter": "Go to the counter",
+  "ui.prompt.sleep": "Sleep",
+  "ui.prompt.read": "Read",
+  "ui.msg.served": "{name} looks up from behind the counter.",
+  "ui.msg.slept": "You sleep, and wake at {time}.",
+  "ui.msg.refused.locked": "It's locked.",
+  "ui.msg.refused.private": "{place} is someone's home. You can't just walk in.",
+  "ui.msg.refused.closed": "{place} is closed. Open {from}–{until}.",
+  "ui.msg.refused.no_interior": "The door doesn't open.",
+  "ui.msg.refused.nobody_serving": "Nobody is behind the counter.",
+  "ui.msg.refused.not_your_bed": "This isn't your bed.",
+  "ui.msg.refused.not_tired": "You're not tired enough to sleep.",
+  "obj.bus_timetable.text": "Buses to Old Town every twenty minutes. Someone has scratched out the evening times.",
+  "obj.harbour_notice.text": "HARBOUR NOTICE — No unauthorised persons past the cranes. Warehouse 9 is private property."
 }

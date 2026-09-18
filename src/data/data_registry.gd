@@ -24,6 +24,7 @@ const REQUIRED_KEYS := {
 	"skills": ["id", "name_key"],
 	"backgrounds": ["id", "name_key"],
 	"maps": ["id", "region", "width", "height", "spawn"],
+	"interiors": ["id", "interior_of", "width", "height", "door"],
 }
 
 var tables: Dictionary = {}          # table -> { id -> entry }
@@ -99,6 +100,28 @@ func validate_references() -> Array[String]:
 				problems.append("schedule '%s' references unknown location '%s'" % [id, loc_id])
 	for id in table("maps"):
 		problems.append_array(_map_reference_problems(id, table("maps")[id]))
+	for id in table("interiors"):
+		problems.append_array(_interior_reference_problems(id, table("interiors")[id]))
+	return problems
+
+
+## An interior is the inside of a building that stands on its region's map.
+func _interior_reference_problems(id: String, interior: Dictionary) -> Array[String]:
+	var problems: Array[String] = []
+	var loc_id := str(interior.get("interior_of", ""))
+	if not has_entry("locations", loc_id):
+		return ["interior '%s' belongs to unknown location '%s'" % [id, loc_id]]
+	var region := str(get_entry("locations", loc_id).get("region", ""))
+	var standing := false
+	for map_id in table("maps"):
+		var map: Dictionary = table("maps")[map_id]
+		if str(map.get("region", "")) != region:
+			continue
+		for building in map.get("buildings", []):
+			if str(building.get("location", "")) == loc_id:
+				standing = true
+	if not standing:
+		problems.append("interior '%s' belongs to '%s', which is not a building on a map" % [id, loc_id])
 	return problems
 
 

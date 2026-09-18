@@ -4,10 +4,11 @@ extends Node2D
 ##
 ## Reacts to the simulation and never polls it: a body is given out when the
 ## director makes someone ACTIVE (or FOCUS), a walk is planned when their
-## location changes, and the body is taken back when they go indoors or drop
-## out of detail. Someone whose location is a building is inside it and has no
-## body until interiors exist; people are seen in open-air places and on the
-## way between places.
+## location changes, and the body is taken back when they leave the shown map
+## or drop out of detail. On a region map people are seen in open-air places
+## and on the way between them; someone in a building is inside it. Inside a
+## building (an interior map) the people there are seen, and whoever works
+## there stands at the staff spot.
 ##
 ## The simulation moves a person the moment their routine says so; the body
 ## then walks there along a route computed once, from DistrictMap.find_path.
@@ -98,17 +99,16 @@ func _place(npc_id: String) -> void:
 		_release(npc_id)
 		return
 	_known[npc_id] = npc.location
-	if not _is_outdoors(npc.location):
+	if not _is_shown_at(npc.location):
 		_release(npc_id)
 		return
-	var cell := _map.standing_cell(npc.location, npc_id)
-	_acquire(npc).stand_at(DistrictMap.cell_to_world(cell))
+	_acquire(npc).stand_at(DistrictMap.cell_to_world(_spot(npc, npc.location)))
 
 
 func _walk(npc: Npc, from: String, to: String) -> void:
 	var body: NpcBody = _bodies.get(npc.id)
-	var start := body.current_cell() if body != null else _endpoint(from, npc.id)
-	var goal := _endpoint(to, npc.id)
+	var start := body.current_cell() if body != null else _endpoint(from, npc)
+	var goal := _endpoint(to, npc)
 	var route := _map.find_path(start, goal)
 	if route.size() <= 1:
 		# Nowhere to walk, or no way there: show them where they now are.
@@ -126,21 +126,32 @@ func _walk(npc: Npc, from: String, to: String) -> void:
 
 
 ## Where a walk to or from a location begins or ends on this map: the
-## person's spot at a place, the door of a building, or the region's edge for
-## anywhere off the map.
-func _endpoint(location_id: String, npc_id: String) -> Vector2i:
+## person's spot at a place, the door of a building, or the map's way out
+## (region edge, or the door of an interior) for anywhere off the map.
+func _endpoint(location_id: String, npc: Npc) -> Vector2i:
 	if _map.has_location(location_id):
-		return _map.standing_cell(location_id, npc_id)
+		return _spot(npc, location_id)
 	return _map.edge_cell()
 
 
+## Where this person stands at a location on the shown map: behind the
+## counter if they work there, otherwise their own spot.
+func _spot(npc: Npc, location_id: String) -> Vector2i:
+	if _map.is_interior() and location_id == _map.interior_of \
+			and npc.workplace == location_id and _map.staff_cell.x >= 0:
+		return _map.staff_cell
+	return _map.standing_cell(location_id, npc.id)
+
+
 func _on_body_arrived(body: NpcBody) -> void:
-	# Arrived at a door or the edge of the region: they go in, or on.
-	if not _is_outdoors(str(_known.get(body.npc_id, ""))):
+	# Arrived at a door or the edge of the map: they go in, or on.
+	if not _is_shown_at(str(_known.get(body.npc_id, ""))):
 		_release(body.npc_id)
 
 
-func _is_outdoors(location_id: String) -> bool:
+## Whether someone at this location has a body on the shown map: an open-air
+## place outdoors, or the building itself when showing its inside.
+func _is_shown_at(location_id: String) -> bool:
 	return _map != null and _map.has_location(location_id) and not _map.is_building(location_id)
 
 
