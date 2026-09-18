@@ -336,3 +336,44 @@ code-painted one from D-014. Tests pass either way.
 **Colour matching note.** Layer colours are the mean of the front frame's
 non-outline pixels. LimeZu's black hair is drawn blue-grey, so the importer
 records blue-tinted hair as black; otherwise black hair came out brown.
+
+## D-021 — Ground tiles and buildings: curated LimeZu, real where it fits
+
+**Decision.** `RegionTiles` now blits real LimeZu tiles for `PAVEMENT`,
+`ROAD`, `ROAD_LINE`, `FLOOR`, `WALL` and `ROOF`, and falls back to the D-014
+code-painted tile wherever no real file is curated. `_real_file(terrain, v)`
+is the whole seam; `tools/import_limezu_tiles.py` prepares the files it points
+to, cropped or copied from the purchased packs into git-ignored
+`art/vendor/limezu/tiles/`. `GRASS`, `WATER`, `SAND` and `DOCK` stay
+code-painted, and so do the interior objects (`DOOR`, `COUNTER`, `SHELF`,
+`BED`, `TABLE`, `SIGN`).
+
+**Why ground and shop-front art were left out.** LimeZu's terrain sheets
+(grass, water, sand) are built as edge-aware autotiles — dirt paths cutting
+through grass, shorelines — meant for a level editor that picks a piece by its
+neighbours. `RegionTiles` picks one of four variants per cell from a hash, with
+no idea what is next door; used that way, autotile edge pieces produce
+scattered triangles of the wrong terrain, not a border. Building fronts are
+similarly unusable generically: the exterior pack's wall art is dozens of
+named, themed shopfronts (bakery, gun store, condo), not a plain wall a
+building of any size can be tiled with. Making either look right is a real
+feature — neighbour-aware tiling, or per-building authored facades — not a
+tile swap, so it is left for later rather than shipped half-working.
+
+**What did fit, and why.** Sidewalk and asphalt singles, the Room Builder's
+floor and wall swatches, and one roof shingle sheet are genuinely
+self-contained flat tiles with no neighbour dependence, so the existing
+per-cell model uses them exactly as it used the painted ones.
+
+**Composited, not four separate files.** `WALL`'s four variants are not
+random flavours; `coords_for()` gives each one a fixed meaning (facade,
+facade-with-window, plinth, interior top-down). Rather than pre-bake a
+windowed and a darkened copy, `_blit_real()` draws the window
+(`_paint_window()`, shared with the code-painted fallback so that drawing
+exists once) and darkens (`_darken()`) on top of the one real wall tile at
+build time. `ROAD_LINE` is the one real composite baked in advance, at import
+time: LimeZu's line-marking pieces are transparent decals meant to sit over
+plain asphalt, so the importer composites a dash onto a plain tile once.
+
+**Fallback.** Exactly like D-020: missing files mean `_build()` calls
+`_paint()`, so the game and `test_region_tiles` pass with or without the art.

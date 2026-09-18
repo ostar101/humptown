@@ -3,18 +3,24 @@ extends RefCounted
 ## The tile set every region is drawn with, and the rule for which tile a map
 ## cell shows.
 ##
-## The atlas is painted in code for now: no art has been chosen, and the brief
-## asks that systems be built independently of assets. This file is the whole
-## seam. Replacing it with an authored atlas means changing `tile_set()` and
-## `coords_for()`; DistrictMap, RegionView and everything above them stay as
-## they are.
-##
 ## Atlas layout: one row per DistrictMap.Terrain, VARIANTS columns per row.
+## Each (terrain, variant) cell is either a real LimeZu tile (D-019/D-021) or,
+## where none was curated, code-painted (D-014). `_real_file()` is the whole
+## seam: it says which file a cell wants; `_build()` blits it in when present
+## and falls back to `_paint()` otherwise, so the game and the tests run
+## identically with or without the art installed. `coords_for()` (which cell a
+## map position shows) does not change either way.
+##
+## Ground terrain (grass, water, sand, dock) has no real tiles yet: LimeZu's
+## packs draw them as edge-aware autotiles (paths cutting through grass,
+## shorelines), which this per-cell-random-variant atlas cannot place
+## correctly without a neighbour-aware tiling pass. See DECISIONS.md D-021.
 
 const TILE := DistrictMap.CELL_PIXELS
 const VARIANTS := 4
 const SOURCE_ID := 0
 const COLLISION_LAYER := 1
+const REAL_DIR := "res://art/vendor/limezu/tiles/"
 
 const SOLID := [
 	DistrictMap.Terrain.WATER,
@@ -84,6 +90,56 @@ static func _hash(cell: Vector2i) -> int:
 	return absi(h)
 
 
+# --- real art ----------------------------------------------------------------
+
+## The curated LimeZu file for a (terrain, variant) cell, or "" for none —
+## the one place that says which real tiles exist. WALL and ROOF variants
+## are not interchangeable (see WALL_UPPER etc. above): the window and the
+## top-down darkening are composited onto the plain tile in `_blit_real()`,
+## not stored as separate files, so that drawing exists only once.
+static func _real_file(terrain: DistrictMap.Terrain, v: int) -> String:
+	match terrain:
+		DistrictMap.Terrain.PAVEMENT:
+			return REAL_DIR + "pavement_%d.png" % v
+		DistrictMap.Terrain.ROAD:
+			return REAL_DIR + "road_%d.png" % v
+		DistrictMap.Terrain.ROAD_LINE:
+			return REAL_DIR + "road_line.png"
+		DistrictMap.Terrain.FLOOR:
+			return REAL_DIR + "floor.png"
+		DistrictMap.Terrain.WALL:
+			match v:
+				WALL_UPPER, WALL_UPPER_WINDOW, WALL_TOP:
+					return REAL_DIR + "wall_upper.png"
+				WALL_LOWER:
+					return REAL_DIR + "wall_lower.png"
+		DistrictMap.Terrain.ROOF:
+			return REAL_DIR + ("roof_eave.png" if v == ROOF_EAVE else "roof_%d.png" % v)
+	return ""
+
+
+## Blits a real tile into the atlas, then adds whatever `_paint()` would have
+## drawn on top for this specific variant (a window, the top-down darkening).
+static func _blit_real(img: Image, path: String, terrain: DistrictMap.Terrain, v: int, o: Vector2i) -> void:
+	var tile_image := (load(path) as Texture2D).get_image()
+	if tile_image.get_format() != img.get_format():
+		tile_image = tile_image.duplicate()
+		tile_image.convert(img.get_format())
+	img.blit_rect(tile_image, Rect2i(Vector2i.ZERO, Vector2i(TILE, TILE)), o)
+	if terrain == DistrictMap.Terrain.WALL and v == WALL_UPPER_WINDOW:
+		_paint_window(img, o)
+	elif terrain == DistrictMap.Terrain.WALL and v == WALL_TOP:
+		_darken(img, o, 0.55)
+
+
+## Darkens an already-blitted tile in place, for the interior top-down wall.
+static func _darken(img: Image, o: Vector2i, amount: float) -> void:
+	for y in TILE:
+		for x in TILE:
+			var p := o + Vector2i(x, y)
+			img.set_pixelv(p, img.get_pixelv(p).darkened(amount))
+
+
 # --- atlas painting ---------------------------------------------------------
 
 static func _build() -> TileSet:
@@ -91,9 +147,15 @@ static func _build() -> TileSet:
 	var image := Image.create(TILE * VARIANTS, TILE * rows, false, Image.FORMAT_RGBA8)
 	var rng := RandomNumberGenerator.new()
 	for row in rows:
+		var terrain := row as DistrictMap.Terrain
 		for v in VARIANTS:
 			rng.seed = row * 97 + v * 13 + 1
-			_paint(image, row as DistrictMap.Terrain, v, Vector2i(v * TILE, row * TILE), rng)
+			var offset := Vector2i(v * TILE, row * TILE)
+			var real_path := _real_file(terrain, v)
+			if real_path != "" and ResourceLoader.exists(real_path):
+				_blit_real(image, real_path, terrain, v, offset)
+			else:
+				_paint(image, terrain, v, offset, rng)
 
 	var tiles := TileSet.new()
 	tiles.tile_size = Vector2i(TILE, TILE)
@@ -118,6 +180,16 @@ static func _build() -> TileSet:
 				data.add_collision_polygon(0)
 				data.set_collision_polygon_points(0, 0, square)
 	return tiles
+
+
+## The window a wall-with-a-window shows, drawn onto whatever is already at
+## `o` — a painted wall (fallback) or a real one (`_blit_real()`), so this
+## drawing exists in exactly one place either way.
+static func _paint_window(img: Image, o: Vector2i) -> void:
+	img.fill_rect(Rect2i(o + Vector2i(8, 8), Vector2i(16, 18)), Color("6b5a44"))
+	img.fill_rect(Rect2i(o + Vector2i(10, 10), Vector2i(12, 14)), Color("7fb2d6"))
+	img.fill_rect(Rect2i(o + Vector2i(10, 10), Vector2i(5, 5)), Color("b5d6ea"))
+	img.fill_rect(Rect2i(o + Vector2i(15, 10), Vector2i(2, 14)), Color("6b5a44"))
 
 
 static func _paint(img: Image, terrain: DistrictMap.Terrain, v: int, o: Vector2i, rng: RandomNumberGenerator) -> void:
@@ -185,10 +257,7 @@ static func _paint(img: Image, terrain: DistrictMap.Terrain, v: int, o: Vector2i
 			if v == WALL_UPPER or v == WALL_UPPER_WINDOW:
 				img.fill_rect(Rect2i(o, Vector2i(TILE, 3)), Color("a89a80"))   # eave shadow
 			if v == WALL_UPPER_WINDOW:
-				img.fill_rect(Rect2i(o + Vector2i(8, 8), Vector2i(16, 18)), Color("6b5a44"))
-				img.fill_rect(Rect2i(o + Vector2i(10, 10), Vector2i(12, 14)), Color("7fb2d6"))
-				img.fill_rect(Rect2i(o + Vector2i(10, 10), Vector2i(5, 5)), Color("b5d6ea"))
-				img.fill_rect(Rect2i(o + Vector2i(15, 10), Vector2i(2, 14)), Color("6b5a44"))
+				_paint_window(img, o)
 			if v == WALL_LOWER:
 				img.fill_rect(Rect2i(o + Vector2i(0, TILE - 6), Vector2i(TILE, 6)), Color("8b8172"))
 			if v == WALL_TOP:

@@ -9,6 +9,10 @@ versions are milestones rather than releases until there is something to release
 - Art direction: LimeZu's Modern pixel-art series at 32 px, staying 2D (D-019)
 - People are drawn from LimeZu's character-generator layers, chosen per person
   from their id and palette; adults only; code-painted fallback (D-020)
+- Pavement, road, floor, wall and roof are real LimeZu tiles; ground terrain
+  (grass/water/sand/dock) and interior objects stay code-painted because
+  LimeZu draws them as edge-aware autotiles or per-shop facades that this
+  atlas's per-cell model cannot place correctly (D-021)
 
 ### Added
 - `tools/import_limezu.py`: builds the local, git-ignored `art/vendor/limezu/`
@@ -16,6 +20,13 @@ versions are milestones rather than releases until there is something to release
 - `CharacterSprites`: picks a person's body, eyes, outfit and hair layers and
   the sheet frame for a facing; `CharacterFigure` draws them when present
 - `test_character_sprites`: 7 tests, runnable with or without the art
+- `tools/import_limezu_tiles.py`: builds the local, git-ignored
+  `art/vendor/limezu/tiles/` (pavement, road, road line, floor, wall, roof)
+  from the purchased packs
+- `RegionTiles._real_file()`: the curated (terrain, variant) → tile mapping;
+  `_blit_real()` composites the window and the top-down darkening onto the
+  real wall tile so that drawing exists in one place for real and painted art
+- `test_region_tiles`: 6 tests covering the curated mapping and the darken helper
 - `CREDITS.md`
 - `data/maps.json` and `DistrictMap`: region layouts authored as rectangles
   (ground areas, buildings with doors, open-air places, exits), rasterised into
