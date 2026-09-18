@@ -15,12 +15,39 @@ extends RefCounted
 ## packs draw them as edge-aware autotiles (paths cutting through grass,
 ## shorelines), which this per-cell-random-variant atlas cannot place
 ## correctly without a neighbour-aware tiling pass. See DECISIONS.md D-021.
+##
+## A building's WALL, ROOF and DOOR cells look different by the location's
+## `kind` (D-022): `THEME_BY_KIND` maps it to a theme name, and WALL/ROOF get
+## extra atlas rows — one per (terrain, theme) pair, appended after the
+## ordinary per-Terrain rows — holding that theme's tile at the same four
+## columns (upper/window/plinth/top, body/body/body/eave). DOOR instead reuses
+## its own row's otherwise-unused variants 1-3, since a door is always drawn
+## at variant 0 today. A kind absent from `THEME_BY_KIND` (home, and anything
+## unset) draws the plain row, so most homes need no extra art at all.
 
 const TILE := DistrictMap.CELL_PIXELS
 const VARIANTS := 4
 const SOURCE_ID := 0
 const COLLISION_LAYER := 1
 const REAL_DIR := "res://art/vendor/limezu/tiles/"
+
+## location `kind` -> theme name. Kinds not listed draw the plain row.
+const THEME_BY_KIND := {
+	"shop": "shop",
+	"bar": "bar",
+	"civic": "civic",
+	"work": "civic",   # the one "work" building is a warehouse; civic's grey fits
+}
+## (terrain, theme) pairs that get an extra atlas row, in the order they are
+## appended. Order matters: it fixes each pair's row number.
+const THEMED_ROWS: Array[Array] = [
+	[DistrictMap.Terrain.WALL, "shop"], [DistrictMap.Terrain.WALL, "bar"], [DistrictMap.Terrain.WALL, "civic"],
+	[DistrictMap.Terrain.ROOF, "shop"], [DistrictMap.Terrain.ROOF, "civic"],
+]
+## DOOR variant per theme, reusing that row's variants 1-3 (variant 0 stays
+## the default/home door). A theme with no entry here still gets a themed
+## wall and roof; a plain door is not worth a fourth variant slot per theme.
+const DOOR_VARIANT_BY_THEME := {"shop": 1, "bar": 2, "civic": 3}
 
 const SOLID := [
 	DistrictMap.Terrain.WATER,
@@ -60,11 +87,15 @@ static func coords_for(map: DistrictMap, cell: Vector2i, structure_layer: bool) 
 	if terrain == DistrictMap.Terrain.NONE:
 		return Vector2i(-1, -1)
 	var variant := _hash(cell) % VARIANTS
+	# Interiors have no `buildings` entry for themselves, so kind_at() (and
+	# therefore theme) is always "" there: an interior never themes its own
+	# walls, with no special case needed for it here.
+	var theme: String = THEME_BY_KIND.get(map.kind_at(cell), "")
 	match terrain:
 		DistrictMap.Terrain.ROOF:
 			var below := map.structure_at(cell + Vector2i.DOWN)
-			variant = ROOF_EAVE if below == DistrictMap.Terrain.WALL or below == DistrictMap.Terrain.DOOR \
-				else _hash(cell) % 3
+			variant = ROOF_EAVE if below == DistrictMap.Terrain.WALL or below == DistrictMap.Terrain.DOOR 				else _hash(cell) % 3
+			return Vector2i(variant, _row_for(terrain, theme))
 		DistrictMap.Terrain.WALL:
 			if map.is_interior():
 				if cell.y >= DistrictMap.INTERIOR_TOP_WALL or cell.x == 0 or cell.x == map.size.x - 1:
@@ -75,9 +106,39 @@ static func coords_for(map: DistrictMap, cell: Vector2i, structure_layer: bool) 
 				variant = WALL_UPPER_WINDOW if cell.x % 2 == 1 else WALL_UPPER
 			else:
 				variant = WALL_LOWER
-		DistrictMap.Terrain.DOOR, DistrictMap.Terrain.COUNTER, DistrictMap.Terrain.BED, DistrictMap.Terrain.SIGN:
+			return Vector2i(variant, _row_for(terrain, theme))
+		DistrictMap.Terrain.DOOR:
+			variant = DOOR_VARIANT_BY_THEME.get(theme, 0)
+		DistrictMap.Terrain.COUNTER, DistrictMap.Terrain.BED, DistrictMap.Terrain.SIGN:
 			variant = 0
 	return Vector2i(variant, int(terrain))
+
+
+## The atlas row for (terrain, theme); "" is always the plain per-Terrain row.
+## The inverse, `_terrain_for_row()`/`_theme_for_row()`, lets `_build()` paint
+## every row -- plain and themed -- through the same loop.
+static func _row_for(terrain: DistrictMap.Terrain, theme: String) -> int:
+	if theme != "":
+		for i in THEMED_ROWS.size():
+			if THEMED_ROWS[i][0] == terrain and THEMED_ROWS[i][1] == theme:
+				return DistrictMap.Terrain.size() - 1 + i
+	return int(terrain)
+
+
+static func _terrain_for_row(row: int) -> DistrictMap.Terrain:
+	var base_rows := DistrictMap.Terrain.size() - 1
+	if row < base_rows:
+		return row as DistrictMap.Terrain
+	return THEMED_ROWS[row - base_rows][0] as DistrictMap.Terrain
+
+
+static func _theme_for_row(row: int) -> String:
+	var base_rows := DistrictMap.Terrain.size() - 1
+	return "" if row < base_rows else str(THEMED_ROWS[row - base_rows][1])
+
+
+static func _total_rows() -> int:
+	return DistrictMap.Terrain.size() - 1 + THEMED_ROWS.size()
 
 
 static func is_solid(terrain: DistrictMap.Terrain) -> bool:
@@ -92,12 +153,13 @@ static func _hash(cell: Vector2i) -> int:
 
 # --- real art ----------------------------------------------------------------
 
-## The curated LimeZu file for a (terrain, variant) cell, or "" for none —
-## the one place that says which real tiles exist. WALL and ROOF variants
-## are not interchangeable (see WALL_UPPER etc. above): the window and the
-## top-down darkening are composited onto the plain tile in `_blit_real()`,
-## not stored as separate files, so that drawing exists only once.
-static func _real_file(terrain: DistrictMap.Terrain, v: int) -> String:
+## The curated LimeZu file for a (terrain, variant, theme) cell, or "" for
+## none — the one place that says which real tiles exist. WALL's four
+## variants share one file per theme: the window, the plinth shade and the
+## top-down darkening are composited onto it in `_blit_real()`, not stored as
+## separate files, so that drawing exists once, not once per theme.
+static func _real_file(terrain: DistrictMap.Terrain, v: int, theme: String = "") -> String:
+	var themed := theme if theme != "" else "home"
 	match terrain:
 		DistrictMap.Terrain.PAVEMENT:
 			return REAL_DIR + "pavement_%d.png" % v
@@ -108,27 +170,30 @@ static func _real_file(terrain: DistrictMap.Terrain, v: int) -> String:
 		DistrictMap.Terrain.FLOOR:
 			return REAL_DIR + "floor.png"
 		DistrictMap.Terrain.WALL:
-			match v:
-				WALL_UPPER, WALL_UPPER_WINDOW, WALL_TOP:
-					return REAL_DIR + "wall_upper.png"
-				WALL_LOWER:
-					return REAL_DIR + "wall_lower.png"
+			return REAL_DIR + "wall_%s.png" % themed
 		DistrictMap.Terrain.ROOF:
-			return REAL_DIR + ("roof_eave.png" if v == ROOF_EAVE else "roof_%d.png" % v)
+			# "bar" has no roof file of its own: the home roof's red suits it too.
+			var roof_theme := "home" if themed == "bar" else themed
+			return REAL_DIR + ("roof_%s_eave.png" % roof_theme if v == ROOF_EAVE else "roof_%s_%d.png" % [roof_theme, v])
 	return ""
 
 
 ## Blits a real tile into the atlas, then adds whatever `_paint()` would have
-## drawn on top for this specific variant (a window, the top-down darkening).
+## drawn on top for this specific variant (a window, the plinth and top-down
+## darkening — WALL's four variants are one real file, not four).
 static func _blit_real(img: Image, path: String, terrain: DistrictMap.Terrain, v: int, o: Vector2i) -> void:
 	var tile_image := (load(path) as Texture2D).get_image()
 	if tile_image.get_format() != img.get_format():
 		tile_image = tile_image.duplicate()
 		tile_image.convert(img.get_format())
 	img.blit_rect(tile_image, Rect2i(Vector2i.ZERO, Vector2i(TILE, TILE)), o)
-	if terrain == DistrictMap.Terrain.WALL and v == WALL_UPPER_WINDOW:
+	if terrain != DistrictMap.Terrain.WALL:
+		return
+	if v == WALL_UPPER_WINDOW:
 		_paint_window(img, o)
-	elif terrain == DistrictMap.Terrain.WALL and v == WALL_TOP:
+	elif v == WALL_LOWER:
+		_darken(img, o, 0.22)
+	elif v == WALL_TOP:
 		_darken(img, o, 0.55)
 
 
@@ -143,19 +208,20 @@ static func _darken(img: Image, o: Vector2i, amount: float) -> void:
 # --- atlas painting ---------------------------------------------------------
 
 static func _build() -> TileSet:
-	var rows := DistrictMap.Terrain.size() - 1   # NONE has no row
+	var rows := _total_rows()
 	var image := Image.create(TILE * VARIANTS, TILE * rows, false, Image.FORMAT_RGBA8)
 	var rng := RandomNumberGenerator.new()
 	for row in rows:
-		var terrain := row as DistrictMap.Terrain
+		var terrain := _terrain_for_row(row)
+		var theme := _theme_for_row(row)
 		for v in VARIANTS:
 			rng.seed = row * 97 + v * 13 + 1
 			var offset := Vector2i(v * TILE, row * TILE)
-			var real_path := _real_file(terrain, v)
+			var real_path := _real_file(terrain, v, theme)
 			if real_path != "" and ResourceLoader.exists(real_path):
 				_blit_real(image, real_path, terrain, v, offset)
 			else:
-				_paint(image, terrain, v, offset, rng)
+				_paint(image, terrain, v, offset, rng, theme)
 
 	var tiles := TileSet.new()
 	tiles.tile_size = Vector2i(TILE, TILE)
@@ -175,7 +241,7 @@ static func _build() -> TileSet:
 		for v in VARIANTS:
 			var coords := Vector2i(v, row)
 			source.create_tile(coords)
-			if is_solid(row as DistrictMap.Terrain):
+			if is_solid(_terrain_for_row(row)):
 				var data := source.get_tile_data(coords, 0)
 				data.add_collision_polygon(0)
 				data.set_collision_polygon_points(0, 0, square)
@@ -192,7 +258,22 @@ static func _paint_window(img: Image, o: Vector2i) -> void:
 	img.fill_rect(Rect2i(o + Vector2i(15, 10), Vector2i(2, 14)), Color("6b5a44"))
 
 
-static func _paint(img: Image, terrain: DistrictMap.Terrain, v: int, o: Vector2i, rng: RandomNumberGenerator) -> void:
+## Base colours for the code-painted fallback, by theme ("" = home/default) —
+## kept alongside THEME_BY_KIND so the fallback looks themed too, not just
+## the real art. DOOR is keyed by variant directly: it stays on its own
+## Terrain row (see DOOR_VARIANT_BY_THEME), never a themed one.
+const THEME_WALL_COLOR := {
+	"": Color("d9cdb4"), "shop": Color("3a6ea8"), "bar": Color("a13c3c"), "civic": Color("7d7686"),
+}
+const THEME_ROOF_COLOR := {
+	"": Color("8e3b2f"), "shop": Color("5a7a3a"), "bar": Color("8e3b2f"), "civic": Color("3a4a6a"),
+}
+const DOOR_COLOR_BY_VARIANT := {
+	0: Color("7a5334"), 1: Color("2a4a70"), 2: Color("5a1f1f"), 3: Color("454550"),
+}
+
+
+static func _paint(img: Image, terrain: DistrictMap.Terrain, v: int, o: Vector2i, rng: RandomNumberGenerator, theme: String = "") -> void:
 	match terrain:
 		DistrictMap.Terrain.GRASS:
 			_noise(img, o, Color("5d8c3e"), 0.05, rng)
@@ -241,33 +322,36 @@ static func _paint(img: Image, terrain: DistrictMap.Terrain, v: int, o: Vector2i
 			for i in 8:
 				img.set_pixelv(o + Vector2i(rng.randi_range(0, TILE - 1), rng.randi_range(0, TILE - 1)), Color("c2ad78"))
 		DistrictMap.Terrain.ROOF:
-			_noise(img, o, Color("8e3b2f"), 0.03, rng)
+			var roof_base: Color = THEME_ROOF_COLOR.get(theme, THEME_ROOF_COLOR[""])
+			_noise(img, o, roof_base, 0.03, rng)
 			for course in 4:
 				var y := course * 8 + 7
 				for x in TILE:
-					img.set_pixelv(o + Vector2i(x, y), Color("6c2a21"))
+					img.set_pixelv(o + Vector2i(x, y), roof_base.darkened(0.25))
 				var shift := 0 if course % 2 == 0 else 8
 				for tab in range(shift, TILE, 16):
 					for dy in 7:
-						img.set_pixelv(o + Vector2i(tab, course * 8 + dy), Color("772f25"))
+						img.set_pixelv(o + Vector2i(tab, course * 8 + dy), roof_base.darkened(0.12))
 			if v == ROOF_EAVE:
-				img.fill_rect(Rect2i(o + Vector2i(0, TILE - 4), Vector2i(TILE, 4)), Color("4d1d17"))
+				img.fill_rect(Rect2i(o + Vector2i(0, TILE - 4), Vector2i(TILE, 4)), roof_base.darkened(0.45))
 		DistrictMap.Terrain.WALL:
-			_noise(img, o, Color("d9cdb4"), 0.02, rng)
+			var wall_base: Color = THEME_WALL_COLOR.get(theme, THEME_WALL_COLOR[""])
+			_noise(img, o, wall_base, 0.02, rng)
 			if v == WALL_UPPER or v == WALL_UPPER_WINDOW:
-				img.fill_rect(Rect2i(o, Vector2i(TILE, 3)), Color("a89a80"))   # eave shadow
+				img.fill_rect(Rect2i(o, Vector2i(TILE, 3)), wall_base.darkened(0.1))   # eave shadow
 			if v == WALL_UPPER_WINDOW:
 				_paint_window(img, o)
 			if v == WALL_LOWER:
-				img.fill_rect(Rect2i(o + Vector2i(0, TILE - 6), Vector2i(TILE, 6)), Color("8b8172"))
+				img.fill_rect(Rect2i(o + Vector2i(0, TILE - 6), Vector2i(TILE, 6)), wall_base.darkened(0.22))
 			if v == WALL_TOP:
-				_noise(img, o, Color("4a4038"), 0.03, rng)
-				img.fill_rect(Rect2i(o + Vector2i(2, 2), Vector2i(TILE - 4, TILE - 4)), Color("5a4e44"))
+				_noise(img, o, wall_base.darkened(0.55), 0.03, rng)
+				img.fill_rect(Rect2i(o + Vector2i(2, 2), Vector2i(TILE - 4, TILE - 4)), wall_base.darkened(0.45))
 		DistrictMap.Terrain.DOOR:
+			var door_color: Color = DOOR_COLOR_BY_VARIANT.get(v, DOOR_COLOR_BY_VARIANT[0])
 			_noise(img, o, Color("d9cdb4"), 0.02, rng)
 			img.fill_rect(Rect2i(o + Vector2i(0, TILE - 6), Vector2i(TILE, 6)), Color("8b8172"))
-			img.fill_rect(Rect2i(o + Vector2i(6, 2), Vector2i(20, 30)), Color("4f3421"))
-			img.fill_rect(Rect2i(o + Vector2i(8, 4), Vector2i(16, 28)), Color("7a5334"))
+			img.fill_rect(Rect2i(o + Vector2i(6, 2), Vector2i(20, 30)), door_color.darkened(0.3))
+			img.fill_rect(Rect2i(o + Vector2i(8, 4), Vector2i(16, 28)), door_color)
 			img.fill_rect(Rect2i(o + Vector2i(20, 17), Vector2i(2, 2)), Color("e0c060"))
 		DistrictMap.Terrain.FLOOR:
 			_noise(img, o, Color("a57b4f"), 0.03, rng)

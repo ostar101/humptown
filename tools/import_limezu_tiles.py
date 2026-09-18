@@ -1,4 +1,4 @@
-"""Builds the game's working copy of LimeZu ground/wall/roof tiles (D-019).
+"""Builds the game's working copy of LimeZu ground/wall/roof tiles (D-019, D-022).
 
 Companion to import_limezu.py (which handles the character layers); this one
 handles `RegionTiles`. Run after extracting the packs:
@@ -14,16 +14,17 @@ LimeZu's tile packs are built for a level editor with real autotiling
 are not sets of simple, independent "pick one of four" tiles. Rather than
 build a full autotiling system to use them (a much bigger feature), this
 importer takes only the pieces that ARE self-contained: flat sidewalk and
-asphalt tiles, the generic Room Builder floor and wall swatches, and a plain
-roof shingle sheet. GRASS, WATER, SAND and DOCK stay code-painted until
+asphalt tiles, the generic Room Builder floor and wall swatches, and plain
+roof shingle sheets. GRASS, WATER, SAND and DOCK stay code-painted until
 ground gets real neighbour-aware tiling; see DECISIONS.md D-021.
 
 `WALL` and `ROOF` are not four interchangeable variants here: `coords_for()`
 in RegionTiles gives each column a fixed meaning (upper facade, upper facade
 with a window, plinth, interior top // roof body, roof eave). This script
-exports exactly the pieces that meaning needs; RegionTiles composites the
-window and the top-down darkening itself, from the one upper-wall tile, so
-the window-drawing pixels only exist in one place.
+exports one upper-wall colour and one roof sheet (body + a separate eave crop)
+per building *theme* (home/shop/bar/civic, D-022); RegionTiles composites the
+window onto the wall colour and darkens it for the plinth and the top-down
+tile, so that drawing exists once, not once per theme.
 """
 
 from __future__ import annotations
@@ -79,23 +80,27 @@ def main() -> int:
     floors = Image.open(INT / "Room_Builder_Floors_32x32.png").convert("RGBA")
     crop(floors, 0, 12).save(OUT / "floor.png")
 
-    # Generic (non-shop-themed) wall swatches: a plain cream upper wall and a
-    # slightly deeper plinth tone directly below it in the same sheet.
+    # One wall swatch per building theme (RegionTiles derives the plinth and
+    # the interior top-down tile from it by darkening, so only the plain
+    # upper-wall colour needs curating). Kind -> theme in RegionTiles.THEME_BY_KIND.
     walls = Image.open(INT / "Room_Builder_Walls_32x32.png").convert("RGBA")
-    crop(walls, 0, 2).save(OUT / "wall_upper.png")
-    crop(walls, 0, 4).save(OUT / "wall_lower.png")
+    wall_swatches = {"home": (0, 2), "shop": (12, 34), "bar": (12, 32), "civic": (0, 32)}
+    for theme, (col, row) in wall_swatches.items():
+        crop(walls, col, row).save(OUT / f"wall_{theme}.png")
 
-    # A red shingle roof sheet: the top rows are the far slope, the bottom
+    # A roof shingle sheet per theme, red reused for "bar" (no separate file
+    # needed for it). Each sheet's top rows are the far slope, the bottom
     # rows the near one (naturally brighter) — used as the eave row.
-    roof_sheet_path = (
-        EXT
-        / "5_Floor_Modular_Building_Singles_32x32"
-        / "ME_Singles_Floor_Modular_Building_32x32_Roof_2.png"
-    )
-    roof_sheet = Image.open(roof_sheet_path).convert("RGBA")
-    for i, x in enumerate((0, 32, 64)):
-        roof_sheet.crop((x, 0, x + T, T)).save(OUT / f"roof_{i}.png")
-    roof_sheet.crop((0, 96, T, 96 + T)).save(OUT / "roof_eave.png")
+    building = EXT / "5_Floor_Modular_Building_Singles_32x32"
+    # "bar" is not here: RegionTiles reads the "home" roof file for it too
+    # (a red roof suits a pub as well as a house; no need for a third file).
+    roof_sheets = {"home": 2, "shop": 6, "civic": 4}
+    for theme, roof_n in roof_sheets.items():
+        sheet_path = building / f"ME_Singles_Floor_Modular_Building_32x32_Roof_{roof_n}.png"
+        sheet = Image.open(sheet_path).convert("RGBA")
+        for i, x in enumerate((0, 32, 64)):
+            sheet.crop((x, 0, x + T, T)).save(OUT / f"roof_{theme}_{i}.png")
+        sheet.crop((0, 96, T, 96 + T)).save(OUT / f"roof_{theme}_eave.png")
 
     names = sorted(p.name for p in OUT.glob("*.png"))
     print(f"{len(names)} tiles written to {OUT}")

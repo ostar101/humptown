@@ -9,7 +9,10 @@ extends Node2D
 ## under it, in one call.
 ##
 ## `chunk_shown` / `chunk_hidden` are the hooks for systems that want to live
-## and die with a chunk (props, ambient sound, NPC body pooling).
+## and die with a chunk (ambient sound, NPC body pooling). Street props
+## (StreetProps, D-022) are decorative and cheap enough to just place inline
+## in `_populate()`, parented under the same y-sort root as the tiles, rather
+## than needing their own listener.
 
 signal chunk_shown(chunk: Vector2i)
 signal chunk_hidden(chunk: Vector2i)
@@ -116,9 +119,26 @@ func _populate(chunk: Vector2i) -> void:
 			if top.x >= 0:
 				structures.set_cell(cell, RegionTiles.SOURCE_ID, top)
 
+	for prop in StreetProps.props_in(map, rect):
+		root.add_child(_prop_sprite(prop))
+
 	add_child(root)
 	_chunks[chunk] = root
 	chunk_shown.emit(chunk)
+
+
+## A lamp/trash-can/hydrant sprite, feet-anchored on its cell the same way
+## CharacterFigure anchors a person: the texture's bottom-centre sits at
+## `cell_to_world(cell)`, so a tall sprite rises above the tile it stands on
+## and still y-sorts correctly against whoever walks in front of it.
+func _prop_sprite(prop: Dictionary) -> Sprite2D:
+	var sprite := Sprite2D.new()
+	sprite.texture = load(prop["file"])
+	sprite.centered = false
+	var feet: Vector2 = DistrictMap.cell_to_world(prop["cell"])
+	var size := sprite.texture.get_size()
+	sprite.position = feet - Vector2(size.x / 2.0, size.y)
+	return sprite
 
 
 func _release(chunk: Vector2i) -> void:

@@ -39,6 +39,7 @@ func place_at(world_position: Vector2) -> void:
 	position = world_position
 	velocity = Vector2.ZERO
 	_cell = DistrictMap.world_to_cell(position)
+	reset_physics_interpolation()   # a teleport, not a step to interpolate towards
 
 
 func current_cell() -> Vector2i:

@@ -13,6 +13,10 @@ versions are milestones rather than releases until there is something to release
   (grass/water/sand/dock) and interior objects stay code-painted because
   LimeZu draws them as edge-aware autotiles or per-shop facades that this
   atlas's per-cell model cannot place correctly (D-021)
+- A building's wall, roof and door look different by its `Location.kind`
+  (shop/bar/civic/work); street furniture (lamps, trash cans, hydrants) on
+  pavement next to a road; both real-art-only, code-painted fallback themed
+  too for wall/roof/door; interiors do not theme yet (D-022)
 
 ### Added
 - `tools/import_limezu.py`: builds the local, git-ignored `art/vendor/limezu/`
@@ -26,8 +30,22 @@ versions are milestones rather than releases until there is something to release
 - `RegionTiles._real_file()`: the curated (terrain, variant) → tile mapping;
   `_blit_real()` composites the window and the top-down darkening onto the
   real wall tile so that drawing exists in one place for real and painted art
-- `test_region_tiles`: 6 tests covering the curated mapping and the darken helper
+- `test_region_tiles`: 11 tests covering the curated mapping, theming and the darken helper
 - `CREDITS.md`
+- `tools/import_limezu_props.py`: builds the local, git-ignored
+  `art/vendor/limezu/props/` (lamp, trash can, hydrant) from the purchased packs
+- `StreetProps`: deterministic, collision-free placement of street furniture
+  on pavement next to a road; `test_street_props`: 4 tests
+- `DistrictMap.building_kind` / `kind_at()`; `RegionTiles.THEME_BY_KIND`,
+  `THEMED_ROWS`, `DOOR_VARIANT_BY_THEME` give a themed building's WALL, ROOF
+  and DOOR their own atlas rows/variants, real-art and code-painted alike
+
+### Fixed
+- The player's sprite stuttered slightly while moving: physics runs at a
+  fixed 30 Hz but the display renders faster, so `physics/common/
+  physics_interpolation` is now on project-wide, with
+  `PlayerBody.place_at()` resetting it on teleport so spawning/loading/
+  entering a building doesn't visibly glide from the old position
 - `data/maps.json` and `DistrictMap`: region layouts authored as rectangles
   (ground areas, buildings with doors, open-air places, exits), rasterised into
   a ground + structure grid with blocking, location lookup, anchors and

@@ -66,6 +66,11 @@ var spawn: Vector2i = Vector2i.ZERO
 ## {"rects": Array[Rect2i]} for open-air places.
 var buildings: Dictionary = {}
 var places: Dictionary = {}
+## location_id -> Location.kind ("shop", "home", ...), set by whoever builds
+## the map alongside its locations (WorldState.build_from()) — DistrictMap
+## itself only knows geometry. Used to give a building's facade a matching
+## look (RegionTiles); untracked or unset ids read as "" (D-022).
+var building_kind: Dictionary = {}
 ## Each: {"to": region_id, "rect": Rect2i}
 var exits: Array[Dictionary] = []
 ## cell -> {"id", "kind", "text_key"}. Objects stand on solid cells and are
@@ -233,6 +238,12 @@ func location_at(cell: Vector2i) -> String:
 			if rect.has_point(cell):
 				return loc_id
 	return ""
+
+
+## The location kind at a cell ("shop", "home", ...), or "" off any location
+## or where the map was built without kinds (tests, mostly).
+func kind_at(cell: Vector2i) -> String:
+	return str(building_kind.get(location_at(cell), ""))
 
 
 ## The walkable cell where someone going to or from a location stands: in

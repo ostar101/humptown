@@ -377,3 +377,57 @@ plain asphalt, so the importer composites a dash onto a plain tile once.
 
 **Fallback.** Exactly like D-020: missing files mean `_build()` calls
 `_paint()`, so the game and `test_region_tiles` pass with or without the art.
+
+## D-022 — Buildings theme by kind; street furniture as decoration; player jitter fixed
+
+**Decision.** Three independent fixes/additions, done together because the
+user asked for them together:
+
+1. **Building themes.** `Location.kind` (home/shop/bar/civic/work) picks a
+   *theme* for a building's WALL, ROOF and DOOR (`RegionTiles.THEME_BY_KIND`).
+   `DistrictMap.building_kind` (loc_id -> kind) is filled in by
+   `WorldState.build_from()`, which is the only place that has both the map
+   and the locations; `DistrictMap` itself stays geometry-only and does not
+   know what a "kind" is. WALL and ROOF get one extra atlas row per themed
+   pair (`RegionTiles.THEMED_ROWS`), holding that theme's real tile at the
+   same columns the plain row uses; an untracked or unthemed kind (home, and
+   anything `THEME_BY_KIND` does not list) draws the ordinary row, so most
+   buildings need no extra art. DOOR has no extra row: it reuses its own
+   row's variants 1-3, since a door was always drawn at variant 0 before.
+   `tools/import_limezu_tiles.py` now exports one wall colour and one roof
+   sheet per theme; "bar" has no roof file of its own and reads "home"'s
+   (a red roof suits both). The code-painted fallback (`_paint()`) is themed
+   too, from small colour tables, so a machine without the art still shows
+   different buildings differently.
+2. **Street furniture.** `StreetProps` places lamps, trash cans and hydrants
+   on pavement that touches a road, chosen deterministically per cell (a
+   different hash than `RegionTiles._hash()`, so the two don't correlate).
+   Purely decorative: no collision, no interaction, nothing saved, and no
+   code-painted fallback — skipping them when the art is missing is a
+   legitimate look, not a broken one. `RegionView._populate()` spawns a
+   `Sprite2D` per prop straight into the chunk's y-sort root, feet-anchored
+   on its cell the way `CharacterFigure` anchors a person, rather than using
+   the `chunk_shown` hook (decoration this cheap does not need its own
+   listener).
+3. **Player jitter.** The player moves in `_physics_process()` at the
+   project's fixed 30 Hz, but the display renders faster (vsync to the
+   monitor), so between physics ticks the engine had nothing new to draw and
+   repeated the last frame — visible as a small stutter, worse the less
+   evenly 30 divides the monitor's refresh rate. Fix: `physics/common/
+   physics_interpolation` is now on project-wide, which is exactly the
+   engine feature for this (interpolates a physics-tied node's rendered
+   transform between ticks); `PlayerBody.place_at()` calls
+   `reset_physics_interpolation()` so a teleport (spawn, load, entering a
+   building) does not visibly glide from the old position. NPC bodies were
+   never affected — `NpcBody` moves in `_process()`, not physics, already
+   updating every rendered frame.
+
+**Why interiors stay unthemed.** An interior `DistrictMap` has no
+`buildings` entry for the building it is inside (it's the space *inside*
+one, not a building placed on a larger map), so `kind_at()` is always ""
+there with no extra plumbing — walking into a shop still shows the plain
+cream interior. Worth theming later; not done now.
+
+**Not decided yet.** A theme for every `Location.kind` (only shop/bar/civic
+have their own look; work borrows civic's). Whether interiors should theme
+too, and how, if so, DistrictMap would learn its own kind.

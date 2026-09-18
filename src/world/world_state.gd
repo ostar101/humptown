@@ -40,6 +40,10 @@ func build_from(registry: DataRegistry) -> void:
 			Log.error("world", "Map rejected", {"map": id, "reason": built.message})
 			continue
 		var map: DistrictMap = built.value
+		for loc_id in map.buildings:
+			var location: Location = locations.get(loc_id)
+			if location != null:
+				map.building_kind[loc_id] = location.kind
 		maps[map.region] = map
 
 	interiors.clear()

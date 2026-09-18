@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-18
 **Milestone:** M2 — The world you can see and walk — **in progress** (steps 1–4 of 5 done)
-**Build:** green. 345 tests, 6802 assertions with the LimeZu art installed
-(6469 without), ~4 s.
+**Build:** green. 354 tests, 6875 assertions with the LimeZu art installed
+(6523 without), ~4-5 s.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
@@ -11,29 +11,35 @@
 ## Next task
 
 **Next: M2 step 5 (main scene becomes the world).** Art direction is chosen
-and mostly in: people (D-020) and pavement/road/floor/wall/roof (D-021) are
-real LimeZu tiles; grass, water, sand, dock and the interior objects (door,
-counter, shelf, bed, table, sign) are still code-painted (D-021 explains why
-— they need real neighbour-aware tiling or per-building facades, not a tile
-swap) and can be picked up later without touching anything else.
+and mostly in: people (D-020), pavement/road/floor/wall/roof (D-021, themed
+by building kind since D-022), and street furniture (D-022) are real LimeZu
+art. Grass, water, sand, dock and the interior objects (door, counter, shelf,
+bed, table, sign) are still code-painted (D-021 explains why — they need real
+neighbour-aware tiling or per-building facades, not a tile swap) and can be
+picked up later without touching anything else. The player's movement jitter
+(physics/render tick mismatch) is fixed (D-022); interiors do not yet theme
+by kind (also D-022).
 
 **The art is local only.** The user bought Modern Interiors and Modern
 Exteriors (Modern Office not yet) and downloaded Serene Village (CC-BY 4.0).
 The zips sit in the project root (git-ignored as `*.zip`). The 32 px sheets
 are extracted to `art/_limezu_source/` (has `.gdignore`, so Godot skips its
-~30 000 files). Two importers build `art/vendor/limezu/` from it:
-`python tools/import_limezu.py` (character layers, D-020) and
-`python tools/import_limezu_tiles.py` (ground/wall/roof tiles, D-021); run
-both, then `godot --headless --path . --import`. Both `art/` folders are
-git-ignored: the licences forbid redistribution. Without them the game and
-the tests fall back to the code-painted art. Credit LimeZu (`CREDITS.md`).
-`Character Generator 2.0 Setup.exe` in the root is the user's LimeZu tool;
-it has not been run.
+~30 000 files). Three importers build `art/vendor/limezu/` from it:
+`python tools/import_limezu.py` (character layers, D-020),
+`python tools/import_limezu_tiles.py` (ground/wall/roof tiles + building
+themes, D-021/D-022) and `python tools/import_limezu_props.py` (street
+furniture, D-022); run all three, then `godot --headless --path . --import`.
+Both `art/` folders are git-ignored: the licences forbid redistribution.
+Without them the game and the tests fall back to the code-painted art (street
+props just don't appear — they have no fallback, see D-022). Credit LimeZu
+(`CREDITS.md`). `Character Generator 2.0 Setup.exe` in the root is the user's
+LimeZu tool; it has not been run.
 
 Done so far: region map + chunk streaming (step 1); player body, camera and
 movement rules (step 2); pooled NPC bodies (step 3, D-017); interiors, doors,
 counters, beds, signs, the `interact` action and the HUD (step 4, D-018);
-art direction and the character/tile import pipeline (D-019, D-020, D-021).
+art direction, the character/tile import pipeline, building themes, street
+furniture and the movement-jitter fix (D-019 through D-022).
 
 5. Main scene becomes the world; `SimViewer` goes behind developer mode.
    Region exits (`DistrictMap.exit_at`) and region travel belong here too.
