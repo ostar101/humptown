@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-18
 **Milestone:** M2 — The world you can see and walk — **in progress** (steps 1–5 of 5 done; the rest of M2's list is unscheduled, see below)
-**Build:** green. 359 tests, 6890 assertions with the LimeZu art installed
-(6543 without), ~4-5 s.
+**Build:** green. 365 tests, 6911 assertions with the LimeZu art installed
+(6563 without), ~4-5 s.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
@@ -18,6 +18,18 @@
 Harbourside has a map, so Old Town and Eastfield refuse today — authoring
 them is M7 ("Old Town and Eastfield. Travel."), not this milestone.
 
+**Homes now use LimeZu's actual house art, whole (D-024), not generic tiles.**
+The user judged the generic per-cell buildings (D-021/D-022) ugly and asked
+to look at how LimeZu's own art is meant to be used. It is not built from
+reusable generic pieces at all — each house is one hand-drawn image with a
+pitched roof, a porch, a balcony. `BuildingArt` uses one whole, for a
+building whose `rect` is exactly its 8x11-cell size; `data/maps.json`'s six
+similarly-sized homes were resized to fit (`loc_tuomas_flat`'s plot is too
+narrow, so it alone keeps the generic look). Shops, civic buildings and the
+bar are still the D-021/D-022 generic per-cell art — no equivalent whole-shop
+LimeZu asset was found generic enough to reuse across different buildings;
+see D-024 for what was tried and ruled out.
+
 **Next: whatever's left of M2's list, not yet split into steps** — day/night
 lighting; title screen, background selection, character creation, the
 opening. These are UI-shaped, not engine-shaped, so plan the steps once you
@@ -25,24 +37,16 @@ look at them rather than guessing here. M2's "done when" (start a character,
 walk Harbourside, watch routines, sleep to morning) needs the title/character
 flow before it's true even though the world itself is walkable now.
 
-Art direction is chosen and mostly in: people (D-020),
-pavement/road/floor/wall/roof (D-021, themed by building kind since D-022),
-and street furniture (D-022) are real LimeZu art. Grass, water, sand, dock
-and the interior objects (door, counter, shelf, bed, table, sign) are still
-code-painted (D-021 explains why — they need real neighbour-aware tiling or
-per-building facades, not a tile swap) and can be picked up later without
-touching anything else. The player's movement jitter (physics/render tick
-mismatch) is fixed (D-022); interiors do not yet theme by kind (also D-022).
-
 **The art is local only.** The user bought Modern Interiors and Modern
 Exteriors (Modern Office not yet) and downloaded Serene Village (CC-BY 4.0).
 The zips sit in the project root (git-ignored as `*.zip`). The 32 px sheets
 are extracted to `art/_limezu_source/` (has `.gdignore`, so Godot skips its
-~30 000 files). Three importers build `art/vendor/limezu/` from it:
+~30 000 files). Four importers build `art/vendor/limezu/` from it:
 `python tools/import_limezu.py` (character layers, D-020),
 `python tools/import_limezu_tiles.py` (ground/wall/roof tiles + building
-themes, D-021/D-022) and `python tools/import_limezu_props.py` (street
-furniture, D-022); run all three, then `godot --headless --path . --import`.
+themes, D-021/D-022), `python tools/import_limezu_props.py` (street
+furniture, D-022) and `python tools/import_limezu_buildings.py` (whole-house
+sprites, D-024); run all four, then `godot --headless --path . --import`.
 Both `art/` folders are git-ignored: the licences forbid redistribution.
 Without them the game and the tests fall back to the code-painted art (street
 props just don't appear — they have no fallback, see D-022). Credit LimeZu
@@ -55,7 +59,7 @@ counters, beds, signs, the `interact` action and the HUD (step 4, D-018);
 art direction, the character/tile import pipeline, building themes, street
 furniture and the movement-jitter fix (D-019 through D-022); the world as the
 main scene, `SimViewer` behind developer mode, and region exits/travel
-(step 5, D-023).
+(step 5, D-023); whole-house sprites for homes (D-024).
 
 **Interaction, briefly.** `Game.interaction_at(cell)` describes,
 `Game.interact_at(cell)` acts (D-018). Buying and selling at counters is M4;

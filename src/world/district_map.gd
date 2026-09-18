@@ -246,6 +246,11 @@ func kind_at(cell: Vector2i) -> String:
 	return str(building_kind.get(location_at(cell), ""))
 
 
+## A building's own kind, by its location id rather than a cell on it.
+func kind_of(location_id: String) -> String:
+	return str(building_kind.get(location_id, ""))
+
+
 ## The walkable cell where someone going to or from a location stands: in
 ## front of a building's door, or the middle of a place. (-1, -1) if the
 ## location is not on this map.

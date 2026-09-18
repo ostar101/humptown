@@ -28,6 +28,9 @@ var map: DistrictMap = null
 var _streamer := ChunkStreamer.new()
 var _chunks: Dictionary = {}        # Vector2i -> Node2D
 var _bounds: StaticBody2D = null
+## Whole-building overlay sprites (BuildingArt, D-024). Few enough per map
+## (a couple dozen at most) to just keep them all resident, unlike chunks.
+var _buildings: Array[Node2D] = []
 
 
 ## Switches to a new map, releasing everything from the previous one. Nothing
@@ -39,6 +42,7 @@ func show_map(new_map: DistrictMap) -> void:
 		return
 	_streamer.configure(map.chunk_grid(), load_radius)
 	_build_bounds()
+	_build_building_art()
 
 
 func clear() -> void:
@@ -48,6 +52,10 @@ func clear() -> void:
 		remove_child(_bounds)
 		_bounds.queue_free()
 		_bounds = null
+	for sprite in _buildings:
+		remove_child(sprite)
+		sprite.queue_free()
+	_buildings.clear()
 	map = null
 
 
@@ -139,6 +147,36 @@ func _prop_sprite(prop: Dictionary) -> Sprite2D:
 	var size := sprite.texture.get_size()
 	sprite.position = feet - Vector2(size.x / 2.0, size.y)
 	return sprite
+
+
+## One overlay sprite per building whose rect matches a whole-building art
+## size (BuildingArt); every other building keeps its per-cell tiles as is.
+## Sits over the map for its whole lifetime — buildings do not stream with
+## chunks. Its y-sort key is placed just past the building's own bottom row,
+## not at that row's centre: a `TileMapLayer` cell's own sort key can reach
+## the bottom of its cell, and this building's WALL/DOOR cells (still drawn,
+## for their collision) must never win that comparison and show through the
+## art meant to cover them. The cost is one imprecise cell of layering at the
+## doorway itself — someone standing exactly on the door tile draws behind
+## the building rather than in front of it — traded for never showing the
+## plain tiles peeking out from under a real, hand-drawn house.
+func _build_building_art() -> void:
+	for loc_id in map.buildings:
+		var rect: Rect2i = map.buildings[loc_id]["rect"]
+		var kind := map.kind_of(loc_id)
+		var file := BuildingArt.sprite_for(kind, loc_id, rect.size)
+		if file == "":
+			continue
+		var sprite := Sprite2D.new()
+		sprite.name = "Building_%s" % loc_id
+		sprite.texture = load(file)
+		sprite.centered = false
+		var top_left := Vector2(rect.position) * float(TILE)
+		var sort_y := float(rect.end.y) * TILE + 1.0
+		sprite.position = Vector2(top_left.x, sort_y)
+		sprite.offset = Vector2(0, top_left.y - sort_y)
+		add_child(sprite)
+		_buildings.append(sprite)
 
 
 func _release(chunk: Vector2i) -> void:

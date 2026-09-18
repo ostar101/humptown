@@ -464,3 +464,56 @@ this milestone; this is the plumbing that content will plug into.
 processing by Godot itself once `physics_interpolation` (D-022) is on
 project-wide — a one-line engine warning the first time it happens, not a
 bug; the camera's own lead/zoom smoothing in `_process()` is unaffected.
+
+## D-024 — Homes are LimeZu's whole villa sprite, not generic per-cell tiles
+
+**Decision.** A building whose `rect` is exactly `BuildingArt.SPRITE_SIZE`
+(8x11 cells) and whose kind has a matching entry gets one real LimeZu house
+image (`RegionView._build_building_art()`) drawn over its whole footprint,
+picked per building from a small set by hashing its location id for variety.
+Today that is every `home`-kind building except `loc_tuomas_flat`, whose plot
+is only 5 cells wide (the street's north-south road is immediately east of
+it) — it keeps the generic per-cell wall/roof/door from D-021/D-022, a real
+building, just plainer, not a broken one. The per-cell atlas is otherwise
+untouched: this is a second, independent seam (`BuildingArt`), not a
+replacement for it, because most of the map (shops, civic buildings, the
+generic fallback) still needs the atlas.
+
+**Why not the modular per-cell wall art either.** Modern Exteriors' actual
+shopfront art (e.g. `Ground_Floor_Shop_Modular`) is real, detailed brick and
+window art, but every piece is themed to a specific trade and none of it is a
+plain, reusable wall a building of arbitrary width can be built from — the
+same problem D-021 already found with the flat-roofed condo/shop art.
+`Villa`, by contrast, is a single complete house image, exactly the unit this
+approach needs: pick one, draw it once, done. Nothing here is a generic
+building kit; it is one specific asset used well.
+
+**Why the rect had to change, not the art.** Stretching pixel art to fit an
+arbitrary building footprint visibly distorts it, so the fix is on the data
+side: `data/maps.json`'s home rects were resized to 8x11 (extending upward,
+away from the street, to avoid colliding with neighbours or the road) and
+their doors moved to column 3 of the rect, where the art's own doorway sits.
+The source `Villa_N.png` is a 9x13-cell image with an empty 9th column and,
+below the doorway, porch steps that would otherwise put the visual door one
+row below where `DistrictMap` requires it (on the building's own front row);
+`tools/import_limezu_buildings.py` crops to the 8x11 that keeps everything
+lined up and drops only those steps.
+
+**Why the sprite's y-sort key sits below its own bottom row.** Its own
+WALL/DOOR cells are still drawn underneath, for their collision, and a
+`TileMapLayer` cell's y-sort key can reach the bottom of that cell — tied or
+lost against the sprite's key, those plain tiles showed through the art at
+the very row it most needed to cover (the doorway). Placing the sprite's key
+one pixel past the building's true bottom edge guarantees it always wins
+against its own tiles; the cost is that someone standing exactly on the door
+cell draws behind the house instead of in front of it, which reads far
+better than a hand-drawn house with a strip of grey generic wall across its
+front door.
+
+**Fallback.** No installed file (`BuildingArt.sprite_for()` returns "") means
+no sprite is added, and the building looks exactly as it did after D-022 —
+proven by `test_building_art`, which runs, and asserts something, either way.
+
+**Not decided yet.** Sprites for the other kinds (shop/bar/civic/work);
+whether to also resize buildings of those kinds to fit whichever art is
+chosen for them, the same way home was resized here.
