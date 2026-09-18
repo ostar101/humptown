@@ -14,10 +14,14 @@ const TEST_DIR := "res://tests/"
 var total_tests := 0
 var total_assertions := 0
 var failures: Array[String] = []
+var _errors := TestErrorCounter.new()
 
 
 func _ready() -> void:
 	Log.min_level = Log.Level.ERROR    # keep the report readable
+	OS.add_logger(_errors)
+	# Let the root finish setting up, so tests may add scenes to the tree.
+	await get_tree().process_frame
 	var started := Time.get_ticks_msec()
 
 	print("")
@@ -25,7 +29,7 @@ func _ready() -> void:
 	print("")
 
 	for path in _discover():
-		_run_file(path)
+		await _run_file(path)
 
 	var elapsed := Time.get_ticks_msec() - started
 	print("")
@@ -45,6 +49,7 @@ func _ready() -> void:
 	# created during the run are released rather than reported as leaked.
 	Game.unload()
 	await get_tree().process_frame
+	OS.remove_logger(_errors)
 	get_tree().quit(0 if failures.is_empty() else 1)
 
 
@@ -89,10 +94,16 @@ func _run_file(path: String) -> void:
 		var instance: TestCase = script.new()
 		instance.set_current_test("%s.%s" % [suite_name, test_name])
 		total_tests += 1
+		var errors_before := _errors.count()
 		instance.before_each()
-		instance.call(test_name)
+		# Awaiting works for plain and coroutine tests alike, so a test that
+		# needs real frames (physics, scenes) can simply `await` them.
+		await Callable(instance, test_name).call()
 		instance.after_each()
 		total_assertions += instance.assertions
+		if _errors.count() != errors_before:
+			instance.failures.append("%s.%s: engine or script error: %s" % [
+				suite_name, test_name, _errors.last()])
 		for failure in instance.failures:
 			failures.append(failure)
 			suite_failures += 1

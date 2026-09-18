@@ -35,8 +35,9 @@ src/progression/ Stats, Skills
 src/llm/       LlmClient, LlmRouter, LlmBudget, LlmRequest/Response, SecretStore, providers/
 src/save/      SaveManager, SaveMigrations
 src/loc/       Localization
-src/presentation/ RegionView, RegionTiles — draws state, never mutates it
-src/debug/     SimViewer, RegionPreview
+src/presentation/ WorldView, RegionView, RegionTiles, PlayerBody, PlayerCamera,
+               CharacterFigure — draws state and emits intent, never mutates
+src/debug/     SimViewer, RegionPreview, DevCapture (--screenshot)
 data/          authored content (JSON)
 locale/        en.json, fi.json
 tests/         test framework, suites, benchmark

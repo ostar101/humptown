@@ -143,6 +143,54 @@ func pause_time(paused: bool) -> void:
 		clock.paused = paused
 
 
+# --- player movement --------------------------------------------------------
+
+## Presentation reports where the player's body now stands; rules decide
+## whether that is somewhere a person can be and which location it counts as.
+## Called when the body crosses into a new cell, not every frame.
+func move_player(world_position: Vector2) -> Result:
+	var proposal := {"kind": "move_player", "x": world_position.x, "y": world_position.y}
+	if not is_running():
+		return _reject(proposal, "no_world")
+	var map := world.map_for(player.region)
+	if map == null:
+		return _reject(proposal, "region_unmapped")
+	var cell := DistrictMap.world_to_cell(world_position)
+	if map.is_blocked(cell):
+		return _reject(proposal, "cell_blocked")
+
+	player.position = world_position
+	var now_at := map.location_at(cell)
+	if now_at != player.location:
+		var was_at := player.location
+		player.location = now_at
+		if not was_at.is_empty():
+			Events.location_exited.emit(PlayerState.ID, was_at)
+		if not now_at.is_empty():
+			Events.location_entered.emit(PlayerState.ID, now_at)
+	return Result.success(now_at)
+
+
+## Where the player's body should appear when the region is shown: the saved
+## position if it is still valid ground, otherwise in front of their current
+## location, otherwise the map's spawn.
+func player_start_position() -> Vector2:
+	var map := world.map_for(player.region)
+	if map == null:
+		return Vector2.ZERO
+	if player.position != Vector2.ZERO and not map.is_blocked(DistrictMap.world_to_cell(player.position)):
+		return player.position
+	var anchor := map.anchor_of(player.location)
+	if anchor.x >= 0 and not map.is_blocked(anchor):
+		return DistrictMap.cell_to_world(anchor)
+	return DistrictMap.cell_to_world(map.spawn)
+
+
+func _reject(proposal: Dictionary, code: String) -> Result:
+	Events.action_rejected.emit(proposal, code)
+	return Result.failure(code)
+
+
 # --- saving -----------------------------------------------------------------
 
 func save_game(slot: String) -> Result:

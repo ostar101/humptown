@@ -1,34 +1,39 @@
 # Project status
 
 **Updated:** 2026-09-18
-**Milestone:** M2 — The world you can see and walk — **in progress** (step 1 of 5 done)
-**Build:** green. 284 tests, 5884 assertions, ~1.3 s.
+**Milestone:** M2 — The world you can see and walk — **in progress** (steps 1–2 of 5 done)
+**Build:** green. 296 tests, 5915 assertions, ~3 s (physics tests included).
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
 
 ## Next task
 
-**Continue M2 at step 2: `PlayerController`.** Step 1 (region map + chunk
-streaming) is done. Remaining, in order:
+**Continue M2 at step 3: `NpcBody`.** Done so far: region map + chunk
+streaming (step 1); player body, camera and movement rules (step 2).
 
-2. `PlayerController` — movement, the angled top-down camera, collision.
-   Collide against physics layer 1 (`RegionTiles.COLLISION_LAYER`). Call
-   `RegionView.focus_on(camera centre)` every frame; it is free when the chunk
-   has not changed. Turn on `y_sort_enabled` on the region root, each chunk
-   node and the `Structures` layer so the player walks behind roofs — the
-   layers were kept separate for exactly this. Movement is presentation
-   emitting intent; the player's `location` in `PlayerState` should change
-   through `Game`, using `DistrictMap.location_at()`.
-3. `NpcBody` — pooled visual body for `ACTIVE` NPCs, driven by
-   `npc_tier_changed`. Place bodies with `DistrictMap.anchor_of(location)`;
-   every harbourside location has one.
-4. Interaction: doors (door cells are solid now, interact from the anchor cell
-   below), shop counters, objects.
+3. `NpcBody` — a pooled visual body for `ACTIVE` NPCs, driven by
+   `npc_tier_changed` (do not poll). Reuse `CharacterFigure` with a palette
+   per NPC (important NPCs recognisable; ordinary ones from a small generated
+   set). Place at `DistrictMap.anchor_of(npc.location)`; every harbourside
+   location has one. Put bodies under `World/Actors` so they y-sort with the
+   player and the structures. Walking between anchors needs a path over
+   `DistrictMap.is_blocked` — a grid A* limited to the region, computed when
+   the NPC's routine block changes, never per frame.
+4. Interaction: doors (door cells are solid; interact from the anchor cell
+   below), shop counters, objects. Add an `interact` input action.
 5. Main scene becomes the world; `SimViewer` goes behind developer mode.
+   Region exits (`DistrictMap.exit_at`) and region travel belong here too.
 
-To look at the map now: `godot --path . res://scenes/debug/region_preview.tscn`
-(arrows pan, wheel zooms). `-- --screenshot=<path>` saves a frame and quits.
+**Running it.** `godot --path . res://scenes/world/world.tscn` — WASD/arrows,
+Shift runs. The main scene is still the SimViewer until step 5.
+`-- --screenshot=<path> [--walk=x,y,seconds]` saves a frame and quits (any
+scene that calls `DevCapture.maybe_capture`). The map alone:
+`res://scenes/debug/region_preview.tscn`.
+
+**Test runner.** A test fails if the engine logs an error during it (D-015),
+and tests may `await`. Physics tests speed time up 8x (D-016); restore
+`Engine` settings in `after_each` if you write another.
 
 **Art is still undecided.** Tiles are painted in code (D-014). Local asset
 packs found in `~/Downloads` (Sunnyside-style farm pack in
@@ -49,6 +54,7 @@ Choosing an art direction is the user's call; ask before importing assets.
 | `WorldState`, `Region`, `Location`, varied unlock requirements | done |
 | `DistrictMap` (maps as JSON rectangles), `ChunkStreamer` | done |
 | `RegionView` + `RegionTiles` (code-painted atlas), `RegionPreview` | done |
+| `WorldView`, `PlayerBody`, `PlayerCamera`, `CharacterFigure`, `Game.move_player` | done |
 | `DataRegistry` — JSON content, validated, cross-referenced | done |
 | `Npc`, `NpcRegistry`, `NpcSchedule`, `NpcNeeds` | done |
 | `SimLod` + `NpcDirector` — four tiers, budgeted, region-indexed | done |
@@ -63,7 +69,7 @@ Choosing an art direction is the user's call; ask before importing assets.
 | `SimViewer` debug screen | done |
 | Test suite + benchmark | done |
 
-**Not started, by design:** player controller, camera, dialogue UI,
+**Not started, by design:** NPC bodies, interaction, dialogue UI,
 live LLM calls, quests, phone, combat, crime and police. See `ROADMAP.md`.
 
 ---
@@ -71,7 +77,7 @@ live LLM calls, quests, phone, combat, crime and police. See `ROADMAP.md`.
 ## Size
 
 - 50 source files in `src/`
-- 15 test suites
+- 16 test suites
 - 10 authored NPCs, 19 locations, 3 regions (1 mapped), 8 schedules, 4 backgrounds
 
 ---

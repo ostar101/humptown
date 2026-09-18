@@ -73,11 +73,11 @@ func chunk_node(chunk: Vector2i) -> Node2D:
 
 
 static func cell_to_world(cell: Vector2i) -> Vector2:
-	return (Vector2(cell) + Vector2(0.5, 0.5)) * TILE
+	return DistrictMap.cell_to_world(cell)
 
 
 static func world_to_cell(world_position: Vector2) -> Vector2i:
-	return Vector2i(floori(world_position.x / TILE), floori(world_position.y / TILE))
+	return DistrictMap.world_to_cell(world_position)
 
 
 ## Map extent in pixels, for camera limits.
@@ -93,15 +93,17 @@ func _populate(chunk: Vector2i) -> void:
 	var tiles := RegionTiles.tile_set()
 	var root := Node2D.new()
 	root.name = "Chunk_%d_%d" % [chunk.x, chunk.y]
+	root.y_sort_enabled = true
+	# Ground is always underneath; structures y-sort with the bodies walking
+	# among them, which is why the two are separate layers.
 	var ground := TileMapLayer.new()
 	ground.name = "Ground"
 	ground.tile_set = tiles
-	# Structures sit above the ground. Y-sorting against bodies arrives with
-	# the player controller; the layer is kept separate now so that is a flag,
-	# not a rewrite.
+	ground.z_index = -1
 	var structures := TileMapLayer.new()
 	structures.name = "Structures"
 	structures.tile_set = tiles
+	structures.y_sort_enabled = true
 	root.add_child(ground)
 	root.add_child(structures)
 

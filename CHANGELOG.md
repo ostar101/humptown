@@ -19,6 +19,21 @@ versions are milestones rather than releases until there is something to release
   only to real regions
 - `test_region_map`: 25 tests, including refusal paths and a content test that
   every mapped location is reachable from the spawn
+- `World` scene: the region, the player's body and the camera, y-sorted
+- `PlayerBody` (walk/run, collision against solid tiles and map edges),
+  `PlayerCamera` (smoothed follow, slight lead, pulls back when running),
+  `CharacterFigure` (a code-drawn person with four facings and a walk cycle)
+- `Game.move_player()`: rules accept or refuse each cell the body enters and
+  derive the player's location from the map; `Game.player_start_position()`
+- Input actions `move_*` (WASD, arrows, left stick) and `run` (Shift, pad B)
+- `DevCapture`: `--screenshot` and `--walk` for any scene
+- `test_player_movement`: 12 tests, three of them driving a real body with
+  physics
+
+### Changed
+- The test runner fails a test during which the engine logs an error, and
+  awaits coroutine tests. Previously a crashing test was reported as passed.
+- `PlayerState.position` is now the position on the region map
 
 ### Fixed
 - `SimViewer` failed to compile under the strict warning settings (untyped

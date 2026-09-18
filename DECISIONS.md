@@ -204,3 +204,31 @@ with unclear licences. The brief says to build systems independently of assets
 and allow replacement without rewriting gameplay: `RegionTiles` is the entire
 seam. Swapping in an authored atlas changes `tile_set()` and `coords_for()`
 and nothing else.
+
+## D-015 — A test during which the engine logs an error fails
+
+**Decision.** The runner registers a `Logger` (Godot 4.5) and fails any test
+during which an engine or script error was logged. Tests may be coroutines;
+the runner awaits each one.
+
+**Why.** GDScript cannot catch a runtime error: the test function just stops,
+and until now the runner reported such a test as passed. That was found when
+the first scene-based test crashed on every run and still showed `ok`. No
+existing test was hiding an error when the check went in.
+
+## D-016 — Player movement is reported per cell and ruled on by Game
+
+**Decision.** `PlayerBody` moves with physics and, when it enters a new cell,
+the world view calls `Game.move_player(position)`. Game refuses blocked cells
+(`cell_blocked`, `region_unmapped`), otherwise records the position and
+derives `PlayerState.location` from `DistrictMap.location_at()`, emitting
+`location_exited` / `location_entered`. Out in town between places, the
+location is empty.
+
+**Why.** The layering rule: presentation emits intent, execution changes the
+world. Reporting per cell rather than per frame keeps it to a few calls a
+second. Physics keeps the body out of walls in practice; the rule still
+decides, and a refused move snaps the body back to the last accepted spot.
+
+**Physics tests** run at 8x time scale with 8x the tick rate, so each step is
+still the game's own 1/30 s — the same collision behaviour, an eighth of the wait.

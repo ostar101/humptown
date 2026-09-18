@@ -11,7 +11,7 @@ extends RefCounted
 ##
 ## Atlas layout: one row per DistrictMap.Terrain, VARIANTS columns per row.
 
-const TILE := 32
+const TILE := DistrictMap.CELL_PIXELS
 const VARIANTS := 4
 const SOURCE_ID := 0
 const COLLISION_LAYER := 1

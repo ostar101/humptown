@@ -16,6 +16,9 @@ extends RefCounted
 enum Terrain { NONE = -1, GRASS, PAVEMENT, ROAD, ROAD_LINE, WATER, DOCK, SAND, ROOF, WALL, DOOR }
 
 const CHUNK_SIZE := 16
+## World units per cell. The physical scale of the world, shared by rules
+## (which cell is the player on?) and by drawing (how big is a tile?).
+const CELL_PIXELS := 32
 ## Rows of facade at the bottom of every building. The rest of the footprint
 ## is roof — the angled top-down view shows the south face and the top.
 const FACADE_ROWS := 2
@@ -210,6 +213,14 @@ func reachable_from(start: Vector2i) -> Dictionary:
 			seen[next] = true
 			frontier.append(next)
 	return seen
+
+
+static func cell_to_world(cell: Vector2i) -> Vector2:
+	return (Vector2(cell) + Vector2(0.5, 0.5)) * CELL_PIXELS
+
+
+static func world_to_cell(world_position: Vector2) -> Vector2i:
+	return Vector2i(floori(world_position.x / CELL_PIXELS), floori(world_position.y / CELL_PIXELS))
 
 
 # --- chunks -----------------------------------------------------------------

@@ -18,8 +18,10 @@ var appearance: Dictionary = {}
 
 # --- position ---------------------------------------------------------------
 var region: String = ""
+## Empty while the player is out in the region but in no particular place.
 var location: String = ""
-## Fine position within the current location's scene, when one is loaded.
+## World position on the current region's map (DistrictMap units). ZERO means
+## "not placed yet"; Game.player_start_position() then picks a spot.
 var position: Vector2 = Vector2.ZERO
 
 # --- systems ----------------------------------------------------------------
