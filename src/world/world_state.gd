@@ -11,6 +11,8 @@ var regions: Dictionary = {}       # id -> Region
 var locations: Dictionary = {}     # id -> Location
 var flags: Dictionary = {}         # story/world flags: name -> Variant
 var current_region: String = ""
+## region_id -> DistrictMap. Derived from content, so never saved.
+var maps: Dictionary = {}
 
 var _locations_by_region: Dictionary = {}   # region_id -> Array[String]
 
@@ -29,11 +31,25 @@ func build_from(registry: DataRegistry) -> void:
 			_locations_by_region[loc.region] = []
 		_locations_by_region[loc.region].append(loc.id)
 
+	maps.clear()
+	for id in registry.ids("maps"):
+		var built := DistrictMap.from_data(registry.get_entry("maps", id))
+		if built.is_err():
+			Log.error("world", "Map rejected", {"map": id, "reason": built.message})
+			continue
+		var map: DistrictMap = built.value
+		maps[map.region] = map
+
 
 # --- queries ----------------------------------------------------------------
 
 func get_region(id: String) -> Region:
 	return regions.get(id)
+
+
+## The physical layout of a region, or null for regions not yet mapped.
+func map_for(region_id: String) -> DistrictMap:
+	return maps.get(region_id)
 
 
 func get_location(id: String) -> Location:

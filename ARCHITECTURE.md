@@ -26,7 +26,7 @@ The reason this is stated first, and enforced by code review, is that an LLM in 
 src/core/      Log, Events, Settings, Game (composition root), Result, SafeJson, RngStreams
 src/data/      DataRegistry — loads and validates res://data/*.json
 src/time/      GameClock, WorldEventQueue
-src/world/     WorldState, Region, Location
+src/world/     WorldState, Region, Location, DistrictMap, ChunkStreamer
 src/npc/       Npc, NpcRegistry, NpcSchedule, NpcNeeds, SimLod, NpcDirector
 src/social/    Relationship, RelationshipGraph, KnowledgeNetwork, Reputation
 src/player/    PlayerState
@@ -35,7 +35,8 @@ src/progression/ Stats, Skills
 src/llm/       LlmClient, LlmRouter, LlmBudget, LlmRequest/Response, SecretStore, providers/
 src/save/      SaveManager, SaveMigrations
 src/loc/       Localization
-src/debug/     SimViewer
+src/presentation/ RegionView, RegionTiles — draws state, never mutates it
+src/debug/     SimViewer, RegionPreview
 data/          authored content (JSON)
 locale/        en.json, fi.json
 tests/         test framework, suites, benchmark
@@ -57,7 +58,7 @@ There are two advancement modes, because an eight-hour sleep must not cost eight
 
 `WorldEventQueue` is a binary min-heap of scheduled events, ordered by time and then by insertion sequence so resolution is deterministic and therefore save-safe. This is how distant things happen without being simulated: instead of an off-screen manager thinking every frame, the world records that a response is due in 45 minutes and resolves it then.
 
-Regions are the unit of streaming and of unlocking. Unlock requirements are a list — story flag, money, reputation, contact, item, knowledge, skill — and each region may use a different one, so the world does not read as a single corridor with a key at each door.
+Regions are the unit of streaming. Within a region, the map (`DistrictMap`, authored as rectangles in `data/maps.json`) is cut into 16x16-cell chunks; `ChunkStreamer` decides which are resident around the focus with a one-chunk hysteresis margin, and `RegionView` gives each resident chunk its own node so releasing one frees everything under it. Every `Location` in a mapped region has a physical anchor — the cell in front of its door, or the middle of its place. Regions are also the unit of unlocking. Unlock requirements are a list — story flag, money, reputation, contact, item, knowledge, skill — and each region may use a different one, so the world does not read as a single corridor with a key at each door.
 
 ## NPC simulation, and why a large population is affordable
 

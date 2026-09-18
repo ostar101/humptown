@@ -1,28 +1,40 @@
 # Project status
 
-**Updated:** 2026-09-17
-**Milestone:** M1 — Foundation and simulation spine — **complete**
-**Build:** green. 259 tests, 5766 assertions, ~0.4 s.
+**Updated:** 2026-09-18
+**Milestone:** M2 — The world you can see and walk — **in progress** (step 1 of 5 done)
+**Build:** green. 284 tests, 5884 assertions, ~1.3 s.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
 
 ## Next task
 
-**Start M2: the world you can see and walk.** In this order:
+**Continue M2 at step 2: `PlayerController`.** Step 1 (region map + chunk
+streaming) is done. Remaining, in order:
 
-1. A `Region` scene that loads a district's tilemap, with the chunk/streaming
-   seam in place from the start (retrofitting streaming is painful).
 2. `PlayerController` — movement, the angled top-down camera, collision.
-3. `NpcBody` — a visual body attached when an NPC is promoted to `ACTIVE` and
-   released on demotion. `NpcDirector` already emits `npc_tier_changed`; hook
-   the pooling to that signal, do not poll.
-4. Interaction system: doors, shop counters, objects worth touching.
-5. Replace `scenes/boot.tscn`'s handoff so the main scene is the world, and put
-   `SimViewer` behind developer mode.
+   Collide against physics layer 1 (`RegionTiles.COLLISION_LAYER`). Call
+   `RegionView.focus_on(camera centre)` every frame; it is free when the chunk
+   has not changed. Turn on `y_sort_enabled` on the region root, each chunk
+   node and the `Structures` layer so the player walks behind roofs — the
+   layers were kept separate for exactly this. Movement is presentation
+   emitting intent; the player's `location` in `PlayerState` should change
+   through `Game`, using `DistrictMap.location_at()`.
+3. `NpcBody` — pooled visual body for `ACTIVE` NPCs, driven by
+   `npc_tier_changed`. Place bodies with `DistrictMap.anchor_of(location)`;
+   every harbourside location has one.
+4. Interaction: doors (door cells are solid now, interact from the anchor cell
+   below), shop counters, objects.
+5. Main scene becomes the world; `SimViewer` goes behind developer mode.
 
-Before writing scene code, read `ARCHITECTURE.md` on the layering rule.
-Presentation reads state and emits input intent; it does not mutate the world.
+To look at the map now: `godot --path . res://scenes/debug/region_preview.tscn`
+(arrows pan, wheel zooms). `-- --screenshot=<path>` saves a frame and quits.
+
+**Art is still undecided.** Tiles are painted in code (D-014). Local asset
+packs found in `~/Downloads` (Sunnyside-style farm pack in
+`godot-2d-topdown-template-main/Tekstuurit`, Craftpix "junkie-city"
+gangsters) are side-view and of unclear licence, so they were not used.
+Choosing an art direction is the user's call; ask before importing assets.
 
 ---
 
@@ -35,6 +47,8 @@ Presentation reads state and emits input intent; it does not mutate the world.
 | `GameClock` — real calendar, continuous and batched advance | done |
 | `WorldEventQueue` — deterministic scheduled events | done |
 | `WorldState`, `Region`, `Location`, varied unlock requirements | done |
+| `DistrictMap` (maps as JSON rectangles), `ChunkStreamer` | done |
+| `RegionView` + `RegionTiles` (code-painted atlas), `RegionPreview` | done |
 | `DataRegistry` — JSON content, validated, cross-referenced | done |
 | `Npc`, `NpcRegistry`, `NpcSchedule`, `NpcNeeds` | done |
 | `SimLod` + `NpcDirector` — four tiers, budgeted, region-indexed | done |
@@ -49,16 +63,16 @@ Presentation reads state and emits input intent; it does not mutate the world.
 | `SimViewer` debug screen | done |
 | Test suite + benchmark | done |
 
-**Not started, by design:** rendering, player controller, camera, dialogue UI,
+**Not started, by design:** player controller, camera, dialogue UI,
 live LLM calls, quests, phone, combat, crime and police. See `ROADMAP.md`.
 
 ---
 
 ## Size
 
-- 45 source files, 5836 lines in `src/`
-- 2750 lines of tests across 14 suites
-- 10 authored NPCs, 19 locations, 3 regions, 8 schedules, 4 backgrounds
+- 50 source files in `src/`
+- 15 test suites
+- 10 authored NPCs, 19 locations, 3 regions (1 mapped), 8 schedules, 4 backgrounds
 
 ---
 
@@ -76,6 +90,10 @@ performs. Re-run after any change under `src/npc/`, `src/time/` or `src/world/`.
     1000       60      1000       1150.5         6.89%        10.45
     3000       60      3000       2405.8        14.41%        30.96
 ```
+
+Re-measured 2026-09-18 on the user's Windows machine after M2 step 1: numbers
+there run ~30-40% above the table (different hardware), and the pre-change
+commit measured the same on that machine, so no regression.
 
 The number that matters: cost per simulated minute is roughly flat in total
 population once the local population is fixed, because dormant people are never

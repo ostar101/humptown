@@ -23,6 +23,7 @@ const REQUIRED_KEYS := {
 	"items": ["id", "name_key"],
 	"skills": ["id", "name_key"],
 	"backgrounds": ["id", "name_key"],
+	"maps": ["id", "region", "width", "height", "spawn"],
 }
 
 var tables: Dictionary = {}          # table -> { id -> entry }
@@ -96,6 +97,30 @@ func validate_references() -> Array[String]:
 				continue  # symbolic token, resolved per NPC at runtime
 			if not loc_id.is_empty() and not has_entry("locations", loc_id):
 				problems.append("schedule '%s' references unknown location '%s'" % [id, loc_id])
+	for id in table("maps"):
+		problems.append_array(_map_reference_problems(id, table("maps")[id]))
+	return problems
+
+
+## A map may only place locations of its own region, and may only lead to
+## regions that exist. Layout geometry is checked by DistrictMap itself.
+func _map_reference_problems(id: String, map: Dictionary) -> Array[String]:
+	var problems: Array[String] = []
+	var region := str(map.get("region", ""))
+	if not has_entry("regions", region):
+		problems.append("map '%s' references unknown region '%s'" % [id, region])
+	var entries: Array = []
+	entries.append_array(map.get("buildings", []))
+	entries.append_array(map.get("places", []))
+	for entry in entries:
+		var loc_id := str(entry.get("location", ""))
+		if not has_entry("locations", loc_id):
+			problems.append("map '%s' places unknown location '%s'" % [id, loc_id])
+		elif str(get_entry("locations", loc_id).get("region", "")) != region:
+			problems.append("map '%s' places '%s', which belongs to another region" % [id, loc_id])
+	for way_out in map.get("exits", []):
+		if not has_entry("regions", str(way_out.get("to", ""))):
+			problems.append("map '%s' exits to unknown region '%s'" % [id, way_out.get("to")])
 	return problems
 
 

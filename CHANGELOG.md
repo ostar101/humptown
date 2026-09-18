@@ -3,6 +3,27 @@
 All notable changes to Humptown. Format loosely follows Keep a Changelog;
 versions are milestones rather than releases until there is something to release.
 
+## [Unreleased] — Milestone 2: the world you can see and walk
+
+### Added
+- `data/maps.json` and `DistrictMap`: region layouts authored as rectangles
+  (ground areas, buildings with doors, open-air places, exits), rasterised into
+  a ground + structure grid with blocking, location lookup, anchors and
+  reachability. Harbourside is mapped; every location in it has a place.
+- `ChunkStreamer`: pure chunk-residency logic with hysteresis
+- `RegionView` scene: draws a map one chunk node at a time around a focus,
+  with collision on solid tiles and invisible walls at the map edge
+- `RegionTiles`: a code-painted placeholder atlas behind a one-file seam
+- `RegionPreview` developer scene with panning, zoom and a `--screenshot` mode
+- `DataRegistry` checks maps place only their own region's locations and exit
+  only to real regions
+- `test_region_map`: 25 tests, including refusal paths and a content test that
+  every mapped location is reachable from the spawn
+
+### Fixed
+- `SimViewer` failed to compile under the strict warning settings (untyped
+  `slice()` element in the scheduled-events panel)
+
 ## [0.1.0] — 2026-09-17 — Milestone 1: foundation and simulation spine
 
 The world runs. Nothing is drawn yet, and everything that is claimed is tested.
