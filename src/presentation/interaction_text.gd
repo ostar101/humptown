@@ -48,7 +48,8 @@ static func outcome_text(interaction: Dictionary, result: Result) -> String:
 			var npc := Game.npcs.get_npc(str(outcome.get("npc", "")))
 			return Localization.t("ui.msg.served", {"name": npc.name if npc != null else "?"})
 		"slept":
-			return Localization.t("ui.msg.slept", {"time": Game.clock.format_time()})
+			var key := "ui.msg.slept_saved" if outcome.get("saved", false) else "ui.msg.slept"
+			return Localization.t(key, {"time": Game.clock.format_time()})
 		"read":
 			return Localization.t(str(outcome.get("text_key", "")))
 	return ""

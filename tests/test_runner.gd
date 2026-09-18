@@ -10,6 +10,9 @@ extends Node
 ## game is worse than no harness.
 
 const TEST_DIR := "res://tests/"
+## Sleeping in your bed saves (D-033); tests sleep, and must never do it over
+## the player's own life.
+const TEST_SAVE_SLOT := "test_runner_main"
 
 var total_tests := 0
 var total_assertions := 0
@@ -20,6 +23,7 @@ var _errors := TestErrorCounter.new()
 func _ready() -> void:
 	Log.min_level = Log.Level.ERROR    # keep the report readable
 	OS.add_logger(_errors)
+	Game.save_slot = TEST_SAVE_SLOT
 	# Let the root finish setting up, so tests may add scenes to the tree.
 	await get_tree().process_frame
 	var started := Time.get_ticks_msec()
@@ -48,6 +52,7 @@ func _ready() -> void:
 	# Tear the world down and let one frame pass before quitting, so objects
 	# created during the run are released rather than reported as leaked.
 	Game.unload()
+	Game.saves.delete_slot(TEST_SAVE_SLOT)
 	await get_tree().process_frame
 	OS.remove_logger(_errors)
 	get_tree().quit(0 if failures.is_empty() else 1)

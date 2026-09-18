@@ -56,7 +56,10 @@ static func reset() -> void:
 
 
 ## The layer files a person wears, keyed by layer. Empty when there is no art.
-static func look_for(person_id: String, palette: Dictionary) -> Dictionary:
+## `chosen` names a style per layer ("outfits" -> "12") where someone picked
+## one rather than having it rolled from their id — the player, from the
+## creation screen (D-033). A chosen style the art does not have is ignored.
+static func look_for(person_id: String, palette: Dictionary, chosen: Dictionary = {}) -> Dictionary:
 	var data := manifest()
 	if data.is_empty():
 		return {}
@@ -69,13 +72,26 @@ static func look_for(person_id: String, palette: Dictionary) -> Dictionary:
 	if not eyes.is_empty():
 		var chosen_eyes: Dictionary = eyes[posmod(_roll(person_id, "eyes"), eyes.size())]
 		look["eyes"] = str(chosen_eyes["file"])
-	var outfit := _styled(data.get("outfits", []), _roll(person_id, "outfits"), _palette_colour(palette, "shirt"))
+	var outfit := _styled(data.get("outfits", []), _roll(person_id, "outfits"),
+		_palette_colour(palette, "shirt"), str(chosen.get("outfits", "")))
 	if outfit != "":
 		look["outfits"] = outfit
-	var hair := _styled(data.get("hairstyles", []), _roll(person_id, "hairstyles"), _palette_colour(palette, "hair"))
+	var hair := _styled(data.get("hairstyles", []), _roll(person_id, "hairstyles"),
+		_palette_colour(palette, "hair"), str(chosen.get("hairstyles", "")))
 	if hair != "":
 		look["hairstyles"] = hair
 	return look
+
+
+## The styles a layer offers, sorted ("01", "02", ...). Empty without the art.
+static func styles(layer: String) -> Array[String]:
+	var out: Array[String] = []
+	for entry: Dictionary in manifest().get(layer, []):
+		var style := str(entry.get("style", ""))
+		if style != "" and not out.has(style):
+			out.append(style)
+	out.sort()
+	return out
 
 
 ## The textures of a look, bottom layer first. Missing files are skipped.
@@ -110,17 +126,18 @@ static func _roll(person_id: String, layer: String) -> int:
 	return ("%s/%s" % [person_id, layer]).hash()
 
 
-## Picks a style from the hash, then the variant of it closest in colour.
-static func _styled(entries: Array, h: int, wanted: Color) -> String:
+## Picks a style — the chosen one if the art has it, else one from the hash —
+## then the variant of it closest in colour.
+static func _styled(entries: Array, h: int, wanted: Color, chosen: String = "") -> String:
 	if entries.is_empty():
 		return ""
-	var styles: Array[String] = []
+	var offered: Array[String] = []
 	for entry: Dictionary in entries:
 		var style := str(entry.get("style", ""))
-		if not styles.has(style):
-			styles.append(style)
-	styles.sort()
-	var style := styles[posmod(h, styles.size())]
+		if not offered.has(style):
+			offered.append(style)
+	offered.sort()
+	var style := chosen if offered.has(chosen) else offered[posmod(h, offered.size())]
 	var variants: Array = entries.filter(func(e: Dictionary) -> bool: return str(e.get("style", "")) == style)
 	return _closest(variants, wanted)
 

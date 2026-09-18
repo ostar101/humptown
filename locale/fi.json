@@ -105,6 +105,7 @@
   "ui.prompt.read": "Lue",
   "ui.msg.served": "{name} nostaa katseensa tiskin takaa.",
   "ui.msg.slept": "Nukut ja heräät kello {time}.",
+  "ui.msg.slept_saved": "Nukut ja heräät kello {time}. Päivä on tallennettu.",
   "ui.msg.refused.locked": "Ovi on lukossa.",
   "ui.msg.refused.private": "{place} on jonkun koti. Sinne ei vain kävellä sisään.",
   "ui.msg.refused.closed": "{place} on kiinni. Auki {from}–{until}.",

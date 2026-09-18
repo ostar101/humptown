@@ -131,6 +131,7 @@
   "ui.prompt.read": "Read",
   "ui.msg.served": "{name} looks up from behind the counter.",
   "ui.msg.slept": "You sleep, and wake at {time}.",
+  "ui.msg.slept_saved": "You sleep, and wake at {time}. The day is saved.",
   "ui.msg.refused.locked": "It's locked.",
   "ui.msg.refused.private": "{place} is someone's home. You can't just walk in.",
   "ui.msg.refused.closed": "{place} is closed. Open {from}–{until}.",

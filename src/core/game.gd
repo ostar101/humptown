@@ -37,6 +37,12 @@ const WAKE_MINUTE := 7 * 60
 ## Above this much rest the player is not tired enough to sleep.
 const SLEEP_THRESHOLD := 0.75
 
+## The one save a life has in M2 (D-033). Sleeping in your own bed writes it —
+## the save point is a place, as D-010 asks — and the title screen's Continue
+## reads it. A variable, not a constant, only so the test runner can point it
+## somewhere that is not the player's real save.
+var save_slot: String = "main"
+
 var _last_retier: int = -999
 ## What the player's body is doing as hours pass; "sleep" during a night.
 var _player_activity := "idle"
@@ -110,6 +116,45 @@ func new_game(background_id: String = "", world_seed: int = 0) -> Result:
 	})
 	world_ready.emit()
 	return Result.success()
+
+
+## Starts a life from what the player chose on the creation screens (D-033).
+## The draft is validated against the content before anything is built; a
+## refused draft leaves no world behind. A new life starts at home, indoors,
+## at the start of the day — the opening hands over to a person waking up in
+## their own flat, not standing in the street.
+func new_game_from(draft: CharacterDraft, world_seed: int = 0) -> Result:
+	if not data.load_all():
+		return Result.failure("content_invalid", "; ".join(data.load_errors))
+	var checked := draft.validate(data)
+	if checked.is_err():
+		return checked
+	var started := new_game(draft.background_id, world_seed)
+	if started.is_err():
+		return started
+
+	player.display_name = draft.display_name.strip_edges()
+	player.pronouns = draft.pronouns
+	player.appearance = draft.appearance.duplicate()
+	for attribute in draft.attribute_shifts:
+		player.stats.attributes[attribute] = player.stats.attribute(attribute) + int(draft.attribute_shifts[attribute])
+	player.on_strength_changed()
+
+	if world.interior_for(player.home_location) != null:
+		player.interior = player.home_location
+		player.location = player.home_location
+		player.position = Vector2.ZERO
+	Log.info("game", "Character created", {"background": draft.background_id})
+	return Result.success()
+
+
+## Whether there is a life to continue.
+func has_saved_game() -> bool:
+	return saves.has_slot(save_slot)
+
+
+func continue_game() -> Result:
+	return load_game(save_slot)
 
 
 ## Tears the world down without touching settings or secrets.
@@ -338,7 +383,11 @@ func _sleep_in_bed(proposal: Dictionary, location_id: String) -> Result:
 	_player_activity = "sleep"
 	advance_time(minutes)
 	_player_activity = "idle"
-	return Result.success({"kind": "slept", "minutes": minutes})
+	# Your own bed is the save point (D-033): the one place a life is kept.
+	var saved := save_game(save_slot)
+	if saved.is_err():
+		Log.warn("game", "Could not save after sleeping", {"reason": saved.message})
+	return Result.success({"kind": "slept", "minutes": minutes, "saved": saved.is_ok()})
 
 
 func _reject(proposal: Dictionary, code: String) -> Result:

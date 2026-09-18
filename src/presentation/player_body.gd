@@ -31,7 +31,14 @@ func _ready() -> void:
 	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	collision_mask = RegionTiles.COLLISION_LAYER
 	_cell = DistrictMap.world_to_cell(position)
-	_figure.look = CharacterSprites.look_for("player", _figure.palette)
+	refresh_look()
+
+
+## Dresses the body as the player chose on the creation screen (D-033).
+func refresh_look() -> void:
+	var appearance: Dictionary = Game.player.appearance if Game.is_running() else {}
+	_figure.palette = PlayerLook.palette(appearance)
+	_figure.look = PlayerLook.look(appearance)
 
 
 ## Puts the body somewhere without walking there (spawn, load, travel).
