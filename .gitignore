@@ -27,3 +27,8 @@ Thumbs.db
 # the working tree because the desktop bridge cannot write into .git.
 *.bundle
 RESTORE_GIT.md
+
+# Local Claude memory MCP server and its registration. Machine-specific
+# (absolute paths, a venv) and personal, so never versioned. See CLAUDE.md.
+Humptown-Claude-Memory/
+.mcp.json

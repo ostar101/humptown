@@ -8,7 +8,8 @@ Read this and `PROJECT_STATUS.md` before touching anything.
 2. `git log --oneline -15` to see where the last session stopped.
 3. `git status` — the tree should be clean. If it is not, find out why before adding to it.
 4. Run the tests: `godot --headless --path . res://tests/test_runner.tscn`. They must be green before you change anything, so that any failure you see later is yours.
-5. Continue from the "Next task" section of `PROJECT_STATUS.md`.
+5. If the `humptown-memory` MCP server is available, read `memory_context` (see below).
+6. Continue from the "Next task" section of `PROJECT_STATUS.md`.
 
 ## End of every session, and whenever you are near a usage limit
 
@@ -18,8 +19,28 @@ Stop at a safe point rather than mid-refactor.
 2. Run the tests. Green, or explicitly recorded as red in `PROJECT_STATUS.md` with the reason.
 3. Update `PROJECT_STATUS.md`: what is done, what is next, anything a fresh session would not guess.
 4. Add an entry to `CHANGELOG.md`.
+   If `humptown-memory` is available, also call `memory_update_current` and
+   `memory_append_history` with a short summary.
 5. Commit with a conventional-commit message. Push if a remote is configured.
 6. If the push fails, say so plainly and leave the commit local. Never report a push that did not happen.
+
+## Persistent project memory
+
+`Humptown-Claude-Memory/` holds a local MCP server, `humptown-memory`,
+registered in `.mcp.json`. Both are git-ignored: they are machine-specific.
+
+The repository stays the source of truth. `PROJECT_STATUS.md`, `DECISIONS.md`
+and `CHANGELOG.md` are authoritative; the memory is a compact aid that points
+into them. When the two disagree, the repository wins — fix the memory.
+
+- At the start of substantial work: read `memory_context`, then use
+  `memory_search` only for what the current task needs. Check the actual files
+  before relying on anything the memory says.
+- After a milestone, once tests have run: `memory_update_current`, record
+  durable decisions with `memory_write` (short, linking to the `D-0xx` entry),
+  and add a compact `memory_append_history` entry.
+- Do not load the whole memory or history by default.
+- Never store secrets, API keys, passwords or credentials in memory.
 
 ## The architectural rule that outranks convenience
 
