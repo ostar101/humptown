@@ -28,9 +28,10 @@ var map: DistrictMap = null
 var _streamer := ChunkStreamer.new()
 var _chunks: Dictionary = {}        # Vector2i -> Node2D
 var _bounds: StaticBody2D = null
-## Whole-building overlay sprites (BuildingArt, D-024). Few enough per map
-## (a couple dozen at most) to just keep them all resident, unlike chunks.
-var _buildings: Array[Node2D] = []
+## Whole-building sprites (BuildingArt, D-024) and open-air place decoration
+## (PlaceArt, D-030). Few enough per map — a couple dozen buildings and a
+## park's worth of trees — to just keep them all resident, unlike chunks.
+var _overlays: Array[Node2D] = []
 
 
 ## Y-sort must be enabled here, not just on the nested chunk roots: a building
@@ -57,6 +58,7 @@ func show_map(new_map: DistrictMap) -> void:
 		return
 	_streamer.configure(map.chunk_grid(), load_radius)
 	_build_bounds()
+	_build_place_art()
 	_build_building_art()
 
 
@@ -67,10 +69,10 @@ func clear() -> void:
 		remove_child(_bounds)
 		_bounds.queue_free()
 		_bounds = null
-	for sprite in _buildings:
+	for sprite in _overlays:
 		remove_child(sprite)
 		sprite.queue_free()
-	_buildings.clear()
+	_overlays.clear()
 	map = null
 
 
@@ -198,7 +200,29 @@ func _build_building_art() -> void:
 		sprite.position = Vector2(top_left.x, sort_y)
 		sprite.offset = Vector2(0, top_left.y - sort_y)
 		add_child(sprite)
-		_buildings.append(sprite)
+		_overlays.append(sprite)
+
+
+## The park's trees, the court's surface, the worksite's frame (PlaceArt,
+## D-030). Like the building sprites these are few and never stream; unlike
+## them they block nothing and hide nothing, so they are simply drawn where
+## the place says. A `flat` piece is painted ground and sorts from its top
+## edge, so walking onto the court puts you on it rather than under it.
+func _build_place_art() -> void:
+	for location_id in PlaceArt.decorated_places(map):
+		for piece: Dictionary in PlaceArt.decorations_for(map, location_id):
+			var sprite := Sprite2D.new()
+			sprite.name = "Place_%s_%d" % [location_id, _overlays.size()]
+			sprite.texture = load(piece["file"])
+			sprite.centered = false
+			var cell: Vector2i = piece["cell"]
+			var top_left := Vector2(cell) * float(TILE)
+			var rows := sprite.texture.get_height() / TILE
+			var sort_y: float = top_left.y if piece["flat"] else float(cell.y + rows) * TILE
+			sprite.position = Vector2(top_left.x, sort_y)
+			sprite.offset = Vector2(0.0, top_left.y - sort_y)
+			add_child(sprite)
+			_overlays.append(sprite)
 
 
 func _release(chunk: Vector2i) -> void:

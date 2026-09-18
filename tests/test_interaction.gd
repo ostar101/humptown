@@ -235,8 +235,16 @@ func test_someone_elses_bed_is_refused() -> void:
 
 
 func test_reading_a_sign() -> void:
-	_stand(Vector2i(40, 21))
-	var result := Game.interact_at(Vector2i(40, 22))
+	# Found by id rather than by cell: where the bus stop sits is a layout
+	# decision the map is free to change.
+	var map := _outside()
+	var cell := Vector2i(-1, -1)
+	for candidate: Vector2i in map.objects:
+		if str(map.objects[candidate]["id"]) == "obj_bus_timetable":
+			cell = candidate
+	assert_true(map.in_bounds(cell), "the bus timetable is somewhere on the map")
+	_stand(cell + Vector2i.DOWN)
+	var result := Game.interact_at(cell)
 	assert_ok(result)
 	assert_eq((result.value as Dictionary)["text_key"], "obj.bus_timetable.text")
 

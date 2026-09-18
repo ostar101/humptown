@@ -1,6 +1,9 @@
 [
   {"id": "loc_player_flat", "region": "harbourside", "name_key": "loc.player_flat", "kind": "home", "access": "private", "travel_minutes": 0, "connections": ["loc_dock_street"]},
-  {"id": "loc_dock_street", "region": "harbourside", "name_key": "loc.dock_street", "kind": "street", "access": "public", "travel_minutes": 2, "connections": ["loc_player_flat", "loc_corner_shop", "loc_cafe_kaisla", "loc_harbour", "loc_bus_stop"]},
+  {"id": "loc_dock_street", "region": "harbourside", "name_key": "loc.dock_street", "kind": "street", "access": "public", "travel_minutes": 2, "connections": ["loc_player_flat", "loc_corner_shop", "loc_cafe_kaisla", "loc_harbour", "loc_bus_stop", "loc_court", "loc_harbour_park", "loc_worksite"]},
+  {"id": "loc_court", "region": "harbourside", "name_key": "loc.court", "kind": "park", "access": "public", "travel_minutes": 4, "connections": ["loc_dock_street"]},
+  {"id": "loc_harbour_park", "region": "harbourside", "name_key": "loc.harbour_park", "kind": "park", "access": "public", "travel_minutes": 5, "connections": ["loc_dock_street"]},
+  {"id": "loc_worksite", "region": "harbourside", "name_key": "loc.worksite", "kind": "work", "access": "semi_public", "travel_minutes": 6, "connections": ["loc_dock_street"]},
   {"id": "loc_corner_shop", "region": "harbourside", "name_key": "loc.corner_shop", "kind": "shop", "access": "public", "open_from": 420, "open_until": 1260, "travel_minutes": 3, "connections": ["loc_dock_street"]},
   {"id": "loc_cafe_kaisla", "region": "harbourside", "name_key": "loc.cafe_kaisla", "kind": "shop", "access": "public", "open_from": 420, "open_until": 1080, "travel_minutes": 4, "connections": ["loc_dock_street"]},
   {"id": "loc_harbour", "region": "harbourside", "name_key": "loc.harbour", "kind": "work", "access": "semi_public", "travel_minutes": 6, "connections": ["loc_dock_street", "loc_warehouse_9"]},

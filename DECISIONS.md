@@ -737,3 +737,51 @@ and bins only appear where a door's approach is genuinely pavement — today
 that is the bar and the warehouse, because the shop row's doors still open
 onto the carriageway. That is a map bug, fixed separately; the placement rule
 is right to refuse it.
+
+## D-030 — Harbourside relaid, and open-air places get authored art
+
+**Decision.** `data/maps.json` is rewritten: Harbourside grows from 80x64 to
+96x72 and gains a second street, and three new open-air locations —
+`loc_court` (a basketball court), `loc_harbour_park` and `loc_worksite` —
+are placed on it. `PlaceArt` furnishes them from
+`tools/import_limezu_places.py`'s output, and `RegionView._build_place_art()`
+draws it.
+
+**Why the map had to grow.** The shop row's doors opened directly onto the
+carriageway: their rect ended on row 27 and row 28 was road, so
+`anchor_of()` — the cell an NPC or the player must stand on to use the door —
+was in the middle of the street. Squeezing a pavement in front of them was
+impossible in the old 28-row band, because two rows of 13-cell buildings plus
+a villa's porch plus two streets do not fit in it. Rather than shave
+buildings to fit a number chosen before any of this art existed, the band was
+made the size the town actually needs:
+
+```
+ 1..11  homes            12..13 porches     14..15 the residential lane
+16..28  shops and the three new places      29..30 the shopfront pavement
+31..34  the main street (line on 32)        35..36 pavement
+37..49  the bar and the warehouse           50..51 pavement
+52..57  sand and dock                       58..71 water
+```
+
+**Why a separate `PlaceArt` rather than more `BuildingArt`.** A building's art
+has to agree with the map about where its door and walls are, which is why
+`BuildingArt` carries a footprint, a door column and porch rows. A place is
+walkable ground whatever is drawn on it, so its art is pure decoration
+authored per location id, blocking nothing — the same bargain `StreetProps`
+already makes. The one wrinkle is `flat`: the court's painted surface is
+ground, not an object, so it sorts from its top edge and a player standing
+anywhere on it is drawn on top rather than underneath.
+
+**Content consequences.** `locations.json` gains three entries with a new
+`kind` of `park`, `locale/en.json` their names, and `loc_dock_street`
+connects to all three. `test_region_map` already required every location in a
+mapped region to be placed and reachable, so the three had to be real places
+on the grid, not scenery — which is the right constraint: a park nobody can
+walk into is a painting.
+
+**Cost accepted.** Decoration does not block, so a tree can be walked
+through, exactly as a lamp post can (D-022). Worth revisiting when there is a
+reason for trees to be solid; not worth a new solid terrain today. The
+harbour quay is still a large empty apron, and every terrain boundary is a
+hard straight line — both of those are the next job, not this one.

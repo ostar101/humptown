@@ -35,6 +35,12 @@ versions are milestones rather than releases until there is something to release
 - A building drawn as one whole sprite draws no per-cell tiles at all, puts
   its door on the column the art draws one in, and keeps its porch as
   walkable ground outside the rect so the door can be reached (D-028)
+- Street furniture is placed by what a cell is — lamps at a regular interval
+  along the back edge of a pavement, bins beside doors — instead of by a hash
+  over any cell near a road (D-029)
+- Harbourside is relaid at 96x72 with a second street, so the shop row's
+  doors open onto a pavement instead of the carriageway; a basketball court,
+  a park and a worksite are placed on it, furnished by `PlaceArt` (D-030)
 
 ### Added
 - `tools/import_limezu.py`: builds the local, git-ignored `art/vendor/limezu/`
@@ -66,6 +72,11 @@ versions are milestones rather than releases until there is something to release
   the same way it already did to a building's `entered`/`exited` (D-023)
 - `test_player_movement`: 4 new tests for region exits, including the full
   success path against a throwaway destination map
+- `tools/import_limezu_places.py`: builds the local, git-ignored
+  `art/vendor/limezu/places/` (a basketball court, trees, benches, a building
+  frame, an excavator, cones) from the purchased packs
+- `PlaceArt`: authored decoration for an open-air location, drawn by
+  `RegionView._build_place_art()`; `test_place_art` covers it
 - `tools/import_limezu_buildings.py`: builds the local, git-ignored
   `art/vendor/limezu/buildings/` (five house sprites, plus one storefront per
   kind with its sign repainted) from the purchased packs

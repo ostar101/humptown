@@ -139,7 +139,7 @@ func test_region_view_gives_correctly_sized_buildings_a_sprite_and_others_none()
 	view.show_map(map)
 
 	var by_name := {}
-	for sprite in view._buildings:
+	for sprite in view._overlays:
 		by_name[sprite.name] = sprite
 	if BuildingArt.sprite_for("home", "loc_player_flat", BuildingArt.footprint("home")) != "":
 		assert_true(by_name.has("Building_loc_player_flat"), "a villa-sized home gets a sprite")
@@ -153,7 +153,7 @@ func test_region_view_gives_correctly_sized_buildings_a_sprite_and_others_none()
 		"a home the wrong size for the art keeps its per-cell tiles")
 
 	view.clear()
-	assert_eq(view._buildings.size(), 0, "clear() frees the building sprites too")
+	assert_eq(view._overlays.size(), 0, "clear() frees the building sprites too")
 	view.free()
 
 

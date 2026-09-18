@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-18
 **Milestone:** M2 — The world you can see and walk — **in progress** (steps 1–5 of 5 done; the rest of M2's list is unscheduled, see below)
-**Build:** green. 367 tests, 6935 assertions with the LimeZu art installed
-(6579 without), ~4-5 s.
+**Build:** green. 383 tests, 7081 assertions with the LimeZu art installed,
+~5 s.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
@@ -45,7 +45,26 @@ in `RegionView._init()` so it can't depend on the embedding scene again;
 `world.tscn`'s now-redundant override was removed. Guarded by a new
 regression test (`test_region_view_y_sorts_itself`).
 
-**Next: whatever's left of M2's list, not yet split into steps** — day/night
+**Harbourside was relaid, and street furniture rethought (D-029, D-030).**
+The user walked the town and listed what was wrong with it; four of the five
+items are done. The map is now 96x72 with a second street: the shop row used
+to open its doors straight onto the carriageway (`anchor_of()` returned a
+cell in the middle of the road), which no amount of shuffling fitted into
+the old 28-row band. Lamps, bins and hydrants are placed by what a cell is
+rather than by a hash, and a lamp is refused where it would lean over the
+road. Three new open-air places — a basketball court, Ropewalk Park and a
+worksite — are furnished by `PlaceArt` from
+`python tools/import_limezu_places.py`.
+
+**Still open from that list: terrain edges.** Every boundary between grass,
+pavement, sand and water is a hard straight line, because D-021 left ground
+terrain code-painted: LimeZu draws it as edge-aware autotiles and
+`RegionTiles` picks a variant per cell from a hash, with no idea what is next
+door. Doing it properly means a neighbour-aware tiling pass — the water also
+wants its animation. That is the next job. The harbour quay is a large empty
+apron until it gets one too.
+
+**Next after that: whatever's left of M2's list, not yet split into steps** — day/night
 lighting; title screen, background selection, character creation, the
 opening. These are UI-shaped, not engine-shaped, so plan the steps once you
 look at them rather than guessing here. M2's "done when" (start a character,
@@ -56,7 +75,7 @@ flow before it's true even though the world itself is walkable now.
 Exteriors (Modern Office not yet) and downloaded Serene Village (CC-BY 4.0).
 The zips sit in the project root (git-ignored as `*.zip`). The 32 px sheets
 are extracted to `art/_limezu_source/` (has `.gdignore`, so Godot skips its
-~30 000 files). Four importers build `art/vendor/limezu/` from it:
+~30 000 files). Five importers build `art/vendor/limezu/` from it:
 `python tools/import_limezu.py` (character layers, D-020),
 `python tools/import_limezu_tiles.py` (ground/wall/roof tiles + building
 themes, D-021/D-022), `python tools/import_limezu_props.py` (street
@@ -77,7 +96,10 @@ furniture and the movement-jitter fix (D-019 through D-022); the world as the
 main scene, `SimViewer` behind developer mode, and region exits/travel
 (step 5, D-023); whole-building sprites for every kind (D-024 through D-026);
 a y-sort fix so those sprites always draw correctly regardless of which scene
-embeds `RegionView` (D-027).
+embeds `RegionView` (D-027); a covered building drawing none of its own tiles,
+with its door on the drawn door and its porch walkable (D-028); street
+furniture placed by what a cell is (D-029); and Harbourside relaid at 96x72
+with a court, a park and a worksite on it (D-030).
 
 **Interaction, briefly.** `Game.interaction_at(cell)` describes,
 `Game.interact_at(cell)` acts (D-018). Buying and selling at counters is M4;
@@ -88,16 +110,17 @@ it (D-017).
 **Running it.** `godot --path .` (the project itself: `boot.tscn` now goes
 straight to `world.tscn`) or `godot --path . res://scenes/world/world.tscn`
 directly — WASD/arrows, Shift runs, E (or Space) interacts. Walking onto
-either of Harbourside's two edge exits (top, near x=36-40; right, near
-y=26-34) refuses today (`region_locked`/`region_unmapped`) since Old Town and
+either of Harbourside's two edge exits (top, near x=42-45; right, near
+y=31-34) refuses today (`region_locked`/`region_unmapped`) since Old Town and
 Eastfield have no map yet. Set `developer_mode: true` in
 `user://settings.json` (or via `Settings.set_value`) to boot into `SimViewer`
 instead. `-- --screenshot=<path> [--advance=minutes] [--at=x,y]
 [--interact=dx,dy] [--walk=x,y,seconds]` saves a frame and quits (any scene
 that calls `DevCapture.maybe_capture` — `SimViewer` does not). At the 07:00
-start everyone is indoors; `--advance=180 --at=40,33` shows the harbour
-mid-morning, and `--advance=120 --at=9,26 --interact=0,-1` walks into the
-corner shop. The map alone: `res://scenes/debug/region_preview.tscn`.
+start everyone is indoors; `--advance=180 --at=48,40` shows the harbour
+mid-morning, and `--advance=120 --at=8,29 --interact=0,-1` walks into the
+corner shop. The map alone: `res://scenes/debug/region_preview.tscn`, which
+takes `--at=x,y` and `--zoom=0.26` to frame the whole district at once.
 
 **Test runner.** A test fails if the engine logs an error during it (D-015),
 and tests may `await`. Physics tests speed time up 8x (D-016); restore
@@ -116,7 +139,7 @@ and tests may `await`. Physics tests speed time up 8x (D-016); restore
 | `WorldState`, `Region`, `Location`, varied unlock requirements | done |
 | `DistrictMap` (maps as JSON rectangles), `ChunkStreamer` | done |
 | `RegionView` + `RegionTiles` (real LimeZu tiles, themed by building kind, code-painted fallback), `RegionPreview` | done |
-| `CharacterSprites`, `StreetProps` — real LimeZu people and street furniture | done |
+| `CharacterSprites`, `StreetProps`, `BuildingArt`, `PlaceArt` — real LimeZu people, street furniture, whole buildings and place decoration | done |
 | `WorldView`, `PlayerBody`, `PlayerCamera`, `CharacterFigure`, `Game.move_player` (region exits too) | done |
 | `NpcBodies` (pooled `NpcBody`), `NpcLook`, `DistrictMap.find_path` | done |
 | Interiors, `Game.interact_at`, `Hud`, `InteractionText`, `interact` action | done |
@@ -144,7 +167,7 @@ live LLM calls, quests, phone, combat, crime and police. See `ROADMAP.md`.
 
 - 62 source files in `src/`
 - 24 test suites
-- 10 authored NPCs, 19 locations, 3 regions (1 mapped), 6 interiors, 8 schedules, 4 backgrounds
+- 10 authored NPCs, 22 locations, 3 regions (1 mapped), 6 interiors, 8 schedules, 4 backgrounds
 
 ---
 
