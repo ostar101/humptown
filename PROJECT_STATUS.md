@@ -148,11 +148,5 @@ godot --headless --path . res://tests/benchmark.tscn
 godot --headless --path . --import
 ```
 
-**Git:** history is local. No remote is configured — the development
-environment had no linked GitHub account, so nothing has been pushed. To
-publish:
-
-```bash
-git remote add origin git@github.com:<you>/humptown.git
-git push -u origin main
-```
+**Git:** remote `origin` is https://github.com/ostar101/humptown.git, branch
+`main`. Push at the end of every session.
