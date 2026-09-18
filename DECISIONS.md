@@ -279,3 +279,30 @@ break does not serve. Sleeping needs rest at or below 0.75 and wakes at 07:00.
 **No save migration.** A save from before interiors has no `interior` field,
 and every such save was made outdoors, so the empty default is correct.
 
+
+## D-019 — Art direction: LimeZu's "Modern" pixel-art series, 32 px
+
+**Decision.** The world and its people are drawn with LimeZu's Modern series
+(itch.io): *Modern Interiors* (includes the character generator), *Modern
+Exteriors* and *Modern Office*, at the 32×32 size, which matches
+`DistrictMap.CELL_PIXELS`. Other packs are added only if they sit in the same
+style. The game stays 2D; 3D (Kenney, KayKit, Quaternius) was looked at and
+declined by the user (2026-09-18).
+
+**Why.** It is the only affordable set found that covers modern everyday life
+indoors and out in one consistent style, with a generator for many distinct
+adult people. It fits the existing 2D seams (`RegionTiles`, `CharacterFigure`)
+without reworking M2. Non-itch sources and non-pixel 2D were surveyed; nothing
+comparable turned up.
+
+**Licence.** Paid versions (from about $1.50 / $2.50 each): use in commercial
+and non-commercial projects, editing allowed, credit to LimeZu required, no
+resale or redistribution of the assets. Consequences: the credits screen must
+name LimeZu; the raw pack files must not be committed anywhere others can download them.
+The free version's licence is not stated on the page, so only the paid files
+are used.
+
+**Not decided yet.** Where the pack files live (a git-ignored `art/vendor/`
+folder is the likely answer, since the GitHub remote may be public) and how tiles map onto
+`RegionTiles` — both belong to the import step, after the user has bought the
+packs.

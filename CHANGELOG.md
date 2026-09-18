@@ -5,6 +5,9 @@ versions are milestones rather than releases until there is something to release
 
 ## [Unreleased] — Milestone 2: the world you can see and walk
 
+### Decided
+- Art direction: LimeZu's Modern pixel-art series at 32 px, staying 2D (D-019)
+
 ### Added
 - `data/maps.json` and `DistrictMap`: region layouts authored as rectangles
   (ground areas, buildings with doors, open-air places, exits), rasterised into

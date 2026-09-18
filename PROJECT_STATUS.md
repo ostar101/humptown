@@ -9,11 +9,12 @@
 
 ## Next task
 
-**Next: choose the art direction with the user, then M2 step 5.** The user
-asked (2026-09-18) to finish step 4 first and then pick the graphics together.
-Tiles, furniture and figures are all code-painted placeholders behind two
-seams: `RegionTiles` (the atlas) and `CharacterFigure` (people). Ask before
-importing any asset pack; check licences.
+**Next: import LimeZu art, then M2 step 5.** Art direction is chosen (D-019):
+LimeZu's Modern Interiors / Exteriors / Office, 32 px, 2D. The user buys the
+packs; wait for them before importing anything. Then replace the code-painted
+placeholders behind the two seams: `RegionTiles` (the atlas) and
+`CharacterFigure` (people, from the Modern Interiors character generator).
+Credit LimeZu; keep the raw pack files out of the repository (redistribution is forbidden).
 
 Done so far: region map + chunk streaming (step 1); player body, camera and
 movement rules (step 2); pooled NPC bodies (step 3, D-017); interiors, doors,
