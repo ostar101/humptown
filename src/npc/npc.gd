@@ -30,6 +30,11 @@ var portrait: String = ""
 ## Authored appearance for recognisable people: CharacterFigure palette keys
 ## to colour strings. Empty for background NPCs, whose look is generated.
 var look: Dictionary = {}
+## Who they are and how they talk, for the model to speak as them (D-036).
+## Prompt material in English, never shown to the player; empty for
+## background people, who are described from their occupation and traits.
+var bio: String = ""
+var voice: String = ""
 
 # --- runtime state (saved) --------------------------------------------------
 var location: String = ""
@@ -60,6 +65,8 @@ static func from_data(d: Dictionary) -> Npc:
 	n.workplace = str(d.get("workplace", ""))
 	n.schedule_id = str(d.get("schedule", ""))
 	n.portrait = str(d.get("portrait", ""))
+	n.bio = str(d.get("bio", ""))
+	n.voice = str(d.get("voice", ""))
 	var raw_look: Variant = d.get("look", {})
 	if raw_look is Dictionary:
 		n.look = raw_look

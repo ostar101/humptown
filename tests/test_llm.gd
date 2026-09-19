@@ -206,6 +206,46 @@ func test_anthropic_puts_system_at_the_top_level() -> void:
 	assert_has(spec["headers"], "anthropic-version: " + AnthropicProvider.API_VERSION)
 
 
+func test_current_claude_models_get_no_sampling_parameters() -> void:
+	var provider := AnthropicProvider.new()
+	var request := LlmRequest.simple(LlmRequest.Purpose.DIALOGUE, "s", "hello")
+	request.max_output_tokens = 160
+	for model in ["claude-opus-5", "claude-sonnet-5", "claude-fable-5-1", "claude-opus-4-8", "claude-opus-4-7"]:
+		var body: Dictionary = JSON.parse_string(provider.build_http(request, model, "k")["body"])
+		assert_false(body.has("temperature"), "%s answers temperature with a 400" % model)
+		assert_eq(body["output_config"]["effort"], "low", model)
+	var unknown: Dictionary = JSON.parse_string(provider.build_http(request, "claude-something-new", "k")["body"])
+	assert_false(unknown.has("temperature"), "an unknown model goes without, to be safe")
+
+
+func test_older_claude_models_keep_temperature_and_haiku_gets_no_effort() -> void:
+	var provider := AnthropicProvider.new()
+	var request := LlmRequest.simple(LlmRequest.Purpose.DIALOGUE, "s", "hello")
+	request.temperature = 0.8
+	var haiku: Dictionary = JSON.parse_string(provider.build_http(request, "claude-haiku-4-5", "k")["body"])
+	assert_almost(float(haiku["temperature"]), 0.8, 0.001)
+	assert_false(haiku.has("output_config"), "Haiku 4.5 answers effort with an error")
+	var sonnet: Dictionary = JSON.parse_string(provider.build_http(request, "claude-sonnet-4-5-20250929", "k")["body"])
+	assert_true(sonnet.has("temperature"), "a dated id belongs to its family")
+
+
+func test_models_that_think_by_default_get_room_to_think() -> void:
+	var provider := AnthropicProvider.new()
+	var request := LlmRequest.simple(LlmRequest.Purpose.DIALOGUE, "s", "hello")
+	request.max_output_tokens = 160
+	var opus: Dictionary = JSON.parse_string(provider.build_http(request, "claude-opus-5", "k")["body"])
+	assert_eq(int(opus["max_tokens"]), 160 + AnthropicProvider.THINKING_HEADROOM,
+		"thinking and answer share max_tokens; a tight cap would cut the answer off")
+	var haiku: Dictionary = JSON.parse_string(provider.build_http(request, "claude-haiku-4-5", "k")["body"])
+	assert_eq(int(haiku["max_tokens"]), 160)
+
+
+func test_anthropic_suggests_current_models() -> void:
+	var models := AnthropicProvider.new().suggested_models()
+	assert_eq(models["main"][0], "claude-opus-5")
+	assert_has(models["cheap"], "claude-haiku-4-5")
+
+
 func test_openai_puts_system_in_the_message_list() -> void:
 	var provider := OpenAiProvider.new()
 	var request := LlmRequest.simple(LlmRequest.Purpose.DIALOGUE, "You are Ida.", "hello")
@@ -259,6 +299,18 @@ func test_anthropic_response_parsing() -> void:
 	assert_eq(response.prompt_tokens, 120)
 	assert_eq(response.completion_tokens, 18)
 	assert_eq(response.finish_reason, "end_turn")
+
+
+func test_an_anthropic_refusal_is_a_failure_not_a_line() -> void:
+	var provider := AnthropicProvider.new()
+	var response := provider.parse_http(200, JSON.stringify({
+		"content": [{"type": "text", "text": "I"}],
+		"stop_reason": "refusal", "model": "claude-opus-5",
+		"usage": {"input_tokens": 120, "output_tokens": 1},
+	}), "claude-opus-5")
+	assert_false(response.ok)
+	assert_eq(response.error_code, "refused")
+	assert_false(response.is_retryable(), "asking again gets the same answer")
 
 
 func test_openai_response_parsing() -> void:

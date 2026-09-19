@@ -11,6 +11,11 @@ versions are milestones rather than releases until there is something to release
   the house style; typed lines recognised by topic in English and Finnish and
   answered from authored lines, a voice for every story NPC; people only know
   who they know; time stands still while talking (D-035)
+- The model speaks behind the same `say()`: the prompt is a pure function of
+  what this person is, sees, feels and believes; a reply changes nothing by
+  itself; any failure falls back to the authored line; the Anthropic provider
+  speaks to current models; a settings screen takes the player's own key; no
+  test can reach a provider or the player's own settings and keys (D-036)
 
 ### Added
 - `DialogueDirector` (`Game.dialogue`), `Conversation`, `OfflineTopics`,
@@ -22,6 +27,27 @@ versions are milestones rather than releases until there is something to release
   and Finnish
 - `test_dialogue`: 26 tests
 - `ui_preview.tscn -- --screen=world --talk=npc_id [--say=text]`
+- `DialoguePrompt`, `DialogueModel`, `LlmDialogueModel`;
+  `DialogueDirector.prompt_context()`; `bio` and `voice` for every story NPC
+- Settings screen (`SettingsScreen`), reached from the title screen:
+  language, provider, API key, models, routing, status and disclosure
+- `Settings.persist`, `LlmClient.sandboxed`, `SecretStore.path`
+- `test_dialogue_model` (14 tests), `test_settings_screen` (13 tests), five
+  more provider tests in `test_llm`
+- `ui_preview.tscn -- --screen=settings [--provider=id] [--locale=fi]`
+
+### Changed
+- `say()` and `Game.say_to_npc()` are coroutines; the dialogue box waits with
+  a "…" while a model answers
+- Anthropic: suggests `claude-opus-5`, `claude-sonnet-5`, `claude-haiku-4-5`;
+  sends `temperature` only to model families that accept it, `effort: low`
+  where supported, thinking headroom on models that think by default; a
+  `refusal` stop reason is the `refused` failure
+- The test runner starts from default settings and never writes them
+
+### Fixed
+- The ObjectDB leak reported at the end of every test run: lambdas in
+  `test_game_clock` held the test that held the clock
 
 ## [0.2.0] — 2026-09-19 — Milestone 2: the world you can see and walk
 

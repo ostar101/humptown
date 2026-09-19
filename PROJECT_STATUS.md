@@ -1,9 +1,9 @@
 # Project status
 
 **Updated:** 2026-09-19
-**Milestone:** M3 — Conversation — **in progress** (step 1 of 5 done). M2 complete (0.2.0).
-**Build:** green. 457 tests, 7654 assertions with the LimeZu art installed,
-~7 s.
+**Milestone:** M3 — Conversation — **in progress** (steps 1–3 of 5 done). M2 complete (0.2.0).
+**Build:** green. 489 tests, 7811 assertions with the LimeZu art installed,
+~8.5 s. No leak warnings at exit any more.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
@@ -24,8 +24,18 @@ box opens, and typed lines are answered from authored lines by topic, in
 English and Finnish. Every story NPC has their own voice; people only know
 who they know; names are learned; time stands still while talking.
 
-**Next: M3 step 2 — the model behind the same `say()`.** The steps as
-planned:
+**M3 step 3 is done (D-036): the model behind the same `say()`.** When the
+player has chosen a provider and saved their own key in the new settings
+screen (title → Settings), people answer in their own words; the prompt is
+a pure function of what that person is, sees, feels and believes
+(`DialoguePrompt`, `DialogueDirector.prompt_context()`); a reply changes
+nothing by itself; any failure falls back to the authored line. The
+Anthropic provider speaks to current models (no `temperature` where it is
+rejected, `effort: low`, thinking headroom, `refusal` handled). **No real
+provider has been contacted yet** — the key is the player's to enter.
+
+**Next: M3 step 4 — intent interpretation on the cheap model, validation in
+Godot.** The steps as planned:
 
 1. ~~**Dialogue UI**~~ — done (D-035). As designed: a real scene in the house theme: portrait upper left,
    name, typewriter reveal, free text entry at the bottom, optional quick
@@ -33,13 +43,15 @@ planned:
    which needs "who is standing on the faced cell" answered from the
    simulation (D-017: never from the bodies).
 2. ~~Authored fallback lines first~~ — done with step 1.
-3. **Prompt assembly** (next, with a settings screen for the provider and the
-   player's own key, and `say()` trying the model before the authored line): identity, present circumstance, selected memories,
-   the relationship, and only what this person actually knows
-   (`KnowledgeNetwork`) — tested as a pure function of world state.
-4. **Intent interpretation on the cheap model; validation in Godot.** The
-   model says what the player *meant*; a validator returns a `Result`; a
-   refusal emits `Events.action_rejected` and changes nothing.
+3. ~~**Prompt assembly**~~ — done (D-036), with the settings screen and the
+   Anthropic fixes.
+4. **Intent interpretation on the cheap model; validation in Godot** (next).
+   The model says what the player *meant*; a validator returns a `Result`; a
+   refusal emits `Events.action_rejected` and changes nothing. Offline, the
+   same proposal comes from `OfflineTopics`, so the pipeline is one path
+   with two interpreters. Today a line's effects (familiarity, ending the
+   talk) are applied directly by `DialogueDirector` from the offline topic —
+   that is what this step turns into proposals.
 5. **NPC memory** with summarisation, and the developer overlay (tokens,
    latency, cost, cache hits, selected memories, rejected proposals).
 
@@ -94,7 +106,9 @@ everyone is indoors; `--advance=180 --at=48,40` is the harbour mid-morning,
 `--advance=930` is night. The map alone: `res://scenes/debug/region_preview.tscn`
 with `--at=x,y --zoom=0.26`. The front end at any step:
 `res://scenes/debug/ui_preview.tscn -- --screen=title|creation|opening|world
-[--step=1-3] [--background=bg_dockhand] [--lines=n]`.
+[--step=1-3] [--background=bg_dockhand] [--lines=n]`, and
+`--screen=settings [--provider=anthropic] [--locale=fi]` (sandboxed: never
+writes the player's settings).
 
 **Test runner.** A test fails if the engine logs an error during it (D-015),
 and tests may `await`. Physics tests speed time up 8x (D-016); restore
@@ -102,6 +116,11 @@ and tests may `await`. Physics tests speed time up 8x (D-016); restore
 `Game.save_slot` at a test slot (D-033). `process_frame` fires *before* a
 frame's `_process` calls — await it twice when a test needs one to have run
 (D-034). Screens change scene through `_go()`; set `scene_changer` in a test.
+The runner sandboxes settings (`Settings.persist = false`, defaults in
+memory), the LLM client (`sandboxed`: offline provider only) and the secret
+store (its own file) — D-036. A test that needs a model sets
+`Game.dialogue.model` to a scripted one, as `test_dialogue_model` does;
+`say_to_npc()` is a coroutine, so `await` it.
 
 ---
 
@@ -132,21 +151,23 @@ frame's `_process` calls — await it twice when a test needs one to have run
 | `Reputation` — derived per scope, group-specific readings | done |
 | `PlayerState`, `Wallet`, `Inventory` (weight-based) | done |
 | `Stats` (attributes, condition, injuries), `Skills` (use-based, 1–99) | done |
-| LLM: router, budget, circuit breaker, 4 providers + offline, secret store | done, **not yet called by anything** |
+| LLM: router, budget, circuit breaker, 4 providers + offline, secret store | done; called by `say()` once the player configures it |
+| Dialogue: `DialogueDirector`, `OfflineTopics`, `DialogueLines`, `DialoguePrompt`, `DialogueModel`, `DialogueBox` | done |
+| Settings screen (language, provider, the player's key, models) | done |
 | `SaveManager` + `SaveMigrations` | done |
 | `Localization` — en complete, fi partial by design | done |
 | `SimViewer` debug screen | done |
 | Test suite + benchmark | done |
 
-**Not started, by design:** buying and selling, dialogue UI,
-live LLM calls, quests, phone, combat, crime and police. See `ROADMAP.md`.
+**Not started, by design:** intent interpretation and NPC memory (M3 steps
+4–5), buying and selling, quests, phone, combat, crime and police. See `ROADMAP.md`.
 
 ---
 
 ## Size
 
-- 72 source files in `src/`
-- 28 test suites
+- 81 source files in `src/`
+- 30 test suites
 - 10 authored NPCs, 22 locations, 3 regions (1 mapped), 6 interiors, 8 schedules, 4 backgrounds
 
 ---
@@ -207,10 +228,6 @@ wants anyway — not a cleverer director.
 
 ## Known issues and technical debt
 
-1. **Godot reports leaked ObjectDB instances at headless exit.** Harmless
-   teardown noise from quitting with RefCounted objects live; the runner now
-   unloads the world and waits a frame, which reduced but did not silence it.
-   Worth five minutes once, not now.
 2. **`NpcDirector.assign_tiers` fills `ACTIVE` in dictionary order.** With more
    than 60 people genuinely present in one region, the same 60 are always
    chosen. Not visible yet — no district is that crowded — but it will read as
@@ -223,9 +240,12 @@ wants anyway — not a cleverer director.
 3. **Finnish translation is ~80% complete.** Deliberate: it exercises the
    fallback path and a test measures the gap. Finish it when the UI settles,
    not before.
-4. **No LLM call has ever been made.** The stack is thoroughly unit-tested
-   offline, but no real provider has been contacted. Expect the usual first
-   contact surprises in M3; the parsers are the likeliest place.
+4. **No LLM call has ever been made.** The whole path is wired and tested
+   offline, but no real provider has been contacted — that needs the
+   player's own key, entered by the player. Expect first-contact surprises;
+   the parsers and model-specific request fields are the likeliest place.
+   Only Anthropic's request fields were brought up to date (D-036); the
+   other providers' suggested models were not revisited.
 5. **`SimViewer` builds its UI in code.** Fine for a developer tool, wrong for
    real UI. Do not copy the pattern into M2 screens.
 

@@ -84,6 +84,11 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "ui.continue"
 
+[node name="Settings" type="Button" parent="UI/Root/Column/Menu/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "ui.settings"
+
 [node name="Quit" type="Button" parent="UI/Root/Column/Menu/Buttons"]
 unique_name_in_owner = true
 layout_mode = 2

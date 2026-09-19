@@ -29,6 +29,8 @@ const LINGER_AFTER_GOODBYE := 1.6
 var _npc_id := ""
 var _reveal: Tween = null
 var _leaving := false
+var _waiting := false
+var _thinking: Tween = null
 
 
 func _ready() -> void:
@@ -77,11 +79,23 @@ func open(npc_id: String) -> Result:
 
 
 ## Says something. Empty or refused input is ignored and nothing is shown.
+## Await it: while a model is answering, the box shows that the person is
+## thinking and takes no more input.
 func submit(text: String) -> Result:
-	if not visible or _leaving:
+	if not visible or _leaving or _waiting:
 		return Result.failure("not_talking")
-	var said := Game.say_to_npc(text)
+	if text.strip_edges().is_empty():
+		return Result.failure("empty")
+	_waiting = true
+	_set_input_enabled(false)
+	if Game.dialogue.model.is_available():
+		_show_thinking()
+	var said: Result = await Game.say_to_npc(text)
+	_waiting = false
+	if not visible:
+		return said   # closed while waiting
 	if said.is_err():
+		_set_input_enabled(true)
 		return said
 	var reply: Dictionary = said.value
 	_entry.text = ""
@@ -90,10 +104,10 @@ func submit(text: String) -> Result:
 	_show_line(str(reply["text"]))
 	if reply["ends"]:
 		_leaving = true
-		_set_input_enabled(false)
 		var linger := str(reply["text"]).length() / CHARS_PER_SECOND + LINGER_AFTER_GOODBYE
 		get_tree().create_timer(linger).timeout.connect(close)
 	else:
+		_set_input_enabled(true)
 		_entry.grab_focus()
 	return said
 
@@ -105,6 +119,9 @@ func close() -> void:
 		Game.end_conversation()
 	if _reveal != null:
 		_reveal.kill()
+	if _thinking != null:
+		_thinking.kill()
+		_thinking = null
 	visible = false
 	_leaving = false
 	closed.emit()
@@ -134,7 +151,22 @@ func speaker_name() -> String:
 	return _name.text
 
 
+## An ellipsis that fills in, while someone is working out what to say.
+func _show_thinking() -> void:
+	if _reveal != null:
+		_reveal.kill()
+	_line.text = "…"
+	_line.visible_ratio = 1.0
+	_thinking = create_tween().set_loops()
+	_thinking.tween_property(_line, "modulate:a", 0.35, 0.45)
+	_thinking.tween_property(_line, "modulate:a", 1.0, 0.45)
+
+
 func _show_line(text: String) -> void:
+	if _thinking != null:
+		_thinking.kill()
+		_thinking = null
+	_line.modulate.a = 1.0
 	_line.text = text
 	_line.visible_ratio = 0.0
 	if _reveal != null:

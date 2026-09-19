@@ -1,6 +1,7 @@
 class_name TitleScreen
 extends Node
-## Where the game starts (D-034): a new life, the one that was saved, or out.
+## Where the game starts (D-034): a new life, the one that was saved, the
+## settings (D-036), or out.
 ##
 ## Continue is offered only when there is a save to continue — sleeping in
 ## your own bed writes it (D-033). A failed load says why and stays here
@@ -8,9 +9,11 @@ extends Node
 
 const CREATION := "res://scenes/ui/character_creation.tscn"
 const WORLD := "res://scenes/world/world.tscn"
+const SETTINGS := "res://scenes/ui/settings_screen.tscn"
 
 @onready var _new_game: Button = %NewGame
 @onready var _continue: Button = %Continue
+@onready var _settings: Button = %Settings
 @onready var _quit: Button = %Quit
 @onready var _message: Label = %Message
 
@@ -18,6 +21,7 @@ const WORLD := "res://scenes/world/world.tscn"
 func _ready() -> void:
 	_new_game.pressed.connect(start_new_game)
 	_continue.pressed.connect(continue_saved_game)
+	_settings.pressed.connect(open_settings)
 	_quit.pressed.connect(func() -> void: get_tree().quit())
 	_continue.disabled = not Game.has_saved_game()
 	# Whichever is the likelier next step has the keyboard's attention.
@@ -27,6 +31,10 @@ func _ready() -> void:
 
 func start_new_game() -> void:
 	_go(CREATION)
+
+
+func open_settings() -> void:
+	_go(SETTINGS)
 
 
 func continue_saved_game() -> Result:

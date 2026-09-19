@@ -98,7 +98,7 @@ func new_game(background_id: String = "", world_seed: int = 0) -> Result:
 
 	_seed_relationships()
 	_apply_background(background_id)
-	dialogue.setup(npcs, world, player, relationships)
+	dialogue.setup(npcs, world, player, relationships, knowledge, clock, data, LlmDialogueModel.new(llm))
 	_connect_simulation()
 
 	# Open the starting region and place the player.
@@ -418,13 +418,15 @@ func start_conversation(npc_id: String) -> Result:
 
 
 ## The player says something to whoever they are talking to; returns the
-## reply as `DialogueDirector.say()` describes it.
+## reply as `DialogueDirector.say()` describes it. Await it: with a model
+## answering, the reply takes as long as the model does.
 func say_to_npc(text: String) -> Result:
-	var said := dialogue.say(text)
+	var talking_to := dialogue.conversation.npc_id if dialogue.is_talking() else ""
+	var said: Result = await dialogue.say(text)
 	if said.is_ok():
 		var reply: Dictionary = said.value
 		Events.dialogue_line.emit(PlayerState.ID, text.strip_edges())
-		Events.dialogue_line.emit(dialogue.conversation.npc_id, str(reply["text"]))
+		Events.dialogue_line.emit(talking_to, str(reply["text"]))
 	return said
 
 

@@ -10,7 +10,7 @@ var completion_tokens: int = 0
 var model: String = ""
 var provider: String = ""
 ## "" on success; otherwise one of: no_key, network, timeout, rate_limited,
-## auth, server, bad_response, budget_exceeded, circuit_open, disabled.
+## auth, server, bad_response, refused, budget_exceeded, circuit_open, disabled.
 var error_code: String = ""
 var error_message: String = ""
 var latency_ms: int = 0

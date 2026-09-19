@@ -18,6 +18,9 @@ var provider: LlmProvider = NullProvider.new()
 var router := LlmRouter.new()
 var budget := LlmBudget.new()
 var secrets := SecretStore.new()
+## True in the test runner: whatever the settings say, no real provider is
+## built, so no test can reach a network, spend money or send a key (D-036).
+var sandboxed := false
 
 ## Captured request/response pairs for the developer overlay. Never contains
 ## the API key: only the provider id ever reaches this.
@@ -45,7 +48,7 @@ func _ready() -> void:
 ## Rebuilds the provider and routing from current settings.
 func reconfigure() -> void:
 	var provider_id := str(Settings.get_value("llm_provider", "none"))
-	provider = make_provider(provider_id)
+	provider = make_provider("none" if sandboxed else provider_id)
 	router.configure(
 		str(Settings.get_value("llm_routing_mode", "balanced")),
 		str(Settings.get_value("llm_main_model", "")),

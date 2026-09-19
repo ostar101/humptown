@@ -8,6 +8,12 @@ func before_each() -> void:
 	clock = GameClock.new()
 
 
+## Lambdas here that read `clock` hold this test, and the clock holds them:
+## let go of the clock so the cycle does not outlive the run.
+func after_each() -> void:
+	clock = null
+
+
 func test_starts_at_configured_time() -> void:
 	assert_eq(clock.hour(), 7)
 	assert_eq(clock.minute(), 0)

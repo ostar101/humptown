@@ -13,6 +13,8 @@ const TEST_DIR := "res://tests/"
 ## Sleeping in your bed saves (D-033); tests sleep, and must never do it over
 ## the player's own life.
 const TEST_SAVE_SLOT := "test_runner_main"
+## Nor over the player's API keys, when a test stores one (D-036).
+const TEST_SECRETS_PATH := "user://test_runner_secrets.dat"
 
 var total_tests := 0
 var total_assertions := 0
@@ -24,6 +26,15 @@ func _ready() -> void:
 	Log.min_level = Log.Level.ERROR    # keep the report readable
 	OS.add_logger(_errors)
 	Game.save_slot = TEST_SAVE_SLOT
+	# A test run starts from the default settings, whatever this machine has
+	# saved, and never writes them back (D-036).
+	Settings.persist = false
+	Settings.reset_to_defaults()
+	# It never reaches a real provider either, whatever a test configures: no
+	# network, no cost, no key leaving the machine — and its keys are its own.
+	Game.llm.sandboxed = true
+	Game.llm.secrets = SecretStore.new(TEST_SECRETS_PATH)
+	Game.llm.reconfigure()
 	# Let the root finish setting up, so tests may add scenes to the tree.
 	await get_tree().process_frame
 	var started := Time.get_ticks_msec()
@@ -53,6 +64,7 @@ func _ready() -> void:
 	# created during the run are released rather than reported as leaked.
 	Game.unload()
 	Game.saves.delete_slot(TEST_SAVE_SLOT)
+	Game.llm.secrets.clear_all()
 	await get_tree().process_frame
 	OS.remove_logger(_errors)
 	get_tree().quit(0 if failures.is_empty() else 1)

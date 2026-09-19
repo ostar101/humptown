@@ -31,6 +31,9 @@ const DEFAULTS := {
 }
 
 var _values: Dictionary = {}
+## False in the test runner: tests change settings, and must never do it over
+## the player's own settings.json (D-036).
+var persist := true
 
 
 func _ready() -> void:
@@ -90,6 +93,8 @@ func load_settings() -> void:
 
 
 func save_settings() -> void:
+	if not persist:
+		return
 	var file := FileAccess.open(SETTINGS_PATH, FileAccess.WRITE)
 	if file == null:
 		Log.error("settings", "Could not write settings", {"err": FileAccess.get_open_error()})

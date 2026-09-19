@@ -17,8 +17,16 @@ const SECRET_PATH := "user://secrets.dat"
 const MACHINE_SALT_PATH := "user://.machine"
 const OBFUSCATION_SALT := "humptown/secret/v1"
 
+## Where the keys live. Only the test runner points it elsewhere, so that no
+## test can read, overwrite or delete the player's own keys (D-036).
+var path: String = SECRET_PATH
 var _cache: Dictionary = {}
 var _loaded: bool = false
+
+
+
+func _init(p_path: String = SECRET_PATH) -> void:
+	path = p_path
 
 
 ## Stores a key for a provider. Pass "" to clear it.
@@ -54,8 +62,8 @@ func configured_providers() -> Array[String]:
 
 func clear_all() -> Result:
 	_cache.clear()
-	if FileAccess.file_exists(SECRET_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SECRET_PATH))
+	if FileAccess.file_exists(path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	_loaded = true
 	return Result.success()
 
@@ -65,9 +73,9 @@ func _ensure_loaded() -> void:
 		return
 	_loaded = true
 	_cache = {}
-	if not FileAccess.file_exists(SECRET_PATH):
+	if not FileAccess.file_exists(path):
 		return
-	var file := FileAccess.open_encrypted_with_pass(SECRET_PATH, FileAccess.READ, _passphrase())
+	var file := FileAccess.open_encrypted_with_pass(path, FileAccess.READ, _passphrase())
 	if file == null:
 		# Wrong machine, or a corrupted file. Do not crash: the player can
 		# simply re-enter the key.
@@ -81,7 +89,7 @@ func _ensure_loaded() -> void:
 
 
 func _save() -> Result:
-	var file := FileAccess.open_encrypted_with_pass(SECRET_PATH, FileAccess.WRITE, _passphrase())
+	var file := FileAccess.open_encrypted_with_pass(path, FileAccess.WRITE, _passphrase())
 	if file == null:
 		Log.error("llm", "Could not write secret store")
 		return Result.failure("secret_write_failed")

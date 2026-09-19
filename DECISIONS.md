@@ -1011,3 +1011,91 @@ words, it does not understand sentences, and it will sometimes take a
 question for small talk. It exists to be the floor, not to compete with the
 model. Finnish inflection is handled by matching the first five letters of
 longer place names ("satamassa" is the harbour), which is crude and enough.
+
+## D-036 — The model speaks behind the same `say()`; what it is told is a pure function; no test can reach a provider
+
+**Decision.** M3 step 3 of the roadmap list (prompt assembly), with what it
+needs around it. `DialogueDirector.say()` asks a `DialogueModel` when one is
+available and falls back to the authored line (D-035) when it is not, when
+the call fails, or when nothing sayable comes back. The game's model is
+`LlmDialogueModel` over `Game.llm`, so every line goes through the router,
+budget, cache and circuit breaker built in M1. The base `DialogueModel` is
+the offline one; tests script their own. `say()` is a coroutine now: the
+dialogue box shows a quiet "…" while it waits, the clock stays paused, and a
+reply that arrives after the conversation has ended is dropped.
+
+**What the model is told is a pure function of a context dictionary.**
+`DialogueDirector.prompt_context(npc_id)` gathers it from world state and
+`DialoguePrompt.build(context)` turns it into an `LlmRequest`, so the prompt
+is testable without any model: who they are (name, age, occupation, and a
+new authored `bio` and `voice` for each story NPC), where they are and what
+they are doing, the player as *they* see them (a name only if they know it;
+the relationship numbers turned into feelings — the model is told "you do not
+trust them", never a score), the people they know (their own relationships,
+nobody else's), what they believe about the player (only their own
+`KnowledgeNetwork` beliefs, each with how they came by it), memories (empty
+until step 5), and the last twelve lines. The prompt is written in English
+whatever the game's language; the model is told to answer in the language
+the player writes in.
+
+**The rules at the end are the anti-hallucination rule in the model's own
+terms.** Speak only as yourself, out loud, one to three sentences; you know
+what is written above and ordinary everyday things; never make up people,
+places, events, prices or anything about the person in front of you; you
+cannot hand over or promise what you do not have; never say you are an AI.
+
+**A reply changes nothing by itself.** What a line *does* — familiarity, the
+conversation ending — still comes from the player's own words through
+`OfflineTopics`. The model cannot keep the player talking, grant anything or
+move anyone. Turning words into proposals that Godot validates is the next
+step (intent interpretation), not this one.
+
+**What comes back is cleaned before it is shown.** Their own name as a
+speaker label, stage directions in `*…*` or `(…)`, and wrapping quotes are
+removed; a reply is cut at the last sentence that fits 420 characters.
+Nothing left counts as a failure. Every fallback records why
+(`timeout`, `refused`, `empty_reply`, `offline`, …) for the developer
+overlay.
+
+**The Anthropic provider speaks to current models.** Suggested models are
+`claude-opus-5` and `claude-sonnet-5` (main) and `claude-haiku-4-5` (cheap).
+Opus 5, Sonnet 5, Fable and Opus 4.7/4.8 answer `temperature` with a 400, so
+it is sent only to the older families known to accept it — and never to a
+model the code does not recognise, since a missing sampling parameter costs
+nothing and a rejected one costs the reply. Models that take `effort` are
+asked for `low` (Haiku 4.5 errors on it and gets none). Opus 5, Sonnet 5 and
+Fable think by default and `max_tokens` caps thinking and answer together,
+so they get 1024 tokens of headroom above the answer's budget; only what is
+generated is billed. A `refusal` stop reason is a failure (`refused`, not
+retried), not an empty line. The server-side `fallbacks` beta is not used:
+a declined line falls back to the authored one, which is already graceful.
+
+**The settings screen.** Reached from the title screen: language, provider,
+the player's API key, the main and cheap model, routing. The key field is a
+secret field; the key goes to `SecretStore` (D-006) and the field is emptied
+the moment it is saved, so the screen only ever says *whether* a key is
+stored. Choosing a provider fills in its suggested models unless the player
+typed their own, and never leaves another provider's model behind. A status
+line says whether people will answer in their own words and, if not, why
+not — the same conditions `LlmClient.is_available()` checks. Once a provider
+is chosen the screen says plainly that the key goes only to that provider,
+that what the player says to people is sent there, and that each answer is
+billed to the player's account. Changes apply at once.
+
+**No test can reach a provider, or the player's own files.** The runner sets
+`Settings.persist = false` and resets settings to their defaults in memory,
+so tests neither depend on this machine's settings nor write them; sets
+`LlmClient.sandboxed`, so `reconfigure()` builds only the offline provider
+whatever a test configures; and gives the client a `SecretStore` at
+`user://test_runner_secrets.dat`, cleared at the end. The first settings
+test asserts all three, because every other settings test would otherwise
+be writing over the player's own. `ui_preview --screen=settings` is
+sandboxed the same way.
+
+**Costs accepted.** No real provider has been contacted: the key is the
+player's to enter, so first contact happens on their machine, and the
+parsers are tested against the documented response shapes only. A prompt is
+roughly 600–900 input tokens per line with no prompt caching yet — cheap at
+these volumes, and caching is worth adding once the system text stops
+changing turn to turn. The other providers' suggested model lists were not
+revisited.

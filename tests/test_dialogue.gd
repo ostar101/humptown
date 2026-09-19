@@ -15,6 +15,7 @@ var _rejections: Array = []
 func before_each() -> void:
 	Game.new_game("", 7)
 	Game.pause_time(true)
+	Game.dialogue.model = DialogueModel.new()   # these are the offline tests
 	Localization.set_locale("en")
 	_rejections = []
 	Events.action_rejected.connect(_on_rejected)
@@ -175,7 +176,7 @@ func test_asking_who_someone_is_gets_their_own_answer_and_their_name() -> void:
 	_enter_shop_with_ida_working()
 	assert_false(Game.dialogue.knows_name("npc_ida"), "a stranger to start with")
 	assert_ok(Game.start_conversation("npc_ida"))
-	var said := Game.say_to_npc("Who are you?")
+	var said: Result = await Game.say_to_npc("Who are you?")
 	assert_ok(said)
 	assert_eq((said.value as Dictionary)["text"], Localization.t("dialogue.npc_ida.about_self.1"))
 	assert_true(Game.dialogue.knows_name("npc_ida"), "now you know her name")
@@ -185,10 +186,10 @@ func test_asking_who_someone_is_gets_their_own_answer_and_their_name() -> void:
 func test_people_only_know_the_people_they_know() -> void:
 	_enter_shop_with_ida_working()
 	assert_ok(Game.start_conversation("npc_ida"))
-	var about_tuomas: Dictionary = Game.say_to_npc("Do you know Tuomas?").value
+	var about_tuomas: Dictionary = (await Game.say_to_npc("Do you know Tuomas?")).value
 	assert_eq(about_tuomas["text"], Localization.t("dialogue.generic.about_person_known.1", {"person": "Tuomas"}),
 		"Ida and Tuomas are friends")
-	var about_joonas: Dictionary = Game.say_to_npc("And Joonas?").value
+	var about_joonas: Dictionary = (await Game.say_to_npc("And Joonas?")).value
 	assert_eq(about_joonas["text"], Localization.t("dialogue.generic.about_person_unknown.1", {"person": "Joonas"}),
 		"Ida has no relationship with Joonas")
 
@@ -199,9 +200,9 @@ func test_time_stands_still_while_talking_and_is_paid_after() -> void:
 	var before := Game.clock.total_minutes
 	assert_ok(Game.start_conversation("npc_ida"))
 	assert_true(Game.clock.paused, "the world waits while two people talk")
-	Game.say_to_npc("Hello.")
-	Game.say_to_npc("What do you do?")
-	Game.say_to_npc("Bye.")
+	await Game.say_to_npc("Hello.")
+	await Game.say_to_npc("What do you do?")
+	await Game.say_to_npc("Bye.")
 	assert_ok(Game.end_conversation())
 	assert_eq(Game.clock.total_minutes, before + 3, "three things said, three minutes gone")
 	assert_false(Game.clock.paused, "and the clock runs again as it did before")
@@ -210,7 +211,7 @@ func test_time_stands_still_while_talking_and_is_paid_after() -> void:
 func test_talking_makes_two_people_a_little_more_familiar() -> void:
 	_enter_shop_with_ida_working()
 	assert_ok(Game.start_conversation("npc_ida"))
-	Game.say_to_npc("Hello.")
+	await Game.say_to_npc("Hello.")
 	assert_ok(Game.end_conversation())
 	assert_almost(Game.relationships.peek("npc_ida", PlayerState.ID).familiarity,
 		DialogueDirector.FAMILIARITY_PER_CONVERSATION, 0.001)
@@ -219,25 +220,25 @@ func test_talking_makes_two_people_a_little_more_familiar() -> void:
 func test_empty_or_endless_lines_are_refused_and_change_nothing() -> void:
 	_enter_shop_with_ida_working()
 	assert_ok(Game.start_conversation("npc_ida"))
-	assert_err(Game.say_to_npc("   "), "empty")
-	assert_err(Game.say_to_npc("a".repeat(DialogueDirector.MAX_LINE_LENGTH + 1)), "too_long")
+	assert_err(await Game.say_to_npc("   "), "empty")
+	assert_err(await Game.say_to_npc("a".repeat(DialogueDirector.MAX_LINE_LENGTH + 1)), "too_long")
 	assert_eq(Game.dialogue.conversation.exchanges, 0)
 
 
 func test_after_goodbye_nothing_more_is_said() -> void:
 	_enter_shop_with_ida_working()
 	assert_ok(Game.start_conversation("npc_ida"))
-	var bye: Dictionary = Game.say_to_npc("Goodbye.").value
+	var bye: Dictionary = (await Game.say_to_npc("Goodbye.")).value
 	assert_true(bye["ends"])
 	assert_eq(bye["text"], Localization.t("dialogue.npc_ida.farewell.1"))
-	assert_err(Game.say_to_npc("wait, one more thing"), "conversation_over")
+	assert_err(await Game.say_to_npc("wait, one more thing"), "conversation_over")
 
 
 func test_finnish_questions_get_finnish_answers() -> void:
 	Localization.set_locale("fi")
 	_enter_shop_with_ida_working()
 	assert_ok(Game.start_conversation("npc_ida"))
-	var said: Dictionary = Game.say_to_npc("Kuka olet?").value
+	var said: Dictionary = (await Game.say_to_npc("Kuka olet?")).value
 	assert_eq(said["topic"], "about_self")
 	assert_true(str(said["text"]).begins_with("Ida. Lahtinen"), said["text"])
 
@@ -276,7 +277,7 @@ func test_walking_up_to_someone_and_talking_to_them() -> void:
 	assert_false(view.player_body().input_enabled, "the player stands still while talking")
 	assert_eq(body.facing(), Vector2i.DOWN, "Joonas turns to face the player")
 
-	assert_ok(box.submit("Who are you?"))
+	assert_ok(await box.submit("Who are you?"))
 	assert_eq(box.line_text(), Localization.t("dialogue.npc_joonas.about_self.1"))
 	assert_eq(box.speaker_name(), joonas.name, "introduced, now named")
 

@@ -4,7 +4,9 @@ extends Node
 ##     godot --path . res://scenes/debug/ui_preview.tscn -- --screen=creation \
 ##         --step=2 --background=bg_dockhand --name=Aino --screenshot=user://c.png
 ##
-## `--screen` is `title`, `creation` or `opening`. For creation, `--step` is
+## `--screen` is `title`, `creation`, `opening`, `settings` or `world`. For
+## settings, `--provider=id` chooses a provider — in memory only, since a
+## preview never writes the player's settings — and `--locale=fi` the language. For creation, `--step` is
 ## 1-3 and the screen is driven through its own public methods, exactly as its
 ## buttons would; for the opening, `--lines=n` reveals that many lines. Scene
 ## changes are captured, so pressing through never leaves this preview.
@@ -13,6 +15,7 @@ const SCREENS := {
 	"title": "res://scenes/ui/title_screen.tscn",
 	"creation": "res://scenes/ui/character_creation.tscn",
 	"opening": "res://scenes/ui/opening.tscn",
+	"settings": "res://scenes/ui/settings_screen.tscn",
 	# The world as a freshly created character first sees it.
 	"world": "res://scenes/world/world.tscn",
 }
@@ -25,6 +28,11 @@ func _ready() -> void:
 			var parts := arg.trim_prefix("--").split("=", true, 1)
 			args[parts[0]] = parts[1]
 	var which := str(args.get("screen", "title"))
+	if which == "settings":
+		Settings.persist = false
+		Game.llm.sandboxed = true
+		if args.has("locale"):
+			Localization.set_locale(str(args["locale"]))
 	var background := str(args.get("background", "bg_dockhand"))
 	if which == "opening" and not Game.is_running():
 		Game.new_game(background, 7)
@@ -46,6 +54,8 @@ func _ready() -> void:
 		# the next line — and one more press would already be leaving.
 		for i in maxi(int(args.get("lines", "1")) * 2 - 1, 0):
 			(screen as Opening).advance()
+	elif which == "settings" and args.has("provider"):
+		(screen as SettingsScreen).choose_provider(str(args["provider"]))
 	elif which == "world" and args.has("talk"):
 		_drive_talk(screen as WorldView, str(args["talk"]), str(args.get("say", "")))
 	DevCapture.maybe_capture(self)
