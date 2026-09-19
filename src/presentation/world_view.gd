@@ -18,6 +18,7 @@ extends Node2D
 @onready var _daylight: CanvasModulate = $Daylight
 @onready var _dialogue: DialogueBox = $Dialogue
 @onready var _shop: ShopWindow = $Shop
+@onready var _bag: InventoryWindow = $Inventory
 
 const NO_CELL := Vector2i(-99999, -99999)
 
@@ -43,6 +44,8 @@ func _ready() -> void:
 	Events.game_loaded.connect(refresh_daylight)
 	_dialogue.closed.connect(_on_dialogue_closed)
 	_shop.closed.connect(_on_shop_closed)
+	_bag.closed.connect(_on_shop_closed)
+	Events.player_collapsed.connect(_on_player_collapsed)
 	show_current_area()
 	DevCapture.maybe_capture(self)
 
@@ -52,6 +55,8 @@ func _exit_tree() -> void:
 		Events.minute_passed.disconnect(_on_minute_passed)
 		Events.time_skipped.disconnect(_on_time_skipped)
 		Events.game_loaded.disconnect(refresh_daylight)
+	if Events.player_collapsed.is_connected(_on_player_collapsed):
+		Events.player_collapsed.disconnect(_on_player_collapsed)
 
 
 ## (Re)builds the view for wherever the player is: the region, or the inside
@@ -113,6 +118,21 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("interact") and _player.input_enabled:
 		get_viewport().set_input_as_handled()
 		interact()
+	elif event.is_action_pressed("inventory") and _player.input_enabled:
+		get_viewport().set_input_as_handled()
+		open_inventory()
+
+
+## Opens what the player carries (D-041); walking waits until it closes.
+func open_inventory() -> void:
+	_bag.open()
+	if _bag.is_open():
+		_player.input_enabled = false
+		_hud.set_prompt("")
+
+
+func inventory_window() -> InventoryWindow:
+	return _bag
 
 
 ## Uses whatever the player is facing — a person first, then whatever is on
@@ -192,7 +212,7 @@ func hud() -> Hud:
 ## Works out the prompt only when the faced cell, or who is standing on it,
 ## changes — not every frame.
 func _refresh_prompt() -> void:
-	if _dialogue.is_open() or _shop.is_open():
+	if _dialogue.is_open() or _shop.is_open() or _bag.is_open():
 		return
 	var front := _player.current_cell() + _player.facing
 	var body := _npcs.body_at(front)
@@ -205,6 +225,18 @@ func _refresh_prompt() -> void:
 		_hud.set_prompt(InteractionText.prompt_for({"kind": "person", "target": person}))
 	else:
 		_hud.set_prompt(InteractionText.prompt_for(Game.interaction_at(front)))
+
+
+## Health ran out (D-041): the player is somewhere else now, and is told why.
+func _on_player_collapsed(woke_at: String, bill: int) -> void:
+	if _dialogue.is_open():
+		_dialogue.close()
+	if _shop.is_open():
+		_shop.close()
+	if _bag.is_open():
+		_bag.close()
+	show_current_area()
+	_hud.show_message(Localization.t("ui.msg.collapsed", {"place": InteractionText.place_name(woke_at), "bill": bill}))
 
 
 func _on_shop_closed() -> void:

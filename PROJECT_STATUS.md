@@ -1,9 +1,9 @@
 # Project status
 
 **Updated:** 2026-09-19
-**Milestone:** M4 — Making a living — **in progress** (steps 1–2 of 6 done). M3 complete in code (0.3.0).
-**Build:** green. 555 tests, 8259 assertions with the LimeZu art installed,
-~9.6 s. No leak warnings at exit.
+**Milestone:** M4 — Making a living — **in progress** (steps 1–3 of 6 done). M3 complete in code (0.3.0).
+**Build:** green. 566 tests, 8305 assertions with the LimeZu art installed,
+~9.8 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
@@ -40,10 +40,10 @@ other providers' model lists were not revisited).
    behind it and the shop opens: Buy and Sell tabs, prices from value ×
    markup, cash then card, stock and till saved, midnight restock.
 2. ~~**Haggling against the skill**~~ — done (D-040).
-3. **Meals and the condition loop** (next). Eating and drinking from the
-   inventory (items already carry `hunger`, `sleep`, `intoxication`,
-   `health`); hunger and tiredness felt in effectiveness; the HUD says so.
-4. **Jobs, shifts and wages.** The background's job (dockhand, …) or one
+3. ~~**Meals and the condition loop**~~ — done (D-041). The bag on I; use
+   what you carry; starving and exhaustion cost health; a collapse wakes you
+   in the clinic, billed; the HUD's status corner.
+4. **Jobs, shifts and wages** (next). The background's job (dockhand, …) or one
    asked for; shifts at the workplace as batched time with pay, skill
    experience and condition cost; missed shifts have consequences. People's
    own finances start here (a gift still goes nowhere, D-037).
@@ -86,7 +86,8 @@ answered from the simulation (`NpcRegistry`), never from the bodies, which lag
 it (D-017).
 
 **Running it.** `godot --path .` boots to the title screen. In the world:
-WASD/arrows, Shift runs, E (or Space) interacts; your bed saves. Harbourside's
+WASD/arrows, Shift runs, E (or Space) interacts, I opens the bag, F3 the
+developer overlay; your bed saves. Harbourside's
 two edge exits (top, x=42-45; right, y=31-34) refuse today since Old Town and
 Eastfield have no map yet (M7). `developer_mode: true` in
 `user://settings.json` boots into `SimViewer` instead.
@@ -152,21 +153,22 @@ store (its own file) — D-036. A test that needs a model sets
 | `MemoryBook` — what people remember of the player, bounded and summarised | done |
 | `DevOverlay` (F3) — model calls, cost, intents, rules, memories, rejections | done |
 | Shops: `ShopRegistry`, `ShopRules`, `HaggleRules`, `ShopWindow` — buy, sell, haggle, restock | done |
+| Condition loop: `ItemRules`, `InventoryWindow` (I), collapse to the clinic, HUD status corner | done |
 | Settings screen (language, provider, the player's key, models) | done |
 | `SaveManager` + `SaveMigrations` | done |
 | `Localization` — en complete, fi partial by design | done |
 | `SimViewer` debug screen | done |
 | Test suite + benchmark | done |
 
-**Not started, by design:** meals, jobs, quests (M4), phone,
+**Not started, by design:** jobs, home stash, quests (M4), phone,
 combat, crime and police. See `ROADMAP.md`.
 
 ---
 
 ## Size
 
-- 89 source files in `src/`
-- 36 test suites
+- 92 source files in `src/`
+- 37 test suites
 - 10 authored NPCs, 22 locations, 3 regions (1 mapped), 6 interiors, 8 schedules, 4 backgrounds, 4 shops, 14 items
 
 ---

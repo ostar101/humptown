@@ -55,6 +55,14 @@ var _player_activity := "idle"
 ## The shop the player is at the counter of, or "" (D-039), and how many
 ## purchases and sales it has seen — each is a minute, paid on leaving.
 var _shopping := ""
+## A collapse noticed in the middle of a clock step, carried out once the
+## step is over (D-041); and a guard against collapsing inside a collapse.
+var _collapse_due := false
+var _collapsing := false
+## Where someone who collapses wakes, when, and what the clinic charges.
+const COLLAPSE_WAKE_MINUTE := 8 * 60
+const CLINIC := "loc_clinic"
+const CLINIC_BILL := 60
 var _shop_deals := 0
 var _time_paused_before_shopping := false
 
@@ -73,6 +81,7 @@ func _process(delta: float) -> void:
 	if not running or clock == null:
 		return
 	clock.tick(delta)
+	_resolve_collapse()
 
 
 # --- lifecycle --------------------------------------------------------------
@@ -206,6 +215,7 @@ func advance_time(minutes: int) -> void:
 	if clock == null or minutes <= 0:
 		return
 	clock.advance(minutes)
+	_resolve_collapse()
 
 
 func pause_time(paused: bool) -> void:
@@ -507,7 +517,8 @@ func haggle(item_id: String) -> Result:
 		data.get_entry("occupations", keeper.occupation).get("skills", []) if keeper != null else [],
 		keeper.traits if keeper != null else [])
 	var odds := HaggleRules.chance(player.skills.level_of("haggling"), against,
-		relationships.disposition(staff, PlayerState.ID) if keeper != null else 0.0)
+		relationships.disposition(staff, PlayerState.ID) if keeper != null else 0.0,
+		player.stats.effectiveness())
 	var judged := HaggleRules.judge({
 		"serving": keeper != null,
 		"sells": shops.sells(shop_id, item_id),
@@ -564,6 +575,74 @@ func close_shop() -> Result:
 	clock.paused = _time_paused_before_shopping
 	advance_time(maxi(deals, 1))
 	return Result.success({"deals": deals})
+
+
+# --- using things and the body --------------------------------------------------
+
+## Eats, drinks or uses something the player carries (D-041). `ItemRules`
+## judges; the item is used up, its effects applied, and the minutes it
+## took pass. Refuses `busy` while talking or shopping, and `not_owned`,
+## `not_usable`, `not_hungry`, `not_hurt`.
+func use_item(item_id: String) -> Result:
+	var proposal := {"kind": "use", "item": item_id}
+	if not is_running():
+		return _reject(proposal, "no_world")
+	if dialogue.is_talking() or is_shopping():
+		return _reject(proposal, "busy")
+	var meters := {}
+	for meter in ItemRules.METERS:
+		meters[meter] = player.stats.get_meter(meter)
+	var judged := ItemRules.judge_use(data.get_entry("items", item_id), player.inventory.count_of(item_id), meters)
+	if judged.is_err():
+		return _reject(proposal, judged.code)
+	var use: Dictionary = judged.value
+	player.inventory.remove(item_id, 1)
+	var effects: Dictionary = use["effects"]
+	for meter in effects:
+		player.stats.modify(str(meter), float(effects[meter]))
+	advance_time(int(use["minutes"]))
+	return Result.success({"kind": "used", "item": item_id, "effects": effects, "minutes": use["minutes"]})
+
+
+func _resolve_collapse() -> void:
+	if _collapse_due and not _collapsing:
+		_collapse()
+
+
+## Health gone — from hunger or exhaustion today, from harm later — the
+## player collapses and wakes in the clinic the next morning, patched up,
+## fed and billed for what they can pay (D-041). A floor under the condition
+## loop that costs a night and money, not the game.
+func _collapse() -> void:
+	_collapsing = true
+	_collapse_due = false
+	if dialogue.is_talking():
+		end_conversation()
+	if is_shopping():
+		close_shop()
+	var clinic := world.interior_for(CLINIC)
+	var wake_at := CLINIC if clinic != null else player.home_location
+	var inside := world.interior_for(wake_at)
+	if inside != null:
+		player.interior = wake_at
+		player.position = DistrictMap.cell_to_world(inside.entry_cell())
+		_set_player_location(wake_at)
+	var minutes := posmod(COLLAPSE_WAKE_MINUTE - clock.minute_of_day(), GameClock.MINUTES_PER_DAY)
+	if minutes < 60:
+		minutes += GameClock.MINUTES_PER_DAY
+	_player_activity = "sleep"
+	advance_time(minutes)
+	_player_activity = "idle"
+	player.stats.health = 0.35
+	player.stats.hunger = 0.2
+	player.stats.sleep = maxf(player.stats.sleep, 0.7)
+	player.stats.modify("stress", 0.2)
+	var bill := mini(CLINIC_BILL, player.wallet.total())
+	if bill > 0:
+		player.wallet.spend(bill, "clinic")
+	_collapsing = false
+	Log.info("game", "Player collapsed", {"woke_at": wake_at, "bill": bill})
+	Events.player_collapsed.emit(wake_at, bill)
 
 
 # --- conversation -------------------------------------------------------------
@@ -722,6 +801,8 @@ func _on_minute(total_minutes: int) -> void:
 func _on_hour(hour_of_day: int) -> void:
 	Events.hour_passed.emit(hour_of_day)
 	player.stats.drift(60, _player_activity)
+	if player.stats.health <= 0.0 and not _collapsing:
+		_collapse_due = true
 
 
 func _on_day(day: int) -> void:

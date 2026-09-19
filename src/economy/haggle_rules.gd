@@ -38,13 +38,15 @@ static func difficulty(occupation_skills: Array, traits: Array) -> int:
 	return clampi(level, 1, Skills.MAX_LEVEL)
 
 
-## The chance of talking them down, from the player's level against theirs
-## and how they feel about the player. Same curve as `Skills.success_chance`:
-## never certain, never hopeless.
-static func chance(skill_level: int, against: int, disposition: float) -> float:
+## The chance of talking them down, from the player's level against theirs,
+## how they feel about the player, and the player's condition (hungry,
+## tired or drunk people haggle worse, D-041). Same curve as
+## `Skills.success_chance`: never certain, never hopeless.
+static func chance(skill_level: int, against: int, disposition: float, condition: float = 1.0) -> float:
 	var gap := float(skill_level - against)
 	var base := 1.0 / (1.0 + exp(-gap * 0.22))
-	return clampf(base + clampf(disposition, -1.0, 1.0) * DISPOSITION_WEIGHT, 0.05, 0.95)
+	var odds := (base + clampf(disposition, -1.0, 1.0) * DISPOSITION_WEIGHT) * clampf(condition, 0.5, 1.0)
+	return clampf(odds, 0.05, 0.95)
 
 
 ## Facts: serving, sells, tried (already haggled over this item today),

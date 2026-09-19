@@ -41,6 +41,8 @@ signal inventory_changed()
 signal skill_xp_gained(skill_id: String, amount: float)
 signal skill_level_up(skill_id: String, level: int)
 signal condition_changed(meter: String, value: float)
+## Health reached zero: the player woke up somewhere (D-041).
+signal player_collapsed(woke_at: String, bill: int)
 
 # --- Dialogue / LLM ---------------------------------------------------------
 signal dialogue_started(npc_id: String)

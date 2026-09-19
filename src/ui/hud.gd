@@ -1,7 +1,8 @@
 class_name Hud
 extends CanvasLayer
-## The layer over the world: what you can do right here, and what just
-## happened. Shows text it is given; it decides nothing and knows no rules.
+## The layer over the world: when and where you are and how you are, what
+## you can do right here, and what just happened. It shows; it decides
+## nothing and knows no rules — the status words come from `StatusText`.
 
 const MESSAGE_SECONDS := 4.0
 
@@ -9,6 +10,8 @@ const MESSAGE_SECONDS := 4.0
 @onready var _prompt_label: Label = $Bottom/Prompt/Label
 @onready var _message: PanelContainer = $Bottom/Message
 @onready var _message_label: Label = $Bottom/Message/Label
+@onready var _status_line: Label = $Status/Lines/Line
+@onready var _condition: Label = $Status/Lines/Condition
 
 var _message_left := 0.0
 
@@ -17,6 +20,27 @@ func _ready() -> void:
 	_prompt.visible = false
 	_message.visible = false
 	set_process(false)
+	for changed: Signal in [Events.minute_passed, Events.time_skipped, Events.money_changed,
+			Events.condition_changed, Events.location_entered, Events.game_loaded, Events.locale_changed]:
+		changed.connect(_on_status_changed)
+	refresh_status()
+
+
+## Rewrites the status corner from the world as it is now.
+func refresh_status() -> void:
+	_status_line.text = StatusText.line()
+	var condition := StatusText.condition()
+	_condition.text = condition
+	_condition.visible = condition != ""
+
+
+func status_text() -> String:
+	return _status_line.text + ("\n" + _condition.text if _condition.visible else "")
+
+
+## Any of the signals it listens to, whatever they carry.
+func _on_status_changed(_a: Variant = null, _b: Variant = null) -> void:
+	refresh_status()
 
 
 ## Empty hides the prompt.

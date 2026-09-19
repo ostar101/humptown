@@ -33,6 +33,12 @@ var intoxication: float = 0.0
 var injuries: Array[Dictionary] = []
 
 const XP_PER_CHARACTER_LEVEL := 1500.0
+## Going without (D-041): past these, the body starts sending the bill.
+const STARVING := 0.95
+const EXHAUSTED := 0.05
+## Hours for starving to empty health from full, and for exhaustion to.
+const STARVING_HOURS := 36.0
+const EXHAUSTED_HOURS := 72.0
 
 
 func attribute(name: String) -> int:
@@ -79,9 +85,17 @@ func drift(minutes: int, activity: String = "idle") -> void:
 			hunger = minf(1.0, hunger + m / (14.0 * 60.0))
 		_:
 			sleep = maxf(0.0, sleep - m / (17.0 * 60.0))
-			hunger = minf(1.0, hunger + m / (6.0 * 60.0))
+			# Hungry again after ten waking hours: two or three meals a day.
+			hunger = minf(1.0, hunger + m / (10.0 * 60.0))
 			stamina = minf(1.0, stamina + m / (3.0 * 60.0))
 	intoxication = maxf(0.0, intoxication - m / 120.0)
+	# The body keeps accounts. Going without food or sleep costs health, and
+	# exhaustion frays the nerves; health at zero is a collapse (Game).
+	if hunger >= STARVING:
+		health = maxf(0.0, health - m / (STARVING_HOURS * 60.0))
+	if sleep <= EXHAUSTED:
+		health = maxf(0.0, health - m / (EXHAUSTED_HOURS * 60.0))
+		stress = minf(1.0, stress + m / (8.0 * 60.0))
 	_recompute_mood()
 	_notify()
 

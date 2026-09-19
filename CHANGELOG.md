@@ -12,6 +12,10 @@ versions are milestones rather than releases until there is something to release
 - Haggling against the skill: one try per item per shop per day, odds from
   skill against the shopkeeper's trade and character and how they feel
   about you, rolled on the seeded stream (D-040)
+- Meals and the condition loop: use what you carry; starving and
+  exhaustion cost health; health at zero is a collapse that wakes you in
+  the clinic, billed; the HUD says when, where, your cash and how you are
+  (D-041)
 
 ### Added
 - `data/shops.json` (corner shop, Kaisla, the Anchor, the pawn shop),
@@ -20,10 +24,16 @@ versions are milestones rather than releases until there is something to release
 - `ShopWindow` in the world: a counter with a shop behind it opens it
 - A cinnamon bun, at Kaisla
 - `HaggleRules`, `Game.haggle()`, a Haggle button on every item for sale
-- `test_shops` (13 tests), `test_haggling` (8 tests)
+- `ItemRules`, `Game.use_item()`, `InventoryWindow` on I (new `inventory`
+  input action), `StatusText` and the HUD's status corner,
+  `Events.player_collapsed`
+- `test_shops` (13 tests), `test_haggling` (8 tests), `test_condition`
+  (11 tests)
 - `ui_preview -- --screen=world --shop=location_id [--selling=1]`
 
 ### Changed
+- Hunger fills over ten waking hours instead of six
+- Haggling odds fall when the player is hungry, tired or drunk
 - Save schema version 3: adds `shops`; version 2 saves open every shop
   with its usual stock
 

@@ -1289,3 +1289,41 @@ back to 3. Haggling is a button, not a conversation — talking a price down
 in your own words is where M3's dialogue could meet the shop, later, as an
 intent the same rules judge. Shopkeepers have no skill of their own to
 improve; their difficulty is their trade and their character.
+
+## D-041 — Meals and the condition loop: use what you carry, the body keeps accounts, a collapse is the floor
+
+**Decision.** M4 step 3. The player can eat, drink and patch themselves up
+from what they carry: the bag (I) lists everything with counts and weight
+and a Use for food, drink and medical things; `Game.use_item()` asks
+`ItemRules` (pure), uses one up, applies its meter changes from the item's
+data (`hunger`, `sleep`, `intoxication`, `health`, `stress`) and passes the
+minutes it takes (food 10, drink and medical 5, or the item's
+`use_minutes`). Refused: `not_owned`, `not_usable`, `not_hungry` (food that
+only feeds, on a stomach under 0.15), `not_hurt` (medicine that only heals,
+at full health), and `busy` while talking or shopping.
+
+**The body keeps accounts.** Hunger now fills over ten waking hours rather
+than six — two or three meals a day, affordable on the wages to come.
+Starving (hunger ≥ 0.95) drains health over 36 hours; exhaustion (sleep ≤
+0.05) drains it over 72 and raises stress. Condition already scaled
+`effectiveness()`; now it touches play: a hungry, tired or drunk haggler
+has worse odds (D-040), and jobs will use it next.
+
+**A collapse is the floor, not the end.** When health reaches zero the
+player collapses and wakes at 08:00 the next morning in the clinic (home if
+there is none), patched up to 0.35 health, fed, a little shaken, and billed
+€60 — or whatever they have. It costs a night, money and nerve, not the
+game. The collapse is noticed during a clock step but carried out after it,
+so a jump in time never runs inside another; it closes any conversation or
+shop first, and `Events.player_collapsed` tells the view to move and say so.
+
+**The HUD says how you are.** A status corner: weekday and time, where you
+are, your cash — and, only when it is worth saying, how you are ("Hungry ·
+Tired"), one word per meter, the worse one first (`StatusText`). The HUD
+listens to the events that can change it; it still decides nothing.
+
+**Costs accepted.** Only the player eats: NPCs' needs stay the scheduler's
+business (they go to lunch; they do not buy lunch). The bag is a list, not
+a grid, and there is no equipping yet. The clinic's care is not an
+interaction — nobody treats you while you wait; that belongs with injuries
+and harm.
