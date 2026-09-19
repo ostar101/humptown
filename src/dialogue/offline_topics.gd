@@ -40,6 +40,10 @@ const PHRASES := {
 		"töitä", "työpaikkaa", "palkkaatteko", "tarvitsetteko apua", "etsin töitä", "saisinko töitä"],
 	"quit_job": ["i quit", "i'm quitting", "i am quitting", "i resign", "i'm done working",
 		"irtisanoudun", "lopetan tämän työn", "otan lopputilin", "lopetan täällä"],
+	"negotiate": ["more time", "an extension", "give me time", "some time to pay", "pay you later", "pay later",
+		"pay it back later", "go easy", "go easy on me", "cut me some slack", "let me off", "let it go this time",
+		"be lenient", "give me a break", "give me a chance", "lisää aikaa", "anna minulle aikaa", "maksan myöhemmin",
+		"voinko maksaa myöhemmin", "armoa", "ole lempeä", "anna mulle vielä mahdollisuus", "päästä minut"],
 	"offer_help": ["can i help", "need any help", "need help", "anything i can do", "do you need anything",
 		"can i do something for you", "voinko auttaa", "tarvitsetko apua", "voinko tehdä jotain",
 		"tarvitsetko jotain"],
@@ -51,7 +55,7 @@ const PHRASES := {
 }
 
 const ORDER: Array[String] = [
-	"threaten", "insult", "farewell", "give_money", "introduce_self", "apologize",
+	"threaten", "insult", "negotiate", "farewell", "give_money", "introduce_self", "apologize",
 	"quit_job", "ask_for_work", "offer_help",
 	"about_person", "about_place", "about_self", "about_work", "compliment", "thanks", "greet",
 ]

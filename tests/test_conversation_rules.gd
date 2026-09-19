@@ -43,7 +43,7 @@ func test_a_greeting_changes_nothing_and_goodbye_ends_it() -> void:
 
 
 func test_a_kind_without_rules_is_talk() -> void:
-	var persuading := _judge("persuade")
+	var persuading := _judge("lie")
 	assert_ok(persuading, "the player is never restricted to a list")
 	assert_true(persuading.value["effects"].is_empty(), "but nothing happens without a rule for it")
 	assert_eq(persuading.value["topic"], "unknown")

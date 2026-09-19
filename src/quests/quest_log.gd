@@ -7,7 +7,9 @@ extends RefCounted
 ## finishing or failing one does. Saved as the `quests` section.
 
 var _data: DataRegistry = null
-## quest id -> {"stage": int, "progress": {}, "started_day": int, "deadline_day": int}
+## quest id -> {"stage": int, "progress": {}, "started_day": int, "deadline_day": int,
+## "extra_need": int} — `extra_need` is what has been added to a sum the stage
+## asks for (interest, D-053).
 var active: Dictionary = {}
 ## quest id -> "done" | "failed", in the order they ended
 var finished: Dictionary = {}
@@ -33,7 +35,8 @@ func start(quest_id: String, day: int) -> bool:
 	if active.has(quest_id) or finished.has(quest_id) or definition(quest_id).is_empty():
 		return false
 	var days := int(definition(quest_id).get("deadline_days", 0))
-	active[quest_id] = {"stage": 0, "progress": {}, "started_day": day, "deadline_day": day + days if days > 0 else -1}
+	active[quest_id] = {"stage": 0, "progress": {}, "started_day": day, "deadline_day": day + days if days > 0 else -1,
+		"extra_need": 0}
 	return true
 
 
@@ -67,6 +70,19 @@ func recheck(feeling: Callable) -> Array[Dictionary]:
 		if status != "":
 			moved.append({"quest": quest_id, "status": status})
 	return moved
+
+
+## Moves a quest's deadline, earlier or later (D-053). No effect on a quest
+## without one, or not under way.
+func extend_deadline(quest_id: String, days: int) -> void:
+	if active.has(quest_id) and int(active[quest_id].get("deadline_day", -1)) >= 0:
+		active[quest_id]["deadline_day"] = int(active[quest_id]["deadline_day"]) + days
+
+
+## Adds to the sum a stage asks for: a debt that has grown.
+func raise_requirement(quest_id: String, amount: int) -> void:
+	if active.has(quest_id):
+		active[quest_id]["extra_need"] = int(active[quest_id].get("extra_need", 0)) + amount
 
 
 ## Quests whose deadline has passed by `day`: failed, and returned.
@@ -127,6 +143,7 @@ func from_dict(d: Dictionary) -> void:
 			active[str(quest_id)] = {
 				"stage": int(raw.get("stage", 0)), "progress": raw.get("progress", {}),
 				"started_day": int(raw.get("started_day", 0)), "deadline_day": int(raw.get("deadline_day", -1)),
+				"extra_need": int(raw.get("extra_need", 0)),
 			}
 	finished = {}
 	var raw_finished: Dictionary = d.get("finished", {})
@@ -149,7 +166,7 @@ func _advance_while_met(quest_id: String, feeling: Callable) -> String:
 	while active.has(quest_id):
 		var state: Dictionary = active[quest_id]
 		var when: Dictionary = current_stage(quest_id).get("when", {})
-		if when.is_empty() or not QuestRules.is_met(when, state["progress"], feeling):
+		if when.is_empty() or not QuestRules.is_met(when, state["progress"], feeling, int(state.get("extra_need", 0))):
 			break
 		state["stage"] = int(state["stage"]) + 1
 		state["progress"] = {}

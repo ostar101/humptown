@@ -1,8 +1,8 @@
 # Project status
 
 **Updated:** 2026-09-19
-**Milestone:** M6 — Consequences — **in progress** (step 1, crime and the police, done). M5 complete in code (0.5.0).
-**Build:** green. 738 tests, 9409 assertions with the LimeZu art installed,
+**Milestone:** M6 — Consequences — **in progress** (steps 1 and 2 done: crime and the police; talking someone round). M5 complete in code (0.5.0).
+**Build:** green. 757 tests, 9541 assertions with the LimeZu art installed,
 ~12 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
@@ -95,11 +95,19 @@ witnesses change their feelings, remember, and — if it matters enough to them
 they *believe* (nothing, a warning, a fine, an arrest), send for the player by
 text, and weigh it at the desk — or, if ignored, without you and worse. Not
 yet: being stopped in the street, confiscating what was taken, a court, other
-crimes (assault waits for combat), a fence. **Next: (2) conflict resolution**
-— partial successes, debts, delayed consequences (the debt quest already has
-one), *not only fighting*: what should be a way to settle a dispute that is
-neither a fight nor a purchase? Propose it before building. Then (3)
-turn-based combat, the most self-contained; (4) dynamic events last. The criminal-contacts
+crimes (assault waits for combat), a fence. (2) **Conflict resolution** — done in a first form
+(D-053), and the shape was my call after the user said "continue": the
+dialogue rules' reserved kinds `negotiate`/`persuade`/`ask_favor` now put an
+*ask* — authored data with four graded outcomes (success, partial with a
+cost, failure, backfire) from skill against difficulty on seeded dice. Two are
+authored: more time from Rauno (interest, a delayed cost, on the debt) and
+going easy with Marika (her leniency moves the weight of the case). More asks
+are data; `deception` and `intimidation` have none to serve yet. **Next: (3)
+turn-based combat**, the most self-contained — a fight is the other way a
+dispute ends, and assault (a crime, with witnesses and a police response)
+finally has something to be. It is a big new system with a real design
+question about how it looks and feels, so propose it before building; (4)
+dynamic events last. The criminal-contacts
    view waits for crime (M6).
 
 **Known gaps worth a pass, none blocking:** interiors are still generic tiles
@@ -214,6 +222,7 @@ store (its own file) — D-036. A test that needs a model sets
 | Map: `MapView`, `PlayerState.known_places`, the phone's Map tab | done |
 | Crime: `TheftRules`, `CrimeDirector`, "Pocket it" at counters, witnesses, reports to the police | done |
 | Police: `PoliceRules`, summons by text, the desk, fines, arrest, the record | done |
+| Asks: `AskRules`, `AskDirector`, `data/asks.json` — graded negotiation with a cost | done (two asks) |
 | Settings screen (language, provider, the player's key, models) | done |
 | `SaveManager` + `SaveMigrations` | done |
 | `Localization` — en complete, fi partial by design | done |
@@ -227,8 +236,8 @@ criminal-contacts view (D-050); combat, crime and police (M6). See `ROADMAP.md`.
 
 ## Size
 
-- 113 source files in `src/`
-- 48 test suites
+- 115 source files in `src/`
+- 49 test suites
 - 10 authored NPCs, 22 locations, 3 regions (1 mapped), 6 interiors, 8 schedules, 4 backgrounds, 4 shops, 14 items, 4 jobs, 4 quests, 3 errands
 
 ---

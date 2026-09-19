@@ -32,6 +32,7 @@ var phone_director := PhoneDirector.new()
 var calendar := Calendar.new()
 var meetings := MeetingDirector.new()
 var crime := CrimeDirector.new()
+var asks := AskDirector.new()
 var reputation := Reputation.new()
 var player := PlayerState.new()
 var saves := SaveManager.new()
@@ -141,9 +142,10 @@ func new_game(background_id: String = "", world_seed: int = 0) -> Result:
 	_start_background_quests(background_id)
 	meetings.setup(calendar, npcs, world, player, relationships, memories, events_queue, clock, data)
 	crime.setup(npcs, knowledge, relationships, memories, events_queue, clock)
+	asks.setup(data, relationships, quests, crime, player, clock, rng)
 	phone_director.setup(phone, npcs, relationships, quests, player, clock, dialogue, meetings)
 	phone_director.sync_contacts()
-	dialogue.setup(npcs, world, player, relationships, knowledge, clock, data, LlmDialogueModel.new(llm), memories, work, quests)
+	dialogue.setup(npcs, world, player, relationships, knowledge, clock, data, LlmDialogueModel.new(llm), memories, work, quests, asks)
 	_connect_simulation()
 
 	# Open the starting region and place the player.
@@ -225,6 +227,7 @@ func unload() -> void:
 	calendar = Calendar.new()
 	meetings = MeetingDirector.new()
 	crime = CrimeDirector.new()
+	asks = AskDirector.new()
 	_shopping = ""
 	_shop_deals = 0
 	reputation = Reputation.new()
@@ -1286,6 +1289,7 @@ func save_game(slot: String) -> Result:
 		"phone": phone.to_dict(),
 		"calendar": calendar.to_dict(),
 		"crime": crime.to_dict(),
+		"asks": asks.to_dict(),
 		"reputation": reputation.to_dict(),
 		"events": events_queue.to_dict(),
 		"player": player.to_dict(),
@@ -1326,6 +1330,7 @@ func load_game(slot: String) -> Result:
 	phone.from_dict(sections.get("phone", {}))
 	calendar.from_dict(sections.get("calendar", {}))
 	crime.from_dict(sections.get("crime", {}))
+	asks.from_dict(sections.get("asks", {}))
 	reputation.from_dict(sections.get("reputation", {}))
 	events_queue.from_dict(sections.get("events", {}))
 	player.from_dict(sections.get("player", {}))

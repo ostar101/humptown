@@ -29,6 +29,7 @@ const REQUIRED_KEYS := {
 	"jobs": ["id", "occupation", "workplace", "shift_start", "shift_end", "wage"],
 	"quests": ["id", "name_key", "stages"],
 	"errands": ["id", "name_key", "giver", "item", "count", "reward"],
+	"asks": ["id", "npc", "skill", "grades"],
 }
 
 var tables: Dictionary = {}          # table -> { id -> entry }
@@ -112,6 +113,8 @@ func validate_references() -> Array[String]:
 		problems.append_array(_job_reference_problems(id, table("jobs")[id]))
 	for id in table("quests"):
 		problems.append_array(_quest_reference_problems(id, table("quests")[id]))
+	for id in table("asks"):
+		problems.append_array(_ask_reference_problems(id, table("asks")[id]))
 	for id in table("errands"):
 		var errand: Dictionary = table("errands")[id]
 		if not has_entry("npcs", str(errand.get("giver", ""))):
@@ -122,6 +125,31 @@ func validate_references() -> Array[String]:
 		var occupation := str(table("backgrounds")[id].get("job", ""))
 		if occupation != "" and find_by("jobs", "occupation", occupation).is_empty():
 			problems.append("background '%s' gives occupation '%s', which no job offers" % [id, occupation])
+	return problems
+
+
+## An ask is put to someone who exists, turns on a skill that exists, waits on
+## a quest that exists, and says what each of the four grades does, in effects
+## the game knows (D-053).
+func _ask_reference_problems(id: String, ask: Dictionary) -> Array[String]:
+	var problems: Array[String] = []
+	if not has_entry("npcs", str(ask.get("npc", ""))):
+		problems.append("ask '%s' is put to unknown person '%s'" % [id, ask.get("npc")])
+	if not has_entry("skills", str(ask.get("skill", ""))):
+		problems.append("ask '%s' turns on unknown skill '%s'" % [id, ask.get("skill")])
+	var quest := str((ask.get("requires", {}) as Dictionary).get("quest", ""))
+	if quest != "" and not has_entry("quests", quest):
+		problems.append("ask '%s' waits on unknown quest '%s'" % [id, quest])
+	var grades: Dictionary = ask.get("grades", {})
+	for grade in AskRules.GRADES:
+		if not grades.has(grade):
+			problems.append("ask '%s' does not say what '%s' does" % [id, grade])
+			continue
+		for effect: Dictionary in grades[grade]:
+			if not AskDirector.EFFECTS.has(str(effect.get("do", ""))):
+				problems.append("ask '%s' has an unknown effect '%s'" % [id, effect.get("do")])
+			if effect.has("quest") and not has_entry("quests", str(effect["quest"])):
+				problems.append("ask '%s' changes unknown quest '%s'" % [id, effect["quest"]])
 	return problems
 
 

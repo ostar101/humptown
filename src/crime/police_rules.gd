@@ -43,7 +43,8 @@ static func strength(confidence: float, distortion: float) -> float:
 
 ## How much a case weighs: its worst matter as she sees it, a little more for
 ## each further one, the record, her character, and having ignored a summons.
-static func weight(entries: Array, record_count: int, traits: Array, ignored: bool = false) -> float:
+static func weight(entries: Array, record_count: int, traits: Array, ignored: bool = false,
+		adjust: float = 0.0) -> float:
 	if entries.is_empty():
 		return 0.0
 	var worst := 0.0
@@ -55,17 +56,18 @@ static func weight(entries: Array, record_count: int, traits: Array, ignored: bo
 		total += float(TRAIT_WEIGHT.get(str(t), 0.0))
 	if ignored:
 		total += IGNORED_SUMMONS_WEIGHT
-	return total
+	return total + adjust
 
 
 ## "none" | "warning" | "fine" | "arrest".
-static func judge_response(entries: Array, record_count: int, traits: Array, ignored: bool = false) -> String:
+static func judge_response(entries: Array, record_count: int, traits: Array, ignored: bool = false,
+		adjust: float = 0.0) -> String:
 	var surest := 0.0
 	for entry: Dictionary in entries:
 		surest = maxf(surest, float(entry["strength"]))
 	if entries.is_empty() or surest < EVIDENCE_MIN:
 		return "none"
-	var w := weight(entries, record_count, traits, ignored)
+	var w := weight(entries, record_count, traits, ignored, adjust)
 	if w >= WEIGHT_ARREST:
 		return "arrest"
 	if w >= WEIGHT_FINE:

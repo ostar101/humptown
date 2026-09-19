@@ -70,6 +70,9 @@ signal crime_reported(fact_id: String, reporter_id: String, officer_id: String)
 signal summons_issued(summons_id: int)
 signal police_action(outcome: String, officer_id: String, fine: int, forced: bool)
 signal player_arrested(officer_id: String, released_at: int)
+## The player put an ask to someone and it came to a grade: "success" |
+## "partial" | "failure" | "backfire" (D-053).
+signal ask_resolved(ask_id: String, grade: String)
 
 # --- Dialogue / LLM ---------------------------------------------------------
 signal dialogue_started(npc_id: String)

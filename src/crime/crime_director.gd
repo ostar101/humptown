@@ -19,6 +19,9 @@ var handled: Dictionary = {}
 ## Told to come in: {"id", "officer", "due", "status": "open" | "attended" |
 ## "ignored", "facts"}.
 var summons: Array[Dictionary] = []
+## officer id -> how far she has been talked round (negative) or put out
+## (positive), added to the weight of a case she is about to decide (D-053).
+var leniency: Dictionary = {}
 var _next_summons := 1
 
 var _npcs: NpcRegistry = null
@@ -146,7 +149,8 @@ func assess(officer_id: String) -> Dictionary:
 		return {}
 	var entries := case_for(officer_id)
 	var npc := _npcs.get_npc(officer_id)
-	if PoliceRules.judge_response(entries, record.size(), npc.traits if npc != null else []) == "none":
+	if PoliceRules.judge_response(entries, record.size(), npc.traits if npc != null else [], false,
+			float(leniency.get(officer_id, 0.0))) == "none":
 		return {}
 	var due := _clock.total_minutes + PoliceRules.SUMMONS_WINDOW
 	var facts: Array[String] = []
@@ -187,7 +191,9 @@ func resolve(summons_id: int, attended: bool, money: int) -> Dictionary:
 	var officer_id := str(open["officer"])
 	var npc := _npcs.get_npc(officer_id)
 	var entries := case_for(officer_id)
-	var outcome := PoliceRules.judge_response(entries, record.size(), npc.traits if npc != null else [], not attended)
+	var outcome := PoliceRules.judge_response(entries, record.size(), npc.traits if npc != null else [], not attended,
+		float(leniency.get(officer_id, 0.0)))
+	leniency.erase(officer_id)   # what was said is spent once she has decided
 	var worst := 0.0
 	var facts: Array[String] = []
 	for entry in entries:
@@ -206,7 +212,7 @@ func resolve(summons_id: int, attended: bool, money: int) -> Dictionary:
 
 func to_dict() -> Dictionary:
 	return {"record": record.duplicate(true), "handled": handled.duplicate(), "summons": summons.duplicate(true),
-		"next_summons": _next_summons}
+		"leniency": leniency.duplicate(), "next_summons": _next_summons}
 
 
 func from_dict(d: Dictionary) -> void:
@@ -224,6 +230,10 @@ func from_dict(d: Dictionary) -> void:
 			facts.append(str(fact_id))
 		summons.append({"id": int(raw.get("id", 0)), "officer": str(raw.get("officer", "")), "due": int(raw.get("due", 0)),
 			"status": str(raw.get("status", "open")), "facts": facts})
+	leniency = {}
+	var raw_leniency: Dictionary = d.get("leniency", {})
+	for officer_id in raw_leniency:
+		leniency[str(officer_id)] = float(raw_leniency[officer_id])
 	_next_summons = int(d.get("next_summons", 1))
 	for entry in summons:
 		_next_summons = maxi(_next_summons, int(entry["id"]) + 1)

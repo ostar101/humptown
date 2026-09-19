@@ -6,6 +6,11 @@ versions are milestones rather than releases until there is something to release
 ## [Unreleased] — Milestone 6: consequences
 
 ### Decided
+- Talking someone round: `negotiate` (and `persuade`, `ask_favor`) put an
+  authored ask when there is one to put — graded success, partial (with a
+  cost), failure or backfire, from skill against difficulty on seeded dice; a
+  model only reads what was meant; the two authored asks reach into two
+  systems (a debt's time and price, an officer's leniency) (D-053)
 - The police respond to what an officer *believes*, not to what happened: her
   case is built from her knowledge (how sure, how serious, whether there is a
   record) and the answer steps up from nothing to a warning, a fine or an
@@ -22,6 +27,11 @@ versions are milestones rather than releases until there is something to release
   secondhand (D-051)
 
 ### Added
+- `AskRules`, `AskDirector` (`Game.asks`), `data/asks.json` (two asks),
+  data validation for asks; `QuestLog.extend_deadline()`,
+  `raise_requirement()` and a quest's `extra_need`; `CrimeDirector.leniency`;
+  the intent kind `negotiate`, offline phrases in English and Finnish;
+  `Events.ask_resolved`; save schema v9 (`asks`); `test_asks` (19 tests)
 - `PoliceRules`; `CrimeDirector.case_for()`, `assess()`, `resolve()`, the
   record and summons; `PhoneDirector.summons()`; the police desk
   (`Game._at_the_desk`); `Game._arrest()` and its deferral;
@@ -31,6 +41,10 @@ versions are milestones rather than releases until there is something to release
 - `TheftRules`, `CrimeDirector` (`Game.crime`); `Game.steal()`; "Pocket it" on
   the shop window; `Events.crime_committed`, `crime_reported`; the deed
   `stole`; the world event `crime_report`; `test_theft` (14 tests)
+
+### Changed
+- Offline reading: asking to bargain outranks saying goodbye ("can I pay
+  later?" is no longer a farewell)
 
 ## [0.5.0] — 2026-09-19 — Milestone 5: the phone
 

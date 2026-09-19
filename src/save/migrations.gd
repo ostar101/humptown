@@ -14,7 +14,7 @@ extends RefCounted
 ##   4. Add a test with a fixture of the old shape.
 ## Never renumber or edit an existing step: someone's save depends on it.
 
-const CURRENT_VERSION := 8
+const CURRENT_VERSION := 9
 
 ## version -> name of the static function upgrading it to version + 1.
 const STEPS := {
@@ -25,6 +25,7 @@ const STEPS := {
 	5: "_v5_to_v6",
 	6: "_v6_to_v7",
 	7: "_v7_to_v8",
+	8: "_v8_to_v9",
 }
 
 
@@ -89,6 +90,8 @@ static func _apply_step(version: int, data: Dictionary) -> Dictionary:
 			return _v6_to_v7(data)
 		7:
 			return _v7_to_v8(data)
+		8:
+			return _v8_to_v9(data)
 		_:
 			return {}
 
@@ -168,4 +171,12 @@ static func _v6_to_v7(data: Dictionary) -> Dictionary:
 static func _v7_to_v8(data: Dictionary) -> Dictionary:
 	if not data.has("crime"):
 		data["crime"] = {"record": [], "handled": {}, "summons": [], "next_summons": 1}
+	return data
+
+
+## v9 keeps what the player has asked of whom, and when (D-053). A v8 save has
+## asked nobody anything.
+static func _v8_to_v9(data: Dictionary) -> Dictionary:
+	if not data.has("asks"):
+		data["asks"] = {"asked": {}}
 	return data

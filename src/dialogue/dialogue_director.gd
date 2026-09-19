@@ -45,6 +45,8 @@ var memories: MemoryBook = MemoryBook.new()
 var work: Employment = null
 ## The player's quests and errands (D-044).
 var quests: QuestLog = QuestLog.new()
+## What can be asked of people, and what comes of asking (D-053).
+var asks: AskDirector = AskDirector.new()
 ## The last few lines and how each was handled, newest last, for the
 ## developer overlay: what was meant and by whose reading, what the rules
 ## did, and where the answer came from.
@@ -65,7 +67,7 @@ var _place_words: Dictionary = {}
 func setup(npcs: NpcRegistry, world: WorldState, player: PlayerState, relationships: RelationshipGraph,
 		knowledge: KnowledgeNetwork = null, clock: GameClock = null, data: DataRegistry = null,
 		p_model: DialogueModel = null, p_memories: MemoryBook = null, p_work: Employment = null,
-		p_quests: QuestLog = null) -> void:
+		p_quests: QuestLog = null, p_asks: AskDirector = null) -> void:
 	_npcs = npcs
 	_world = world
 	_player = player
@@ -77,6 +79,7 @@ func setup(npcs: NpcRegistry, world: WorldState, player: PlayerState, relationsh
 	memories = p_memories if p_memories != null else MemoryBook.new()
 	work = p_work if p_work != null else Employment.new()
 	quests = p_quests if p_quests != null else QuestLog.new()
+	asks = p_asks if p_asks != null else AskDirector.new()
 	if p_quests == null and data != null:
 		quests.setup(data)
 	conversation = null
@@ -208,11 +211,14 @@ func _respond(convo: Conversation, line: String, channel: String, words: Diction
 	if judged.is_ok():
 		var verdict: Dictionary = judged.value
 		var effects: Array[Dictionary] = verdict["effects"]
-		_apply(npc_id, effects)
+		var applied := _apply(npc_id, effects)
 		convo.warmth += ConversationRules.warmth_of(effects)
 		topic = verdict["topic"]
 		happened = verdict["happened"]
 		ends = verdict["ends"]
+		if applied.has("happened"):   # what an ask came to is only known once it is rolled
+			happened = str(applied["happened"])
+			topic = str(applied["topic"])
 	else:
 		rejection = {"code": judged.code, "proposal": {
 			"kind": {"in_person": "say", "call": "call", "text": "text"}[channel], "intent": intent["kind"], "npc": npc_id, "amount": intent.get("amount", 0),
@@ -516,12 +522,15 @@ func _feelings(npc_id: String) -> Dictionary:
 
 ## What `ConversationRules` needs to know about the world, and nothing more.
 func _rules_state(npc_id: String, convo: Conversation, channel: String) -> Dictionary:
+	var ask := asks.offer(npc_id)
 	return {
 		"npc_id": npc_id,
 		"channel": channel,
 		"player_name": _player.display_name,
 		"player_cash": _player.wallet.cash,
 		"player_bank": _player.wallet.bank,
+		"ask": ask,
+		"ask_cooldown": not ask.is_empty() and asks.on_cooldown(str(ask["id"])),
 		"relationship": _feelings(npc_id),
 		"warmth": convo.warmth,
 		"hiring": _hiring(npc_id),
@@ -571,10 +580,13 @@ func _hiring(npc_id: String) -> Dictionary:
 
 ## Carries out what the rules allowed. Nothing else in a conversation writes
 ## to the world.
-func _apply(npc_id: String, effects: Array[Dictionary]) -> void:
+func _apply(npc_id: String, effects: Array[Dictionary]) -> Dictionary:
 	var now := _clock.total_minutes if _clock != null else 0
+	var came_of_it := {}
 	for effect in effects:
 		match str(effect["do"]):
+			"ask":
+				came_of_it = asks.attempt(str(effect["ask"]))
 			"feel":
 				_relationships.adjust(npc_id, PlayerState.ID, str(effect["dimension"]), float(effect["delta"]), now)
 			"pay":
@@ -617,6 +629,7 @@ func _apply(npc_id: String, effects: Array[Dictionary]) -> void:
 				var edge := _relationships.get_edge(npc_id, PlayerState.ID)
 				if edge.familiarity < FAMILIARITY_ONCE_INTRODUCED:
 					_relationships.adjust(npc_id, PlayerState.ID, "familiarity", FAMILIARITY_ONCE_INTRODUCED - edge.familiarity, now)
+	return came_of_it
 
 
 ## Someone knows the player's name if the player is a contact of theirs from

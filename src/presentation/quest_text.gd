@@ -16,9 +16,12 @@ static func entries() -> Array[Dictionary]:
 		var state: Dictionary = book.active[quest_id]
 		var stage := book.current_stage(quest_id)
 		var goal := Localization.t(str(stage.get("goal_key", "")))
-		var done := QuestRules.progress_of(stage.get("when", {}), state.get("progress", {}))
+		var extra := int(state.get("extra_need", 0))
+		var done := QuestRules.progress_of(stage.get("when", {}), state.get("progress", {}), extra)
 		if not done.is_empty():
 			goal += " " + Localization.t("ui.quests.progress", done)
+		if extra > 0:
+			goal += " " + Localization.t("ui.quests.owed_more", {"extra": extra})
 		out.append({
 			"title": Localization.t(str(quest.get("name_key", quest_id))), "from": _giver(str(quest.get("giver", ""))),
 			"goal": goal, "when": deadline_text(int(state.get("deadline_day", -1))), "status": "active",

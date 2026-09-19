@@ -58,6 +58,7 @@ func _ready() -> void:
 	Events.meeting_updated.connect(_on_meeting_updated)
 	Events.place_learned.connect(_on_place_learned)
 	Events.player_arrested.connect(_on_player_arrested)
+	Events.ask_resolved.connect(_on_ask_resolved)
 	Events.police_action.connect(_on_police_action)
 	Events.quest_updated.connect(_on_quest_updated)
 	Events.player_collapsed.connect(_on_player_collapsed)
@@ -79,6 +80,7 @@ func _exit_tree() -> void:
 		Events.meeting_updated.disconnect(_on_meeting_updated)
 		Events.place_learned.disconnect(_on_place_learned)
 		Events.player_arrested.disconnect(_on_player_arrested)
+		Events.ask_resolved.disconnect(_on_ask_resolved)
 		Events.police_action.disconnect(_on_police_action)
 
 
@@ -335,6 +337,12 @@ func _on_player_collapsed(woke_at: String, bill: int) -> void:
 		_atm.close()
 	show_current_area()
 	_hud.show_message(Localization.t("ui.msg.collapsed", {"place": InteractionText.place_name(woke_at), "bill": bill}))
+
+
+## The player put an ask and it came to a grade (D-053).
+func _on_ask_resolved(ask_id: String, grade: String) -> void:
+	var ask := Game.data.get_entry("asks", ask_id)
+	_hud.show_message(Localization.t("ui.msg.ask." + grade, {"ask": Localization.t(str(ask.get("name_key", ask_id)))}))
 
 
 ## A night in the cells, or a fine for not coming in (D-052).

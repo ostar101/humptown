@@ -22,6 +22,8 @@ extends RefCounted
 ##   "problem"} — the job this person hires for, if any, and why the player
 ##   could not have it), works_for_them (the player's job is theirs to give),
 ##   player_bank (what is in the account: by phone money goes through it),
+##   ask ({"id", …} — something they could be asked for, D-053) and ask_cooldown
+##   (they were asked too recently),
 ##   channel ("in_person", "call" or "text": nothing said down a phone carries cash),
 ##   errand ({"id", "what", "reward"} — something they could ask of the
 ##   player today, D-044), errand_running (they are already waiting on one)
@@ -35,10 +37,12 @@ extends RefCounted
 const KINDS: Array[String] = [
 	"greet", "farewell", "thanks", "about_self", "about_work", "about_person", "about_place",
 	"introduce_self", "compliment", "flirt", "apologize", "insult", "threaten", "give_money",
-	"ask_for_work", "quit_job", "offer_help",
+	"ask_for_work", "quit_job", "offer_help", "negotiate",
 ]
+## Kinds that put an ask, when there is something to ask (D-053).
+const ASK_KINDS: Array[String] = ["negotiate", "persuade", "ask_favor"]
 ## Kinds a model may use that are understood but change nothing yet.
-const TALK_KINDS: Array[String] = ["persuade", "negotiate", "ask_favor", "lie", "small_talk"]
+const TALK_KINDS: Array[String] = ["persuade", "ask_favor", "lie", "small_talk"]
 
 ## The most cash a single gesture may hand over. Past this it is not a gift,
 ## it is a transaction, and transactions are M4.
@@ -68,7 +72,8 @@ const GIFT_CASH_PER_POINT := 250.0
 ## player) · {"do": "pay", "amount"} · {"do": "remember", "predicate",
 ## "visibility", "severity"} (a fact about the player they witnessed) ·
 ## {"do": "introduce_them"} · {"do": "introduce_player"} · {"do": "transfer",
-## "amount"} (from the account, by text) · {"do": "tell_place", "place"}.
+## "amount"} (from the account, by text) · {"do": "tell_place", "place"} · {"do": "ask", "ask"} (put an ask: what
+## comes of it is rolled and applied by `AskDirector`).
 static func judge(intent: Dictionary, state: Dictionary) -> Result:
 	var kind := str(intent.get("kind", "unknown"))
 	var feeling: Dictionary = state.get("relationship", {})
@@ -167,6 +172,18 @@ static func judge(intent: Dictionary, state: Dictionary) -> Result:
 			else:
 				happened = "They offered to help. You do not need anything from them."
 				topic = "no_errand"
+		"negotiate", "persuade", "ask_favor":
+			var ask: Dictionary = state.get("ask", {})
+			if ask.is_empty():
+				happened = "They tried to bargain with you, but there is nothing between you to bargain over."
+				topic = "no_ask"
+			elif bool(state.get("ask_cooldown", false)):
+				happened = "They asked you for the same thing again, too soon after the last time."
+				topic = "ask_again"
+			else:
+				effects.append({"do": "ask", "ask": str(ask["id"])})
+				happened = "They asked you for something."
+				topic = "ask_made"
 		"quit_job":
 			if bool(state.get("works_for_them", false)):
 				effects.append({"do": "quit"})

@@ -41,22 +41,22 @@ static func count_deed(when: Dictionary, progress: Dictionary, kind: String, dat
 
 ## Whether a stage is met, from its progress and — for feelings — how one
 ## person feels about the player (`feeling(npc_id, dimension) -> float`).
-static func is_met(when: Dictionary, progress: Dictionary, feeling: Callable) -> bool:
+static func is_met(when: Dictionary, progress: Dictionary, feeling: Callable, extra_need: int = 0) -> bool:
 	if bool(when.get("open", false)):
 		return false
 	if when.has("feeling"):
 		var f: Dictionary = when["feeling"]
 		return float(feeling.call(str(f.get("npc", "")), str(f.get("dimension", "")))) >= float(f.get("at_least", 1.0))
 	if str(when.get("sum", "")) != "":
-		return int(progress.get("sum", 0)) >= int(when.get("at_least", 1))
+		return int(progress.get("sum", 0)) >= int(when.get("at_least", 1)) + extra_need
 	return int(progress.get("count", 0)) >= int(when.get("count", 1))
 
 
 ## How far along a stage is, for the log: {"have", "need"}, or {} when the
 ## stage is not a count worth showing.
-static func progress_of(when: Dictionary, progress: Dictionary) -> Dictionary:
+static func progress_of(when: Dictionary, progress: Dictionary, extra_need: int = 0) -> Dictionary:
 	if str(when.get("sum", "")) != "":
-		return {"have": int(progress.get("sum", 0)), "need": int(when.get("at_least", 1))}
+		return {"have": int(progress.get("sum", 0)), "need": int(when.get("at_least", 1)) + extra_need}
 	if int(when.get("count", 1)) > 1:
 		return {"have": int(progress.get("count", 0)), "need": int(when.get("count", 1))}
 	return {}

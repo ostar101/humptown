@@ -1,0 +1,31 @@
+[
+  {"id": "ask_rauno_time", "npc": "npc_rauno", "name_key": "ask.rauno_time", "skill": "persuasion", "difficulty": 25,
+   "cooldown_days": 4, "requires": {"quest": "q_rauno_debt"},
+   "happened": {
+     "success": "They asked you for more time to pay, and you agreed: a week more, no strings.",
+     "partial": "They asked you for more time to pay. You gave them three days more, but the debt has grown by thirty for your trouble.",
+     "failure": "They asked you for more time to pay. You said no, and were short with them.",
+     "backfire": "They asked you for more time to pay and pushed their luck. You lost patience: they have two days less."},
+   "grades": {
+     "success": [{"do": "extend_deadline", "quest": "q_rauno_debt", "days": 7},
+                 {"do": "feel", "dimension": "respect", "delta": 0.03}],
+     "partial": [{"do": "extend_deadline", "quest": "q_rauno_debt", "days": 3},
+                 {"do": "raise_requirement", "quest": "q_rauno_debt", "amount": 30}],
+     "failure": [{"do": "feel", "dimension": "trust", "delta": -0.03}],
+     "backfire": [{"do": "feel", "dimension": "affection", "delta": -0.08},
+                  {"do": "extend_deadline", "quest": "q_rauno_debt", "days": -2}]}},
+
+  {"id": "ask_marika_leniency", "npc": "npc_marika", "name_key": "ask.marika_leniency", "skill": "persuasion", "difficulty": 45,
+   "cooldown_days": 2, "requires": {"open_summons": true},
+   "happened": {
+     "success": "They asked you to go easy on them. You weighed it again and decided to be lenient.",
+     "partial": "They asked you to go easy on them. You will take it into account, a little.",
+     "failure": "They asked you to go easy on them. You did not change your mind.",
+     "backfire": "They asked you to go easy on them, and talked around what was reported. It has made you less inclined to be lenient."},
+   "grades": {
+     "success": [{"do": "leniency", "delta": -0.30}],
+     "partial": [{"do": "leniency", "delta": -0.15}],
+     "failure": [],
+     "backfire": [{"do": "leniency", "delta": 0.15},
+                  {"do": "feel", "dimension": "respect", "delta": -0.05}]}}
+]

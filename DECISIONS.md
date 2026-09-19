@@ -1825,3 +1825,64 @@ than Marika (any NPC in a group beginning `police` will do); crimes other than
 theft (assault waits for combat); a fence, and stolen goods at the pawn shop.
 The email and criminal-contacts view that D-050 deferred still have no reason
 to exist yet — this is the closest they have come.
+
+
+## D-053 — Talking someone round: asks, graded, with a cost
+
+**Decision.** M6 step 2, conflict resolution that is not only fighting. The
+roadmap's phrase — partial successes, costs, debts, delayed consequences — and
+the dialogue rules' own note that `persuade`, `negotiate` and `ask_favor` are
+"understood but change nothing yet" say what this is: making those intents
+*do* something, judged by rules like everything else, so a dispute can be
+settled by talking rather than by a fight or a purchase. (The user answered
+"continue" to the question of what shape it should take; this is my call and
+is recorded so it can be redirected.)
+
+**An ask is authored data** (`data/asks.json`): who it is put to, what has to
+be true for there to be anything to ask (`requires`: an open quest, an open
+summons), the skill it turns on, its difficulty, a cooldown, and for each of
+four grades what happens — a list of effects from a small vocabulary
+(`AskDirector.EFFECTS`: `feel`, `flag`, `cash`, `extend_deadline`,
+`raise_requirement`, `leniency`). `DataRegistry` validates every ask against
+the world (the person, the skill, the quest, all four grades, known effects).
+A model reads what the player meant (`negotiate`; `persuade` and `ask_favor`
+count too) and *nothing else*: which ask it is, whether it succeeds and what it
+changes are decided by rules and dice.
+
+**Four grades, not two** (`AskRules`): the player's skill against the ask's
+difficulty, moved by how the person feels about them and by the player's
+condition, never certain and never hopeless, rolled on the seeded `ask`
+stream. **Success** gives what was asked. **Partial** gives some of it *and
+costs*. **Failure** changes nothing and puts them out a little. **Backfire**
+— pushing too hard — leaves things worse than before. Every try teaches the
+skill, more for winning. Asking twice in a breath is refused (a cooldown,
+`ask_again`, and no dice thrown), and asking where there is nothing to ask is
+`no_ask`.
+
+**Two asks, deliberately unlike each other.**
+- *More time from Rauno* (the debt, D-044): success is a week more; partial is
+  three days and the debt grows by €30 — interest, a *delayed* cost, carried in
+  the quest's `extra_need` and shown in the log ("0 of 330"); failure loses a
+  little trust; backfire loses two days and his goodwill.
+- *Going easy* with Marika, once she has sent for you (D-052): her leniency —
+  a number added to the weight of the case she is about to decide — falls on a
+  success (a fine can become nothing), a little on a partial (a warning), not
+  at all on a failure, and *rises* on a backfire (an arrest). It is spent when
+  she decides. What the police believe is still what decides; the player only
+  moves how it weighs.
+It works in person, by text and on a call, since it is a line of speech like
+any other. A reply to an ask is authored generic lines by grade, or the
+model's, told what came of it.
+
+**A bug the tests found.** "Can I pay later?" was read offline as a farewell
+(it contains "later"), which would have ended the conversation; negotiating now
+outranks saying goodbye in the offline reading.
+
+**Saved.** An `asks` section (what was asked of whom, when), schema v9; quests
+carry `extra_need` and the police `leniency`, in their own sections.
+
+**Not yet.** Only two asks are authored — the mechanism, not a catalogue; the
+other skills (`deception` for lying, `intimidation` for threats that work) have
+no ask to serve yet; asks that give things (an advance on wages, credit at a
+shop); the person *refusing to be asked* for reasons of their own beyond
+disposition.
