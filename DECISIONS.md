@@ -1450,3 +1450,60 @@ longer has.
 `errands.json`; people's own money is still not modelled (D-042), so rewards
 come from nowhere. Quest text is English-first with the Finnish gap the
 project already tolerates.
+
+
+## D-045 — The phone: a window of its own, and nobody texts without a reason
+
+**Decision.** M5 step 1. The phone is a window (`P`, `PhoneWindow`) shaped
+like one — a narrow frame, Messages and Contacts along the bottom, more apps
+joining that bar as they are built — not a page of the menu. It exists only
+if the player has `item_phone` on them (every background starts with one;
+the pawn shop will buy it): without one you cannot open it, and nothing that
+would have arrived is queued for you.
+
+**Numbers.** `PhoneState.contacts`. You have someone's number once they know
+you (familiarity 0.1: introduced, or talked twice), or when they hire you.
+Looked at once an hour, after a conversation ends, and at the start.
+
+**Who writes, and when.** `PhoneRules.judge_outreach` — pure, tested per
+refusal code — says whether a cause may become a message: `no_phone`,
+`not_a_contact`, `asleep`, `quiet_hours` (before 07:00, from 22:00),
+`too_soon` (a per-kind gap: two days for an errand, one for a nudge or a
+missed shift, five for a friend), `daily_cap` (three people a day). The
+*causes* come from the simulation, never from a model and never at random:
+a quest deadline within three days (from whoever gave it), a shift missed
+(from the employer), an errand someone needs done, a fond acquaintance
+checking in. Each contact gets a preferred hour each day, from a hash, so a
+day's messages arrive spread out. `PhoneDirector` looks at contacts only —
+never the population — once an hour and once after time was skipped, so it
+costs nothing that scales with the world (`src/npc`, `src/time` and
+`src/world` are untouched; the benchmark was not re-run).
+
+**Midnight is no time to write.** A missed shift is counted at the day's
+turn, so it waits in `PhoneState.pending` and is delivered at the next hour
+the rules allow; held back only by the hour, sleep or the cap it waits, up to
+a day, otherwise it is dropped.
+
+**A text can ask something, and the answer is a proposal.** An errand offer
+carries an action; the window offers "I'll do it" / "Not now";
+`Game.answer_message()` judges it (`PhoneRules.judge_answer`: `no_phone`,
+`no_such_answer`, `already_answered`, `no_longer_possible` — an errand taken
+in person meanwhile), applies it through the same `QuestLog.take_errand` the
+conversation route uses, and a refusal emits `Events.action_rejected`. You can
+always decline.
+
+**Words.** Messages are stored as a locale key and arguments (an item id, a
+place id, a quest name key), rendered on display (`PhoneText`), so a change of
+language reaches messages already received. Every line is authored, English
+and Finnish; letting the cheap model *word* a message in the sender's voice is
+a later step and would change wording only, never whether or when.
+
+**Saved.** A `phone` section (contacts, messages bounded at 200 — read ones
+go first and an unanswered question is never dropped — last-started times,
+pending, next id); schema v6; a v5 save gets an empty phone and picks its
+contacts up from who already knows the player.
+
+**Not yet, on purpose.** Replying in your own words (the intent pipeline would
+read a text the way it reads a line of speech), calls, calendar and meeting
+requests, the map, banking, photos, email. The criminal-contacts view waits
+for crime (M6). Sequenced in `PROJECT_STATUS.md`.

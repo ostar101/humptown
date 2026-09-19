@@ -1,0 +1,187 @@
+class_name PhoneDirector
+extends RefCounted
+## Carries out the phone (D-045). Godot decides who has a reason to write and
+## `PhoneRules` decides whether they may; no model is asked, and every line is
+## authored. It looks only at the player's contacts — never a loop over the
+## whole population — and only once an hour (and once after time was skipped).
+##
+## The causes, in the order they are looked at:
+## - a deadline coming up on a quest, from whoever gave it (`quest_nudge`)
+## - a shift missed, from the employer (`missed_shift`, told by `Game`)
+## - an errand someone needs done and you could do (`errand_offer`)
+## - a friend thinking of you (`check_in`)
+##
+## Without a phone in the bag nothing arrives and nothing is queued: the
+## messages you would have had are simply not there.
+
+const ITEM := "item_phone"
+const MINUTES_PER_DAY := 1440
+
+var state: PhoneState = PhoneState.new()
+
+var _npcs: NpcRegistry = null
+var _relationships: RelationshipGraph = null
+var _quests: QuestLog = null
+var _player: PlayerState = null
+var _clock: GameClock = null
+
+
+func setup(p_state: PhoneState, npcs: NpcRegistry, relationships: RelationshipGraph, quests: QuestLog,
+		player: PlayerState, clock: GameClock) -> void:
+	state = p_state
+	_npcs = npcs
+	_relationships = relationships
+	_quests = quests
+	_player = player
+	_clock = clock
+
+
+func has_phone() -> bool:
+	return _player != null and _player.inventory.count_of(ITEM) > 0
+
+
+## Adds the number of everyone who knows the player well enough (introduced,
+## or talked twice). Returns the people newly added.
+func sync_contacts() -> Array[String]:
+	var added: Array[String] = []
+	for npc_id in _relationships.who_knows(PlayerState.ID):
+		var edge := _relationships.peek(npc_id, PlayerState.ID)
+		if edge != null and edge.familiarity >= PhoneRules.CONTACT_FAMILIARITY and add_contact(npc_id):
+			added.append(npc_id)
+	return added
+
+
+## Their number, given or taken. False when it was already there or the person
+## is not someone who exists.
+func add_contact(npc_id: String) -> bool:
+	var npc := _npcs.get_npc(npc_id)
+	if npc == null or not npc.alive or not state.add_contact(npc_id, _clock.day_index()):
+		return false
+	Events.phone_contact_added.emit(npc_id)
+	return true
+
+
+## One look at who has a reason to write. Returns how many messages arrived.
+func run_outreach() -> int:
+	if not has_phone():
+		return 0
+	var arrived := _deliver_pending()
+	for cause in _causes():
+		if deliver(cause).is_ok():
+			arrived += 1
+	return arrived
+
+
+## A message the simulation has a reason for: {"npc", "kind", "key", "args",
+## "action"?}. Judged by the rules; delivered if allowed.
+func deliver(cause: Dictionary) -> Result:
+	var npc_id := str(cause.get("npc", ""))
+	var npc := _npcs.get_npc(npc_id)
+	var now := _clock.total_minutes
+	var judged := PhoneRules.judge_outreach(cause, {
+		"has_phone": has_phone(),
+		"is_contact": state.is_contact(npc_id),
+		"npc_awake": npc != null and npc.alive and npc.activity != "sleep",
+		"hour": _clock.hour(),
+		"minutes_since": state.minutes_since_started(npc_id, now),
+		"started_today": state.started_since(_clock.day_index() * MINUTES_PER_DAY),
+	})
+	if judged.is_err():
+		Log.debug("phone", "Message held back", {"npc": npc_id, "kind": cause.get("kind"), "why": judged.code})
+		return judged
+	var message := state.add_message(npc_id, true, str(cause["kind"]), str(cause["key"]),
+		cause.get("args", {}), now, cause.get("action", {}))
+	Events.phone_message.emit(npc_id, int(message["id"]))
+	return Result.success(message)
+
+
+## The employer noticing a missed shift. Told by `Game` when it counts one —
+## at midnight, which is no time to write, so it waits for morning.
+func missed_shift(employer_id: String, workplace_id: String) -> void:
+	if not has_phone():
+		return
+	state.pending.append({"queued": _clock.total_minutes, "cause": {
+		"npc": employer_id, "kind": "missed_shift", "key": "phone.msg.missed_shift", "args": {"place": workplace_id}}})
+
+
+## The player answers a message's question: "accept" or "decline". Judged, then
+## applied through the same state the conversation route uses.
+func answer(message_id: int, choice: String) -> Result:
+	var message := state.get_message(message_id)
+	var action: Dictionary = message.get("action", {})
+	var possible := false
+	if str(action.get("do", "")) == "take_errand":
+		possible = _quests.errand_offered_by(str(message.get("npc", "")), _clock.day_index()) == str(action.get("errand", "-"))
+	var judged := PhoneRules.judge_answer(message, choice, {
+		"has_phone": has_phone(), "open": state.is_open(message), "still_possible": possible,
+	})
+	if judged.is_err():
+		return judged
+	var npc_id := str(message["npc"])
+	var now := _clock.total_minutes
+	if choice == "accept":
+		_quests.take_errand(str(action["errand"]), _clock.day_index())
+		state.answer(message_id, "accepted")
+		state.add_message(npc_id, false, "reply", "phone.reply.accept", {}, now)
+		Events.quest_updated.emit(str(action["errand"]), "errand_taken")
+	else:
+		state.answer(message_id, "declined")
+		state.add_message(npc_id, false, "reply", "phone.reply.decline", {}, now)
+	return Result.success(choice)
+
+
+## Tries what is waiting. Something held back only for the hour, sleep or a full
+## day keeps waiting, up to a day; anything else is dropped.
+func _deliver_pending() -> int:
+	var arrived := 0
+	var waiting: Array[Dictionary] = []
+	for entry in state.pending:
+		var judged := deliver(entry["cause"])
+		if judged.is_ok():
+			arrived += 1
+		elif judged.code in ["quiet_hours", "asleep", "daily_cap"] and _clock.total_minutes - int(entry["queued"]) < MINUTES_PER_DAY:
+			waiting.append(entry)
+	state.pending = waiting
+	return arrived
+
+
+# --- causes ----------------------------------------------------------------------------
+
+func _causes() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var today := _clock.day_index()
+	var hour := _clock.hour()
+	for quest_id in _quests.active:
+		var quest := _quests.definition(quest_id)
+		var giver := str(quest.get("giver", ""))
+		var deadline := int(_quests.active[quest_id].get("deadline_day", -1))
+		if giver == "" or deadline < 0 or deadline - today > PhoneRules.NUDGE_DAYS:
+			continue
+		var days := deadline - today
+		out.append({"npc": giver, "kind": "quest_nudge",
+			"key": "phone.msg.quest_nudge" if days > 0 else "phone.msg.quest_nudge_last",
+			"args": {"quest_key": str(quest.get("name_key", "")), "days": days}})
+	var contacts: Array = state.contacts.keys()
+	contacts.sort()
+	for npc_id: String in contacts:
+		if hour < _preferred_hour(npc_id, today):
+			continue
+		var errand_id := _quests.errand_offered_by(npc_id, today)
+		if errand_id != "":
+			var errand := _quests.errand(errand_id)
+			out.append({"npc": npc_id, "kind": "errand_offer", "key": "phone.msg.errand_offer",
+				"args": {"count": int(errand.get("count", 1)), "item": str(errand.get("item", "")),
+					"reward": int(errand.get("reward", 0))},
+				"action": {"do": "take_errand", "errand": errand_id}})
+		var edge := _relationships.peek(npc_id, PlayerState.ID)
+		if edge != null and edge.familiarity >= PhoneRules.CHECK_IN_FAMILIARITY \
+				and edge.affection >= PhoneRules.CHECK_IN_AFFECTION:
+			out.append({"npc": npc_id, "kind": "check_in", "args": {},
+				"key": "phone.msg.check_in.%d" % (1 + posmod(("%s/%d" % [npc_id, today]).hash(), 3))})
+	return out
+
+
+## The hour of the day from which someone gets round to it, so a day's
+## messages arrive spread out and not all as the clock strikes seven.
+func _preferred_hour(npc_id: String, day: int) -> int:
+	return PhoneRules.FIRST_HOUR + 1 + posmod(("%s/%d" % [npc_id, day]).hash(), 12)

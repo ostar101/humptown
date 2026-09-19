@@ -27,6 +27,8 @@ var memories := MemoryBook.new()
 var shops := ShopRegistry.new()
 var work := Employment.new()
 var quests := QuestLog.new()
+var phone := PhoneState.new()
+var phone_director := PhoneDirector.new()
 var reputation := Reputation.new()
 var player := PlayerState.new()
 var saves := SaveManager.new()
@@ -77,6 +79,7 @@ func _ready() -> void:
 	Localization.setup()
 	Events.player_deed.connect(_on_player_deed)
 	Events.relationship_changed.connect(_on_relationship_changed)
+	Events.dialogue_ended.connect(_on_dialogue_ended)
 	Log.min_level = int(Settings.get_value("log_level", Log.Level.INFO)) as Log.Level
 	Log.info("game", "Game root ready")
 
@@ -122,6 +125,8 @@ func new_game(background_id: String = "", world_seed: int = 0) -> Result:
 	_apply_background(background_id)
 	_start_background_job(background_id)
 	_start_background_quests(background_id)
+	phone_director.setup(phone, npcs, relationships, quests, player, clock)
+	phone_director.sync_contacts()
 	dialogue.setup(npcs, world, player, relationships, knowledge, clock, data, LlmDialogueModel.new(llm), memories, work, quests)
 	_connect_simulation()
 
@@ -199,6 +204,8 @@ func unload() -> void:
 	shops = ShopRegistry.new()
 	work = Employment.new()
 	quests = QuestLog.new()
+	phone = PhoneState.new()
+	phone_director = PhoneDirector.new()
 	_shopping = ""
 	_shop_deals = 0
 	reputation = Reputation.new()
@@ -670,6 +677,42 @@ func _feeling(npc_id: String, dimension: String) -> float:
 	return edge.get_dimension(dimension) if edge != null else 0.0
 
 
+# --- the phone -------------------------------------------------------------------
+
+## Once an hour, and once after time was skipped: numbers exchanged, and
+## whoever has a reason to write (D-045).
+func _phone_tick() -> void:
+	if not is_running():
+		return
+	phone_director.sync_contacts()
+	phone_director.run_outreach()
+
+
+func _on_dialogue_ended(_npc_id: String) -> void:
+	if is_running():
+		phone_director.sync_contacts()
+
+
+func has_phone() -> bool:
+	return is_running() and phone_director.has_phone()
+
+
+## Opens a thread: everything in it is read.
+func read_thread(npc_id: String) -> void:
+	if is_running() and phone.mark_read(npc_id) > 0:
+		Events.phone_read.emit(npc_id)
+
+
+## The player answers a text that asks something: "accept" or "decline".
+func answer_message(message_id: int, choice: String) -> Result:
+	if not is_running():
+		return Result.failure("no_world")
+	var answered := phone_director.answer(message_id, choice)
+	if answered.is_err():
+		return _reject({"kind": "phone_answer", "message": message_id, "answer": choice}, answered.code)
+	return answered
+
+
 # --- home ------------------------------------------------------------------------
 
 ## Puts something away in the cupboard at home (D-043). Only at home, and only
@@ -789,6 +832,7 @@ func hire_player(job_id: String) -> Result:
 	if not data.has_entry("jobs", job_id):
 		return _reject({"kind": "hire", "job": job_id}, "no_such_job")
 	work.hire(job_id, clock.day_index())
+	phone_director.add_contact(str(data.get_entry("jobs", job_id).get("employer", "")))
 	Events.job_changed.emit(job_id)
 	Events.player_deed.emit("hired", {"job": job_id})
 	return Result.success(job_id)
@@ -822,11 +866,14 @@ func _count_missed_shifts(day: int) -> void:
 		return
 	var job := data.get_entry("jobs", work.job_id)
 	var today_weekday := clock.weekday()
+	var missed_before := work.shifts_missed
 	for d in range(maxi(work.checked_through_day + 1, work.hired_day + 1), day):
 		var weekday := posmod(today_weekday - (day - d), 7)
 		if WorkRules.works_on(job.get("days", "all"), weekday) and work.last_worked_day != d:
 			work.record_missed()
 	work.checked_through_day = day - 1
+	if work.shifts_missed > missed_before and work.standing > 0.0 and str(job.get("employer", "")) != "":
+		phone_director.missed_shift(str(job["employer"]), str(job.get("workplace", "")))
 	if work.standing <= 0.0:
 		var lost := work.job_id
 		var employer := str(job.get("employer", ""))
@@ -986,6 +1033,7 @@ func save_game(slot: String) -> Result:
 		"shops": shops.to_dict(),
 		"work": work.to_dict(),
 		"quests": quests.to_dict(),
+		"phone": phone.to_dict(),
 		"reputation": reputation.to_dict(),
 		"events": events_queue.to_dict(),
 		"player": player.to_dict(),
@@ -1023,6 +1071,7 @@ func load_game(slot: String) -> Result:
 	shops.from_dict(sections.get("shops", {}))
 	work.from_dict(sections.get("work", {}))
 	quests.from_dict(sections.get("quests", {}))
+	phone.from_dict(sections.get("phone", {}))
 	reputation.from_dict(sections.get("reputation", {}))
 	events_queue.from_dict(sections.get("events", {}))
 	player.from_dict(sections.get("player", {}))
@@ -1065,6 +1114,7 @@ func _on_minute(total_minutes: int) -> void:
 func _on_hour(hour_of_day: int) -> void:
 	Events.hour_passed.emit(hour_of_day)
 	player.stats.drift(60, _player_activity)
+	_phone_tick()
 	if player.stats.health <= 0.0 and not _collapsing:
 		_collapse_due = true
 
@@ -1083,6 +1133,7 @@ func _on_day(day: int) -> void:
 func _on_time_skipped(from_minutes: int, to_minutes: int) -> void:
 	director.catch_up(to_minutes)
 	director.assign_tiers()
+	_phone_tick()
 	Events.time_skipped.emit(from_minutes, to_minutes)
 
 

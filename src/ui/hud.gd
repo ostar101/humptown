@@ -21,7 +21,8 @@ func _ready() -> void:
 	_message.visible = false
 	set_process(false)
 	for changed: Signal in [Events.minute_passed, Events.time_skipped, Events.money_changed,
-			Events.condition_changed, Events.location_entered, Events.game_loaded, Events.locale_changed]:
+			Events.condition_changed, Events.location_entered, Events.game_loaded, Events.locale_changed,
+			Events.phone_message, Events.phone_read]:
 		changed.connect(_on_status_changed)
 	refresh_status()
 

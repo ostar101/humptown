@@ -21,12 +21,14 @@ const CONDITION_WORDS := [
 static func line() -> String:
 	if not Game.is_running():
 		return ""
-	return Localization.t("ui.status.line", {
+	var line := Localization.t("ui.status.line", {
 		"day": Localization.t(Game.clock.weekday_key()),
 		"time": Game.clock.format_time(),
 		"place": InteractionText.place_name(Game.player.location),
 		"cash": Game.player.wallet.cash,
 	})
+	var unread := PhoneText.unread_line()
+	return line + " · " + unread if unread != "" else line
 
 
 ## The condition keys that apply, one per meter, most serious first.

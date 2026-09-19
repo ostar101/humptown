@@ -52,6 +52,11 @@ signal player_deed(kind: String, data: Dictionary)
 ## A quest or errand moved: started, advanced, done, failed, errand_taken,
 ## errand_done.
 signal quest_updated(quest_id: String, status: String)
+## Someone wrote to the player's phone (D-045); the player read a thread; a
+## number was added.
+signal phone_message(npc_id: String, message_id: int)
+signal phone_read(npc_id: String)
+signal phone_contact_added(npc_id: String)
 
 # --- Dialogue / LLM ---------------------------------------------------------
 signal dialogue_started(npc_id: String)

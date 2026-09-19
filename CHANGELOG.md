@@ -3,6 +3,28 @@
 All notable changes to Humptown. Format loosely follows Keep a Changelog;
 versions are milestones rather than releases until there is something to release.
 
+## [Unreleased] — Milestone 5: the phone
+
+### Decided
+- The phone: its own window on P, only if you have one on you; numbers come
+  from being known or hired; nobody writes without a cause the simulation
+  produced, and the rules hold them to quiet hours, per-kind gaps and three
+  people a day; a text can ask something and your answer is judged like any
+  other proposal (D-045)
+
+### Added
+- `PhoneState` (`Game.phone`), `PhoneRules`, `PhoneDirector`
+  (`Game.phone_director`), `PhoneText`, `PhoneWindow` (new `phone` input
+  action); `Game.has_phone()`, `answer_message()`, `read_thread()`;
+  `Events.phone_message`, `phone_read`, `phone_contact_added`
+- Texts: an errand someone needs done (answerable in the thread), a quest
+  deadline coming up, a shift missed, a friend checking in; the HUD says
+  when something is unread
+- `test_phone` (24 tests); `ui_preview -- --screen=world --phone=threads|thread|contacts`
+
+### Changed
+- Save schema version 6: adds `phone`; a version 5 save gets an empty one
+
 ## [0.4.0] — 2026-09-19 — Milestone 4: making a living
 
 You can earn a wage, buy and sell and haggle, eat, sleep and collapse, keep

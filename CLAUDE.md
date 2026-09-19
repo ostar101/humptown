@@ -90,6 +90,5 @@ Make implementation decisions yourself and record the notable ones in `DECISIONS
 
 Do not "fix" these; they are sequenced, not forgotten. See `ROADMAP.md`.
 
-- No rendering, tilemaps, sprites, player controller or camera — Milestone 2.
-- No dialogue UI and no live LLM calls — the provider layer is built and tested offline, nothing calls it yet — Milestone 3.
-- No quests, phone, combat, police. No weather or seasons ever in v1 (explicitly out of scope).
+- No live LLM call has ever been made — the provider layer and dialogue are built and tested offline; first contact needs the player's own key, entered by the player.
+- No combat, crime or police. The phone has its core only (M5 step 1: contacts, texts, errands by text); replies, calendar, map and the rest are sequenced in `PROJECT_STATUS.md`. No weather or seasons ever in v1 (explicitly out of scope).
