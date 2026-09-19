@@ -3,8 +3,9 @@ extends CanvasLayer
 ## The phone (D-045): its own window, shaped like one, not a page of the
 ## menu. Messages and Contacts for now; more apps join the bottom bar as they
 ## are built. It reads the phone and never writes it, except through
-## `Game.answer_message()` and `Game.read_thread()`, which decide. Time stands
-## still while it is open.
+## `Game.send_text()`, `Game.answer_message()` and `Game.read_thread()`, which
+## decide. Time stands still while it is open, so a reply to a text arrives
+## after it is put away.
 
 signal closed()
 
@@ -24,6 +25,10 @@ var _time_was_paused := false
 @onready var _tab_messages: Button = %TabMessages
 @onready var _tab_contacts: Button = %TabContacts
 @onready var _close: Button = %Close
+@onready var _compose: HBoxContainer = %Compose
+@onready var _line: LineEdit = %Line
+@onready var _send: Button = %Send
+@onready var _notice: Label = %Notice
 
 
 func _ready() -> void:
@@ -32,6 +37,8 @@ func _ready() -> void:
 	_back.pressed.connect(func() -> void: show_page(Page.THREADS))
 	_tab_messages.pressed.connect(func() -> void: show_page(Page.THREADS))
 	_tab_contacts.pressed.connect(func() -> void: show_page(Page.CONTACTS))
+	_send.pressed.connect(_send_line)
+	_line.text_submitted.connect(func(_text: String) -> void: _send_line())
 	Events.phone_message.connect(_on_phone_message)
 
 
@@ -80,6 +87,17 @@ func show_page(page_to_show: Page, npc_id: String = "") -> void:
 
 func open_thread(npc_id: String) -> void:
 	show_page(Page.THREAD, npc_id)
+
+
+## Writes into the box and sends it, as the player would. Returns the result.
+func type_and_send(text: String) -> Result:
+	_line.text = text
+	return _send_line()
+
+
+## What the small note under the thread says, "" when it says nothing.
+func notice_text() -> String:
+	return _notice.text if _notice.visible else ""
 
 
 ## What is on the page, one entry per row, its labels joined by "|".
@@ -140,9 +158,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		close()
 
 
-func _on_phone_message(_npc_id: String, _message_id: int) -> void:
-	if _root.visible:
-		_render()
+func _on_phone_message(npc_id: String, _message_id: int) -> void:
+	if not _root.visible:
+		return
+	if _page == Page.THREAD and npc_id == _npc:
+		Game.read_thread(_npc)   # it arrived while you were looking at it
+	_render()
 
 
 func _answer_buttons() -> Array[Button]:
@@ -161,6 +182,8 @@ func _render() -> void:
 		child.queue_free()
 	_clock.text = Game.clock.format_time()
 	_back.visible = _page == Page.THREAD
+	_compose.visible = _page == Page.THREAD
+	_notice.visible = false
 	_tab_messages.button_pressed = _page != Page.CONTACTS
 	_tab_contacts.button_pressed = _page == Page.CONTACTS
 	match _page:
@@ -198,7 +221,10 @@ func _render_threads() -> void:
 
 func _render_thread() -> void:
 	var open_message := {}
-	for message in Game.phone.thread(_npc):
+	var thread := Game.phone.thread(_npc)
+	if thread.is_empty():
+		_rows.add_child(_note(Localization.t("ui.phone.thread_empty")))
+	for message in thread:
 		var box := VBoxContainer.new()
 		box.add_theme_constant_override("separation", 2)
 		var mine: bool = message["from"] == "player"
@@ -227,26 +253,36 @@ func _render_thread() -> void:
 			button.pressed.connect(_answer.bind(int(open_message["id"]), choice))
 			answers.add_child(button)
 		_rows.add_child(answers)
+	if Game.phone.waiting_for(_npc) > 0:
+		_rows.add_child(_note(Localization.t("ui.phone.waiting")))
 
 
 func _render_contacts() -> void:
 	var ids: Array = Game.phone.contacts.keys()
 	ids.sort_custom(func(a: String, b: String) -> bool: return PhoneText.npc_name(a) < PhoneText.npc_name(b))
 	for npc_id: String in ids:
-		var box := VBoxContainer.new()
-		box.add_theme_constant_override("separation", 2)
-		var who := Label.new()
-		who.text = PhoneText.npc_name(npc_id)
-		who.add_theme_font_size_override("font_size", 20)
-		var work := Label.new()
-		work.theme_type_variation = &"MutedLabel"
-		work.text = PhoneText.occupation(npc_id)
-		work.visible = work.text != ""
-		box.add_child(who)
-		box.add_child(work)
-		_rows.add_child(box)
+		var row := Button.new()
+		row.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		row.clip_text = true
+		row.set_meta("npc", npc_id)
+		var occupation := PhoneText.occupation(npc_id)
+		row.text = PhoneText.npc_name(npc_id) + ("\n" + occupation if occupation != "" else "")
+		row.pressed.connect(open_thread.bind(npc_id))
+		_rows.add_child(row)
 	if ids.is_empty():
 		_rows.add_child(_note(Localization.t("ui.phone.no_contacts")))
+
+
+func _send_line() -> Result:
+	var sent := Game.send_text(_npc, _line.text)
+	if sent.is_ok():
+		_line.text = ""
+	_render()
+	if sent.is_err() and sent.code != "empty":
+		_notice.text = Localization.t("ui.phone.refused." + sent.code)
+		_notice.visible = true
+	_line.grab_focus()
+	return sent
 
 
 func _answer(message_id: int, choice: String) -> void:
@@ -271,5 +307,7 @@ func _focus_first() -> void:
 	var buttons := _answer_buttons()
 	if not buttons.is_empty():
 		buttons[0].grab_focus()
+	elif _page == Page.THREAD:
+		_line.grab_focus()
 	else:
 		_close.grab_focus()

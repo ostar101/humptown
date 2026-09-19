@@ -28,6 +28,16 @@ const MIN_GAP := {
 	"check_in": 5 * 24 * 60,
 }
 
+## The longest text the player may send, as the longest line they may say.
+const MAX_TEXT_LENGTH := 280
+## Texts to one person that have not been read yet, at most.
+const MAX_WAITING := 3
+## Minutes before someone gets to a text, by what they are doing.
+const READ_DELAY := {"work": 45}
+const READ_DELAY_DEFAULT := 5
+## When they cannot read it yet, they look again after this many minutes.
+const READ_RETRY := 30
+
 ## Days before a deadline at which its giver starts nudging.
 const NUDGE_DAYS := 3
 ## How warmly someone must feel about the player to check in on them.
@@ -73,3 +83,37 @@ static func judge_answer(message: Dictionary, answer: String, state: Dictionary)
 	if answer == "accept" and not bool(state.get("still_possible", false)):
 		return Result.failure("no_longer_possible")
 	return Result.success(answer)
+
+
+## Whether the player may send this text. `state` = {"has_phone", "is_contact",
+## "waiting"} — how many of theirs this person has not read. Codes: `no_phone`,
+## `not_a_contact`, `empty`, `too_long`, `too_many_waiting`.
+static func judge_send(line: String, state: Dictionary) -> Result:
+	if not bool(state.get("has_phone", false)):
+		return Result.failure("no_phone")
+	if not bool(state.get("is_contact", false)):
+		return Result.failure("not_a_contact")
+	var text := line.strip_edges()
+	if text.is_empty():
+		return Result.failure("empty")
+	if text.length() > MAX_TEXT_LENGTH:
+		return Result.failure("too_long")
+	if int(state.get("waiting", 0)) >= MAX_WAITING:
+		return Result.failure("too_many_waiting")
+	return Result.success(text)
+
+
+## Minutes until someone gets to a text, from what they are doing.
+static func reading_delay(activity: String) -> int:
+	return int(READ_DELAY.get(activity, READ_DELAY_DEFAULT))
+
+
+## Whether a person can read a text now: awake, and not in the small hours.
+## `state` = {"npc_awake", "hour"}. Codes: `asleep`, `quiet_hours`.
+static func judge_reading(state: Dictionary) -> Result:
+	if not bool(state.get("npc_awake", false)):
+		return Result.failure("asleep")
+	var hour := int(state.get("hour", 12))
+	if hour < FIRST_HOUR or hour >= LAST_HOUR:
+		return Result.failure("quiet_hours")
+	return Result.success()

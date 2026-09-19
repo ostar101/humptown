@@ -483,5 +483,15 @@
   "phone.msg.check_in.2": "Haven't seen you around. Everything all right?",
   "phone.msg.check_in.3": "Thinking of you. Come by sometime.",
   "phone.reply.accept": "I'll do it.",
-  "phone.reply.decline": "Sorry, not right now."
+  "phone.reply.decline": "Sorry, not right now.",
+  "ui.phone.send": "Send",
+  "ui.phone.write": "Write a message",
+  "ui.phone.waiting": "…",
+  "ui.phone.thread_empty": "Nothing here yet. Say something.",
+  "ui.phone.refused.too_many_waiting": "They have not answered yet.",
+  "ui.phone.refused.too_long": "That is too long for a text.",
+  "ui.phone.refused.no_phone": "You do not have a phone on you.",
+  "ui.phone.refused.not_a_contact": "You do not have their number.",
+  "dialogue.generic.not_in_person.1": "Not over the phone. If you mean it, hand it over face to face.",
+  "dialogue.generic.not_in_person.2": "You can't send cash in a text. Come by."
 }

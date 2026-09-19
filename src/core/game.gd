@@ -125,7 +125,7 @@ func new_game(background_id: String = "", world_seed: int = 0) -> Result:
 	_apply_background(background_id)
 	_start_background_job(background_id)
 	_start_background_quests(background_id)
-	phone_director.setup(phone, npcs, relationships, quests, player, clock)
+	phone_director.setup(phone, npcs, relationships, quests, player, clock, dialogue)
 	phone_director.sync_contacts()
 	dialogue.setup(npcs, world, player, relationships, knowledge, clock, data, LlmDialogueModel.new(llm), memories, work, quests)
 	_connect_simulation()
@@ -686,6 +686,8 @@ func _phone_tick() -> void:
 		return
 	phone_director.sync_contacts()
 	phone_director.run_outreach()
+	if not phone.outbox.is_empty():
+		phone_director.process_due()
 
 
 func _on_dialogue_ended(_npc_id: String) -> void:
@@ -695,6 +697,17 @@ func _on_dialogue_ended(_npc_id: String) -> void:
 
 func has_phone() -> bool:
 	return is_running() and phone_director.has_phone()
+
+
+## The player texts someone (D-046). It is read when they get to it, and
+## answered as a text; a refusal here is a text that was never sent.
+func send_text(npc_id: String, line: String) -> Result:
+	if not is_running():
+		return Result.failure("no_world")
+	var sent := phone_director.send_text(npc_id, line)
+	if sent.is_err():
+		return _reject({"kind": "send_text", "npc": npc_id}, sent.code)
+	return sent
 
 
 ## Opens a thread: everything in it is read.
@@ -1106,6 +1119,8 @@ func _on_world_event(event: WorldEventQueue.QueuedEvent) -> void:
 func _on_minute(total_minutes: int) -> void:
 	Events.minute_passed.emit(total_minutes)
 	director.tick(total_minutes)
+	if not phone.outbox.is_empty():
+		phone_director.process_due()
 	if total_minutes - _last_retier >= RETIER_INTERVAL:
 		_last_retier = total_minutes
 		director.assign_tiers()

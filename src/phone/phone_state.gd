@@ -10,13 +10,18 @@ const MAX_MESSAGES := 200
 
 ## npc id -> day the number was added
 var contacts: Dictionary = {}
-## Oldest first: {"id", "npc", "from": "npc" | "player", "kind", "key", "args",
+## Oldest first: {"id", "npc", "from": "npc" | "player", "kind", "key", "args", "text",
 ## "minute", "read", "action": {} | {"do", ...}, "answer": "" | "accepted" | "declined"}
+## `kind` "text" is the player's own and "reply" an answer to one; a `text`, when
+## there is one, is what it says, and `key` and `args` are for authored ones.
 var messages: Array[Dictionary] = []
 ## npc id -> minute of the last message *they* started
 var last_started: Dictionary = {}
 ## Messages with a reason that are waiting for a better hour: {"cause", "queued"}
 var pending: Array[Dictionary] = []
+## Texts the player sent that the person has not read yet:
+## {"npc", "message" (the id), "line", "due"}
+var outbox: Array[Dictionary] = []
 var _next_id := 1
 
 
@@ -33,14 +38,14 @@ func is_contact(npc_id: String) -> bool:
 
 ## Adds a message and returns it. `from_npc` false is the player's own.
 func add_message(npc_id: String, from_npc: bool, kind: String, key: String, args: Dictionary,
-		minute: int, action: Dictionary = {}) -> Dictionary:
+		minute: int, action: Dictionary = {}, text: String = "") -> Dictionary:
 	var message := {
 		"id": _next_id, "npc": npc_id, "from": "npc" if from_npc else "player", "kind": kind,
-		"key": key, "args": args, "minute": minute, "read": not from_npc, "action": action, "answer": "",
+		"key": key, "args": args, "text": text, "minute": minute, "read": not from_npc, "action": action, "answer": "",
 	}
 	_next_id += 1
 	messages.append(message)
-	if from_npc:
+	if from_npc and kind != "reply":
 		last_started[npc_id] = minute
 	_trim()
 	return message
@@ -90,11 +95,12 @@ func mark_read(npc_id: String) -> int:
 	return n
 
 
-## How many messages people started at or after `minute`.
+## How many messages people started at or after `minute`. An answer to the
+## player's own text is not one they started.
 func started_since(minute: int) -> int:
 	var n := 0
 	for message in messages:
-		if message["from"] == "npc" and int(message["minute"]) >= minute:
+		if message["from"] == "npc" and message["kind"] != "reply" and int(message["minute"]) >= minute:
 			n += 1
 	return n
 
@@ -110,6 +116,15 @@ func answer(message_id: int, how: String) -> void:
 		message["answer"] = how
 
 
+## How many of the player's texts this person has not read.
+func waiting_for(npc_id: String) -> int:
+	var n := 0
+	for entry in outbox:
+		if entry["npc"] == npc_id:
+			n += 1
+	return n
+
+
 ## A question still waiting on the player.
 func is_open(message: Dictionary) -> bool:
 	return not (message.get("action", {}) as Dictionary).is_empty() and str(message.get("answer", "")) == ""
@@ -117,7 +132,7 @@ func is_open(message: Dictionary) -> bool:
 
 func to_dict() -> Dictionary:
 	return {"contacts": contacts.duplicate(), "messages": messages.duplicate(true),
-		"last_started": last_started.duplicate(), "pending": pending.duplicate(true), "next_id": _next_id}
+		"last_started": last_started.duplicate(), "pending": pending.duplicate(true), "outbox": outbox.duplicate(true), "next_id": _next_id}
 
 
 func from_dict(d: Dictionary) -> void:
@@ -129,7 +144,7 @@ func from_dict(d: Dictionary) -> void:
 	for raw: Dictionary in d.get("messages", []):
 		messages.append({
 			"id": int(raw.get("id", 0)), "npc": str(raw.get("npc", "")), "from": str(raw.get("from", "npc")),
-			"kind": str(raw.get("kind", "")), "key": str(raw.get("key", "")), "args": raw.get("args", {}),
+			"kind": str(raw.get("kind", "")), "key": str(raw.get("key", "")), "args": raw.get("args", {}), "text": str(raw.get("text", "")),
 			"minute": int(raw.get("minute", 0)), "read": bool(raw.get("read", true)),
 			"action": raw.get("action", {}), "answer": str(raw.get("answer", "")),
 		})
@@ -140,6 +155,10 @@ func from_dict(d: Dictionary) -> void:
 	pending = []
 	for raw: Dictionary in d.get("pending", []):
 		pending.append({"cause": raw.get("cause", {}), "queued": int(raw.get("queued", 0))})
+	outbox = []
+	for raw: Dictionary in d.get("outbox", []):
+		outbox.append({"npc": str(raw.get("npc", "")), "message": int(raw.get("message", 0)),
+			"line": str(raw.get("line", "")), "due": int(raw.get("due", 0))})
 	_next_id = int(d.get("next_id", 1))
 	for message in messages:
 		_next_id = maxi(_next_id, int(message["id"]) + 1)

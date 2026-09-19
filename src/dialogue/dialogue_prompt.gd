@@ -61,8 +61,11 @@ static func system_text(context: Dictionary, opening: Array[String] = []) -> Str
 	var name := str(npc.get("name", "someone"))
 	var parts: Array[String] = []
 
-	parts.append("You are %s, %s, %s in Harbourside, the harbour district of a small Finnish port town. Someone has stopped to talk to you, face to face." % [
-		name, str(npc.get("age", "")), str(npc.get("occupation", "a local"))])
+	var texting := str(context.get("channel", "in_person")) == "phone"
+	parts.append("You are %s, %s, %s in Harbourside, the harbour district of a small Finnish port town. %s" % [
+		name, str(npc.get("age", "")), str(npc.get("occupation", "a local")),
+		"Someone has sent you a text message on your phone; you are not with them." if texting
+			else "Someone has stopped to talk to you, face to face."])
 	if str(npc.get("bio", "")) != "":
 		parts.append("Who you are: " + str(npc["bio"]))
 	if str(npc.get("voice", "")) != "":
@@ -104,6 +107,8 @@ static func system_text(context: Dictionary, opening: Array[String] = []) -> Str
 - What is written under "What just happened" is true. React to it; never contradict it or pretend something else happened.
 - Answer in the language the other person writes in. The game is being played in %s.
 - Never say you are an AI, a model or a character in a game.""" % [name, language])
+	if texting:
+		parts.append("This is a text message: write it as one. You cannot see them or hand them anything.")
 	return "\n\n".join(parts)
 
 

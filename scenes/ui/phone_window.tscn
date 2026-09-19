@@ -76,6 +76,30 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 12
 
+[node name="Notice" type="Label" parent="Root/Frame/Layout"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+autowrap_mode = 3
+
+[node name="Compose" type="HBoxContainer" parent="Root/Frame/Layout"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="Line" type="LineEdit" parent="Root/Frame/Layout/Compose"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "ui.phone.write"
+max_length = 280
+
+[node name="Send" type="Button" parent="Root/Frame/Layout/Compose"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "ui.phone.send"
+
 [node name="Tabs" type="HBoxContainer" parent="Root/Frame/Layout"]
 layout_mode = 2
 

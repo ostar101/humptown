@@ -13,6 +13,12 @@ extends RefCounted
 ##
 ## Without a phone in the bag nothing arrives and nothing is queued: the
 ## messages you would have had are simply not there.
+##
+## The player may write back, or write first, to anyone whose number they have
+## (D-046). A text waits in the outbox until the person gets to it — soon, or
+## after a shift, or in the morning — and is then read exactly as a spoken line
+## is (`DialogueDirector.text_exchange`): the same intent, the same rules, the
+## same effects; the answer comes back as a text.
 
 const ITEM := "item_phone"
 const MINUTES_PER_DAY := 1440
@@ -24,10 +30,14 @@ var _relationships: RelationshipGraph = null
 var _quests: QuestLog = null
 var _player: PlayerState = null
 var _clock: GameClock = null
+var _dialogue: DialogueDirector = null
+## Message ids being read right now (a model may take a while).
+var _busy: Array[int] = []
 
 
 func setup(p_state: PhoneState, npcs: NpcRegistry, relationships: RelationshipGraph, quests: QuestLog,
-		player: PlayerState, clock: GameClock) -> void:
+		player: PlayerState, clock: GameClock, dialogue: DialogueDirector = null) -> void:
+	_dialogue = dialogue
 	state = p_state
 	_npcs = npcs
 	_relationships = relationships
@@ -102,6 +112,54 @@ func missed_shift(employer_id: String, workplace_id: String) -> void:
 		return
 	state.pending.append({"queued": _clock.total_minutes, "cause": {
 		"npc": employer_id, "kind": "missed_shift", "key": "phone.msg.missed_shift", "args": {"place": workplace_id}}})
+
+
+## The player sends a text. Judged by `PhoneRules.judge_send`; it goes into the
+## outbox to be read when the person gets to it. Returns the message.
+func send_text(npc_id: String, line: String) -> Result:
+	var npc := _npcs.get_npc(npc_id)
+	var judged := PhoneRules.judge_send(line, {
+		"has_phone": has_phone(), "is_contact": state.is_contact(npc_id) and npc != null and npc.alive,
+		"waiting": state.waiting_for(npc_id),
+	})
+	if judged.is_err():
+		return judged
+	var now := _clock.total_minutes
+	var message := state.add_message(npc_id, false, "text", "", {}, now, {}, str(judged.value))
+	state.outbox.append({"npc": npc_id, "message": int(message["id"]), "line": str(judged.value),
+		"due": now + PhoneRules.reading_delay(npc.activity)})
+	return Result.success(message)
+
+
+## Reads the texts whose time has come. A coroutine — a model may answer — so
+## the caller does not wait for it; it is safe to start again while one is
+## still being read.
+func process_due() -> void:
+	for entry in state.outbox.duplicate():
+		var message_id := int(entry["message"])
+		if int(entry["due"]) > _clock.total_minutes or _busy.has(message_id):
+			continue
+		var npc_id := str(entry["npc"])
+		var npc := _npcs.get_npc(npc_id)
+		if npc == null or not npc.alive:
+			state.outbox.erase(entry)
+			continue
+		if PhoneRules.judge_reading({"npc_awake": npc.activity != "sleep", "hour": _clock.hour()}).is_err():
+			entry["due"] = _clock.total_minutes + PhoneRules.READ_RETRY
+			continue
+		_busy.append(message_id)
+		var replied: Result = await _dialogue.text_exchange(npc_id, str(entry["line"]))
+		_busy.erase(message_id)
+		state.outbox.erase(entry)
+		if replied.is_err():
+			continue
+		var reply: Dictionary = replied.value
+		var rejection: Dictionary = reply.get("rejection", {})
+		if not rejection.is_empty():
+			Events.action_rejected.emit(rejection["proposal"], str(rejection["code"]))
+		if has_phone():
+			var answer := state.add_message(npc_id, true, "reply", "", {}, _clock.total_minutes, {}, str(reply["text"]))
+			Events.phone_message.emit(npc_id, int(answer["id"]))
 
 
 ## The player answers a message's question: "accept" or "decline". Judged, then

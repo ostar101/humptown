@@ -21,6 +21,7 @@ extends RefCounted
 ##   conversation has already warmed them), hiring ({"job", "name",
 ##   "problem"} — the job this person hires for, if any, and why the player
 ##   could not have it), works_for_them (the player's job is theirs to give),
+##   channel ("in_person" or "phone": a text cannot carry cash),
 ##   errand ({"id", "what", "reward"} — something they could ask of the
 ##   player today, D-044), errand_running (they are already waiting on one)
 ##
@@ -113,6 +114,9 @@ static func judge(intent: Dictionary, state: Dictionary) -> Result:
 			happened = "They threatened you. You want this conversation over."
 			ends = true
 		"give_money":
+			if str(state.get("channel", "in_person")) == "phone":
+				return Result.failure("not_in_person",
+					"They offered you cash in a text, but cash has to be handed over face to face. Nothing changed hands.")
 			var amount := int(intent.get("amount", 0))
 			if amount <= 0 or amount > MAX_GIFT:
 				return Result.failure("invalid_amount", "They talked about giving you money, but offered nothing you could take.")
@@ -214,7 +218,7 @@ static func topic_for_refusal(code: String) -> String:
 	match code:
 		"not_enough_cash":
 			return "gift_no_cash"
-		"not_hiring", "not_qualified", "do_not_know_you":
+		"not_hiring", "not_qualified", "do_not_know_you", "not_in_person":
 			return code
 	return "unknown"
 

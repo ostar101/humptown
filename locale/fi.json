@@ -458,5 +458,14 @@
   "phone.msg.check_in.1": "Hei, mitä kuuluu?",
   "phone.msg.check_in.2": "Et ole näkynyt. Onko kaikki hyvin?",
   "phone.reply.accept": "Hoidan sen.",
-  "phone.reply.decline": "Anteeksi, ei nyt."
+  "phone.reply.decline": "Anteeksi, ei nyt.",
+  "ui.phone.send": "Lähetä",
+  "ui.phone.write": "Kirjoita viesti",
+  "ui.phone.thread_empty": "Täällä ei ole vielä mitään. Sano jotain.",
+  "ui.phone.refused.too_many_waiting": "He eivät ole vielä vastanneet.",
+  "ui.phone.refused.too_long": "Se on liian pitkä tekstiviestiksi.",
+  "ui.phone.refused.no_phone": "Sinulla ei ole puhelinta mukana.",
+  "ui.phone.refused.not_a_contact": "Sinulla ei ole heidän numeroaan.",
+  "dialogue.generic.not_in_person.1": "Ei puhelimessa. Jos tarkoitat sitä, anna se kasvokkain.",
+  "dialogue.generic.not_in_person.2": "Käteistä ei voi lähettää viestillä. Tule käymään."
 }

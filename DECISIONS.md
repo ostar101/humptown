@@ -1507,3 +1507,52 @@ contacts up from who already knows the player.
 read a text the way it reads a line of speech), calls, calendar and meeting
 requests, the map, banking, photos, email. The criminal-contacts view waits
 for crime (M6). Sequenced in `PROJECT_STATUS.md`.
+
+
+## D-046 — Texting: the same road as speech, read when they get to it
+
+**Decision.** M5 step 2. The player may text anyone whose number they have,
+starting a thread from Contacts or answering one. A text is read into an
+intent, judged by `ConversationRules`, applied and answered by *exactly* the
+code a spoken line goes through: `DialogueDirector.say()` and the new
+`text_exchange()` are two doors onto one `_respond(convo, line, channel)`.
+Nothing about what a text may change is written a second time, so a rule
+learned in a conversation is learned on the phone too, and a model may read
+and word a text no more freely than it may a spoken line.
+
+**What the channel changes, and only this.** `ConversationRules` gets
+`channel` in its state: cash cannot be sent by text (`not_in_person`, with its
+own authored refusal — banking is a later step). The `talked` deed becomes
+`texted` — a quest that wants you *in front of* someone (Ida, the corner shop)
+is not satisfied by a message. The prompt tells the model it is a text and
+that it cannot see the player or hand anything over. A text earns a little
+less familiarity than a conversation (0.02, not 0.05) and leaves the same
+kind of memory.
+
+**Attention costs time.** A sent text waits in `PhoneState.outbox` with a
+due time: five minutes, forty-five if the person is at work. When it is due
+they read it only if they are awake and it is between 07:00 and 22:00
+(`PhoneRules.judge_reading`); otherwise they look again half an hour later.
+So a text at 3 am is answered at breakfast, and nobody replies instantly to
+everything. At most three texts to one person may be unread (`PhoneRules.
+judge_send`; codes `no_phone`, `not_a_contact`, `empty`, `too_long`,
+`too_many_waiting`), each refusal an `action_rejected`. Reading is a
+coroutine started from the per-minute step only when the outbox is not empty
+— free otherwise — and guarded against being started twice while a model is
+thinking. Reading a text is independent of an in-person conversation: the
+conversation state is passed in, not held, so a text can be read while the
+player talks to someone else, and it does not disturb it.
+
+**Their answer is a text.** From the model when there is one, otherwise the
+authored line for the topic. It is stored as literal text (an authored line
+was already resolved to words, with its arguments). An answer is not a
+message they *started*, so it neither uses their gap nor one of the day's
+three (D-045). It arrives with the HUD's toast; if you are looking at that
+thread it is read on arrival. Time stands still while the phone is open, so
+replies come after it is put away.
+
+**Saved.** `outbox` and per-message `text` in the `phone` section; a phone
+saved before this loads unchanged (no schema step: the reader defaults them).
+
+**Not yet.** Meeting requests and the calendar (step 3), banking (step 4),
+calls.

@@ -27,6 +27,8 @@ const WEEKDAYS: Array[String] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Th
 const FAMILIARITY_PER_CONVERSATION := 0.05
 ## Asking someone who they are is how you learn their name.
 const FAMILIARITY_ONCE_INTRODUCED := 0.1
+## A text exchange gets you known a little less than a conversation does.
+const FAMILIARITY_PER_TEXT := 0.02
 ## Lines this short and this plain are read from their words even when a
 ## model is available: a model adds nothing to "hi" but cost and a wait.
 const PLAIN_TOPICS: Array[String] = ["greet", "farewell", "thanks"]
@@ -139,16 +141,44 @@ func say(text: String) -> Result:
 	var talking_to := conversation
 	talking_to.add(PlayerState.ID, line, "player")
 	talking_to.exchanges += 1
-	var npc_id := talking_to.npc_id
+	return await _respond(talking_to, line, "in_person")
+
+
+## A text the person has now read (D-046). The same road as a spoken line:
+## read into an intent, judged by the rules, applied, answered — but on the
+## phone, with no conversation open and nobody in front of them. Returns what
+## `say()` does; the person's memory of it is kept and a little familiarity
+## earned, as when a conversation ends. Await it.
+func text_exchange(npc_id: String, line: String) -> Result:
+	var npc := _npcs.get_npc(npc_id) if _npcs != null else null
+	if npc == null or not npc.alive:
+		return Result.failure("nobody_there")
+	var convo := Conversation.new(npc_id, _clock.total_minutes if _clock != null else 0)
+	convo.place = npc.location
+	convo.add(PlayerState.ID, line, "player")
+	convo.exchanges = 1
+	var replied: Result = await _respond(convo, line, "phone", _word_maps(npc_id))
+	if replied.is_ok():
+		_settle(convo, FAMILIARITY_PER_TEXT)
+	return replied
+
+
+## One line, however it was said: what was meant, what that may change, what
+## comes back. `channel` is "in_person" or "phone"; `words` are the people and
+## places that can be mentioned (the conversation's own, when empty).
+func _respond(convo: Conversation, line: String, channel: String, words: Dictionary = {}) -> Result:
+	var npc_id := convo.npc_id
 	var npc := _npcs.get_npc(npc_id)
+	var in_person := channel == "in_person"
 
 	# 1. What the player meant.
-	var intent: Dictionary = await interpret(line, npc_id)
-	if talking_to != conversation:
+	var intent: Dictionary = await _interpret(line, npc_id,
+		words.get("people", _people_words), words.get("places", _place_words))
+	if in_person and convo != conversation:
 		return Result.failure("not_talking")   # they walked away while it was thinking
 
 	# 2. What that is allowed to change — rules, not the model — and doing it.
-	var judged := ConversationRules.judge(intent, _rules_state(npc_id))
+	var judged := ConversationRules.judge(intent, _rules_state(npc_id, convo, channel))
 	var topic := ConversationRules.topic_for_refusal(judged.code)
 	var happened := judged.message
 	var ends := false
@@ -157,18 +187,19 @@ func say(text: String) -> Result:
 		var verdict: Dictionary = judged.value
 		var effects: Array[Dictionary] = verdict["effects"]
 		_apply(npc_id, effects)
-		talking_to.warmth += ConversationRules.warmth_of(effects)
+		convo.warmth += ConversationRules.warmth_of(effects)
 		topic = verdict["topic"]
 		happened = verdict["happened"]
 		ends = verdict["ends"]
 	else:
 		rejection = {"code": judged.code, "proposal": {
-			"kind": "say", "intent": intent["kind"], "npc": npc_id, "amount": intent.get("amount", 0),
+			"kind": "say" if in_person else "text", "intent": intent["kind"], "npc": npc_id, "amount": intent.get("amount", 0),
 		}}
 	var kept := ConversationRules.memory_of(intent, judged, _subject_name(intent))
 	if not kept.is_empty():
-		talking_to.remember(str(kept["text"]), float(kept["weight"]))
-	Events.player_deed.emit("talked", {"npc": npc_id, "kind": str(intent["kind"]), "subject": str(intent.get("subject", ""))})
+		convo.remember(str(kept["text"]), float(kept["weight"]))
+	Events.player_deed.emit("talked" if in_person else "texted",
+		{"npc": npc_id, "kind": str(intent["kind"]), "subject": str(intent.get("subject", ""))})
 	var reply_args := _errand_args(npc_id) if topic in ["errand_asked", "errand_waiting"] else {}
 
 	# 3. What they say back, knowing what actually happened.
@@ -176,9 +207,9 @@ func say(text: String) -> Result:
 	var source := "authored"
 	var fallback_reason := ""
 	if model.is_available():
-		var request := DialoguePrompt.build(prompt_context(npc_id, happened))
+		var request := DialoguePrompt.build(prompt_context(npc_id, happened, convo, channel))
 		var response: LlmResponse = await model.send(request)
-		if talking_to != conversation:
+		if in_person and convo != conversation:
 			return Result.failure("not_talking")
 		if response.ok:
 			reply = DialoguePrompt.clean_reply(response.text, npc.name if npc != null else "")
@@ -189,12 +220,13 @@ func say(text: String) -> Result:
 	else:
 		fallback_reason = "offline"
 	if reply == "":
-		reply = _authored_reply(npc_id, topic, intent, reply_args)
+		reply = _authored_reply(npc_id, topic, intent, reply_args, convo.exchanges)
 
-	talking_to.add(npc_id, reply, source)
-	talking_to.over = ends
+	convo.add(npc_id, reply, source)
+	if in_person:
+		convo.over = ends
 	turn_log.append({
-		"npc": npc_id, "line": line.left(60), "intent": intent["kind"], "read_by": intent["source"],
+		"npc": npc_id, "channel": channel, "line": line.left(60), "intent": intent["kind"], "read_by": intent["source"],
 		"read_fallback": intent.get("fallback_reason", ""), "happened": happened,
 		"rejected": str(rejection.get("code", "")), "reply_by": source, "reply_fallback": fallback_reason,
 	})
@@ -214,7 +246,11 @@ func say(text: String) -> Result:
 ## decide what deterministic logic can. Whatever the model says, names are
 ## resolved to people and places here, or to nothing.
 func interpret(line: String, npc_id: String) -> Dictionary:
-	var found := OfflineTopics.topic_of(line, npc_id, _people_words, _place_words)
+	return await _interpret(line, npc_id, _people_words, _place_words)
+
+
+func _interpret(line: String, npc_id: String, people_words: Dictionary, place_words: Dictionary) -> Dictionary:
+	var found := OfflineTopics.topic_of(line, npc_id, people_words, place_words)
 	var offline := {
 		"kind": found["topic"], "subject": found["subject"], "amount": found["amount"],
 		"name": found["name"], "person_said": "", "source": "offline", "fallback_reason": "",
@@ -234,9 +270,9 @@ func interpret(line: String, npc_id: String) -> Dictionary:
 	var subject := ""
 	match str(read["kind"]):
 		"about_person":
-			subject = OfflineTopics.resolve(str(read["person"]), _people_words, npc_id)
+			subject = OfflineTopics.resolve(str(read["person"]), people_words, npc_id)
 		"about_place":
-			subject = OfflineTopics.resolve(str(read["place"]), _place_words, "")
+			subject = OfflineTopics.resolve(str(read["place"]), place_words, "")
 	return {
 		"kind": read["kind"], "subject": subject, "amount": read["amount"], "name": read["name"],
 		"person_said": read["person"] if str(read["kind"]) == "about_person" else read["place"],
@@ -247,13 +283,14 @@ func interpret(line: String, npc_id: String) -> Dictionary:
 ## Everything `DialoguePrompt` is allowed to know about this conversation,
 ## read from the world as it stands. Public so a test can check what a prompt
 ## would be built from.
-func prompt_context(npc_id: String, happened: String = "") -> Dictionary:
+func prompt_context(npc_id: String, happened: String = "", convo: Conversation = null, channel: String = "in_person") -> Dictionary:
 	var npc := _npcs.get_npc(npc_id)
 	var place := _world.get_location(npc.location)
 	var minute := _clock.minute_of_day() if _clock != null else 12 * 60
 	var history: Array[Dictionary] = []
-	if conversation != null:
-		for line in conversation.lines:
+	var talk := convo if convo != null else conversation
+	if talk != null:
+		for line in talk.lines:
 			history.append({"speaker": "player" if line["speaker"] == PlayerState.ID else "npc", "text": line["text"]})
 	return {
 		"npc": {
@@ -276,6 +313,7 @@ func prompt_context(npc_id: String, happened: String = "") -> Dictionary:
 		"memories": memories.recall(npc_id, _clock.total_minutes if _clock != null else 0, _place_name),
 		"history": history,
 		"happened": happened,
+		"channel": channel,
 		"language": Localization.current_locale(),
 	}
 
@@ -290,16 +328,22 @@ func end() -> Result:
 		return Result.failure("not_talking")
 	var ended := conversation
 	conversation = null
+	return Result.success(_settle(ended, FAMILIARITY_PER_CONVERSATION))
+
+
+## What is left of a conversation once it is over: a little more familiarity,
+## both ways, and a memory of it (D-038).
+func _settle(ended: Conversation, familiarity: float) -> Dictionary:
 	var folded: Array[String] = []
 	if ended.exchanges > 0:
-		_relationships.adjust(PlayerState.ID, ended.npc_id, "familiarity", FAMILIARITY_PER_CONVERSATION)
-		_relationships.adjust(ended.npc_id, PlayerState.ID, "familiarity", FAMILIARITY_PER_CONVERSATION)
+		_relationships.adjust(PlayerState.ID, ended.npc_id, "familiarity", familiarity)
+		_relationships.adjust(ended.npc_id, PlayerState.ID, "familiarity", familiarity)
 		memories.add_episode(ended.npc_id, ended.started_minute, ended.place, ended.things, ended.weight)
 		folded = memories.fold_by_rule(ended.npc_id, _place_name)
-	return Result.success({
+	return {
 		"npc": ended.npc_id, "exchanges": ended.exchanges,
 		"folded": folded, "fold": memories.folds(ended.npc_id),
-	})
+	}
 
 
 ## Has the model rewrite what someone remembers of the player, after older
@@ -355,8 +399,7 @@ func _where_problem(npc: Npc) -> String:
 	return ""
 
 
-func _authored_reply(npc_id: String, topic: String, intent: Dictionary, extra: Dictionary = {}) -> String:
-	var turn := conversation.exchanges
+func _authored_reply(npc_id: String, topic: String, intent: Dictionary, extra: Dictionary, turn: int) -> String:
 	var subject := str(intent.get("subject", ""))
 	var said := str(intent.get("person_said", ""))
 	match topic:
@@ -450,13 +493,14 @@ func _feelings(npc_id: String) -> Dictionary:
 
 
 ## What `ConversationRules` needs to know about the world, and nothing more.
-func _rules_state(npc_id: String) -> Dictionary:
+func _rules_state(npc_id: String, convo: Conversation, channel: String) -> Dictionary:
 	return {
 		"npc_id": npc_id,
+		"channel": channel,
 		"player_name": _player.display_name,
 		"player_cash": _player.wallet.cash,
 		"relationship": _feelings(npc_id),
-		"warmth": conversation.warmth,
+		"warmth": convo.warmth,
 		"hiring": _hiring(npc_id),
 		"errand": _errand_offer(npc_id),
 		"errand_running": quests.errand_running_for(npc_id) != "",
@@ -604,6 +648,12 @@ func _introduced(npc_id: String) -> void:
 ## Who and where can be mentioned, in every language the game has, built once
 ## per conversation rather than per line.
 func _build_word_maps(npc_id: String) -> void:
+	var words := _word_maps(npc_id)
+	_people_words = words["people"]
+	_place_words = words["places"]
+
+
+func _word_maps(npc_id: String) -> Dictionary:
 	var people := {}
 	var first_names: Array[String] = []
 	for other_id in _npcs.all_ids():
@@ -618,8 +668,7 @@ func _build_word_maps(npc_id: String) -> void:
 		var loc := _world.get_location(str(location_id))
 		if loc != null:
 			places[loc.id] = _names_in_every_locale(loc.name_key)
-	_people_words = OfflineTopics.name_words(people, true)
-	_place_words = OfflineTopics.name_words(places, false, first_names)
+	return {"people": OfflineTopics.name_words(people, true), "places": OfflineTopics.name_words(places, false, first_names)}
 
 
 static func _names_in_every_locale(key: String) -> Array[String]:

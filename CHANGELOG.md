@@ -6,6 +6,10 @@ versions are milestones rather than releases until there is something to release
 ## [Unreleased] — Milestone 5: the phone
 
 ### Decided
+- Texting: a text goes through the same intent, rules and effects as a spoken
+  line (one `_respond` behind two doors); cash cannot be sent by text; a text
+  is read when the person gets to it — awake, at a civil hour, sooner if idle
+  — and answered as a text (D-046)
 - The phone: its own window on P, only if you have one on you; numbers come
   from being known or hired; nobody writes without a cause the simulation
   produced, and the rules hold them to quiet hours, per-kind gaps and three
@@ -20,9 +24,16 @@ versions are milestones rather than releases until there is something to release
 - Texts: an errand someone needs done (answerable in the thread), a quest
   deadline coming up, a shift missed, a friend checking in; the HUD says
   when something is unread
+- `PhoneDirector.send_text()`, `process_due()`; `PhoneState.outbox`;
+  `PhoneRules.judge_send()`, `judge_reading()`; `DialogueDirector.
+  text_exchange()`; `Game.send_text()`; the deed `texted`; a compose row in
+  the phone; contacts open as threads; `test_phone_texts` (20 tests)
 - `test_phone` (24 tests); `ui_preview -- --screen=world --phone=threads|thread|contacts`
 
 ### Changed
+- `DialogueDirector.say()` is now a thin door onto `_respond()`; the
+  conversation is passed in rather than held, `interpret()`, `end()` and the
+  prompt context unchanged for callers
 - Save schema version 6: adds `phone`; a version 5 save gets an empty one
 
 ## [0.4.0] — 2026-09-19 — Milestone 4: making a living

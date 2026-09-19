@@ -11,6 +11,8 @@ static func npc_name(npc_id: String) -> String:
 
 ## What one message says.
 static func render(message: Dictionary) -> String:
+	if str(message.get("text", "")) != "":
+		return str(message["text"])
 	var args: Dictionary = (message.get("args", {}) as Dictionary).duplicate()
 	if args.has("item"):
 		args["item"] = Localization.t(str(Game.data.get_entry("items", str(args["item"])).get("name_key", "")))

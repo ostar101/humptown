@@ -1,8 +1,8 @@
 # Project status
 
 **Updated:** 2026-09-19
-**Milestone:** M5 — The phone — **in progress** (step 1 of 5 done). M4 complete in code (0.4.0).
-**Build:** green. 619 tests, 8650 assertions with the LimeZu art installed,
+**Milestone:** M5 — The phone — **in progress** (steps 1–2 of 5 done). M4 complete in code (0.4.0).
+**Build:** green. 639 tests, 8749 assertions with the LimeZu art installed,
 ~12 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
@@ -65,13 +65,11 @@ Pirjo help, pay Rauno back in parts, open the phone on P.
    messages people send when the simulation gives them a reason, held to quiet
    hours, per-kind gaps and three people a day; a text can ask something (an
    errand) and your answer is judged; saved (schema v6).
-2. **Replying in your own words** (next). A text you type goes through the
-   same intent pipeline as speech (`IntentPrompt`, `ConversationRules`), so
-   you can ask for work, offer help or apologise by phone; the answer is a
-   text from the person, authored or from the cheap model, and it costs their
-   attention (no instant replies at 3 am). Decide whether phone talk shares
-   `DialogueDirector` or gets a thin sibling.
-3. **Calendar and meeting requests.** Agreed meetings become scheduled events
+2. ~~**Writing in your own words**~~ — done (D-046). A text goes through the
+   same intent, rules and effects as speech (`DialogueDirector._respond`);
+   it is read when the person gets to it (awake, 07:00–22:00, sooner if idle)
+   and answered as a text; cash cannot be sent by text.
+3. **Calendar and meeting requests** (next). Agreed meetings become scheduled events
    (`WorldEventQueue`) that move an NPC's schedule (`NpcSchedule.Override`);
    missing one is a deed with consequences.
 4. **Map and banking.** The map shows what the player has learned, not the
@@ -186,22 +184,22 @@ store (its own file) — D-036. A test that needs a model sets
 | Work: `data/jobs.json`, `Employment`, `WorkRules` — shifts, wages, standing, hiring by conversation | done |
 | Home: the cupboard (`PlayerState.stash`, `StashWindow`) | done |
 | Quests: `QuestLog`, `QuestRules`, `QuestText`, `QuestWindow` (J), `data/quests.json`, `data/errands.json` | done |
-| Phone: `PhoneState`, `PhoneRules`, `PhoneDirector`, `PhoneText`, `PhoneWindow` (P) — contacts, texts, errands by text | done (core) |
+| Phone: `PhoneState`, `PhoneRules`, `PhoneDirector`, `PhoneText`, `PhoneWindow` (P) — contacts, texts both ways, errands by text | done (core, texting) |
 | Settings screen (language, provider, the player's key, models) | done |
 | `SaveManager` + `SaveMigrations` | done |
 | `Localization` — en complete, fi partial by design | done |
 | `SimViewer` debug screen | done |
 | Test suite + benchmark | done |
 
-**Not started, by design:** phone replies, calls,
-calendar, map, email, photos (rest of M5); combat, crime and police. See `ROADMAP.md`.
+**Not started, by design:** calls,
+calendar, map, banking, email, photos (rest of M5); combat, crime and police. See `ROADMAP.md`.
 
 ---
 
 ## Size
 
 - 104 source files in `src/`
-- 41 test suites
+- 42 test suites
 - 10 authored NPCs, 22 locations, 3 regions (1 mapped), 6 interiors, 8 schedules, 4 backgrounds, 4 shops, 14 items, 4 jobs, 4 quests, 3 errands
 
 ---
