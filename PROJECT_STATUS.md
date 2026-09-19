@@ -1,9 +1,9 @@
 # Project status
 
 **Updated:** 2026-09-19
-**Milestone:** M4 — Making a living — **in progress** (step 1 of 6 done). M3 complete in code (0.3.0).
-**Build:** green. 547 tests, 8223 assertions with the LimeZu art installed,
-~9.5 s. No leak warnings at exit.
+**Milestone:** M4 — Making a living — **in progress** (steps 1–2 of 6 done). M3 complete in code (0.3.0).
+**Build:** green. 555 tests, 8259 assertions with the LimeZu art installed,
+~9.6 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
@@ -39,13 +39,8 @@ other providers' model lists were not revisited).
 1. ~~**Shops**~~ — done (D-039). Step up to a counter with someone working
    behind it and the shop opens: Buy and Sell tabs, prices from value ×
    markup, cash then card, stock and till saved, midnight restock.
-2. **Haggling against the skill** (next). A "Haggle" on a purchase: the
-   `haggling` skill against the shopkeeper's own and how they feel about
-   the player, rolled deterministically (`RngStreams`); success takes
-   5–20 % off that item for the day, failure sours them a little and closes
-   haggling on it until tomorrow; either way the skill gains experience.
-   Rules pure and tested, like `ShopRules`.
-3. **Meals and the condition loop.** Eating and drinking from the
+2. ~~**Haggling against the skill**~~ — done (D-040).
+3. **Meals and the condition loop** (next). Eating and drinking from the
    inventory (items already carry `hunger`, `sleep`, `intoxication`,
    `health`); hunger and tiredness felt in effectiveness; the HUD says so.
 4. **Jobs, shifts and wages.** The background's job (dockhand, …) or one
@@ -156,22 +151,22 @@ store (its own file) — D-036. A test that needs a model sets
 | Dialogue: `DialogueDirector`, `OfflineTopics`, `DialogueLines`, `DialoguePrompt`, `DialogueModel`, `DialogueBox`, `IntentPrompt`, `ConversationRules` | done |
 | `MemoryBook` — what people remember of the player, bounded and summarised | done |
 | `DevOverlay` (F3) — model calls, cost, intents, rules, memories, rejections | done |
-| Shops: `ShopRegistry`, `ShopRules`, `ShopWindow` — buy, sell, restock | done |
+| Shops: `ShopRegistry`, `ShopRules`, `HaggleRules`, `ShopWindow` — buy, sell, haggle, restock | done |
 | Settings screen (language, provider, the player's key, models) | done |
 | `SaveManager` + `SaveMigrations` | done |
 | `Localization` — en complete, fi partial by design | done |
 | `SimViewer` debug screen | done |
 | Test suite + benchmark | done |
 
-**Not started, by design:** haggling, meals, jobs, quests (M4), phone,
+**Not started, by design:** meals, jobs, quests (M4), phone,
 combat, crime and police. See `ROADMAP.md`.
 
 ---
 
 ## Size
 
-- 88 source files in `src/`
-- 35 test suites
+- 89 source files in `src/`
+- 36 test suites
 - 10 authored NPCs, 22 locations, 3 regions (1 mapped), 6 interiors, 8 schedules, 4 backgrounds, 4 shops, 14 items
 
 ---

@@ -14,7 +14,9 @@ extends RefCounted
 ## is `ShopRules`' call, and doing it is `Game`'s.
 
 var _data: DataRegistry = null
-## shop id -> {"stock": {item id: count}, "till": int}
+## shop id -> {"stock": {item id: count}, "till": int,
+##             "haggled": {item id: {"won": bool, "discount": float}}}
+## `haggled` is today's haggling (D-040), cleared at midnight.
 var _state: Dictionary = {}
 
 
@@ -67,9 +69,28 @@ func buys(shop_id: String, item_id: String) -> bool:
 		and definition(shop_id).get("buys", []).has(str(item.get("kind", "")))
 
 
-## What one of this item costs the player here.
+## What one of this item costs the player here, after today's haggling.
 func buy_price(shop_id: String, item_id: String) -> int:
-	return price(_value(item_id), float(definition(shop_id).get("markup", 1.0)))
+	var markup := float(definition(shop_id).get("markup", 1.0))
+	return price(_value(item_id), markup * (1.0 - discount(shop_id, item_id)))
+
+
+## The discount won on this item today, 0 when none.
+func discount(shop_id: String, item_id: String) -> float:
+	var deal: Dictionary = haggled(shop_id).get(item_id, {})
+	return float(deal.get("discount", 0.0)) if bool(deal.get("won", false)) else 0.0
+
+
+## Today's haggling at this shop: {item id: {"won", "discount"}}.
+func haggled(shop_id: String) -> Dictionary:
+	return _state.get(shop_id, {}).get("haggled", {})
+
+
+func record_haggle(shop_id: String, item_id: String, won: bool, won_discount: float) -> void:
+	var state: Dictionary = _state[shop_id]
+	if not state.has("haggled"):
+		state["haggled"] = {}
+	(state["haggled"] as Dictionary)[item_id] = {"won": won, "discount": won_discount if won else 0.0}
 
 
 ## What the shop pays the player for one of this item.
@@ -111,6 +132,7 @@ func restock() -> void:
 		for item_id in usual:
 			stock[item_id] = maxi(int(stock.get(item_id, 0)), int(usual[item_id]))
 		state["till"] = int(definition(shop_id).get("till", 0))
+		state["haggled"] = {}
 
 
 func to_dict() -> Dictionary:
@@ -131,7 +153,13 @@ func from_dict(d: Dictionary) -> void:
 		for item_id in raw_stock:
 			if _data.has_entry("items", str(item_id)):
 				stock[str(item_id)] = maxi(int(raw_stock[item_id]), 0)
-		_state[shop_id] = {"stock": stock, "till": maxi(int(raw.get("till", 0)), 0)}
+		var haggles := {}
+		var raw_haggles: Dictionary = raw.get("haggled", {})
+		for item_id in raw_haggles:
+			var deal: Dictionary = raw_haggles[item_id]
+			haggles[str(item_id)] = {"won": bool(deal.get("won", false)),
+				"discount": clampf(float(deal.get("discount", 0.0)), 0.0, HaggleRules.MAX_DISCOUNT)}
+		_state[shop_id] = {"stock": stock, "till": maxi(int(raw.get("till", 0)), 0), "haggled": haggles}
 
 
 func _fresh(shop_id: String) -> Dictionary:
@@ -140,7 +168,7 @@ func _fresh(shop_id: String) -> Dictionary:
 	var usual: Dictionary = shop.get("stock", {})
 	for item_id in usual:
 		stock[str(item_id)] = int(usual[item_id])
-	return {"stock": stock, "till": int(shop.get("till", 0))}
+	return {"stock": stock, "till": int(shop.get("till", 0)), "haggled": {}}
 
 
 func _value(item_id: String) -> int:

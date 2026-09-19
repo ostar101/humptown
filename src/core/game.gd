@@ -444,9 +444,11 @@ func shop_view() -> Dictionary:
 	var shop_id := shops.shop_at(_shopping)
 	var for_sale: Array[Dictionary] = []
 	for item_id in shops.items_for_sale(shop_id):
+		var deal: Dictionary = shops.haggled(shop_id).get(item_id, {})
 		for_sale.append({
 			"item": item_id, "name_key": str(data.get_entry("items", item_id).get("name_key", item_id)),
 			"price": shops.buy_price(shop_id, item_id), "stock": shops.stock_of(shop_id, item_id),
+			"haggled": not deal.is_empty(), "discount": shops.discount(shop_id, item_id),
 		})
 	var will_buy: Array[Dictionary] = []
 	for item_id in player.inventory.item_ids():
@@ -486,6 +488,46 @@ func buy(item_id: String, quantity: int = 1) -> Result:
 	shops.sold(shop_id, item_id, quantity, total)
 	_shop_deals += 1
 	return Result.success({"kind": "bought", "item": item_id, "quantity": quantity, "total": total})
+
+
+## Tries to talk the price of an item down (D-040): the player's haggling
+## skill against the shopkeeper's, moved by how they feel about the player,
+## rolled on the game's seeded stream. Won: that item is cheaper here for
+## the rest of the day. Lost: they are a little put out, and will not haggle
+## over it again until tomorrow. Either way the skill learns. Refuses
+## `not_shopping`, `nobody_serving`, `not_sold_here`, `already_haggled`.
+func haggle(item_id: String) -> Result:
+	var proposal := {"kind": "haggle", "item": item_id, "location": _shopping}
+	if _shopping.is_empty():
+		return _reject(proposal, "not_shopping")
+	var shop_id := shops.shop_at(_shopping)
+	var staff := staff_serving(_shopping)
+	var keeper := npcs.get_npc(staff)
+	var against := HaggleRules.difficulty(
+		data.get_entry("occupations", keeper.occupation).get("skills", []) if keeper != null else [],
+		keeper.traits if keeper != null else [])
+	var odds := HaggleRules.chance(player.skills.level_of("haggling"), against,
+		relationships.disposition(staff, PlayerState.ID) if keeper != null else 0.0)
+	var judged := HaggleRules.judge({
+		"serving": keeper != null,
+		"sells": shops.sells(shop_id, item_id),
+		"tried": shops.haggled(shop_id).has(item_id),
+		"chance": odds,
+		"roll": rng.stream("haggle").randf(),
+	})
+	if judged.is_err():
+		return _reject(proposal, judged.code)
+	var outcome: Dictionary = judged.value
+	var won := bool(outcome["won"])
+	shops.record_haggle(shop_id, item_id, won, float(outcome["discount"]))
+	if not won:
+		relationships.adjust(staff, PlayerState.ID, "affection", HaggleRules.SOURED_AFFECTION, clock.total_minutes)
+	player.skills.practise("haggling", HaggleRules.XP_WON if won else HaggleRules.XP_LOST, against)
+	_shop_deals += 1
+	return Result.success({
+		"kind": "haggled", "item": item_id, "won": won, "discount": float(outcome["discount"]),
+		"price": shops.buy_price(shop_id, item_id), "chance": odds, "staff": staff,
+	})
 
 
 ## Sells to the shop the player is at, for cash from its till.

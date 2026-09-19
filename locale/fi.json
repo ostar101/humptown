@@ -336,5 +336,10 @@
   "ui.shop.refused.till_short": "Kassassa ei ole tarpeeksi rahaa maksaa sinulle.",
   "ui.shop.refused.other": "Se ei onnistu.",
   "ui.msg.refused.not_a_shop": "Täällä ei myydä mitään.",
-  "ui.msg.refused.already_shopping": "Olet jo tiskillä."
+  "ui.msg.refused.already_shopping": "Olet jo tiskillä.",
+  "ui.shop.haggle": "Tingi",
+  "ui.shop.haggle_won": "{name} antaa {percent} % alennusta: {item}.",
+  "ui.shop.haggle_lost": "{name} ei jousta: {item}.",
+  "ui.shop.stock_discounted": "{count} jäljellä · −{percent} %",
+  "ui.shop.refused.already_haggled": "Olet jo tinkinyt siitä tänään."
 }

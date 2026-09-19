@@ -9,6 +9,9 @@ versions are milestones rather than releases until there is something to release
 - Shops: shelves and tills in data and saved state; buying and selling at
   the counter judged by `ShopRules`; midnight restocks and squares the till;
   time stands still at the counter (D-039)
+- Haggling against the skill: one try per item per shop per day, odds from
+  skill against the shopkeeper's trade and character and how they feel
+  about you, rolled on the seeded stream (D-040)
 
 ### Added
 - `data/shops.json` (corner shop, Kaisla, the Anchor, the pawn shop),
@@ -16,7 +19,8 @@ versions are milestones rather than releases until there is something to release
   `shop_view()`, `buy()`, `sell()`, `close_shop()`
 - `ShopWindow` in the world: a counter with a shop behind it opens it
 - A cinnamon bun, at Kaisla
-- `test_shops` (13 tests)
+- `HaggleRules`, `Game.haggle()`, a Haggle button on every item for sale
+- `test_shops` (13 tests), `test_haggling` (8 tests)
 - `ui_preview -- --screen=world --shop=location_id [--selling=1]`
 
 ### Changed

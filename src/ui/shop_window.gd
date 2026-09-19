@@ -71,6 +71,24 @@ func buy(item_id: String) -> Result:
 	return bought
 
 
+## Tries to talk the price down (D-040); the counter says how it went.
+func haggle(item_id: String) -> Result:
+	var tried := Game.haggle(item_id)
+	if tried.is_ok():
+		var outcome: Dictionary = tried.value
+		var item := Game.data.get_entry("items", item_id)
+		var args := {
+			"name": Game.dialogue.display_name(str(outcome["staff"]), Game.data),
+			"item": Localization.t(str(item.get("name_key", item_id))),
+			"percent": int(round(float(outcome["discount"]) * 100.0)),
+		}
+		_message.text = Localization.t("ui.shop.haggle_won" if outcome["won"] else "ui.shop.haggle_lost", args)
+		_render()
+	else:
+		_report(tried, "")
+	return tried
+
+
 func sell(item_id: String) -> Result:
 	var sold := Game.sell(item_id, 1)
 	_report(sold, "ui.shop.sold")
@@ -158,19 +176,34 @@ func _row(entry: Dictionary) -> HBoxContainer:
 		action.text = Localization.t("ui.shop.sell")
 		action.pressed.connect(func() -> void: sell(item_id))
 	else:
-		detail.text = Localization.t("ui.shop.stock", {"count": entry["stock"]})
+		var off := int(round(float(entry.get("discount", 0.0)) * 100.0))
+		if off > 0:
+			detail.text = Localization.t("ui.shop.stock_discounted", {"count": entry["stock"], "percent": off})
+		else:
+			detail.text = Localization.t("ui.shop.stock", {"count": entry["stock"]})
 		action.text = Localization.t("ui.shop.buy")
 		action.disabled = int(entry["stock"]) <= 0
 		action.pressed.connect(func() -> void: buy(item_id))
+		var bargain := Button.new()
+		bargain.theme_type_variation = &"SmallButton"
+		bargain.custom_minimum_size = Vector2(90, 0)
+		bargain.text = Localization.t("ui.shop.haggle")
+		bargain.disabled = bool(entry.get("haggled", false))
+		bargain.pressed.connect(func() -> void: haggle(item_id))
+		for child: Control in [item_name, price, detail, bargain, action]:
+			row.add_child(child)
+		return row
 	for child: Control in [item_name, price, detail, action]:
 		row.add_child(child)
 	return row
 
 
+## Focus on the first row's main action — Buy or Sell, the last button in a
+## row — so the keyboard's first press is the plain one, not a haggle.
 func _focus_first() -> void:
 	for row in _rows.get_children():
-		for child in row.get_children():
-			if child is Button and not (child as Button).disabled:
-				(child as Button).grab_focus()
-				return
+		var buttons := row.get_children().filter(func(c: Node) -> bool: return c is Button and not (c as Button).disabled)
+		if not buttons.is_empty():
+			(buttons[-1] as Button).grab_focus()
+			return
 	_leave.grab_focus()

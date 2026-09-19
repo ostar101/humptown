@@ -1258,3 +1258,34 @@ not theirs: M4's job and wage steps are where people's finances start, and
 a gift (D-037) still goes nowhere. A counter with no shop behind it — the
 clinic, the police post — still only says who is serving. Buying does not
 make the shopkeeper know you: being a customer is not an introduction.
+
+## D-040 — Haggling against the skill: one try per item per day, rolled on the seeded stream
+
+**Decision.** M4 step 2. In the shop window every item for sale has a
+Haggle beside Buy. `Game.haggle()` sets the player's `haggling` level
+against the shopkeeper's difficulty, moved by how they feel about the
+player, and rolls once on the game's `haggle` random stream; `HaggleRules`
+(pure) judges. Won: that item is cheaper at that shop for the rest of the
+day, by 5–20 % — the further the roll fell under the odds, the better the
+deal. Lost: they are a little put out (affection −0.02) and will not haggle
+over that item again until tomorrow. Either way the skill practises at the
+difficulty tried, more for a win. One try per item per shop per day; the
+record is shop state, saved, cleared at midnight with the restock (D-039).
+
+**Difficulty is a level, like a skill.** Anyone behind a counter holds out
+a little (8); someone whose occupation lists haggling holds out more (+14);
+character moves it — Ida keeps accounts and is observant (36 in all), Leena
+is cheerful (17), Tuomas the barkeep is easy (8). The odds use the same
+curve as `Skills.success_chance`: never below 5 %, never above 95 %. How
+they feel about the player moves the odds by up to 15 points either way —
+a friend gives way, someone you insulted does not.
+
+**Why the seeded stream.** A reload replays the same haggles, so saving
+before a haggle and reloading until it works is no better than haggling
+once. The roll is a world event, not a dice the player can re-throw.
+
+**Costs accepted.** Cheap things barely move: 5 % off a 3-euro coffee rounds
+back to 3. Haggling is a button, not a conversation — talking a price down
+in your own words is where M3's dialogue could meet the shop, later, as an
+intent the same rules judge. Shopkeepers have no skill of their own to
+improve; their difficulty is their trade and their character.

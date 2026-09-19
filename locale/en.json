@@ -357,5 +357,10 @@
   "ui.shop.refused.till_short": "There isn't enough in the till to pay you.",
   "ui.shop.refused.other": "That can't be done.",
   "ui.msg.refused.not_a_shop": "Nothing is sold here.",
-  "ui.msg.refused.already_shopping": "You're already at the counter."
+  "ui.msg.refused.already_shopping": "You're already at the counter.",
+  "ui.shop.haggle": "Haggle",
+  "ui.shop.haggle_won": "{name} knocks {percent}% off the {item}.",
+  "ui.shop.haggle_lost": "{name} won't budge on the {item}.",
+  "ui.shop.stock_discounted": "{count} left · {percent}% off",
+  "ui.shop.refused.already_haggled": "You've already haggled over that today."
 }
