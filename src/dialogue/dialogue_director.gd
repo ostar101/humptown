@@ -240,7 +240,7 @@ func _respond(convo: Conversation, line: String, channel: String, words: Diction
 		if live and convo != conversation:
 			return Result.failure("not_talking")
 		if response.ok:
-			reply = DialoguePrompt.clean_reply(response.text, npc.name if npc != null else "")
+			reply = DialoguePrompt.clean_reply(response.text, npc.name if npc != null else "", response.hit_length_limit())
 			source = "model" if reply != "" else "authored"
 			fallback_reason = "" if reply != "" else "empty_reply"
 		else:

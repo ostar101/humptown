@@ -37,6 +37,35 @@ func parse_http(_status: int, _body_text: String, _model: String) -> LlmResponse
 
 # --- shared helpers ---------------------------------------------------------
 
+## Extra output room for models that think before they answer: the output cap
+## covers thinking and answer together, so a tight cap is spent on thinking and
+## the answer is cut off or comes back empty. Only generated tokens are billed.
+const REASONING_HEADROOM := 1024
+## Name fragments of models that think by default (matched anywhere in the id,
+## so `google/gemini-3-flash` and `gemini-2.5-flash` both count).
+const REASONING_MARKERS: Array[String] = [
+	"gemini-2.5", "gemini-3", "gpt-5", "/o1", "/o3", "/o4", "o1-", "o3-", "o4-",
+	"deepseek-r1", "qwen3", "grok-3-mini", "grok-4", ":thinking", "-thinking",
+	"claude-opus-5", "claude-sonnet-5", "claude-fable",
+]
+
+
+static func may_reason(model: String) -> bool:
+	var lower := model.to_lower()
+	if lower.begins_with("o1") or lower.begins_with("o3") or lower.begins_with("o4"):
+		return true
+	for marker in REASONING_MARKERS:
+		if lower.contains(marker):
+			return true
+	return false
+
+
+## The output cap to send: the caller's budget for the answer, plus room to
+## think when the model is one that does.
+static func output_cap(request: LlmRequest, model: String) -> int:
+	return request.max_output_tokens + (REASONING_HEADROOM if may_reason(model) else 0)
+
+
 ## Maps an HTTP status to one of our error codes.
 static func classify_status(status: int) -> String:
 	if status == 401 or status == 403:

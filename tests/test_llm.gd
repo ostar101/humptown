@@ -285,6 +285,29 @@ func test_openrouter_sends_attribution_headers() -> void:
 	assert_has(spec["headers"], "X-Title: " + OpenRouterProvider.APP_TITLE)
 
 
+func test_reasoning_models_on_every_provider_get_room_to_think() -> void:
+	var request := LlmRequest.simple(LlmRequest.Purpose.DIALOGUE, "s", "hello")
+	request.max_output_tokens = 200
+	var reserve := LlmProvider.REASONING_HEADROOM
+	var router: Dictionary = JSON.parse_string(OpenRouterProvider.new().build_http(request, "google/gemini-3.8-flash", "k")["body"])
+	assert_eq(int(router["max_tokens"]), 200 + reserve, "Gemini thinks; a tight cap is eaten by the thinking")
+	assert_eq(router["reasoning"]["effort"], "low")
+	var plain: Dictionary = JSON.parse_string(OpenRouterProvider.new().build_http(request, "openai/gpt-4.1", "k")["body"])
+	assert_eq(int(plain["max_tokens"]), 200)
+	assert_false(plain.has("reasoning"))
+	var google: Dictionary = JSON.parse_string(GoogleProvider.new().build_http(request, "gemini-2.5-flash", "k")["body"])
+	assert_eq(int(google["generationConfig"]["maxOutputTokens"]), 200 + reserve)
+	var gpt5: Dictionary = JSON.parse_string(OpenAiProvider.new().build_http(request, "gpt-5-mini", "k")["body"])
+	assert_eq(int(gpt5["max_completion_tokens"]), 200 + reserve)
+
+
+func test_a_length_stop_is_recognised() -> void:
+	var response := OpenRouterProvider.new().parse_http(200, JSON.stringify({
+		"choices": [{"message": {"content": "Hei, mitä kuuluu? Minä olen"}, "finish_reason": "length"}],
+	}), "google/gemini-3.8-flash")
+	assert_true(response.hit_length_limit())
+
+
 # --- provider response parsing ---------------------------------------------
 
 func test_anthropic_response_parsing() -> void:

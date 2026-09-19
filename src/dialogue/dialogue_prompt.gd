@@ -23,7 +23,8 @@ extends RefCounted
 ##   language     "en" | "fi" — the language the game is being played in
 
 const MAX_HISTORY_LINES := 12
-const MAX_OUTPUT_TOKENS := 160
+## Finnish takes roughly twice the tokens of English for the same sentence.
+const MAX_OUTPUT_TOKENS := 200
 const TEMPERATURE := 0.8
 ## A reply longer than this is cut at the last sentence that fits. People in
 ## this town do not make speeches.
@@ -170,7 +171,7 @@ static func relationship_words(relationship: Dictionary) -> String:
 ## What the model said, made fit to be shown as a line of speech: no speaker
 ## label, no stage directions, no wrapping quotes, not a speech. Empty when
 ## nothing sayable is left, which the caller treats as a failed reply.
-static func clean_reply(text: String, npc_name: String) -> String:
+static func clean_reply(text: String, npc_name: String, truncated: bool = false) -> String:
 	var out := text.strip_edges()
 	# Only their own name is stripped as a label: "Listen: …" is speech.
 	for prefix in [npc_name + ":", npc_name.split(" ")[0] + ":"]:
@@ -184,11 +185,25 @@ static func clean_reply(text: String, npc_name: String) -> String:
 		if out.ends_with(quote):
 			out = out.substr(0, out.length() - 1)
 	out = " ".join(out.split(" ", false)).strip_edges()
+	if truncated:
+		out = _last_whole_sentence(out)
 	if out.length() > MAX_REPLY_CHARS:
 		var cut := out.substr(0, MAX_REPLY_CHARS)
 		var end := maxi(cut.rfind(". "), maxi(cut.rfind("! "), cut.rfind("? ")))
 		out = cut.substr(0, end + 1) if end > 40 else cut.strip_edges() + "…"
 	return out
+
+
+## A reply the model ran out of room for ends mid-word; keep the sentences
+## that were finished. With no finished sentence there is nothing better to
+## do than show what there is, marked as unfinished.
+static func _last_whole_sentence(text: String) -> String:
+	var end := -1
+	for mark in [".", "!", "?", "…"]:
+		end = maxi(end, text.rfind(mark))
+	if end >= 1:
+		return text.substr(0, end + 1)
+	return text + "…"
 
 
 static func part_of_day(minute_of_day: int) -> String:

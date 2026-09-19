@@ -35,6 +35,12 @@ static func failure(code: String, message: String = "") -> LlmResponse:
 	return r
 
 
+## True when the model stopped because it ran out of room, not because it was
+## done — the finish reasons the providers use for that.
+func hit_length_limit() -> bool:
+	return finish_reason.to_lower() in ["length", "max_tokens", "max_output_tokens"]
+
+
 func total_tokens() -> int:
 	return prompt_tokens + completion_tokens
 

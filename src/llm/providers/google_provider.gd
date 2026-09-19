@@ -36,7 +36,7 @@ func build_http(request: LlmRequest, model: String, api_key: String) -> Dictiona
 		"contents": contents,
 		"generationConfig": {
 			"temperature": request.temperature,
-			"maxOutputTokens": request.max_output_tokens,
+			"maxOutputTokens": LlmProvider.output_cap(request, model),
 		},
 	}
 	if not request.system.is_empty():

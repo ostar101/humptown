@@ -38,8 +38,11 @@ func build_http(request: LlmRequest, model: String, api_key: String) -> Dictiona
 		"model": model,
 		"messages": LlmProvider.with_system_message(request.system, request.messages),
 		"temperature": request.temperature,
-		"max_tokens": request.max_output_tokens,
+		"max_tokens": LlmProvider.output_cap(request, model),
 	}
+	if LlmProvider.may_reason(model):
+		# Models that do not reason ignore this; the ones that do keep it short.
+		body["reasoning"] = {"effort": "low"}
 	return {
 		"url": ENDPOINT,
 		"method": HTTPClient.METHOD_POST,

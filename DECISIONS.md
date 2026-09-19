@@ -2017,3 +2017,25 @@ grudge that grows into a group; a dismissed employer refusing to rehire;
 consequences from the player's *good* deeds coming back (favours returned,
 gossip that helps); events that are not about the player at all (that is M7's
 factions).
+
+
+## D-056 — Models that think get room to think, on every provider
+
+**Found on first live contact.** With OpenRouter and a Gemini Flash model,
+replies came back short and cut off mid-sentence. The output cap covers
+thinking and answer together, and only the Anthropic adapter (D-036) gave
+thinking any headroom; the others sent the bare 160-token budget, which the
+model spent thinking.
+
+**Now.** `LlmProvider.may_reason(model)` recognises models that think by
+default (Gemini 2.5/3, GPT-5, o-series, DeepSeek R1, Qwen3, Grok 4,
+Claude 5 family, `thinking` variants) by name fragment, and
+`LlmProvider.output_cap` adds `REASONING_HEADROOM` (1024) for them. OpenRouter
+also sends `reasoning: {effort: low}`. The dialogue budget goes from 160 to
+200 tokens because Finnish takes about twice the tokens of English. When a
+reply still stops on the limit (`LlmResponse.hit_length_limit`),
+`clean_reply` keeps the finished sentences instead of showing a half-word.
+
+**Not done.** Direct Google `thinkingConfig` (the shape differs per model
+generation; headroom is enough and cannot be rejected).
+

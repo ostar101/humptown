@@ -28,7 +28,7 @@ func build_http(request: LlmRequest, model: String, api_key: String) -> Dictiona
 	}
 	# Newer reasoning-capable models renamed the output cap.
 	if _uses_completion_tokens(model):
-		body["max_completion_tokens"] = request.max_output_tokens
+		body["max_completion_tokens"] = LlmProvider.output_cap(request, model)
 	else:
 		body["max_tokens"] = request.max_output_tokens
 

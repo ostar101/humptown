@@ -178,3 +178,12 @@ func test_relationship_numbers_become_feelings() -> void:
 	assert_true(close.contains("know them well") and close.contains("like them") and close.contains("trust them"))
 	var sour := DialoguePrompt.relationship_words({"familiarity": 0.5, "trust": -0.6, "fear": 0.5})
 	assert_true(sour.contains("do not trust") and sour.contains("frighten"))
+
+
+func test_a_reply_cut_off_by_the_limit_keeps_its_finished_sentences() -> void:
+	assert_eq(DialoguePrompt.clean_reply("Hei vain. Kuulin että olit satamassa ja sitten mi", "Ida", true),
+		"Hei vain.")
+	assert_eq(DialoguePrompt.clean_reply("Hei vain. Mitä kuuluu?", "Ida", true), "Hei vain. Mitä kuuluu?")
+	assert_eq(DialoguePrompt.clean_reply("Kuulin että olit satamassa ja sitten mi", "Ida", true).right(1), "…",
+		"nothing finished: show it as unfinished rather than as a whole thought")
+	assert_eq(DialoguePrompt.clean_reply("Hei vain. Kuulin että", "Ida", false), "Hei vain. Kuulin että")

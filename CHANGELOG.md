@@ -3,6 +3,15 @@
 All notable changes to Humptown. Format loosely follows Keep a Changelog;
 versions are milestones rather than releases until there is something to release.
 
+## [Unreleased]
+
+### Fixed
+- NPC replies cut off mid-sentence or very short on reasoning models
+  (Gemini Flash via OpenRouter and similar): thinking shared the 160-token cap
+  with the answer. All providers now reserve room for thinking (D-056), the
+  dialogue budget is 200 tokens, and a reply that still hits the limit is
+  trimmed to its last finished sentence.
+
 ## [0.6.0] — 2026-09-19 — Milestone 6: consequences
 
 What you do stays done. Take something and someone who saw it may tell the

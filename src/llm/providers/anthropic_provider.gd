@@ -17,7 +17,7 @@ const ENDPOINT := "https://api.anthropic.com/v1/messages"
 const API_VERSION := "2023-06-01"
 ## Extra room for thinking on models that think by default. Only generated
 ## tokens are billed; the cap exists so an answer is never cut off mid-thought.
-const THINKING_HEADROOM := 1024
+const THINKING_HEADROOM := LlmProvider.REASONING_HEADROOM
 
 ## Families that accept `temperature`. Anything else — including a model this
 ## code has never heard of — goes without, because a missing sampling
