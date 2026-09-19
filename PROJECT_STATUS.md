@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-19
 **Milestone:** M5 — The phone — **in progress** (steps 1–3 of 5 done). M4 complete in code (0.4.0).
-**Build:** green. 664 tests, 8914 assertions with the LimeZu art installed,
+**Build:** green. 678 tests, 9008 assertions with the LimeZu art installed,
 ~12 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
@@ -74,7 +74,10 @@ Pirjo help, pay Rauno back in parts, open the phone on P.
    reminder, the person heading over (`NpcSchedule.Override`) and the moment it
    is settled; kept or missed is read from where people stand. Not yet: the
    player proposing one, someone cancelling.
-4. **Map and banking** (next). The map shows what the player has learned, not the
+4. **Map and banking.** Banking done (D-048): the ledger says when, the Bank tab
+   shows the statement, money by text goes through the account, a cash machine
+   in the corner shop. **The map is next:** what the player has learned, not the
+   whole town. The map shows what the player has learned, not the
    whole town (progressive revelation, M7); banking is the wallet's
    transaction log.
 5. **Calls, email, photos** — only what earns its place. The criminal-contacts
@@ -114,7 +117,7 @@ answered from the simulation (`NpcRegistry`), never from the bodies, which lag
 it (D-017).
 
 **Running it.** `godot --path .` boots to the title screen. In the world:
-WASD/arrows, Shift runs, E (or Space) interacts, I opens the bag, J the quest log, P the phone, F3 the
+WASD/arrows, Shift runs, E (or Space) interacts, I opens the bag, J the quest log, P the phone (the cash machine is in the corner shop), F3 the
 developer overlay; your bed saves. Harbourside's
 two edge exits (top, x=42-45; right, y=31-34) refuse today since Old Town and
 Eastfield have no map yet (M7). `developer_mode: true` in
@@ -188,6 +191,7 @@ store (its own file) — D-036. A test that needs a model sets
 | Quests: `QuestLog`, `QuestRules`, `QuestText`, `QuestWindow` (J), `data/quests.json`, `data/errands.json` | done |
 | Phone: `PhoneState`, `PhoneRules`, `PhoneDirector`, `PhoneText`, `PhoneWindow` (P) — contacts, texts both ways, errands by text | done (core, texting) |
 | Meetings: `Calendar`, `MeetingRules`, `MeetingDirector`, the phone's Calendar tab | done |
+| Banking: `BankText`, `AtmWindow`, the phone's Bank tab, transfers by text | done |
 | Settings screen (language, provider, the player's key, models) | done |
 | `SaveManager` + `SaveMigrations` | done |
 | `Localization` — en complete, fi partial by design | done |
@@ -195,14 +199,14 @@ store (its own file) — D-036. A test that needs a model sets
 | Test suite + benchmark | done |
 
 **Not started, by design:** calls,
-map, banking, email, photos (rest of M5); combat, crime and police. See `ROADMAP.md`.
+map, email, photos (rest of M5); combat, crime and police. See `ROADMAP.md`.
 
 ---
 
 ## Size
 
-- 107 source files in `src/`
-- 43 test suites
+- 109 source files in `src/`
+- 44 test suites
 - 10 authored NPCs, 22 locations, 3 regions (1 mapped), 6 interiors, 8 schedules, 4 backgrounds, 4 shops, 14 items, 4 jobs, 4 quests, 3 errands
 
 ---

@@ -1605,3 +1605,43 @@ agreed and coming, and the last few that are behind you, with how each went.
 coffee tomorrow?") — it needs a time and a place read out of a line of speech
 and a person who may say no for reasons of their own; sequenced after banking.
 Someone cancelling; meetings with more than one person; reminders as texts.
+
+
+## D-048 — Banking: an account with a history, money by text, and a machine
+
+**Decision.** M5 step 4, first half. The wallet's two pots (D-005) get what
+makes the difference between them matter.
+
+**The ledger says when.** Each entry gains `at`, the minute it happened,
+stamped by the game's own clock (`Wallet.stamp`, set in `new_game`); a save
+from before has entries without one and shows them without a time.
+`Wallet.transfer_out()` is money leaving the *account* for someone — never
+cash, refused (`insufficient_bank`, `bad_amount`) otherwise.
+
+**The phone's Bank tab** shows the balance and cash in hand and a statement:
+what touches the account — wages paid to it, purchases the account covered,
+transfers, deposits and withdrawals — newest first, each said in words and
+dated (`BankText`). Cash spent or earned in hand never appears on a statement;
+that is the point of having two pots. (Close moved to the phone's header to
+make room for a fourth tab.)
+
+**Money by text goes through the account.** D-046 refused cash by text
+because there are no hands on a phone. That refusal is replaced by the honest
+rule: over the phone `give_money` is judged against the *account* (`player_
+bank`; `not_enough_bank` refuses it, with its own authored lines), applied as
+a `transfer` effect, and announced as the same `gave_money` deed a handed-over
+gift is — so Rauno's debt can be paid by transfer, and a quest cannot tell the
+difference and should not. Nothing else about it changed: same intent, same
+rules, same limits (`MAX_GIFT`), same warmth, same memory.
+
+**A cash machine.** The pots need somewhere to meet. `atm` is a new map
+object kind, on a shelf in the corner shop (like the cupboard, D-043): facing
+it opens `AtmWindow` — put in or take out €10, €50, €100 or all. `Game.
+atm_deposit()` / `atm_withdraw()` decide and refuse away from a machine
+(`not_at_atm`) or without the money. It is in a shop, so it is there only
+while the shop is open; time stands still at it. `src/world/district_map.gd`
+changed, so the benchmark was re-run: unchanged.
+
+**Not yet.** Bills and rent, interest, loans, cards refused by some shops
+(the design's "not accepted by everyone"), and theft of cash — later, with
+crime (M6).

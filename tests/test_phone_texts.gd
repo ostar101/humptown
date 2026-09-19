@@ -210,15 +210,22 @@ func test_a_text_can_do_what_a_word_can() -> void:
 	assert_false(_deeds.has("talked"), "a text is not a conversation")
 
 
-func test_cash_cannot_be_sent_by_text() -> void:
+func test_money_by_text_goes_through_the_account_and_not_the_hand() -> void:
 	_start()
 	_contact("npc_pirjo")
 	Game.player.wallet.cash = 100
+	Game.player.wallet.bank = 200
+	await _text_and_wait("npc_pirjo", "Here's 50 euros.")
+	assert_eq(Game.player.wallet.cash, 100, "no hands, no cash")
+	assert_eq(Game.player.wallet.bank, 150, "it left the account")
+	assert_eq(_rejected, [] as Array[String])
+	assert_has(_deeds, "gave_money")
+	Game.player.wallet.bank = 10
 	var reply := await _text_and_wait("npc_pirjo", "Here's 50 euros.")
-	assert_eq(Game.player.wallet.cash, 100, "nothing changed hands")
-	assert_eq(_rejected, ["not_in_person"] as Array[String])
-	assert_true(["Not over the phone. If you mean it, hand it over face to face.",
-		"You can't send cash in a text. Come by."].has(PhoneText.render(reply)), PhoneText.render(reply))
+	assert_eq(Game.player.wallet.bank, 10, "nothing was sent")
+	assert_eq(_rejected, ["not_enough_bank"] as Array[String])
+	assert_true(["That is not in your account. Don't play games with me.",
+		"The transfer bounced. Check your balance before you offer."].has(PhoneText.render(reply)), PhoneText.render(reply))
 
 
 func test_a_text_is_remembered_and_earns_a_little_familiarity() -> void:

@@ -121,6 +121,7 @@ func new_game(background_id: String = "", world_seed: int = 0) -> Result:
 	knowledge.setup(relationships, events_queue)
 	reputation.setup(knowledge, npcs, world)
 	player.setup(data)
+	player.wallet.stamp = func() -> int: return clock.total_minutes if clock != null else -1
 	shops.setup(data)
 	quests.setup(data)
 
@@ -380,6 +381,8 @@ func interact_at(cell: Vector2i) -> Result:
 			if map.interior_of != player.home_location:
 				return _reject(proposal, "not_your_stash")
 			return Result.success({"kind": "stash", "location": map.interior_of})
+		"atm":
+			return Result.success({"kind": "atm", "location": map.interior_of})
 	return _reject(proposal, "nothing_there")
 
 
@@ -738,6 +741,40 @@ func answer_message(message_id: int, choice: String) -> Result:
 	if answered.is_err():
 		return _reject({"kind": "phone_answer", "message": message_id, "answer": choice}, answered.code)
 	return answered
+
+
+# --- the cash machine -------------------------------------------------------------
+
+## Whether the player is standing where there is a cash machine: inside a
+## place that has one.
+func atm_here() -> bool:
+	var map := current_map()
+	if not is_running() or map == null or not map.is_interior():
+		return false
+	for thing: Dictionary in map.objects.values():
+		if thing["kind"] == "atm":
+			return true
+	return false
+
+
+## Puts cash into the account (D-048). Refused: `not_at_atm`, `bad_amount`,
+## `insufficient_cash`.
+func atm_deposit(amount: int) -> Result:
+	var proposal := {"kind": "deposit", "amount": amount}
+	if not atm_here():
+		return _reject(proposal, "not_at_atm")
+	var done := player.wallet.deposit(amount)
+	return done if done.is_ok() else _reject(proposal, done.code)
+
+
+## Takes cash out of the account. Refused: `not_at_atm`, `bad_amount`,
+## `insufficient_bank`.
+func atm_withdraw(amount: int) -> Result:
+	var proposal := {"kind": "withdraw", "amount": amount}
+	if not atm_here():
+		return _reject(proposal, "not_at_atm")
+	var done := player.wallet.withdraw(amount)
+	return done if done.is_ok() else _reject(proposal, done.code)
 
 
 # --- home ------------------------------------------------------------------------

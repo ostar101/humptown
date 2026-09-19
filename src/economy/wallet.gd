@@ -8,8 +8,12 @@ extends RefCounted
 
 var cash: int = 0
 var bank: int = 0
-## Running log of the last transactions, for the phone's banking view.
+## Running log of the last transactions, for the phone's banking view: {"amount",
+## "kind" ("cash" | "bank" | "mixed" | "deposit" | "withdraw" | "transfer"),
+## "reason", "at" (the minute it happened, -1 when not known)}.
 var ledger: Array[Dictionary] = []
+## Set by the game so each entry can say when it happened (D-048).
+var stamp: Callable = Callable()
 
 const LEDGER_LIMIT := 60
 
@@ -50,6 +54,18 @@ func spend(amount: int, reason: String = "", cash_only: bool = false) -> Result:
 	return Result.success(amount)
 
 
+## Money sent out of the account to someone: never cash (D-048).
+func transfer_out(amount: int, reason: String = "") -> Result:
+	if amount <= 0:
+		return Result.failure("bad_amount")
+	if bank < amount:
+		return Result.failure("insufficient_bank", "needs %d" % amount)
+	bank -= amount
+	_record(-amount, "transfer", reason)
+	Events.money_changed.emit(cash, bank)
+	return Result.success(amount)
+
+
 func deposit(amount: int) -> Result:
 	if amount <= 0 or cash < amount:
 		return Result.failure("insufficient_cash")
@@ -71,7 +87,8 @@ func withdraw(amount: int) -> Result:
 
 
 func _record(amount: int, kind: String, reason: String) -> void:
-	ledger.append({"amount": amount, "kind": kind, "reason": reason})
+	ledger.append({"amount": amount, "kind": kind, "reason": reason,
+		"at": int(stamp.call()) if stamp.is_valid() else -1})
 	if ledger.size() > LEDGER_LIMIT:
 		ledger.remove_at(0)
 

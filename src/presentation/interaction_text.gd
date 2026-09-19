@@ -31,6 +31,8 @@ static func prompt_for(interaction: Dictionary) -> String:
 			return Localization.t("ui.prompt.read")
 		"stash":
 			return Localization.t("ui.prompt.stash")
+		"atm":
+			return Localization.t("ui.prompt.atm")
 		"work":
 			var job := Game.data.get_entry("jobs", target) if Game.is_running() else {}
 			return Localization.t("ui.prompt.work", {"wage": job.get("wage", 0)})

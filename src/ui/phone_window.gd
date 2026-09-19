@@ -9,7 +9,7 @@ extends CanvasLayer
 
 signal closed()
 
-enum Page { THREADS, THREAD, CONTACTS, CALENDAR }
+enum Page { THREADS, THREAD, CONTACTS, CALENDAR, BANK }
 
 const PREVIEW_CHARS := 30
 
@@ -25,6 +25,7 @@ var _time_was_paused := false
 @onready var _tab_messages: Button = %TabMessages
 @onready var _tab_contacts: Button = %TabContacts
 @onready var _tab_calendar: Button = %TabCalendar
+@onready var _tab_bank: Button = %TabBank
 @onready var _close: Button = %Close
 @onready var _compose: HBoxContainer = %Compose
 @onready var _line: LineEdit = %Line
@@ -39,6 +40,7 @@ func _ready() -> void:
 	_tab_messages.pressed.connect(func() -> void: show_page(Page.THREADS))
 	_tab_contacts.pressed.connect(func() -> void: show_page(Page.CONTACTS))
 	_tab_calendar.pressed.connect(func() -> void: show_page(Page.CALENDAR))
+	_tab_bank.pressed.connect(func() -> void: show_page(Page.BANK))
 	_send.pressed.connect(_send_line)
 	_line.text_submitted.connect(func(_text: String) -> void: _send_line())
 	Events.phone_message.connect(_on_phone_message)
@@ -189,6 +191,7 @@ func _render() -> void:
 	_tab_messages.button_pressed = _page == Page.THREADS or _page == Page.THREAD
 	_tab_contacts.button_pressed = _page == Page.CONTACTS
 	_tab_calendar.button_pressed = _page == Page.CALENDAR
+	_tab_bank.button_pressed = _page == Page.BANK
 	match _page:
 		Page.THREADS:
 			_title.text = Localization.t("ui.phone.messages")
@@ -202,6 +205,9 @@ func _render() -> void:
 		Page.CALENDAR:
 			_title.text = Localization.t("ui.phone.calendar")
 			_render_calendar()
+		Page.BANK:
+			_title.text = Localization.t("ui.phone.bank")
+			_render_bank()
 
 
 func _render_threads() -> void:
@@ -277,6 +283,36 @@ func _render_contacts() -> void:
 		_rows.add_child(row)
 	if ids.is_empty():
 		_rows.add_child(_note(Localization.t("ui.phone.no_contacts")))
+
+
+func _render_bank() -> void:
+	var wallet := Game.player.wallet
+	var account := Label.new()
+	account.text = Localization.t("ui.bank.account", {"bank": wallet.bank})
+	account.add_theme_font_size_override("font_size", 24)
+	var cash := Label.new()
+	cash.theme_type_variation = &"MutedLabel"
+	cash.text = Localization.t("ui.bank.cash", {"cash": wallet.cash})
+	var balance := VBoxContainer.new()
+	balance.add_child(account)
+	balance.add_child(cash)
+	_rows.add_child(balance)
+	var entries := BankText.statement()
+	for entry in entries:
+		var box := VBoxContainer.new()
+		box.add_theme_constant_override("separation", 2)
+		var caption := Label.new()
+		caption.text = BankText.line(entry)
+		caption.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		box.add_child(caption)
+		if str(entry["when"]) != "":
+			var moment := Label.new()
+			moment.theme_type_variation = &"MutedLabel"
+			moment.text = str(entry["when"])
+			box.add_child(moment)
+		_rows.add_child(box)
+	if entries.is_empty():
+		_rows.add_child(_note(Localization.t("ui.bank.empty")))
 
 
 func _render_calendar() -> void:

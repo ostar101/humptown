@@ -6,6 +6,10 @@ versions are milestones rather than releases until there is something to release
 ## [Unreleased] — Milestone 5: the phone
 
 ### Decided
+- Banking: the ledger says when; the phone's Bank tab shows the account's
+  statement in words; money sent by text goes through the account (replacing
+  "cash cannot be sent by text") and counts as the same `gave_money` deed;
+  a cash machine in the corner shop moves cash in and out (D-048)
 - Meetings: a fond friend may suggest meeting tomorrow at an open public
   place; accepting is judged (notice, clashes) and schedules a reminder, the
   person heading over, and the moment it is settled as world events; kept or
@@ -37,10 +41,18 @@ versions are milestones rather than releases until there is something to release
   (`Game.meetings`); the phone's Calendar tab; `NpcRegistry.
   scheduled_location_of()`; `Events.meeting_updated`; the deed `met`;
   `meeting_place` on four locations; `test_meetings` (25 tests)
-- `ui_preview --phone=calendar`
+- `BankText`, `AtmWindow`, `Wallet.transfer_out()` and `Wallet.stamp`,
+  `Game.atm_here()`, `atm_deposit()`, `atm_withdraw()`; the `atm` object
+  kind, one in the corner shop; the phone's Bank tab; the effect `transfer`;
+  `test_banking` (14 tests)
+- `ui_preview --phone=calendar|bank`, `--atm=1`
 - `test_phone` (24 tests); `ui_preview -- --screen=world --phone=threads|thread|contacts`
 
 ### Changed
+- Cash by text is no longer refused (`not_in_person` is gone): by phone
+  `give_money` is judged against the account; a text with no money in the
+  account is refused `not_enough_bank`
+- The phone's Close button moved to its header
 - `DialogueDirector.say()` is now a thin door onto `_respond()`; the
   conversation is passed in rather than held, `interpret()`, `end()` and the
   prompt context unchanged for callers

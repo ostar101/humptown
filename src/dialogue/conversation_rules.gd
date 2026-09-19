@@ -21,7 +21,8 @@ extends RefCounted
 ##   conversation has already warmed them), hiring ({"job", "name",
 ##   "problem"} — the job this person hires for, if any, and why the player
 ##   could not have it), works_for_them (the player's job is theirs to give),
-##   channel ("in_person" or "phone": a text cannot carry cash),
+##   player_bank (what is in the account: by phone money goes through it),
+##   channel ("in_person" or "phone": a text carries no cash),
 ##   errand ({"id", "what", "reward"} — something they could ask of the
 ##   player today, D-044), errand_running (they are already waiting on one)
 ##
@@ -60,13 +61,14 @@ const GIFT_CASH_PER_POINT := 250.0
 
 
 ## Ok: {"kind", "topic", "effects": Array[Dictionary], "happened": String,
-## "ends": bool}. Refused: `invalid_amount`, `not_enough_cash` — with what
+## "ends": bool}. Refused: `invalid_amount`, `not_enough_cash`, `not_enough_bank` (by text) — with what
 ## happened in the message, so the person can react to it.
 ##
 ## Effects: {"do": "feel", "dimension", "delta"} (their feeling toward the
 ## player) · {"do": "pay", "amount"} · {"do": "remember", "predicate",
 ## "visibility", "severity"} (a fact about the player they witnessed) ·
-## {"do": "introduce_them"} · {"do": "introduce_player"}.
+## {"do": "introduce_them"} · {"do": "introduce_player"} · {"do": "transfer",
+## "amount"} (from the account, by text).
 static func judge(intent: Dictionary, state: Dictionary) -> Result:
 	var kind := str(intent.get("kind", "unknown"))
 	var feeling: Dictionary = state.get("relationship", {})
@@ -114,19 +116,24 @@ static func judge(intent: Dictionary, state: Dictionary) -> Result:
 			happened = "They threatened you. You want this conversation over."
 			ends = true
 		"give_money":
-			if str(state.get("channel", "in_person")) == "phone":
-				return Result.failure("not_in_person",
-					"They offered you cash in a text, but cash has to be handed over face to face. Nothing changed hands.")
 			var amount := int(intent.get("amount", 0))
 			if amount <= 0 or amount > MAX_GIFT:
 				return Result.failure("invalid_amount", "They talked about giving you money, but offered nothing you could take.")
-			if int(state.get("player_cash", 0)) < amount:
-				return Result.failure("not_enough_cash",
-					"They offered you %d in cash, but they do not have that much on them. Nothing changed hands." % amount)
-			effects.append({"do": "pay", "amount": amount})
+			if str(state.get("channel", "in_person")) == "phone":
+				# By phone there are no hands: it goes through the account (D-048).
+				if int(state.get("player_bank", 0)) < amount:
+					return Result.failure("not_enough_bank",
+						"They offered to send you %d, but there is not that much in their account. Nothing was sent." % amount)
+				effects.append({"do": "transfer", "amount": amount})
+				happened = "They sent you %d from their account, and it arrived." % amount
+			else:
+				if int(state.get("player_cash", 0)) < amount:
+					return Result.failure("not_enough_cash",
+						"They offered you %d in cash, but they do not have that much on them. Nothing changed hands." % amount)
+				effects.append({"do": "pay", "amount": amount})
+				happened = "They handed you %d in cash, and you took it." % amount
 			_warm(effects, "affection", minf(amount / GIFT_CASH_PER_POINT, GIFT_WARMTH_MAX), warmth_left)
 			effects.append({"do": "remember", "predicate": "gave_money_to", "visibility": "private", "severity": 0.2})
-			happened = "They handed you %d in cash, and you took it." % amount
 			topic = "gift_accepted"
 		"ask_for_work":
 			var hiring: Dictionary = state.get("hiring", {})
@@ -218,8 +225,10 @@ static func topic_for_refusal(code: String) -> String:
 	match code:
 		"not_enough_cash":
 			return "gift_no_cash"
-		"not_hiring", "not_qualified", "do_not_know_you", "not_in_person":
+		"not_hiring", "not_qualified", "do_not_know_you":
 			return code
+		"not_enough_bank":
+			return "transfer_no_funds"
 	return "unknown"
 
 

@@ -7,7 +7,7 @@ extends Node
 ## `--screen` is `title`, `creation`, `opening`, `settings` or `world`
 ## (`--overlay=1` shows the developer overlay; `--shop=location_id
 ## [--selling=1]` stands the player at that shop's counter; `--quests=1`
-## opens the quest log; `--phone=threads|thread|contacts|calendar` the phone). For
+## opens the quest log; `--atm=1` the cash machine; `--phone=threads|thread|contacts|calendar|bank` the phone). For
 ## settings, `--provider=id` chooses a provider — in memory only, since a
 ## preview never writes the player's settings — and `--locale=fi` the language. For creation, `--step` is
 ## 1-3 and the screen is driven through its own public methods, exactly as its
@@ -65,6 +65,8 @@ func _ready() -> void:
 		_drive_shop(screen as WorldView, str(args["shop"]), args.has("selling"))
 	if which == "world" and args.has("quests"):
 		(screen as WorldView).open_quests()
+	if which == "world" and args.has("atm"):
+		_drive_atm(screen as WorldView)
 	if which == "world" and args.has("phone"):
 		_drive_phone(screen as WorldView, str(args["phone"]))
 	if which == "world" and args.has("overlay"):
@@ -123,7 +125,22 @@ func _drive_shop(view: WorldView, location_id: String, selling: bool) -> void:
 		view.shop_window().show_selling(true)
 
 
-## `--phone=threads|thread|contacts|calendar`: some numbers and a few messages on the
+## `--atm=1`: inside the corner shop, at the cash machine, with some money.
+func _drive_atm(view: WorldView) -> void:
+	var map := Game.world.map_for(Game.player.region)
+	Game.player.interior = ""
+	Game.player.position = DistrictMap.cell_to_world(map.anchor_of("loc_corner_shop"))
+	Game.player.wallet.cash = 75
+	Game.player.wallet.bank = 240
+	if Game.interact_at(map.buildings["loc_corner_shop"]["door"]).is_err():
+		Log.warn("ui_preview", "Could not go in")
+		return
+	view.show_current_area()
+	Game.move_player(DistrictMap.cell_to_world(Vector2i(2, 4)))
+	view.atm_window().open()
+
+
+## `--phone=threads|thread|contacts|calendar|bank`: some numbers and a few messages on the
 ## phone, then the phone open on that page. Written straight into the phone
 ## state — the rules that would deliver them are tested elsewhere.
 func _drive_phone(view: WorldView, page: String) -> void:
@@ -144,6 +161,12 @@ func _drive_phone(view: WorldView, page: String) -> void:
 			phone.open_thread("npc_pirjo")
 		"contacts":
 			phone.show_page(PhoneWindow.Page.CONTACTS)
+		"bank":
+			Game.player.wallet.add_to_bank(110, "wage:job_dockhand")
+			Game.player.wallet.spend(12, "buy:item_sandwich")
+			Game.player.wallet.transfer_out(50, "transfer:npc_rauno")
+			Game.player.wallet.deposit(20)
+			phone.show_page(PhoneWindow.Page.BANK)
 		"calendar":
 			var spec := Game.meetings.suggest("npc_pirjo")
 			if not spec.is_empty():

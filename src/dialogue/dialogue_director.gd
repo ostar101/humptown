@@ -499,6 +499,7 @@ func _rules_state(npc_id: String, convo: Conversation, channel: String) -> Dicti
 		"channel": channel,
 		"player_name": _player.display_name,
 		"player_cash": _player.wallet.cash,
+		"player_bank": _player.wallet.bank,
 		"relationship": _feelings(npc_id),
 		"warmth": convo.warmth,
 		"hiring": _hiring(npc_id),
@@ -558,6 +559,12 @@ func _apply(npc_id: String, effects: Array[Dictionary]) -> void:
 				var paid := _player.wallet.spend(int(effect["amount"]), "gift:" + npc_id, true)
 				if paid.is_err():
 					Log.warn("dialogue", "A judged payment failed", {"code": paid.code})
+				else:
+					Events.player_deed.emit("gave_money", {"npc": npc_id, "amount": int(effect["amount"])})
+			"transfer":
+				var sent := _player.wallet.transfer_out(int(effect["amount"]), "transfer:" + npc_id)
+				if sent.is_err():
+					Log.warn("dialogue", "A judged transfer failed", {"code": sent.code})
 				else:
 					Events.player_deed.emit("gave_money", {"npc": npc_id, "amount": int(effect["amount"])})
 			"remember":
