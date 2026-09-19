@@ -5,5 +5,8 @@
   {"id": "occ_nurse", "name_key": "occ.nurse", "daily_wage": 130, "workplace_kind": "civic", "skills": ["first_aid", "observation"]},
   {"id": "occ_officer", "name_key": "occ.officer", "daily_wage": 140, "workplace_kind": "civic", "skills": ["observation", "intimidation"]},
   {"id": "occ_fixer", "name_key": "occ.fixer", "daily_wage": 0, "workplace_kind": "bar", "skills": ["persuasion", "stealth"]},
-  {"id": "occ_unemployed", "name_key": "occ.unemployed", "daily_wage": 0, "workplace_kind": "", "skills": []}
+  {"id": "occ_unemployed", "name_key": "occ.unemployed", "daily_wage": 0, "workplace_kind": "", "skills": []},
+  {"id": "occ_labourer", "name_key": "occ.labourer", "daily_wage": 90, "workplace_kind": "work", "skills": ["labour", "endurance_training"]},
+  {"id": "occ_counter_hand", "name_key": "occ.counter_hand", "daily_wage": 75, "workplace_kind": "shop", "skills": ["persuasion", "haggling"]},
+  {"id": "occ_care_assistant", "name_key": "occ.care_assistant", "daily_wage": 120, "workplace_kind": "civic", "skills": ["first_aid", "observation"]}
 ]

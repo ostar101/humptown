@@ -16,6 +16,9 @@ versions are milestones rather than releases until there is something to release
   exhaustion cost health; health at zero is a collapse that wakes you in
   the clinic, billed; the HUD says when, where, your cash and how you are
   (D-041)
+- Jobs, shifts and wages: jobs are data; a shift is one batched step paid by
+  the part worked; reliability is kept and missed days cost the job; asking
+  for work and quitting are conversation intents the rules judge (D-042)
 
 ### Added
 - `data/shops.json` (corner shop, Kaisla, the Anchor, the pawn shop),
@@ -27,8 +30,13 @@ versions are milestones rather than releases until there is something to release
 - `ItemRules`, `Game.use_item()`, `InventoryWindow` on I (new `inventory`
   input action), `StatusText` and the HUD's status corner,
   `Events.player_collapsed`
+- `data/jobs.json` (harbour, worksite, Kaisla, clinic) and three
+  occupations; `Employment` (`Game.work`), `WorkRules`; `Game.work_shift()`,
+  `job_here()`, `hire_player()`, `quit_job()`; `Wallet.add_to_bank()`;
+  `Events.job_changed`, `Events.job_lost`
+- Conversation kinds `ask_for_work` and `quit_job`, with generic lines
 - `test_shops` (13 tests), `test_haggling` (8 tests), `test_condition`
-  (11 tests)
+  (11 tests), `test_work` (11 tests)
 - `ui_preview -- --screen=world --shop=location_id [--selling=1]`
 
 ### Changed
@@ -36,6 +44,8 @@ versions are milestones rather than releases until there is something to release
 - Haggling odds fall when the player is hungry, tired or drunk
 - Save schema version 3: adds `shops`; version 2 saves open every shop
   with its usual stock
+- Save schema version 4: the job moves from `player.job_id` to its own
+  `work` section
 
 ## [0.3.0] — 2026-09-19 — Milestone 3: conversation
 

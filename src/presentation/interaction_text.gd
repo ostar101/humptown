@@ -10,6 +10,7 @@ extends RefCounted
 const EXPLAINED_REFUSALS: Array[String] = [
 	"locked", "private", "closed", "no_interior", "nobody_serving", "not_your_bed", "not_tired",
 	"asleep", "on_their_way", "nobody_there", "already_talking",
+	"not_a_work_day", "too_early", "too_late", "already_worked", "too_drunk", "too_exhausted", "busy",
 ]
 
 
@@ -27,6 +28,9 @@ static func prompt_for(interaction: Dictionary) -> String:
 			return Localization.t("ui.prompt.sleep")
 		"sign":
 			return Localization.t("ui.prompt.read")
+		"work":
+			var job := Game.data.get_entry("jobs", target) if Game.is_running() else {}
+			return Localization.t("ui.prompt.work", {"wage": job.get("wage", 0)})
 		"person":
 			# A name only once the player knows it (D-035).
 			if Game.is_running() and Game.dialogue.knows_name(target):
@@ -59,6 +63,11 @@ static func outcome_text(interaction: Dictionary, result: Result) -> String:
 			return Localization.t(key, {"time": Game.clock.format_time()})
 		"read":
 			return Localization.t(str(outcome.get("text_key", "")))
+		"worked":
+			var key := "ui.msg.worked_bank" if outcome.get("pay_to") == "bank" else "ui.msg.worked_cash"
+			if outcome.get("late", false):
+				key += "_late"
+			return Localization.t(key, {"time": outcome.get("until", ""), "pay": outcome.get("pay", 0)})
 	return ""
 
 

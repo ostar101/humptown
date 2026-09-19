@@ -148,7 +148,7 @@ func test_a_new_life_is_the_background_plus_the_players_choices() -> void:
 	assert_eq(p.pronouns, "she")
 	assert_eq(p.appearance["hair_style"], "05")
 	assert_eq(p.background_id, "bg_dockhand")
-	assert_eq(p.job_id, "occ_dockhand", "the background still sets the life up")
+	assert_eq(Game.work.job_id, "job_dockhand", "the background still sets the life up")
 	var bg := _background("bg_dockhand")
 	assert_eq(p.stats.attribute("wits"), int(bg["attributes"]["wits"]) + 1)
 	assert_eq(p.stats.attribute("strength"), int(bg["attributes"]["strength"]) - 1)

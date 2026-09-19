@@ -1327,3 +1327,52 @@ business (they go to lunch; they do not buy lunch). The bag is a list, not
 a grid, and there is no equipping yet. The clinic's care is not an
 interaction — nobody treats you while you wait; that belongs with injuries
 and harm.
+
+## D-042 — Jobs, shifts and wages: a job is data, a shift is one batched step, reliability is kept
+
+**Decision.** M4 step 4. A job is data (`data/jobs.json`): an occupation at
+a workplace, for an employer (none for casual work), on certain days
+between a shift's start and end, for a wage paid to cash or the bank, teaching
+certain skills at a difficulty, straining the body, and with requirements (a
+flag *or* a skill level, or knowing the employer well enough). Four today:
+the harbour (Veikko; a harbour pass or labour 6), the worksite (casual:
+anyone, any weekday, cash), Kaisla's counter (Leena, once she knows you),
+and the clinic (Sanna; medical training or first aid 6).
+
+**The player's job is `Employment` (`Game.work`),** saved as the `work`
+section (schema v4; a v3 save's `player.job_id`, which was an occupation,
+moves there through a fixed table). The dockhand background starts with the
+harbour job; everyone else starts without one.
+
+**A shift is one step.** Standing at the workplace during shift hours, with
+nothing else in front of you, the interact button offers "Start your shift"
+and `Game.work_shift()` asks `WorkRules` (pure). You may start up to an hour
+early (and wait) or late, until half the shift is gone; not on a day off,
+not twice a day, not drunk, not exhausted. The rest of the shift then
+passes in one batched step with the player's activity "work"; the job's
+strain is paid on the body; the wage — for the part worked, scaled a little
+by condition, never below half — goes to cash or the bank; the job's skills
+practise at its difficulty; the employer gets a little more familiar.
+
+**Reliability.** `standing` runs from 1 to 0: a full shift on time raises it
+a little, a late start lowers it a little, a missed working day lowers it a
+quarter. Missed days are counted at midnight (the day a job begins does not
+count — nobody is fired on their first morning). At zero the player is let
+go, the employer thinks less of them, and `Events.job_lost` says so.
+
+**Getting hired and quitting are conversation (M3 meets M4).** Asking an
+employer for work ("are you hiring?", "onko töitä?") is the intent
+`ask_for_work`; `ConversationRules` judges it against the job they hire for
+and its requirements: hired, `not_hiring`, `not_qualified` or
+`do_not_know_you` — refusals are rejected proposals, and the person says
+why. `quit_job` to your employer ends the job. The cheap model knows both
+kinds; offline words do too.
+
+**What you see.** The prompt shows the wage; the outcome says until when you
+worked and where the money went, and whether you were late. The bag shows
+the job, its place, days and hours.
+
+**Costs accepted.** A shift is not played, it passes: working is a decision
+with consequences, not a minigame. People have no money of their own yet —
+wages come from nowhere and gifts go nowhere; an economy of accounts is
+later work. One job at a time; taking a new one replaces the old.

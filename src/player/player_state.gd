@@ -38,7 +38,6 @@ var inventory := Inventory.new()
 var known_contacts: Array[String] = []
 var quest_flags: Dictionary = {}
 var home_location: String = ""
-var job_id: String = ""
 
 
 func setup(data: DataRegistry) -> void:
@@ -61,7 +60,6 @@ func apply_background(background: Dictionary) -> void:
 	wallet.cash = int(background.get("cash", 0))
 	wallet.bank = int(background.get("bank", 0))
 	home_location = str(background.get("home", ""))
-	job_id = str(background.get("job", ""))
 	location = home_location
 	_apply_carry_capacity()
 
@@ -123,7 +121,6 @@ func to_dict() -> Dictionary:
 		"known_contacts": known_contacts,
 		"quest_flags": quest_flags,
 		"home_location": home_location,
-		"job_id": job_id,
 	}
 
 
@@ -148,5 +145,4 @@ func from_dict(d: Dictionary) -> void:
 	known_contacts = contacts
 	quest_flags = d.get("quest_flags", {})
 	home_location = str(d.get("home_location", ""))
-	job_id = str(d.get("job_id", ""))
 	_apply_carry_capacity()

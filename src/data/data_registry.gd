@@ -26,6 +26,7 @@ const REQUIRED_KEYS := {
 	"maps": ["id", "region", "width", "height", "spawn"],
 	"interiors": ["id", "interior_of", "width", "height", "door"],
 	"shops": ["id", "location", "stock"],
+	"jobs": ["id", "occupation", "workplace", "shift_start", "shift_end", "wage"],
 }
 
 var tables: Dictionary = {}          # table -> { id -> entry }
@@ -105,6 +106,31 @@ func validate_references() -> Array[String]:
 		problems.append_array(_interior_reference_problems(id, table("interiors")[id]))
 	for id in table("shops"):
 		problems.append_array(_shop_reference_problems(id, table("shops")[id]))
+	for id in table("jobs"):
+		problems.append_array(_job_reference_problems(id, table("jobs")[id]))
+	for id in table("backgrounds"):
+		var occupation := str(table("backgrounds")[id].get("job", ""))
+		if occupation != "" and find_by("jobs", "occupation", occupation).is_empty():
+			problems.append("background '%s' gives occupation '%s', which no job offers" % [id, occupation])
+	return problems
+
+
+## A job is an occupation at a place that exists, for an employer who exists
+## (or nobody, for casual work), teaching skills that exist (D-042).
+func _job_reference_problems(id: String, job: Dictionary) -> Array[String]:
+	var problems: Array[String] = []
+	if not has_entry("occupations", str(job.get("occupation", ""))):
+		problems.append("job '%s' references unknown occupation '%s'" % [id, job.get("occupation")])
+	if not has_entry("locations", str(job.get("workplace", ""))):
+		problems.append("job '%s' references unknown workplace '%s'" % [id, job.get("workplace")])
+	var employer := str(job.get("employer", ""))
+	if employer != "" and not has_entry("npcs", employer):
+		problems.append("job '%s' references unknown employer '%s'" % [id, employer])
+	for skill_id in job.get("skills", []):
+		if not has_entry("skills", str(skill_id)):
+			problems.append("job '%s' teaches unknown skill '%s'" % [id, skill_id])
+	if int(job.get("shift_end", 0)) <= int(job.get("shift_start", 0)):
+		problems.append("job '%s' ends before it starts" % id)
 	return problems
 
 

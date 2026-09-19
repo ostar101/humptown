@@ -18,7 +18,9 @@ extends RefCounted
 ## State (from the world):
 ##   npc_id, player_name, player_cash, relationship {dimension: value}
 ##   (how the person feels about the player), warmth (how much this
-##   conversation has already warmed them)
+##   conversation has already warmed them), hiring ({"job", "name",
+##   "problem"} — the job this person hires for, if any, and why the player
+##   could not have it), works_for_them (the player's job is theirs to give)
 ##
 ## A kind with no rule here — a model may say "persuade", "negotiate", "lie"
 ## — is talk: accepted, and it changes nothing until a system exists that it
@@ -29,6 +31,7 @@ extends RefCounted
 const KINDS: Array[String] = [
 	"greet", "farewell", "thanks", "about_self", "about_work", "about_person", "about_place",
 	"introduce_self", "compliment", "flirt", "apologize", "insult", "threaten", "give_money",
+	"ask_for_work", "quit_job",
 ]
 ## Kinds a model may use that are understood but change nothing yet.
 const TALK_KINDS: Array[String] = ["persuade", "negotiate", "ask_favor", "offer_help", "lie", "small_talk"]
@@ -119,6 +122,26 @@ static func judge(intent: Dictionary, state: Dictionary) -> Result:
 			effects.append({"do": "remember", "predicate": "gave_money_to", "visibility": "private", "severity": 0.2})
 			happened = "They handed you %d in cash, and you took it." % amount
 			topic = "gift_accepted"
+		"ask_for_work":
+			var hiring: Dictionary = state.get("hiring", {})
+			if hiring.is_empty():
+				return Result.failure("not_hiring", "They asked you for work. You have none to give.")
+			if bool(state.get("works_for_them", false)):
+				happened = "They asked you for work, but they already work for you."
+				topic = "already_hired"
+			elif str(hiring.get("problem", "")) != "":
+				return Result.failure(str(hiring["problem"]),
+					"They asked you for work as a %s, but you cannot take them on: %s." % [
+						hiring.get("name", "worker"), str(hiring["problem"]).replace("_", " ")])
+			else:
+				effects.append({"do": "hire", "job": str(hiring["job"])})
+				happened = "They asked you for work, and you took them on as a %s, from the next shift." % hiring.get("name", "worker")
+				topic = "hired"
+		"quit_job":
+			if bool(state.get("works_for_them", false)):
+				effects.append({"do": "quit"})
+				happened = "They told you they quit. They no longer work for you."
+				topic = "quit"
 
 	return Result.success({"kind": kind, "topic": topic, "effects": effects, "happened": happened, "ends": ends})
 
@@ -132,6 +155,8 @@ static func memory_of(intent: Dictionary, judged: Result, subject_name: String =
 	if judged.is_err():
 		if judged.code == "not_enough_cash":
 			return {"text": "offered you %d in cash they did not have" % int(intent.get("amount", 0)), "weight": 0.3}
+		if kind == "ask_for_work":
+			return {"text": "asked you for work", "weight": 0.2}
 		return {}
 	var verdict: Dictionary = judged.value
 	match kind:
@@ -159,12 +184,22 @@ static func memory_of(intent: Dictionary, judged: Result, subject_name: String =
 			return {"text": "threatened you", "weight": 0.9}
 		"give_money":
 			return {"text": "gave you %d in cash" % int(intent.get("amount", 0)), "weight": 0.5}
+		"ask_for_work":
+			return {"text": "asked you for work, and you took them on" if verdict["topic"] == "hired"
+				else "asked you for work", "weight": 0.4 if verdict["topic"] == "hired" else 0.2}
+		"quit_job":
+			return {"text": "quit working for you", "weight": 0.5} if verdict["topic"] == "quit" else {}
 	return {}
 
 
 ## The authored topic that answers a refusal.
 static func topic_for_refusal(code: String) -> String:
-	return "gift_no_cash" if code == "not_enough_cash" else "unknown"
+	match code:
+		"not_enough_cash":
+			return "gift_no_cash"
+		"not_hiring", "not_qualified", "do_not_know_you":
+			return code
+	return "unknown"
 
 
 ## How much a set of effects warms someone, for the conversation's cap.

@@ -28,6 +28,13 @@ func add_cash(amount: int, reason: String = "") -> void:
 	Events.money_changed.emit(cash, bank)
 
 
+## Money paid straight into the account: a wage, a transfer.
+func add_to_bank(amount: int, reason: String = "") -> void:
+	bank += amount
+	_record(amount, "bank", reason)
+	Events.money_changed.emit(cash, bank)
+
+
 func spend(amount: int, reason: String = "", cash_only: bool = false) -> Result:
 	if amount < 0:
 		return Result.failure("negative_amount")

@@ -43,6 +43,9 @@ signal skill_level_up(skill_id: String, level: int)
 signal condition_changed(meter: String, value: float)
 ## Health reached zero: the player woke up somewhere (D-041).
 signal player_collapsed(woke_at: String, bill: int)
+## The player's job changed: hired ("" when they quit), or let go (D-042).
+signal job_changed(job_id: String)
+signal job_lost(job_id: String, reason: String)
 
 # --- Dialogue / LLM ---------------------------------------------------------
 signal dialogue_started(npc_id: String)

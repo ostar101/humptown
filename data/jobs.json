@@ -1,0 +1,17 @@
+[
+  {"id": "job_dockhand", "occupation": "occ_dockhand", "workplace": "loc_harbour", "employer": "npc_veikko",
+   "days": "weekday", "shift_start": 360, "shift_end": 990, "wage": 110, "pay_to": "bank",
+   "skills": ["labour", "endurance_training"], "difficulty": 12, "strain": {"stamina": -0.4, "stress": 0.05},
+   "requires": {"flag": "has_harbour_pass", "or_skill": {"labour": 6}}},
+  {"id": "job_worksite", "occupation": "occ_labourer", "workplace": "loc_worksite", "employer": "",
+   "casual": true, "days": "weekday", "shift_start": 420, "shift_end": 960, "wage": 85, "pay_to": "cash",
+   "skills": ["labour"], "difficulty": 6, "strain": {"stamina": -0.35, "stress": 0.03}},
+  {"id": "job_kaisla", "occupation": "occ_counter_hand", "workplace": "loc_cafe_kaisla", "employer": "npc_leena",
+   "days": [2, 3, 4, 5, 6], "shift_start": 420, "shift_end": 900, "wage": 75, "pay_to": "bank",
+   "skills": ["persuasion", "haggling"], "difficulty": 8, "strain": {"stamina": -0.2, "stress": 0.08},
+   "requires": {"familiarity": 0.1}},
+  {"id": "job_clinic_aide", "occupation": "occ_care_assistant", "workplace": "loc_clinic", "employer": "npc_sanna",
+   "days": "weekday", "shift_start": 480, "shift_end": 1020, "wage": 120, "pay_to": "bank",
+   "skills": ["first_aid", "observation"], "difficulty": 15, "strain": {"stamina": -0.25, "stress": 0.15},
+   "requires": {"flag": "medically_trained", "or_skill": {"first_aid": 6}}}
+]

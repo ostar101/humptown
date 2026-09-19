@@ -39,6 +39,8 @@ var conversation: Conversation = null
 var model: DialogueModel = DialogueModel.new()
 ## What people remember of the player (D-038). The game's own book in play.
 var memories: MemoryBook = MemoryBook.new()
+## The player's job (D-042), for hiring and quitting in conversation.
+var work: Employment = null
 ## The last few lines and how each was handled, newest last, for the
 ## developer overlay: what was meant and by whose reading, what the rules
 ## did, and where the answer came from.
@@ -58,7 +60,7 @@ var _place_words: Dictionary = {}
 
 func setup(npcs: NpcRegistry, world: WorldState, player: PlayerState, relationships: RelationshipGraph,
 		knowledge: KnowledgeNetwork = null, clock: GameClock = null, data: DataRegistry = null,
-		p_model: DialogueModel = null, p_memories: MemoryBook = null) -> void:
+		p_model: DialogueModel = null, p_memories: MemoryBook = null, p_work: Employment = null) -> void:
 	_npcs = npcs
 	_world = world
 	_player = player
@@ -68,6 +70,7 @@ func setup(npcs: NpcRegistry, world: WorldState, player: PlayerState, relationsh
 	_data = data
 	model = p_model if p_model != null else DialogueModel.new()
 	memories = p_memories if p_memories != null else MemoryBook.new()
+	work = p_work if p_work != null else Employment.new()
 	conversation = null
 
 
@@ -398,7 +401,35 @@ func _rules_state(npc_id: String) -> Dictionary:
 		"player_cash": _player.wallet.cash,
 		"relationship": _feelings(npc_id),
 		"warmth": conversation.warmth,
+		"hiring": _hiring(npc_id),
+		"works_for_them": work.has_job() and _data != null \
+			and str(_data.get_entry("jobs", work.job_id).get("employer", "")) == npc_id,
 	}
+
+
+## The job this person hires for, if any: {"job", "name", "problem"}, where
+## `problem` is why the player could not have it ("" when they could).
+func _hiring(npc_id: String) -> Dictionary:
+	if _data == null:
+		return {}
+	for job_id in _data.ids("jobs"):
+		var job := _data.get_entry("jobs", job_id)
+		if str(job.get("employer", "")) != npc_id:
+			continue
+		var flags: Array = []
+		for flag in _player.quest_flags:
+			if _player.quest_flags[flag]:
+				flags.append(str(flag))
+		var feeling := _relationships.peek(npc_id, PlayerState.ID)
+		var judged := WorkRules.judge_hire(job, flags, _player.skills.level_map(),
+			feeling.familiarity if feeling != null else 0.0)
+		var occupation := _data.get_entry("occupations", str(job.get("occupation", "")))
+		return {
+			"job": str(job_id),
+			"name": DialoguePrompt.english(str(occupation.get("name_key", ""))).to_lower(),
+			"problem": judged.code if judged.is_err() else "",
+		}
+	return {}
 
 
 ## Carries out what the rules allowed. Nothing else in a conversation writes
@@ -423,6 +454,12 @@ func _apply(npc_id: String, effects: Array[Dictionary]) -> void:
 					})
 			"introduce_them":
 				_introduced(npc_id)
+			"hire":
+				work.hire(str(effect["job"]), _clock.day_index() if _clock != null else 0)
+				Events.job_changed.emit(str(effect["job"]))
+			"quit":
+				work.leave()
+				Events.job_changed.emit("")
 			"introduce_player":
 				var edge := _relationships.get_edge(npc_id, PlayerState.ID)
 				if edge.familiarity < FAMILIARITY_ONCE_INTRODUCED:

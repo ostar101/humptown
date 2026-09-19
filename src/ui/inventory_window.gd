@@ -15,6 +15,7 @@ var _time_was_paused := false
 @onready var _rows: VBoxContainer = %Rows
 @onready var _message: Label = %Message
 @onready var _carrying: Label = %Carrying
+@onready var _job: Label = %Job
 @onready var _close: Button = %Close
 
 
@@ -96,6 +97,8 @@ func _render() -> void:
 		holder.add_child(none)
 		_rows.add_child(holder)
 	_condition.text = StatusText.condition()
+	_job.text = StatusText.job()
+	_job.visible = _job.text != ""
 	_carrying.text = Localization.t("ui.bag.carrying", {
 		"weight": "%.1f" % inventory.total_weight(), "capacity": "%.0f" % inventory.capacity(),
 		"cash": Game.player.wallet.cash,

@@ -46,6 +46,7 @@ func _ready() -> void:
 	_shop.closed.connect(_on_shop_closed)
 	_bag.closed.connect(_on_shop_closed)
 	Events.player_collapsed.connect(_on_player_collapsed)
+	Events.job_lost.connect(_on_job_lost)
 	show_current_area()
 	DevCapture.maybe_capture(self)
 
@@ -57,6 +58,7 @@ func _exit_tree() -> void:
 		Events.game_loaded.disconnect(refresh_daylight)
 	if Events.player_collapsed.is_connected(_on_player_collapsed):
 		Events.player_collapsed.disconnect(_on_player_collapsed)
+		Events.job_lost.disconnect(_on_job_lost)
 
 
 ## (Re)builds the view for wherever the player is: the region, or the inside
@@ -237,6 +239,11 @@ func _on_player_collapsed(woke_at: String, bill: int) -> void:
 		_bag.close()
 	show_current_area()
 	_hud.show_message(Localization.t("ui.msg.collapsed", {"place": InteractionText.place_name(woke_at), "bill": bill}))
+
+
+func _on_job_lost(job_id: String, _reason: String) -> void:
+	var job := Game.data.get_entry("jobs", job_id)
+	_hud.show_message(Localization.t("ui.msg.job_lost", {"place": InteractionText.place_name(str(job.get("workplace", "")))}))
 
 
 func _on_shop_closed() -> void:

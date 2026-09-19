@@ -35,6 +35,11 @@ const PHRASES := {
 		"anteeksi", "pahoittelen", "sori"],
 	"introduce_self": ["my name is", "my name's", "i'm called", "i am called", "call me",
 		"nimeni on", "mun nimi on", "minun nimeni on", "minun nimi on"],
+	"ask_for_work": ["any work", "need work", "need a job", "looking for work", "looking for a job",
+		"are you hiring", "you hiring", "give me a job", "can i work", "work for you", "take me on",
+		"töitä", "työpaikkaa", "palkkaatteko", "tarvitsetteko apua", "etsin töitä", "saisinko töitä"],
+	"quit_job": ["i quit", "i'm quitting", "i am quitting", "i resign", "i'm done working",
+		"irtisanoudun", "lopetan tämän työn", "otan lopputilin", "lopetan täällä"],
 	"compliment": ["you look great", "you look nice", "you're nice", "you are nice", "you're kind",
 		"you are kind", "i like you", "well done", "good job", "nice shop", "you're great", "you are great",
 		"olet mukava", "olet ihana", "näytät hyvältä", "hyvää työtä", "hieno kauppa", "olet kiva"],
@@ -44,6 +49,7 @@ const PHRASES := {
 
 const ORDER: Array[String] = [
 	"threaten", "insult", "farewell", "give_money", "introduce_self", "apologize",
+	"quit_job", "ask_for_work",
 	"about_person", "about_place", "about_self", "about_work", "compliment", "thanks", "greet",
 ]
 ## Handing over money needs all three: a giving phrase, a number, and money.

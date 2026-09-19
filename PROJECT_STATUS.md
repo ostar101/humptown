@@ -1,9 +1,9 @@
 # Project status
 
 **Updated:** 2026-09-19
-**Milestone:** M4 — Making a living — **in progress** (steps 1–3 of 6 done). M3 complete in code (0.3.0).
-**Build:** green. 566 tests, 8305 assertions with the LimeZu art installed,
-~9.8 s. No leak warnings at exit.
+**Milestone:** M4 — Making a living — **in progress** (steps 1–4 of 6 done). M3 complete in code (0.3.0).
+**Build:** green. 577 tests, 8389 assertions with the LimeZu art installed,
+~10 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
@@ -43,11 +43,12 @@ other providers' model lists were not revisited).
 3. ~~**Meals and the condition loop**~~ — done (D-041). The bag on I; use
    what you carry; starving and exhaustion cost health; a collapse wakes you
    in the clinic, billed; the HUD's status corner.
-4. **Jobs, shifts and wages** (next). The background's job (dockhand, …) or one
-   asked for; shifts at the workplace as batched time with pay, skill
-   experience and condition cost; missed shifts have consequences. People's
-   own finances start here (a gift still goes nowhere, D-037).
-5. **The home as a base.** A stash at home; the bed already saves.
+4. ~~**Jobs, shifts and wages**~~ — done (D-042). The harbour, the worksite
+   (casual), Kaisla's counter, the clinic; shifts as one batched step;
+   standing and missed days; hired and quitting in conversation. People's
+   own money is still not modelled (wages come from nowhere, gifts go
+   nowhere) — later work, not M4.
+5. **The home as a base** (next). A stash at home; the bed already saves.
 6. **Basic quests and their UI.** Authored threads (the backgrounds' story
    hooks: the debt, the contact) plus NPC-need-driven jobs; a quest log that
    states the goal without drawing the route.
@@ -154,22 +155,23 @@ store (its own file) — D-036. A test that needs a model sets
 | `DevOverlay` (F3) — model calls, cost, intents, rules, memories, rejections | done |
 | Shops: `ShopRegistry`, `ShopRules`, `HaggleRules`, `ShopWindow` — buy, sell, haggle, restock | done |
 | Condition loop: `ItemRules`, `InventoryWindow` (I), collapse to the clinic, HUD status corner | done |
+| Work: `data/jobs.json`, `Employment`, `WorkRules` — shifts, wages, standing, hiring by conversation | done |
 | Settings screen (language, provider, the player's key, models) | done |
 | `SaveManager` + `SaveMigrations` | done |
 | `Localization` — en complete, fi partial by design | done |
 | `SimViewer` debug screen | done |
 | Test suite + benchmark | done |
 
-**Not started, by design:** jobs, home stash, quests (M4), phone,
+**Not started, by design:** home stash, quests (M4), phone,
 combat, crime and police. See `ROADMAP.md`.
 
 ---
 
 ## Size
 
-- 92 source files in `src/`
-- 37 test suites
-- 10 authored NPCs, 22 locations, 3 regions (1 mapped), 6 interiors, 8 schedules, 4 backgrounds, 4 shops, 14 items
+- 94 source files in `src/`
+- 38 test suites
+- 10 authored NPCs, 22 locations, 3 regions (1 mapped), 6 interiors, 8 schedules, 4 backgrounds, 4 shops, 14 items, 4 jobs
 
 ---
 

@@ -45,6 +45,35 @@ static func condition_keys(stats: Stats) -> Array[String]:
 	return out
 
 
+## "Dockhand at the Harbour · Mon–Fri 06:00–16:30", or "" without a job.
+static func job() -> String:
+	if not Game.is_running() or not Game.work.has_job():
+		return ""
+	var job_data := Game.data.get_entry("jobs", Game.work.job_id)
+	var occupation := Game.data.get_entry("occupations", str(job_data.get("occupation", "")))
+	return Localization.t("ui.status.job", {
+		"job": Localization.t(str(occupation.get("name_key", ""))),
+		"place": InteractionText.place_name(str(job_data.get("workplace", ""))),
+		"days": days_text(job_data.get("days", "all")),
+		"from": "%02d:%02d" % [int(job_data.get("shift_start", 0)) / 60, int(job_data.get("shift_start", 0)) % 60],
+		"until": "%02d:%02d" % [int(job_data.get("shift_end", 0)) / 60, int(job_data.get("shift_end", 0)) % 60],
+	})
+
+
+static func days_text(days: Variant) -> String:
+	if typeof(days) == TYPE_ARRAY:
+		var keys: Array[String] = []
+		for d in days:
+			keys.append(Localization.t(GameClock.WEEKDAY_KEYS[int(d) % 7]))
+		return ", ".join(keys)
+	match str(days):
+		"weekday":
+			return Localization.t("ui.status.weekdays")
+		"weekend":
+			return Localization.t("ui.status.weekends")
+	return Localization.t("ui.status.every_day")
+
+
 ## "Hungry · Tired", or "" when you are fine.
 static func condition() -> String:
 	if not Game.is_running():

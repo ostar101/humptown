@@ -14,12 +14,13 @@ extends RefCounted
 ##   4. Add a test with a fixture of the old shape.
 ## Never renumber or edit an existing step: someone's save depends on it.
 
-const CURRENT_VERSION := 3
+const CURRENT_VERSION := 4
 
 ## version -> name of the static function upgrading it to version + 1.
 const STEPS := {
 	1: "_v1_to_v2",
 	2: "_v2_to_v3",
+	3: "_v3_to_v4",
 }
 
 
@@ -74,6 +75,8 @@ static func _apply_step(version: int, data: Dictionary) -> Dictionary:
 			return _v1_to_v2(data)
 		2:
 			return _v2_to_v3(data)
+		3:
+			return _v3_to_v4(data)
 		_:
 			return {}
 
@@ -104,4 +107,20 @@ static func _v1_to_v2(data: Dictionary) -> Dictionary:
 static func _v2_to_v3(data: Dictionary) -> Dictionary:
 	if not data.has("shops"):
 		data["shops"] = {"shops": {}}
+	return data
+
+
+## v4 moves the job out of the player into its own `work` section (D-042).
+## A v3 player's `job_id` was an occupation; the one job each such
+## occupation had then is written here by hand, not looked up, so this step
+## means the same thing whatever the data says later.
+const V3_JOBS := {"occ_dockhand": "job_dockhand"}
+
+
+static func _v3_to_v4(data: Dictionary) -> Dictionary:
+	var player: Dictionary = data.get("player", {})
+	var occupation := str(player.get("job_id", ""))
+	player.erase("job_id")
+	if not data.has("work"):
+		data["work"] = {"job": str(V3_JOBS.get(occupation, "")), "standing": 1.0}
 	return data

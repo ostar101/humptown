@@ -25,6 +25,7 @@ var relationships := RelationshipGraph.new()
 var knowledge := KnowledgeNetwork.new()
 var memories := MemoryBook.new()
 var shops := ShopRegistry.new()
+var work := Employment.new()
 var reputation := Reputation.new()
 var player := PlayerState.new()
 var saves := SaveManager.new()
@@ -115,7 +116,8 @@ func new_game(background_id: String = "", world_seed: int = 0) -> Result:
 
 	_seed_relationships()
 	_apply_background(background_id)
-	dialogue.setup(npcs, world, player, relationships, knowledge, clock, data, LlmDialogueModel.new(llm), memories)
+	_start_background_job(background_id)
+	dialogue.setup(npcs, world, player, relationships, knowledge, clock, data, LlmDialogueModel.new(llm), memories, work)
 	_connect_simulation()
 
 	# Open the starting region and place the player.
@@ -190,6 +192,7 @@ func unload() -> void:
 	knowledge = KnowledgeNetwork.new()
 	memories = MemoryBook.new()
 	shops = ShopRegistry.new()
+	work = Employment.new()
 	_shopping = ""
 	_shop_deals = 0
 	reputation = Reputation.new()
@@ -319,6 +322,10 @@ func interaction_at(cell: Vector2i) -> Dictionary:
 	var thing := map.object_at(cell)
 	if not thing.is_empty():
 		return {"kind": str(thing["kind"]), "target": str(thing["id"]), "text_key": str(thing["text_key"])}
+	# Nothing on the cell, but a shift that could start right here (D-042).
+	var job := job_here()
+	if not job.is_empty() and judge_shift_here().is_ok():
+		return {"kind": "work", "target": str(job["id"])}
 	return {}
 
 
@@ -348,6 +355,8 @@ func interact_at(cell: Vector2i) -> Result:
 			return _sleep_in_bed(proposal, map.interior_of)
 		"sign":
 			return Result.success({"kind": "read", "text_key": what["text_key"]})
+		"work":
+			return work_shift()
 	return _reject(proposal, "nothing_there")
 
 
@@ -577,6 +586,138 @@ func close_shop() -> Result:
 	return Result.success({"deals": deals})
 
 
+# --- work ------------------------------------------------------------------------
+
+## The job the player could work where they stand: their own, if this is its
+## workplace; else casual work here, which takes anyone for the day. Empty
+## when neither (D-042).
+func job_here() -> Dictionary:
+	if not is_running():
+		return {}
+	if work.has_job():
+		var own := data.get_entry("jobs", work.job_id)
+		if str(own.get("workplace", "")) == player.location:
+			return own
+	for job_id in data.ids("jobs"):
+		var job := data.get_entry("jobs", job_id)
+		if bool(job.get("casual", false)) and str(job.get("workplace", "")) == player.location:
+			return job
+	return {}
+
+
+## Whether a shift could start here now, and if not why not.
+func judge_shift_here() -> Result:
+	var job := job_here()
+	return WorkRules.judge_shift({
+		"job": job,
+		"employed_here": not job.is_empty() and (bool(job.get("casual", false)) or str(job["id"]) == work.job_id),
+		"at_workplace": not job.is_empty(),
+		"weekday": clock.weekday(),
+		"minute": clock.minute_of_day(),
+		"day": clock.day_index(),
+		"last_worked_day": work.last_worked_day,
+		"intoxication": player.stats.intoxication,
+		"sleep": player.stats.sleep,
+	})
+
+
+## Works a shift at the job here (D-042): the rest of the shift passes in one
+## step, the body pays its strain, the wage — for the part worked, scaled a
+## little by how fit the player was — goes to cash or the bank, the job's
+## skills learn, and the employer notes whether the player was on time.
+## Refuses what `WorkRules.judge_shift` refuses.
+func work_shift() -> Result:
+	var proposal := {"kind": "work", "location": player.location if is_running() else ""}
+	if not is_running():
+		return _reject(proposal, "no_world")
+	if dialogue.is_talking() or is_shopping():
+		return _reject(proposal, "busy")
+	var job := job_here()
+	var judged := judge_shift_here()
+	if judged.is_err():
+		return _reject(proposal, judged.code)
+	var shift: Dictionary = judged.value
+	var fraction := float(shift["fraction"])
+	var fitness := player.stats.effectiveness()
+	var day := clock.day_index()
+	_player_activity = "work"
+	advance_time(int(shift["minutes"]))
+	_player_activity = "idle"
+	var strain: Dictionary = job.get("strain", {})
+	for meter in strain:
+		player.stats.modify(str(meter), float(strain[meter]) * fraction)
+	var wage := WorkRules.pay(int(job.get("wage", 0)), fraction, fitness)
+	var reason := "wage:" + str(job["id"])
+	if str(job.get("pay_to", "cash")) == "bank":
+		player.wallet.add_to_bank(wage, reason)
+	else:
+		player.wallet.add_cash(wage, reason)
+	for skill_id in job.get("skills", []):
+		player.skills.practise(str(skill_id), 25.0 * fraction, int(job.get("difficulty", 5)))
+	var casual := bool(job.get("casual", false))
+	work.record_shift(day, fraction >= 0.95, bool(shift["late"]), casual)
+	var employer := str(job.get("employer", ""))
+	if employer != "" and npcs.get_npc(employer) != null:
+		relationships.adjust(employer, PlayerState.ID, "familiarity", 0.02, clock.total_minutes)
+		relationships.adjust(PlayerState.ID, employer, "familiarity", 0.02, clock.total_minutes)
+	return Result.success({
+		"kind": "worked", "job": str(job["id"]), "pay": wage, "pay_to": str(job.get("pay_to", "cash")),
+		"late": shift["late"], "until": clock.format_time(),
+	})
+
+
+## Takes the job on (D-042), from the first shift after today.
+func hire_player(job_id: String) -> Result:
+	if not data.has_entry("jobs", job_id):
+		return _reject({"kind": "hire", "job": job_id}, "no_such_job")
+	work.hire(job_id, clock.day_index())
+	Events.job_changed.emit(job_id)
+	return Result.success(job_id)
+
+
+func quit_job() -> Result:
+	if not work.has_job():
+		return _reject({"kind": "quit"}, "no_job")
+	work.leave()
+	Events.job_changed.emit("")
+	return Result.success()
+
+
+func _start_background_job(background_id: String) -> void:
+	var occupation := str(data.get_entry("backgrounds", background_id).get("job", ""))
+	if occupation.is_empty():
+		return
+	for job_id in data.ids("jobs"):
+		if str(data.get_entry("jobs", job_id).get("occupation", "")) == occupation:
+			# From today, but today is not counted: a life starts at 07:00,
+			# and nobody is fired on their first morning (D-042).
+			work.hire(str(job_id), clock.day_index())
+			return
+
+
+## At midnight, every working day since the last check that the player did
+## not work counts as missed; standing at zero loses the job (D-042).
+func _count_missed_shifts(day: int) -> void:
+	if not work.has_job():
+		work.checked_through_day = day - 1
+		return
+	var job := data.get_entry("jobs", work.job_id)
+	var today_weekday := clock.weekday()
+	for d in range(maxi(work.checked_through_day + 1, work.hired_day + 1), day):
+		var weekday := posmod(today_weekday - (day - d), 7)
+		if WorkRules.works_on(job.get("days", "all"), weekday) and work.last_worked_day != d:
+			work.record_missed()
+	work.checked_through_day = day - 1
+	if work.standing <= 0.0:
+		var lost := work.job_id
+		var employer := str(job.get("employer", ""))
+		if employer != "" and npcs.get_npc(employer) != null:
+			relationships.adjust(employer, PlayerState.ID, "respect", -0.1, clock.total_minutes)
+		work.leave()
+		Log.info("game", "Job lost", {"job": lost})
+		Events.job_lost.emit(lost, "missed_shifts")
+
+
 # --- using things and the body --------------------------------------------------
 
 ## Eats, drinks or uses something the player carries (D-041). `ItemRules`
@@ -724,6 +865,7 @@ func save_game(slot: String) -> Result:
 		"knowledge": knowledge.to_dict(),
 		"memories": memories.to_dict(),
 		"shops": shops.to_dict(),
+		"work": work.to_dict(),
 		"reputation": reputation.to_dict(),
 		"events": events_queue.to_dict(),
 		"player": player.to_dict(),
@@ -759,6 +901,7 @@ func load_game(slot: String) -> Result:
 	knowledge.from_dict(sections.get("knowledge", {}))
 	memories.from_dict(sections.get("memories", {}))
 	shops.from_dict(sections.get("shops", {}))
+	work.from_dict(sections.get("work", {}))
 	reputation.from_dict(sections.get("reputation", {}))
 	events_queue.from_dict(sections.get("events", {}))
 	player.from_dict(sections.get("player", {}))
@@ -811,6 +954,7 @@ func _on_day(day: int) -> void:
 	knowledge.forget_stale(clock.total_minutes)
 	player.stats.heal_expired_injuries(clock.total_minutes)
 	shops.restock()
+	_count_missed_shifts(day)
 
 
 func _on_time_skipped(from_minutes: int, to_minutes: int) -> void:
