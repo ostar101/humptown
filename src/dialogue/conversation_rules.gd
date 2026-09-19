@@ -68,7 +68,7 @@ const GIFT_CASH_PER_POINT := 250.0
 ## player) · {"do": "pay", "amount"} · {"do": "remember", "predicate",
 ## "visibility", "severity"} (a fact about the player they witnessed) ·
 ## {"do": "introduce_them"} · {"do": "introduce_player"} · {"do": "transfer",
-## "amount"} (from the account, by text).
+## "amount"} (from the account, by text) · {"do": "tell_place", "place"}.
 static func judge(intent: Dictionary, state: Dictionary) -> Result:
 	var kind := str(intent.get("kind", "unknown"))
 	var feeling: Dictionary = state.get("relationship", {})
@@ -83,6 +83,10 @@ static func judge(intent: Dictionary, state: Dictionary) -> Result:
 			ends = true
 		"about_self":
 			effects.append({"do": "introduce_them"})
+		"about_place":
+			# They tell you where it is: it goes on your map (D-049).
+			if str(intent.get("subject", "")).begins_with("loc_"):
+				effects.append({"do": "tell_place", "place": str(intent["subject"])})
 		"introduce_self":
 			var said_name := str(intent.get("name", "")).strip_edges()
 			if said_name == "" or _same_name(said_name, str(state.get("player_name", ""))):

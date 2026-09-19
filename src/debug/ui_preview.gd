@@ -7,7 +7,7 @@ extends Node
 ## `--screen` is `title`, `creation`, `opening`, `settings` or `world`
 ## (`--overlay=1` shows the developer overlay; `--shop=location_id
 ## [--selling=1]` stands the player at that shop's counter; `--quests=1`
-## opens the quest log; `--atm=1` the cash machine; `--phone=threads|thread|contacts|calendar|bank` the phone). For
+## opens the quest log; `--atm=1` the cash machine; `--phone=threads|thread|contacts|calendar|bank|map` the phone). For
 ## settings, `--provider=id` chooses a provider — in memory only, since a
 ## preview never writes the player's settings — and `--locale=fi` the language. For creation, `--step` is
 ## 1-3 and the screen is driven through its own public methods, exactly as its
@@ -140,7 +140,7 @@ func _drive_atm(view: WorldView) -> void:
 	view.atm_window().open()
 
 
-## `--phone=threads|thread|contacts|calendar|bank`: some numbers and a few messages on the
+## `--phone=threads|thread|contacts|calendar|bank|map`: some numbers and a few messages on the
 ## phone, then the phone open on that page. Written straight into the phone
 ## state — the rules that would deliver them are tested elsewhere.
 func _drive_phone(view: WorldView, page: String) -> void:
@@ -161,6 +161,12 @@ func _drive_phone(view: WorldView, page: String) -> void:
 			phone.open_thread("npc_pirjo")
 		"contacts":
 			phone.show_page(PhoneWindow.Page.CONTACTS)
+		"map":
+			for place in ["loc_dock_street", "loc_court", "loc_corner_shop", "loc_harbour"]:
+				Game.player.learn_place(place, "visited")
+			for place in ["loc_anchor_bar", "loc_cafe_kaisla", "loc_clinic"]:
+				Game.player.learn_place(place, "told")
+			phone.show_page(PhoneWindow.Page.MAP)
 		"bank":
 			Game.player.wallet.add_to_bank(110, "wage:job_dockhand")
 			Game.player.wallet.spend(12, "buy:item_sandwich")

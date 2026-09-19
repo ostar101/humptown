@@ -59,6 +59,8 @@ signal phone_read(npc_id: String)
 signal phone_contact_added(npc_id: String)
 ## A meeting moved: accepted, reminder, kept, missed, stood_up (D-047).
 signal meeting_updated(meeting_id: int, status: String)
+## A place joined the player's map: `how` is "visited" or "told" (D-049).
+signal place_learned(location_id: String, how: String)
 
 # --- Dialogue / LLM ---------------------------------------------------------
 signal dialogue_started(npc_id: String)

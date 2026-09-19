@@ -504,5 +504,10 @@
   "ui.bank.wage": "Palkka · {place}",
   "ui.bank.transfer": "Lähetetty: {name}",
   "ui.bank.deposit": "Käteistä tilille",
-  "ui.bank.withdraw": "Käteisnosto"
+  "ui.bank.withdraw": "Käteisnosto",
+  "ui.phone.map": "Kartta",
+  "ui.map.visited": "käyty",
+  "ui.map.told": "kuultu",
+  "ui.map.unmapped": "Et tunne tätä kaupunginosaa vielä.",
+  "ui.msg.place_new": "Uutta kartallasi: {place}"
 }

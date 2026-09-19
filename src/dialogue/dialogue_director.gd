@@ -577,8 +577,12 @@ func _apply(npc_id: String, effects: Array[Dictionary]) -> void:
 					})
 			"introduce_them":
 				_introduced(npc_id)
+			"tell_place":
+				_player.learn_place(str(effect["place"]), "told")
 			"hire":
 				work.hire(str(effect["job"]), _today())
+				if _data != null:
+					_player.learn_place(str(_data.get_entry("jobs", str(effect["job"])).get("workplace", "")), "told")
 				Events.job_changed.emit(str(effect["job"]))
 				Events.player_deed.emit("hired", {"job": str(effect["job"])})
 			"take_errand":

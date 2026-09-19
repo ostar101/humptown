@@ -1645,3 +1645,34 @@ changed, so the benchmark was re-run: unchanged.
 **Not yet.** Bills and rent, interest, loans, cards refused by some shops
 (the design's "not accepted by everyone"), and theft of cash — later, with
 crime (M6).
+
+
+## D-049 — The map: what you have learned, and nothing else
+
+**Decision.** M5 step 4, second half. The phone's Map tab draws the district
+the way the player knows it. `PlayerState.known_places` maps a location to
+"visited" or "told" and is saved with the player; the map draws only those,
+and nobody but the player is on it — no one else's position, ever (D-017: who
+is where is the simulation's, not something to hand the player for free).
+Places been to are solid; places only heard of are outlined and faint. Each is
+marked with a number and the legend below says which is which (names beside
+narrow buildings clipped or collided; numbers do neither). "You" is the yellow
+dot — on the building when you are inside one. Places in districts with no map
+yet (Old Town, Eastfield) are listed in the legend but not drawn.
+
+**How a place is learned.** By *being* there — every change of the player's
+location (`Game._set_player_location`) marks it visited, and being there
+outranks hearing of it; by being *told* — a line about a place is judged by
+`ConversationRules` and gives an effect, `tell_place`, applied like any other
+(so it works by text too, and a model cannot put a place on the map that the
+rules did not); by an *invitation* that names it (a meeting request); by being
+*hired* there. You begin knowing your home, and your workplace if you have
+one. A save from before the map knows where you live. `Events.place_learned`
+fires the first time a place appears and the HUD says "New on your map: …";
+turning a heard-of place into a been-to one is quiet.
+
+**Scope.** No fog *of the tiles* — the world you walk is drawn as before; this
+is the phone's map, a record of knowledge, not a minimap. No routes, no
+markers on other people, no "go here" (the design's rule for quests, §51, holds
+for the map too). Faded, unnumbered detail such as streets between places
+waits for M7's wider "progressive revelation" of Old Town and Eastfield.

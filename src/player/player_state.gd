@@ -42,6 +42,8 @@ const STASH_CAPACITY := 150.0
 var known_contacts: Array[String] = []
 var quest_flags: Dictionary = {}
 var home_location: String = ""
+## location id -> "visited" | "told": the places the player knows of (D-049).
+var known_places: Dictionary = {}
 
 
 func setup(data: DataRegistry) -> void:
@@ -66,6 +68,7 @@ func apply_background(background: Dictionary) -> void:
 	wallet.cash = int(background.get("cash", 0))
 	wallet.bank = int(background.get("bank", 0))
 	home_location = str(background.get("home", ""))
+	known_places[home_location] = "visited"
 	location = home_location
 	_apply_carry_capacity()
 
@@ -83,6 +86,26 @@ func add_contact(npc_id: String) -> void:
 	if npc_id.is_empty() or npc_id in known_contacts:
 		return
 	known_contacts.append(npc_id)
+
+
+## Learns of a place: been there ("visited") or heard of it ("told"). Being
+## there outranks hearing of it. Returns whether the place was unknown until
+## now — the moment it appears on the map.
+func learn_place(location_id: String, how: String) -> bool:
+	if location_id == "":
+		return false
+	var was := str(known_places.get(location_id, ""))
+	if was == "visited" or (was == "told" and how == "told"):
+		return false
+	known_places[location_id] = how
+	if was == "":
+		Events.place_learned.emit(location_id, how)
+		return true
+	return false
+
+
+func knows_place(location_id: String) -> bool:
+	return known_places.has(location_id)
 
 
 func knows_contact(npc_id: String) -> bool:
@@ -128,6 +151,7 @@ func to_dict() -> Dictionary:
 		"known_contacts": known_contacts,
 		"quest_flags": quest_flags,
 		"home_location": home_location,
+		"known_places": known_places,
 	}
 
 
@@ -155,4 +179,9 @@ func from_dict(d: Dictionary) -> void:
 	known_contacts = contacts
 	quest_flags = d.get("quest_flags", {})
 	home_location = str(d.get("home_location", ""))
+	known_places = {}
+	for place_id in d.get("known_places", {}):
+		known_places[str(place_id)] = str(d["known_places"][place_id])
+	if known_places.is_empty() and home_location != "":
+		known_places[home_location] = "visited"   # a save from before the map: you know where you live
 	_apply_carry_capacity()

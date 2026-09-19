@@ -107,6 +107,7 @@ func deliver(cause: Dictionary) -> Result:
 	var action: Dictionary = cause.get("action", {})
 	if cause.has("meeting") and _meetings != null:
 		action = {"do": "meeting", "meeting": _meetings.propose(npc_id, cause["meeting"])}
+		_player.learn_place(str(cause["meeting"]["location"]), "told")   # they said where
 	var message := state.add_message(npc_id, true, str(cause["kind"]), str(cause["key"]),
 		cause.get("args", {}), now, action)
 	Events.phone_message.emit(npc_id, int(message["id"]))

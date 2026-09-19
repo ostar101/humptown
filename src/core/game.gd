@@ -128,6 +128,7 @@ func new_game(background_id: String = "", world_seed: int = 0) -> Result:
 	_seed_relationships()
 	_apply_background(background_id)
 	_start_background_job(background_id)
+	_know_where_you_work()
 	_start_background_quests(background_id)
 	meetings.setup(calendar, npcs, world, player, relationships, memories, events_queue, clock, data)
 	phone_director.setup(phone, npcs, relationships, quests, player, clock, dialogue, meetings)
@@ -317,6 +318,7 @@ func _set_player_location(now_at: String) -> void:
 		return
 	var was_at := player.location
 	player.location = now_at
+	player.learn_place(now_at, "visited")
 	if not was_at.is_empty():
 		Events.location_exited.emit(PlayerState.ID, was_at)
 	if not now_at.is_empty():
@@ -896,6 +898,7 @@ func hire_player(job_id: String) -> Result:
 	if not data.has_entry("jobs", job_id):
 		return _reject({"kind": "hire", "job": job_id}, "no_such_job")
 	work.hire(job_id, clock.day_index())
+	player.learn_place(str(data.get_entry("jobs", job_id).get("workplace", "")), "told")
 	phone_director.add_contact(str(data.get_entry("jobs", job_id).get("employer", "")))
 	Events.job_changed.emit(job_id)
 	Events.player_deed.emit("hired", {"job": job_id})
@@ -908,6 +911,14 @@ func quit_job() -> Result:
 	work.leave()
 	Events.job_changed.emit("")
 	return Result.success()
+
+
+## You know where you work, from the first day (D-049).
+func _know_where_you_work() -> void:
+	if work.has_job():
+		var workplace := str(data.get_entry("jobs", work.job_id).get("workplace", ""))
+		if not player.knows_place(workplace):
+			player.known_places[workplace] = "told"
 
 
 func _start_background_job(background_id: String) -> void:

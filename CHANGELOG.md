@@ -6,6 +6,11 @@ versions are milestones rather than releases until there is something to release
 ## [Unreleased] — Milestone 5: the phone
 
 ### Decided
+- The map: the phone's Map tab draws the district as the player knows it —
+  places been to solid, places heard of outlined, numbered with a legend, the
+  player on it and nobody else; a place is learned by going there, by being
+  told (a rules-judged effect), by an invitation, or by being hired there
+  (D-049)
 - Banking: the ledger says when; the phone's Bank tab shows the account's
   statement in words; money sent by text goes through the account (replacing
   "cash cannot be sent by text") and counts as the same `gave_money` deed;
@@ -45,10 +50,14 @@ versions are milestones rather than releases until there is something to release
   `Game.atm_here()`, `atm_deposit()`, `atm_withdraw()`; the `atm` object
   kind, one in the corner shop; the phone's Bank tab; the effect `transfer`;
   `test_banking` (14 tests)
-- `ui_preview --phone=calendar|bank`, `--atm=1`
+- `MapView`, the phone's Map tab; `PlayerState.known_places`,
+  `learn_place()`, `knows_place()`; `Events.place_learned`; the effect
+  `tell_place`; `test_map` (15 tests)
+- `ui_preview --phone=calendar|bank|map`, `--atm=1`
 - `test_phone` (24 tests); `ui_preview -- --screen=world --phone=threads|thread|contacts`
 
 ### Changed
+- The phone's frame is wider (520 px) for a fifth tab
 - Cash by text is no longer refused (`not_in_person` is gone): by phone
   `give_money` is judged against the account; a text with no money in the
   account is refused `not_enough_bank`

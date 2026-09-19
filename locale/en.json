@@ -538,5 +538,10 @@
   "ui.bank.transfer": "Sent to {name}",
   "ui.bank.deposit": "Cash put in",
   "ui.bank.withdraw": "Cash taken out",
-  "ui.bank.other": "Other"
+  "ui.bank.other": "Other",
+  "ui.phone.map": "Map",
+  "ui.map.visited": "been there",
+  "ui.map.told": "heard of",
+  "ui.map.unmapped": "You do not know this part of town yet.",
+  "ui.msg.place_new": "New on your map: {place}"
 }

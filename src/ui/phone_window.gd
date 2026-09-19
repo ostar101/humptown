@@ -9,7 +9,7 @@ extends CanvasLayer
 
 signal closed()
 
-enum Page { THREADS, THREAD, CONTACTS, CALENDAR, BANK }
+enum Page { THREADS, THREAD, CONTACTS, CALENDAR, BANK, MAP }
 
 const PREVIEW_CHARS := 30
 
@@ -26,6 +26,7 @@ var _time_was_paused := false
 @onready var _tab_contacts: Button = %TabContacts
 @onready var _tab_calendar: Button = %TabCalendar
 @onready var _tab_bank: Button = %TabBank
+@onready var _tab_map: Button = %TabMap
 @onready var _close: Button = %Close
 @onready var _compose: HBoxContainer = %Compose
 @onready var _line: LineEdit = %Line
@@ -41,6 +42,7 @@ func _ready() -> void:
 	_tab_contacts.pressed.connect(func() -> void: show_page(Page.CONTACTS))
 	_tab_calendar.pressed.connect(func() -> void: show_page(Page.CALENDAR))
 	_tab_bank.pressed.connect(func() -> void: show_page(Page.BANK))
+	_tab_map.pressed.connect(func() -> void: show_page(Page.MAP))
 	_send.pressed.connect(_send_line)
 	_line.text_submitted.connect(func(_text: String) -> void: _send_line())
 	Events.phone_message.connect(_on_phone_message)
@@ -113,6 +115,8 @@ func row_texts() -> Array[String]:
 			continue
 		if row is Label:
 			out.append((row as Label).text)
+			continue
+		if row is MapView:
 			continue
 		var parts: Array[String] = []
 		for child in row.get_children():
@@ -192,6 +196,7 @@ func _render() -> void:
 	_tab_contacts.button_pressed = _page == Page.CONTACTS
 	_tab_calendar.button_pressed = _page == Page.CALENDAR
 	_tab_bank.button_pressed = _page == Page.BANK
+	_tab_map.button_pressed = _page == Page.MAP
 	match _page:
 		Page.THREADS:
 			_title.text = Localization.t("ui.phone.messages")
@@ -208,6 +213,9 @@ func _render() -> void:
 		Page.BANK:
 			_title.text = Localization.t("ui.phone.bank")
 			_render_bank()
+		Page.MAP:
+			_title.text = Localization.t("ui.phone.map")
+			_render_map()
 
 
 func _render_threads() -> void:
@@ -283,6 +291,67 @@ func _render_contacts() -> void:
 		_rows.add_child(row)
 	if ids.is_empty():
 		_rows.add_child(_note(Localization.t("ui.phone.no_contacts")))
+
+
+## The district as the player knows it, then what they know of, by name.
+func map_view() -> MapView:
+	for row in _rows.get_children():
+		if row is MapView:
+			return row as MapView
+	return null
+
+
+func _render_map() -> void:
+	var known := Game.player.known_places
+	var world := Game.world
+	var map := world.map_for(Game.player.region)
+	var kinds := {}
+	var elsewhere: Array[String] = []
+	var here: Array[String] = []
+	for location_id: String in known:
+		var location := world.get_location(location_id)
+		if location != null:
+			kinds[location_id] = location.kind
+		if map != null and (map.buildings.has(location_id) or map.places.has(location_id)):
+			here.append(location_id)
+		else:
+			elsewhere.append(location_id)
+	if map != null:
+		var you := Vector2i(-1, -1)
+		if Game.player.interior != "" and map.buildings.has(Game.player.interior):
+			you = (map.buildings[Game.player.interior]["rect"] as Rect2i).get_center()
+		elif Game.player.interior == "":
+			you = DistrictMap.world_to_cell(Game.player.position)
+		var view := MapView.new()
+		view.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		_rows.add_child(view)
+		var on_this_map := {}
+		for location_id in here:
+			on_this_map[location_id] = known[location_id]
+		view.show_district(map, on_this_map, kinds, _map_numbers(here), you)
+	else:
+		_rows.add_child(_note(Localization.t("ui.map.unmapped")))
+	var numbers := _map_numbers(here)
+	var listed: Array[String] = []
+	listed.append_array(here)
+	listed.append_array(elsewhere)
+	listed.sort_custom(func(a: String, b: String) -> bool: return InteractionText.place_name(a) < InteractionText.place_name(b))
+	for location_id in listed:
+		var line := Label.new()
+		line.theme_type_variation = &"MutedLabel"
+		var number := ("%d · " % numbers[location_id]) if numbers.has(location_id) else ""
+		line.text = "%s%s · %s" % [number, InteractionText.place_name(location_id), Localization.t("ui.map." + str(known[location_id]))]
+		_rows.add_child(line)
+
+
+## The numbers the map marks places with, in the order of their names.
+func _map_numbers(on_the_map: Array[String]) -> Dictionary:
+	var ordered := on_the_map.duplicate()
+	ordered.sort_custom(func(a: String, b: String) -> bool: return InteractionText.place_name(a) < InteractionText.place_name(b))
+	var out := {}
+	for i in ordered.size():
+		out[ordered[i]] = i + 1
+	return out
 
 
 func _render_bank() -> void:
