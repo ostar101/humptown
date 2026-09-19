@@ -66,9 +66,15 @@ var _shopping := ""
 ## step is over (D-041); and a guard against collapsing inside a collapse.
 var _collapse_due := false
 var _collapsing := false
+## A forced arrest waiting for the clock to stop moving (D-052), as a collapse waits.
+var _arrest_pending: Dictionary = {}
+var _arresting := false
 ## Where someone who collapses wakes, when, and what the clinic charges.
 const COLLAPSE_WAKE_MINUTE := 8 * 60
 const CLINIC := "loc_clinic"
+const POLICE_POST := "loc_police_post"
+## The morning they let you go.
+const RELEASE_MINUTE := 8 * 60
 const CLINIC_BILL := 60
 var _shop_deals := 0
 var _time_paused_before_shopping := false
@@ -84,6 +90,7 @@ func _ready() -> void:
 	Events.relationship_changed.connect(_on_relationship_changed)
 	Events.dialogue_ended.connect(_on_dialogue_ended)
 	Events.meeting_updated.connect(_on_meeting_updated)
+	Events.fact_learned.connect(_on_fact_learned)
 	Log.min_level = int(Settings.get_value("log_level", Log.Level.INFO)) as Log.Level
 	Log.info("game", "Game root ready")
 
@@ -93,6 +100,7 @@ func _process(delta: float) -> void:
 		return
 	clock.tick(delta)
 	_resolve_collapse()
+	_resolve_arrest()
 
 
 # --- lifecycle --------------------------------------------------------------
@@ -243,6 +251,7 @@ func advance_time(minutes: int) -> void:
 		return
 	clock.advance(minutes)
 	_resolve_collapse()
+	_resolve_arrest()
 
 
 func pause_time(paused: bool) -> void:
@@ -438,6 +447,8 @@ func _use_counter(proposal: Dictionary, location_id: String) -> Result:
 	var staff := staff_serving(location_id)
 	if staff.is_empty():
 		return _reject(proposal, "nobody_serving")
+	if crime.officers().has(staff):
+		return _at_the_desk(staff)
 	return Result.success({"kind": "served", "npc": staff})
 
 
@@ -782,6 +793,103 @@ func answer_message(message_id: int, choice: String) -> Result:
 	if answered.is_err():
 		return _reject({"kind": "phone_answer", "message": message_id, "answer": choice}, answered.code)
 	return answered
+
+
+# --- the police (D-052) -----------------------------------------------------------
+
+## The officer has looked at what she knows and decided the player should come
+## in: she sends for them.
+func _police_assess(payload: Dictionary) -> void:
+	var issued := crime.assess(str(payload.get("officer", "")))
+	if not issued.is_empty():
+		phone_director.summons(str(issued["officer"]), int(issued["due"]))
+
+
+## The time to come in has passed. If the player did not, the case is weighed
+## without them — and worse for it.
+func _summons_due(payload: Dictionary) -> void:
+	var result := crime.resolve(int(payload.get("summons", 0)), false, player.wallet.total())
+	if not result.is_empty():
+		_apply_police_outcome(result, true)
+
+
+## The player at the police desk. If they were sent for, the case is weighed
+## now, on what she knows; if not, she has nothing to say to them.
+func _at_the_desk(officer_id: String) -> Result:
+	var open := crime.open_summons_for(officer_id)
+	if open.is_empty():
+		return Result.success({"kind": "desk", "officer": officer_id, "outcome": "nothing", "fine": 0})
+	var result := crime.resolve(int(open["id"]), true, player.wallet.total())
+	if result.is_empty():
+		return Result.success({"kind": "desk", "officer": officer_id, "outcome": "nothing", "fine": 0})
+	_apply_police_outcome(result, false)
+	result["kind"] = "desk"
+	return Result.success(result)
+
+
+## What an outcome does to the player. A warning and a fine are done at once;
+## an arrest that happens while time is moving waits until it has stopped.
+func _apply_police_outcome(result: Dictionary, forced: bool) -> void:
+	var officer_id := str(result["officer"])
+	var outcome := str(result["outcome"])
+	match outcome:
+		"warning":
+			relationships.adjust(officer_id, PlayerState.ID, "respect", -0.03, clock.total_minutes)
+		"fine":
+			player.wallet.spend(int(result["fine"]), "fine")
+			relationships.adjust(officer_id, PlayerState.ID, "respect", -0.05, clock.total_minutes)
+		"arrest":
+			if forced:
+				_arrest_pending = result
+			else:
+				_arrest(result)
+	Log.info("police", "Case weighed", {"officer": officer_id, "outcome": outcome, "forced": forced})
+	Events.police_action.emit(outcome, officer_id, int(result["fine"]), forced)
+
+
+func _resolve_arrest() -> void:
+	if not _arrest_pending.is_empty() and not _arresting:
+		var result := _arrest_pending
+		_arrest_pending = {}
+		_arrest(result)
+
+
+## A night in the cells: the player is taken to the police post and let go in
+## the morning. It is known — that is what an arrest is — and it travels.
+func _arrest(result: Dictionary) -> void:
+	_arresting = true
+	if dialogue.is_talking():
+		end_conversation()
+	if is_shopping():
+		close_shop()
+	var officer_id := str(result["officer"])
+	var post := world.interior_for(POLICE_POST)
+	if post != null:
+		player.interior = POLICE_POST
+		player.position = DistrictMap.cell_to_world(post.entry_cell())
+		_set_player_location(POLICE_POST)
+	var minutes := posmod(RELEASE_MINUTE - clock.minute_of_day(), GameClock.MINUTES_PER_DAY)
+	if minutes < 6 * 60:
+		minutes += GameClock.MINUTES_PER_DAY
+	# They feed you and let you sleep; a night in the cells is not a starvation.
+	player.stats.hunger = minf(player.stats.hunger, 0.3)
+	player.stats.sleep = maxf(player.stats.sleep, 0.6)
+	_player_activity = "sleep"
+	advance_time(minutes)
+	_player_activity = "idle"
+	player.stats.modify("stress", 0.25)
+	var witnesses: Array[String] = [officer_id]
+	knowledge.observe_event(PlayerState.ID, "arrested", clock.total_minutes, witnesses, {
+		"object": officer_id, "location": POLICE_POST, "severity": 0.6, "visibility": "social"})
+	relationships.adjust(officer_id, PlayerState.ID, "respect", -0.08, clock.total_minutes)
+	_arresting = false
+	Log.info("police", "Player arrested", {"officer": officer_id})
+	Events.player_arrested.emit(officer_id, clock.total_minutes)
+
+
+func _on_fact_learned(knower_id: String, fact_id: String, _source_id: String) -> void:
+	if is_running():
+		crime.on_fact_learned(knower_id, fact_id)
 
 
 # --- the cash machine -------------------------------------------------------------
@@ -1177,6 +1285,7 @@ func save_game(slot: String) -> Result:
 		"quests": quests.to_dict(),
 		"phone": phone.to_dict(),
 		"calendar": calendar.to_dict(),
+		"crime": crime.to_dict(),
 		"reputation": reputation.to_dict(),
 		"events": events_queue.to_dict(),
 		"player": player.to_dict(),
@@ -1216,6 +1325,7 @@ func load_game(slot: String) -> Result:
 	quests.from_dict(sections.get("quests", {}))
 	phone.from_dict(sections.get("phone", {}))
 	calendar.from_dict(sections.get("calendar", {}))
+	crime.from_dict(sections.get("crime", {}))
 	reputation.from_dict(sections.get("reputation", {}))
 	events_queue.from_dict(sections.get("events", {}))
 	player.from_dict(sections.get("player", {}))
@@ -1247,6 +1357,10 @@ func _on_world_event(event: WorldEventQueue.QueuedEvent) -> void:
 			meetings.on_event(event.kind, event.payload)
 		"crime_report":
 			crime.deliver_report(event.payload)
+		"police_assess":
+			_police_assess(event.payload)
+		"police_summons_due":
+			_summons_due(event.payload)
 		_:
 			Log.debug("events", "Unhandled world event", {"kind": event.kind})
 

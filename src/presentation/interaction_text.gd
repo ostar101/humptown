@@ -68,6 +68,12 @@ static func outcome_text(interaction: Dictionary, result: Result) -> String:
 			return Localization.t(key, {"time": Game.clock.format_time()})
 		"read":
 			return Localization.t(str(outcome.get("text_key", "")))
+		"desk":
+			var officer := Game.npcs.get_npc(str(outcome.get("officer", "")))
+			var who := Game.dialogue.display_name(str(outcome.get("officer", "")), Game.data) if officer != null else ""
+			if str(outcome["outcome"]) == "arrest":
+				return ""   # the night in the cells says its own
+			return Localization.t("ui.msg.desk." + str(outcome["outcome"]), {"name": who, "fine": outcome.get("fine", 0)})
 		"worked":
 			var key := "ui.msg.worked_bank" if outcome.get("pay_to") == "bank" else "ui.msg.worked_cash"
 			if outcome.get("late", false):

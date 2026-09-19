@@ -522,5 +522,10 @@
   "dialogue.generic.call_answer.3": "Moi. Mitä asiaa?",
   "ui.shop.pocket": "Pihistä",
   "ui.shop.stole_taken": "Livautat tuotteen ({item}) taskuusi.",
-  "ui.shop.stole_caught": "{name} tarttuu käteesi. Laitat tuotteen ({item}) takaisin."
+  "ui.shop.stole_caught": "{name} tarttuu käteesi. Laitat tuotteen ({item}) takaisin.",
+  "phone.msg.summons": "Satamakadun poliisi. Sinusta on ilmoitettu jotain ja meidän pitää jutella. Tule paikkaan {place} viimeistään {when} klo {time}.",
+  "ui.msg.desk.nothing": "Täällä ei ole sinulle tänään mitään.",
+  "ui.msg.desk.warning": "{name} katsoo sinua pitkään. \"Pidä tätä varoituksena.\"",
+  "ui.msg.desk.fine": "{name} kirjoittaa sinulle sakon. {fine} €, maksettu.",
+  "ui.msg.arrested": "Vietät yön sellissä. {name} päästää sinut aamulla."
 }

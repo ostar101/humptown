@@ -1768,3 +1768,60 @@ a response proportional to it, not to what actually happened. Here they only
 come to know. Also not yet: other crimes (pickpocketing, trespass, assault —
 the last waits for combat), fences and stolen goods, and shopkeepers refusing
 service.
+
+
+## D-052 — The police: proportionate to what they believe, not to what happened
+
+**Decision.** M6 step 1, second half. What the police do about a crime is
+decided from what an officer *believes* about it — never from the world's
+account of what really happened. `CrimeDirector.case_for(officer)` builds her
+case from the knowledge network: each crime fact she knows about the player
+that has not been dealt with, with its severity and how sure she is of it
+(`PoliceRules.strength`: her confidence less how garbled it has become — 1
+if she saw it, about 0.75 if a witness told her, under 0.35 for a rumour
+that has been passed along a few times, which is not enough to act on
+however serious it sounds).
+
+**The answer is a weight, and the weight steps up.** `PoliceRules.
+judge_response`: the worst matter as she sees it (severity × strength), a
+little more for each further matter in the case, 0.10 for each earlier
+offence on the record (three at most), a little for an officer who goes by
+the book, and 0.25 for having ignored a summons. Under 0.12: nothing. From
+0.12 a warning; from 0.30 a fine; from 0.50 an arrest. So a first petty
+theft that Ida told Marika about is a warning; the same again is a fine; a
+fourth is an arrest; a costly one is an arrest at once; and a fine the player
+cannot pay is not waived but becomes a night in the cells.
+
+**How it plays out.**
+1. An officer comes to know a crime — a witness's report reaches her
+   (D-051), or she saw it — and gets round to it in her own time (an hour;
+   two for someone unhurried, like Marika): `police_assess`.
+2. If what she knows warrants anything, she **sends for the player**: a
+   summons, by text (they have your number; it waits for a civil hour like any
+   message, and the police post goes on the map), with a day to come in. With
+   no phone the summons still stands and nobody tells you — losing your phone
+   has a cost.
+3. **Coming in**: the police desk (the counter in the post, with an officer
+   behind it) weighs the case now, on what she knows now: a warning is on the
+   record and costs nothing; a fine is paid from what you have; an arrest is a
+   night in the cells, let out in the morning (fed and rested — a night in the
+   cells is not a starvation), and *known*: `arrested` is a fact the officer
+   witnessed and it travels and reads through `Reputation` like any other. A
+   matter dealt with is not held over you again; what is on the record is.
+4. **Not coming in**: at the end of the day the case is weighed without you,
+   worse (a warning becomes a fine, a fine an arrest), the fine is taken, and
+   an arrest is carried out once time has stopped moving — the same deferral a
+   collapse uses, so no world event ever moves the player mid-skip.
+Only one summons per officer is open at a time; more news while it is open is
+folded into the case when it is weighed.
+
+**Saved.** A `crime` section (the record, what has been handled, the
+summons), schema v8; the deadline and the pending assessments live in the
+event queue and survive a load.
+
+**Not yet.** Being stopped in the street; confiscating what was taken (the
+goods are not tagged as stolen yet); a court, bail or a lawyer; officers other
+than Marika (any NPC in a group beginning `police` will do); crimes other than
+theft (assault waits for combat); a fence, and stolen goods at the pawn shop.
+The email and criminal-contacts view that D-050 deferred still have no reason
+to exist yet — this is the closest they have come.

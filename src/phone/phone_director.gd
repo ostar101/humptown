@@ -123,6 +123,19 @@ func missed_shift(employer_id: String, workplace_id: String) -> void:
 		"npc": employer_id, "kind": "missed_shift", "key": "phone.msg.missed_shift", "args": {"place": workplace_id}}})
 
 
+## The police tell the player to come in (D-052). They have your number: it is
+## added if it was not there. Waits for a civil hour like any message, and is
+## never seen at all without a phone.
+func summons(officer_id: String, due_minute: int) -> void:
+	if not has_phone():
+		return
+	add_contact(officer_id)
+	_player.learn_place("loc_police_post", "told")
+	state.pending.append({"queued": _clock.total_minutes, "cause": {
+		"npc": officer_id, "kind": "summons", "key": "phone.msg.summons",
+		"args": {"place": "loc_police_post", "start": due_minute}}})
+
+
 ## Someone waited at a meeting the player never came to; they say so, at a
 ## civil hour (D-047).
 func meeting_missed(npc_id: String, place_id: String) -> void:

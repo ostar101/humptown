@@ -6,6 +6,13 @@ versions are milestones rather than releases until there is something to release
 ## [Unreleased] — Milestone 6: consequences
 
 ### Decided
+- The police respond to what an officer *believes*, not to what happened: her
+  case is built from her knowledge (how sure, how serious, whether there is a
+  record) and the answer steps up from nothing to a warning, a fine or an
+  arrest; she sends for the player by text; coming in gets the case weighed at
+  the desk, not coming in gets it weighed worse without you and the player is
+  taken in once time has stopped moving; a fine that cannot be paid is a night
+  in the cells; an arrest is known and travels (D-052)
 - Crime is only what someone saw: theft at a shop counter is judged against
   who is there and how closely they watch (post, character, the player's
   stealth), on seeded dice; someone on duty who notices stops it, a bystander
@@ -15,6 +22,12 @@ versions are milestones rather than releases until there is something to release
   secondhand (D-051)
 
 ### Added
+- `PoliceRules`; `CrimeDirector.case_for()`, `assess()`, `resolve()`, the
+  record and summons; `PhoneDirector.summons()`; the police desk
+  (`Game._at_the_desk`); `Game._arrest()` and its deferral;
+  `Events.summons_issued`, `police_action`, `player_arrested`; the world
+  events `police_assess`, `police_summons_due`; save schema v8 (`crime`);
+  `test_police` (19 tests)
 - `TheftRules`, `CrimeDirector` (`Game.crime`); `Game.steal()`; "Pocket it" on
   the shop window; `Events.crime_committed`, `crime_reported`; the deed
   `stole`; the world event `crime_report`; `test_theft` (14 tests)

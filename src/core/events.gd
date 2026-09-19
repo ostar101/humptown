@@ -64,6 +64,12 @@ signal place_learned(location_id: String, how: String)
 ## Someone saw the player commit a crime (D-051); a witness told the police.
 signal crime_committed(fact_id: String, location_id: String)
 signal crime_reported(fact_id: String, reporter_id: String, officer_id: String)
+## The police decided to summon the player (D-052); what they did about a case
+## ("none" | "warning" | "fine" | "arrest", `forced` when the player did not
+## come in); the player spent a night in the cells.
+signal summons_issued(summons_id: int)
+signal police_action(outcome: String, officer_id: String, fine: int, forced: bool)
+signal player_arrested(officer_id: String, released_at: int)
 
 # --- Dialogue / LLM ---------------------------------------------------------
 signal dialogue_started(npc_id: String)

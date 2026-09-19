@@ -57,6 +57,8 @@ func _ready() -> void:
 	Events.phone_message.connect(_on_phone_message)
 	Events.meeting_updated.connect(_on_meeting_updated)
 	Events.place_learned.connect(_on_place_learned)
+	Events.player_arrested.connect(_on_player_arrested)
+	Events.police_action.connect(_on_police_action)
 	Events.quest_updated.connect(_on_quest_updated)
 	Events.player_collapsed.connect(_on_player_collapsed)
 	Events.job_lost.connect(_on_job_lost)
@@ -76,6 +78,8 @@ func _exit_tree() -> void:
 		Events.phone_message.disconnect(_on_phone_message)
 		Events.meeting_updated.disconnect(_on_meeting_updated)
 		Events.place_learned.disconnect(_on_place_learned)
+		Events.player_arrested.disconnect(_on_player_arrested)
+		Events.police_action.disconnect(_on_police_action)
 
 
 ## (Re)builds the view for wherever the player is: the region, or the inside
@@ -331,6 +335,22 @@ func _on_player_collapsed(woke_at: String, bill: int) -> void:
 		_atm.close()
 	show_current_area()
 	_hud.show_message(Localization.t("ui.msg.collapsed", {"place": InteractionText.place_name(woke_at), "bill": bill}))
+
+
+## A night in the cells, or a fine for not coming in (D-052).
+func _on_player_arrested(officer_id: String, _released_at: int) -> void:
+	for window: Node in [_dialogue, _shop, _bag, _stash, _quests, _phone, _atm]:
+		if window.has_method("is_open") and window.is_open():
+			window.close()
+	show_current_area()
+	_hud.show_message(Localization.t("ui.msg.arrested", {"name": Game.dialogue.display_name(officer_id, Game.data)}))
+
+
+func _on_police_action(outcome: String, officer_id: String, fine: int, forced: bool) -> void:
+	if not forced or outcome == "arrest" or outcome == "none":
+		return
+	_hud.show_message(Localization.t("ui.msg.police_forced." + outcome, {
+		"name": Game.dialogue.display_name(officer_id, Game.data), "fine": fine}))
 
 
 func _on_place_learned(location_id: String, _how: String) -> void:

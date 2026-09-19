@@ -556,5 +556,13 @@
   "dialogue.generic.call_answer.3": "Hi. What is it?",
   "ui.shop.pocket": "Pocket it",
   "ui.shop.stole_taken": "You slip the {item} into your pocket.",
-  "ui.shop.stole_caught": "{name} catches your hand. You put the {item} back."
+  "ui.shop.stole_caught": "{name} catches your hand. You put the {item} back.",
+  "phone.msg.summons": "Harbourside police. Something was reported about you and we need a word. Come to {place} by {when} at {time}.",
+  "ui.msg.desk.nothing": "Nothing for you here today.",
+  "ui.msg.desk.none": "{name} looks over her notes. \"Nothing I can act on.\"",
+  "ui.msg.desk.warning": "{name} gives you a long look. \"Consider this a warning.\"",
+  "ui.msg.desk.fine": "{name} writes you a fine. €{fine}, paid.",
+  "ui.msg.arrested": "You spend the night in the cells. {name} lets you go in the morning.",
+  "ui.msg.police_forced.warning": "You did not come in. {name} has put a warning against your name.",
+  "ui.msg.police_forced.fine": "You did not come in. {name} has fined you €{fine}."
 }
