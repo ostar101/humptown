@@ -1,9 +1,9 @@
 # Project status
 
 **Updated:** 2026-09-19
-**Milestone:** M3 — Conversation — **in progress** (steps 1–3 of 5 done). M2 complete (0.2.0).
-**Build:** green. 489 tests, 7811 assertions with the LimeZu art installed,
-~8.5 s. No leak warnings at exit any more.
+**Milestone:** M3 — Conversation — **in progress** (steps 1–4 of 5 done). M2 complete (0.2.0).
+**Build:** green. 517 tests, 7976 assertions with the LimeZu art installed,
+~8.7 s. No leak warnings at exit any more.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
@@ -34,8 +34,17 @@ Anthropic provider speaks to current models (no `temperature` where it is
 rejected, `effort: low`, thinking headroom, `refusal` handled). **No real
 provider has been contacted yet** — the key is the player's to enter.
 
-**Next: M3 step 4 — intent interpretation on the cheap model, validation in
-Godot.** The steps as planned:
+**M3 step 4 is done (D-037): what the player meant is a proposal.** Each
+line is read — by the cheap model when there is one (`IntentPrompt`), by
+words when not (`OfflineTopics`) — into an intent; `ConversationRules`
+judges it (a pure function: effects or a refusal code); `DialogueDirector`
+applies the effects; refusals emit `action_rejected`; the reply is told what
+actually happened. Gifts of cash, compliments (capped per conversation),
+insults and threats (remembered as witnessed facts that travel as gossip),
+apologies, flirting, and introductions both ways all work offline too.
+
+**Next: M3 step 5 — NPC memory with summarisation, and the developer
+overlay.** The steps as planned:
 
 1. ~~**Dialogue UI**~~ — done (D-035). As designed: a real scene in the house theme: portrait upper left,
    name, typewriter reveal, free text entry at the bottom, optional quick
@@ -45,15 +54,17 @@ Godot.** The steps as planned:
 2. ~~Authored fallback lines first~~ — done with step 1.
 3. ~~**Prompt assembly**~~ — done (D-036), with the settings screen and the
    Anthropic fixes.
-4. **Intent interpretation on the cheap model; validation in Godot** (next).
-   The model says what the player *meant*; a validator returns a `Result`; a
-   refusal emits `Events.action_rejected` and changes nothing. Offline, the
-   same proposal comes from `OfflineTopics`, so the pipeline is one path
-   with two interpreters. Today a line's effects (familiarity, ending the
-   talk) are applied directly by `DialogueDirector` from the offline topic —
-   that is what this step turns into proposals.
+4. ~~**Intent interpretation on the cheap model; validation in Godot**~~ —
+   done (D-037).
 5. **NPC memory** with summarisation, and the developer overlay (tokens,
-   latency, cost, cache hits, selected memories, rejected proposals).
+   latency, cost, cache hits, selected memories, rejected proposals) (next).
+   A conversation's transcript is transient (`Conversation`); what a person
+   keeps of it should be a saved, bounded memory per NPC, summarised on the
+   cheap model when one is available and by rule when not, and fed to
+   `DialoguePrompt`'s `memories` key (empty today). Every `say()` result
+   already carries `intent`, `happened`, `rejection`, `source` and
+   `fallback_reason` for the overlay; `LlmClient.stats()` and `debug_log`
+   have the rest.
 
 A live provider needs the user's own API key, entered by the user in a
 settings screen (`SecretStore`, D-006) — never by Claude. Everything above
@@ -152,22 +163,22 @@ store (its own file) — D-036. A test that needs a model sets
 | `PlayerState`, `Wallet`, `Inventory` (weight-based) | done |
 | `Stats` (attributes, condition, injuries), `Skills` (use-based, 1–99) | done |
 | LLM: router, budget, circuit breaker, 4 providers + offline, secret store | done; called by `say()` once the player configures it |
-| Dialogue: `DialogueDirector`, `OfflineTopics`, `DialogueLines`, `DialoguePrompt`, `DialogueModel`, `DialogueBox` | done |
+| Dialogue: `DialogueDirector`, `OfflineTopics`, `DialogueLines`, `DialoguePrompt`, `DialogueModel`, `DialogueBox`, `IntentPrompt`, `ConversationRules` | done |
 | Settings screen (language, provider, the player's key, models) | done |
 | `SaveManager` + `SaveMigrations` | done |
 | `Localization` — en complete, fi partial by design | done |
 | `SimViewer` debug screen | done |
 | Test suite + benchmark | done |
 
-**Not started, by design:** intent interpretation and NPC memory (M3 steps
-4–5), buying and selling, quests, phone, combat, crime and police. See `ROADMAP.md`.
+**Not started, by design:** NPC memory and the developer overlay (M3 step
+5), buying and selling, quests, phone, combat, crime and police. See `ROADMAP.md`.
 
 ---
 
 ## Size
 
-- 81 source files in `src/`
-- 30 test suites
+- 83 source files in `src/`
+- 32 test suites
 - 10 authored NPCs, 22 locations, 3 regions (1 mapped), 6 interiors, 8 schedules, 4 backgrounds
 
 ---

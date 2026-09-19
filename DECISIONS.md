@@ -1099,3 +1099,63 @@ roughly 600–900 input tokens per line with no prompt caching yet — cheap at
 these volumes, and caching is worth adding once the system text stops
 changing turn to turn. The other providers' suggested model lists were not
 revisited.
+
+## D-037 — What the player meant is a proposal; the rules decide what it changes
+
+**Decision.** M3 step 4. Every line the player says goes one way: an
+interpreter says what the player *meant* (an intent), `ConversationRules`
+judges it against the world and returns a `Result` — the effects to apply
+and a plain sentence of what actually happened, or a refusal code — the
+effects are applied by `DialogueDirector`, and only then does the person
+answer, told what happened. A refused intent emits `Events.action_rejected`
+and changes nothing; the line itself was still said, and the person reacts
+to the attempt ("you don't have that on you").
+
+**Two interpreters, one path.** With a model available, the cheap model
+reads the line (`IntentPrompt`, purpose `INTENT`, so the router sends it to
+the cheap model and caches it). Without one — or when it fails, or answers
+with something that is not a small JSON object — `OfflineTopics` reads the
+words, as before, now with more kinds. Lines plain enough that words settle
+them ("hi", "thanks, bye": a greeting, thanks or goodbye in four words or
+fewer) never reach the model: a model adds nothing to "hi" but cost and a
+wait.
+
+**The model never names an id.** Its answer is a kind and the person, place,
+amount or name as the player said them. Godot resolves names to people and
+places itself, so "Gandalf" resolves to nobody and the person says they do
+not know him. The kind is checked for shape (a snake_case word, not a
+sentence); nothing else in the answer is trusted.
+
+**The vocabulary is open, the effects are not.** Kinds with rules: greet,
+farewell, thanks, about_self, about_work, about_person, about_place,
+introduce_self, compliment, flirt, apologize, insult, threaten, give_money.
+The model may use its own word — persuade, negotiate, lie — as the plan asks
+("do not restrict the player to a hardcoded list"); such a line is talk,
+accepted, and changes nothing until a system exists that it could change.
+
+**The rules, in short.** Asking who someone is introduces them; giving your
+own name introduces you (a false name is yours to give, and is not learned).
+Compliments warm, but one conversation can warm someone only so far
+(`WARMTH_CAP`); insults and threats have no cap. An apology mends a
+grievance back to even and no further. Flirting is welcome only from someone
+known and liked, and cools things otherwise. Insults and threats are facts
+the person witnessed, recorded in `KnowledgeNetwork` with social visibility,
+so they travel along the relationship graph like any gossip; a threat also
+frightens and ends the conversation. Money must be in the player's cash and
+at most `MAX_GIFT` (past that it is a transaction, M4); a gift is paid,
+warms by its size, and is remembered privately. NPCs have no wallets yet, so
+a gift leaves the player and goes nowhere — M4 gives people money.
+
+**The reply is told the truth.** The judged outcome reaches the reply prompt
+under "What just happened", with a rule that it is true and not to be
+contradicted — so a model cannot thank the player for money that never
+changed hands. Authored replies have a line for every new outcome, generic
+for everyone in English and Finnish.
+
+**Costs accepted.** Two model calls per non-plain line (a cheap reading, then
+the reply) roughly doubles latency against one combined call; kept apart
+because the reading must be judged before the reply is written, and so the
+reading can run on the cheap model. The offline reading is still words, not
+understanding — "I won't give you 20 euros" reads as an offer offline — and
+the rules check the wallet whoever interpreted. One intent per line: "sorry,
+here's 20 euros" is a gift, not also an apology.

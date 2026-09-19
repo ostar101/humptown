@@ -426,6 +426,10 @@ func say_to_npc(text: String) -> Result:
 	if said.is_ok():
 		var reply: Dictionary = said.value
 		Events.dialogue_line.emit(PlayerState.ID, text.strip_edges())
+		# The line was said; what it tried to do was refused (D-037).
+		var rejection: Dictionary = reply.get("rejection", {})
+		if not rejection.is_empty():
+			Events.action_rejected.emit(rejection["proposal"], str(rejection["code"]))
 		Events.dialogue_line.emit(talking_to, str(reply["text"]))
 	return said
 

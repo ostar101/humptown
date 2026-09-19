@@ -5,31 +5,14 @@ extends TestCase
 ## instead of a real provider; nothing here touches a network.
 
 
-## Answers from a script, and remembers what it was asked.
-class ScriptedModel:
-	extends DialogueModel
-	var available := true
-	var replies: Array[LlmResponse] = []
-	var requests: Array[LlmRequest] = []
-
-	func is_available() -> bool:
-		return available
-
-	func send(request: LlmRequest) -> LlmResponse:
-		requests.append(request)
-		if replies.is_empty():
-			return LlmResponse.failure("network", "nothing scripted")
-		return replies.pop_front()
-
-
-var _model: ScriptedModel
+var _model: ScriptedDialogueModel
 
 
 func before_each() -> void:
 	Game.new_game("", 7)
 	Game.pause_time(true)
 	Localization.set_locale("en")
-	_model = ScriptedModel.new()
+	_model = ScriptedDialogueModel.new()
 	Game.dialogue.model = _model
 
 
@@ -39,7 +22,7 @@ func after_each() -> void:
 
 
 func _reply(text: String) -> LlmResponse:
-	return LlmResponse.success(text, "scripted", "test")
+	return ScriptedDialogueModel.say(text)
 
 
 func _talk_to_ida_in_her_shop() -> void:
@@ -110,7 +93,7 @@ func test_the_player_speaks_first_and_last_and_turns_alternate() -> void:
 	_model.replies.append(_reply("Ida."))
 	await Game.say_to_npc("Hello.")
 	await Game.say_to_npc("Who are you?")
-	var request: LlmRequest = _model.requests[-1]
+	var request: LlmRequest = _model.requests_for(LlmRequest.Purpose.DIALOGUE)[-1]
 	assert_eq(request.purpose, LlmRequest.Purpose.DIALOGUE)
 	assert_true(request.max_output_tokens <= 200, "a line, not an essay")
 	assert_eq(request.messages[0]["role"], "user", "every API wants the player first")

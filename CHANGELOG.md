@@ -16,6 +16,10 @@ versions are milestones rather than releases until there is something to release
   itself; any failure falls back to the authored line; the Anthropic provider
   speaks to current models; a settings screen takes the player's own key; no
   test can reach a provider or the player's own settings and keys (D-036)
+- What the player meant is a proposal: the cheap model (or words, offline)
+  reads the intent, `ConversationRules` judges it, Godot carries it out, a
+  refusal emits `action_rejected`, and the reply is told what actually
+  happened (D-037)
 
 ### Added
 - `DialogueDirector` (`Game.dialogue`), `Conversation`, `OfflineTopics`,
@@ -35,6 +39,12 @@ versions are milestones rather than releases until there is something to release
 - `test_dialogue_model` (14 tests), `test_settings_screen` (13 tests), five
   more provider tests in `test_llm`
 - `ui_preview.tscn -- --screen=settings [--provider=id] [--locale=fi]`
+- `ConversationRules`, `IntentPrompt`, `DialogueDirector.interpret()`,
+  `OfflineTopics.resolve()`; new kinds introduce_self, compliment, flirt,
+  apologize, insult, threaten and give_money, with generic authored lines in
+  English and Finnish
+- `test_conversation_rules` (13 tests), `test_intent` (15 tests); the
+  scripted test model is shared (`tests/scripted_dialogue_model.gd`)
 
 ### Changed
 - `say()` and `Game.say_to_npc()` are coroutines; the dialogue box waits with

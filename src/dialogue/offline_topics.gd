@@ -10,9 +10,12 @@ extends RefCounted
 ## When a model is available it does the interpreting instead; this never
 ## decides anything a model would be better at.
 ##
-## Topics, checked in this order so that "thanks, bye" is a goodbye and
-## "hi, who are you?" is a question: farewell, about_person, about_place,
-## about_self, about_work, thanks, greet — else unknown.
+## Topics, checked in this order so that "thanks, bye" is a goodbye, "hi,
+## who are you?" is a question and "bye, idiot" is an insult: threaten,
+## insult, farewell, give_money, introduce_self, apologize, about_person,
+## about_place, about_self, about_work, compliment, thanks, greet — else
+## unknown. A topic is also an intent kind (D-037): what the words are
+## taken to mean, which `ConversationRules` then judges.
 
 const PHRASES := {
 	"farewell": ["bye", "goodbye", "good bye", "see you", "see ya", "farewell", "later",
@@ -23,11 +26,32 @@ const PHRASES := {
 	"about_work": ["work", "job", "working", "do you do", "for a living", "your shop", "occupation",
 		"työ", "työsi", "töissä", "työksesi", "mitä teet", "ammatti", "ammattisi"],
 	"thanks": ["thanks", "thank you", "cheers", "kiitos", "kiitti", "kiitoksia"],
+	"threaten": ["or else", "i'll hurt you", "i will hurt you", "i'll kill you", "i will kill you",
+		"watch your back", "you'll regret", "you will regret", "i know where you live",
+		"tapan sinut", "tapan sut", "satutan sinua", "kadut vielä", "varo selustaasi", "tiedän missä asut"],
+	"insult": ["idiot", "stupid", "shut up", "moron", "loser", "fool", "i hate you", "you're useless",
+		"you are useless", "idiootti", "tyhmä", "turpa kiinni", "ääliö", "vihaan sinua", "luuseri", "hölmö"],
+	"apologize": ["sorry", "i apologise", "i apologize", "my apologies", "forgive me",
+		"anteeksi", "pahoittelen", "sori"],
+	"introduce_self": ["my name is", "my name's", "i'm called", "i am called", "call me",
+		"nimeni on", "mun nimi on", "minun nimeni on", "minun nimi on"],
+	"compliment": ["you look great", "you look nice", "you're nice", "you are nice", "you're kind",
+		"you are kind", "i like you", "well done", "good job", "nice shop", "you're great", "you are great",
+		"olet mukava", "olet ihana", "näytät hyvältä", "hyvää työtä", "hieno kauppa", "olet kiva"],
 	"greet": ["hello", "hi", "hey", "good morning", "good evening", "good day", "morning", "evening",
 		"moi", "hei", "terve", "huomenta", "iltaa", "päivää", "moro"],
 }
 
-const ORDER: Array[String] = ["farewell", "about_person", "about_place", "about_self", "about_work", "thanks", "greet"]
+const ORDER: Array[String] = [
+	"threaten", "insult", "farewell", "give_money", "introduce_self", "apologize",
+	"about_person", "about_place", "about_self", "about_work", "compliment", "thanks", "greet",
+]
+## Handing over money needs all three: a giving phrase, a number, and money.
+const GIVE_PHRASES: Array[String] = [
+	"give you", "here's", "here is", "take this", "for you", "have this",
+	"annan sinulle", "annan sulle", "tässä", "ota", "saat",
+]
+const MONEY_WORDS: Array[String] = ["euro", "euros", "eur", "money", "cash", "bucks", "euroa", "rahaa", "egeä", "e"]
 
 ## Words in place names too common to say which place is meant.
 const PLACE_STOPWORDS: Array[String] = [
@@ -41,29 +65,70 @@ const STEM_MIN := 6
 const STEM_LENGTH := 5
 
 static var _words := RegEx.create_from_string("[\\p{L}']+")
+static var _amount := RegEx.create_from_string("(\\d+)\\s*(€)?")
 
 
-## {"topic": String, "subject": String}. `subject` is the npc id or location
-## id a person or place topic is about, else "". `npc_id` is who is being
-## spoken to — their own name is not a question about somebody else.
+## {"topic", "subject", "amount", "name"}. `subject` is the npc id or
+## location id a person or place topic is about, else "". `amount` is the
+## cash offered, for give_money; `name` the name the player gave, for
+## introduce_self. `npc_id` is who is being spoken to — their own name is not
+## a question about somebody else.
 static func topic_of(text: String, npc_id: String, people: Dictionary, places: Dictionary) -> Dictionary:
 	var tokens := tokens_of(text)
 	var padded := " " + " ".join(tokens) + " "
 	for topic in ORDER:
 		match topic:
+			"give_money":
+				var amount := _money_offered(text, tokens, padded)
+				if amount > 0:
+					return {"topic": topic, "subject": "", "amount": amount, "name": ""}
+			"introduce_self":
+				for phrase: String in PHRASES[topic]:
+					var at := padded.find(" " + phrase + " ")
+					if at >= 0:
+						var after := padded.substr(at + phrase.length() + 2).split(" ", false)
+						return {"topic": topic, "subject": "", "amount": 0,
+							"name": after[0].capitalize() if not after.is_empty() else ""}
 			"about_person":
 				var who := _mentioned(tokens, people, npc_id)
 				if who != "":
-					return {"topic": topic, "subject": who}
+					return {"topic": topic, "subject": who, "amount": 0, "name": ""}
 			"about_place":
 				var where := _mentioned(tokens, places, "")
 				if where != "":
-					return {"topic": topic, "subject": where}
+					return {"topic": topic, "subject": where, "amount": 0, "name": ""}
 			_:
 				for phrase: String in PHRASES[topic]:
 					if padded.contains(" " + phrase + " "):
-						return {"topic": topic, "subject": ""}
-	return {"topic": "unknown", "subject": ""}
+						return {"topic": topic, "subject": "", "amount": 0, "name": ""}
+	return {"topic": "unknown", "subject": "", "amount": 0, "name": ""}
+
+
+## The cash a line offers, or 0: "here's 20 euros", "annan sulle 5 €".
+## Words are not understanding — "I won't give you 20 euros" reads as an
+## offer — which is one reason a model interprets when there is one, and
+## why the rules check the wallet whoever interpreted.
+static func _money_offered(text: String, tokens: Array[String], padded: String) -> int:
+	var found := _amount.search(text)
+	if found == null:
+		return 0
+	var giving := false
+	for phrase in GIVE_PHRASES:
+		if padded.contains(" " + phrase + " "):
+			giving = true
+			break
+	var money := found.get_string(2) != ""
+	for word in MONEY_WORDS:
+		if tokens.has(word):
+			money = true
+	return int(found.get_string(1)) if giving and money else 0
+
+
+## The person or place a name as someone said it picks out, or "". How a
+## model's "person": "Tuomas" becomes an id — or nothing, if there is no
+## such person (D-037).
+static func resolve(name: String, words_by_id: Dictionary, except_id: String) -> String:
+	return _mentioned(tokens_of(name), words_by_id, except_id) if name.strip_edges() != "" else ""
 
 
 static func tokens_of(text: String) -> Array[String]:

@@ -11,12 +11,14 @@ extends RefCounted
 ## there and does not stop, which is both true and a reasonable thing for a
 ## person to do.
 ##
-## Replies come from the model when one is available (D-036), prompted with
-## only what this person knows, and from authored lines through
-## `OfflineTopics` when it is not or when it fails — the conversation carries
-## on either way. What talking *changes* (who you have been introduced to,
-## whether that was goodbye, how familiar two people are) is decided here from
-## the player's own words, never from the model's reply.
+## Every line goes the same way (D-037): an interpreter says what the player
+## meant — the cheap model when there is one, `OfflineTopics` when there is
+## not or when it fails; `ConversationRules` judges that against the world
+## and either lists the effects or refuses; the effects are applied here; and
+## only then does the person answer — from the model (D-036), told what
+## actually happened, or from authored lines. A model's reply never changes
+## anything, and a model's reading of the player changes only what the rules
+## allow.
 
 const MAX_LINE_LENGTH := 280
 const WEEKDAYS: Array[String] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
@@ -25,6 +27,10 @@ const WEEKDAYS: Array[String] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Th
 const FAMILIARITY_PER_CONVERSATION := 0.05
 ## Asking someone who they are is how you learn their name.
 const FAMILIARITY_ONCE_INTRODUCED := 0.1
+## Lines this short and this plain are read from their words even when a
+## model is available: a model adds nothing to "hi" but cost and a wait.
+const PLAIN_TOPICS: Array[String] = ["greet", "farewell", "thanks"]
+const PLAIN_MAX_WORDS := 4
 
 var conversation: Conversation = null
 ## Whatever answers as the person. The game's LLM client in play
@@ -93,8 +99,12 @@ func start(npc_id: String, now_minute: int) -> Result:
 
 ## The player says something; returns the reply:
 ## {"text", "topic", "subject", "ends": bool, "source": "model" | "authored",
-## "fallback_reason": String}. Await it: with a model, it waits for an answer.
-## Refuses `not_talking`, `empty`, `too_long`, `conversation_over`.
+## "fallback_reason": String, "intent": Dictionary, "happened": String,
+## "rejection": {} or {"proposal": Dictionary, "code": String}}.
+## Await it: with a model, it waits for an answer. Refuses `not_talking`,
+## `empty`, `too_long`, `conversation_over`. A refused *intent* is not a
+## refused line — the line was said; what it tried to do did not happen, and
+## `rejection` says why, for the caller to announce.
 func say(text: String) -> Result:
 	if not is_talking():
 		return Result.failure("not_talking")
@@ -110,21 +120,41 @@ func say(text: String) -> Result:
 	talking_to.add(PlayerState.ID, line, "player")
 	talking_to.exchanges += 1
 	var npc_id := talking_to.npc_id
-	# What the player's words *do* is read from the player's words, the same
-	# way with or without a model, so it can never depend on a reply.
-	var found := OfflineTopics.topic_of(line, npc_id, _people_words, _place_words)
-	var topic: String = found["topic"]
-	var subject: String = found["subject"]
+	var npc := _npcs.get_npc(npc_id)
 
+	# 1. What the player meant.
+	var intent: Dictionary = await interpret(line, npc_id)
+	if talking_to != conversation:
+		return Result.failure("not_talking")   # they walked away while it was thinking
+
+	# 2. What that is allowed to change — rules, not the model — and doing it.
+	var judged := ConversationRules.judge(intent, _rules_state(npc_id))
+	var topic := ConversationRules.topic_for_refusal(judged.code)
+	var happened := judged.message
+	var ends := false
+	var rejection := {}
+	if judged.is_ok():
+		var verdict: Dictionary = judged.value
+		var effects: Array[Dictionary] = verdict["effects"]
+		_apply(npc_id, effects)
+		talking_to.warmth += ConversationRules.warmth_of(effects)
+		topic = verdict["topic"]
+		happened = verdict["happened"]
+		ends = verdict["ends"]
+	else:
+		rejection = {"code": judged.code, "proposal": {
+			"kind": "say", "intent": intent["kind"], "npc": npc_id, "amount": intent.get("amount", 0),
+		}}
+
+	# 3. What they say back, knowing what actually happened.
 	var reply := ""
 	var source := "authored"
 	var fallback_reason := ""
 	if model.is_available():
-		var npc := _npcs.get_npc(npc_id)
-		var request := DialoguePrompt.build(prompt_context(npc_id))
+		var request := DialoguePrompt.build(prompt_context(npc_id, happened))
 		var response: LlmResponse = await model.send(request)
 		if talking_to != conversation:
-			return Result.failure("not_talking")   # they walked away while it was thinking
+			return Result.failure("not_talking")
 		if response.ok:
 			reply = DialoguePrompt.clean_reply(response.text, npc.name if npc != null else "")
 			source = "model" if reply != "" else "authored"
@@ -134,31 +164,61 @@ func say(text: String) -> Result:
 	else:
 		fallback_reason = "offline"
 	if reply == "":
-		reply = _authored_reply(npc_id, topic, subject)
+		reply = _authored_reply(npc_id, topic, intent)
 
 	talking_to.add(npc_id, reply, source)
-	if topic == "about_self":
-		_introduced(npc_id)
-	var ends := topic == "farewell"
 	talking_to.over = ends
 	return Result.success({
-		"text": reply, "topic": topic, "subject": subject, "ends": ends,
+		"text": reply, "topic": topic, "subject": str(intent.get("subject", "")), "ends": ends,
 		"source": source, "fallback_reason": fallback_reason,
+		"intent": intent, "happened": happened, "rejection": rejection,
 	})
+
+
+## What the player meant by a line: {"kind", "subject", "amount", "name",
+## "person_said", "source": "model" | "offline", "fallback_reason"}. The
+## cheap model reads it when one is available, except for lines plain enough
+## that words settle them ("hi", "thanks, bye") — never call a model to
+## decide what deterministic logic can. Whatever the model says, names are
+## resolved to people and places here, or to nothing.
+func interpret(line: String, npc_id: String) -> Dictionary:
+	var found := OfflineTopics.topic_of(line, npc_id, _people_words, _place_words)
+	var offline := {
+		"kind": found["topic"], "subject": found["subject"], "amount": found["amount"],
+		"name": found["name"], "person_said": "", "source": "offline", "fallback_reason": "",
+	}
+	if not model.is_available():
+		offline["fallback_reason"] = "offline"
+		return offline
+	if str(found["topic"]) in PLAIN_TOPICS and OfflineTopics.tokens_of(line).size() <= PLAIN_MAX_WORDS:
+		offline["fallback_reason"] = "plain"
+		return offline
+	var npc := _npcs.get_npc(npc_id)
+	var response: LlmResponse = await model.send(IntentPrompt.build(line, npc.name if npc != null else ""))
+	var read := IntentPrompt.parse(response)
+	if read.is_empty():
+		offline["fallback_reason"] = response.error_code if not response.ok else "unreadable"
+		return offline
+	var subject := ""
+	match str(read["kind"]):
+		"about_person":
+			subject = OfflineTopics.resolve(str(read["person"]), _people_words, npc_id)
+		"about_place":
+			subject = OfflineTopics.resolve(str(read["place"]), _place_words, "")
+	return {
+		"kind": read["kind"], "subject": subject, "amount": read["amount"], "name": read["name"],
+		"person_said": read["person"] if str(read["kind"]) == "about_person" else read["place"],
+		"source": "model", "fallback_reason": "",
+	}
 
 
 ## Everything `DialoguePrompt` is allowed to know about this conversation,
 ## read from the world as it stands. Public so a test can check what a prompt
 ## would be built from.
-func prompt_context(npc_id: String) -> Dictionary:
+func prompt_context(npc_id: String, happened: String = "") -> Dictionary:
 	var npc := _npcs.get_npc(npc_id)
 	var place := _world.get_location(npc.location)
 	var minute := _clock.minute_of_day() if _clock != null else 12 * 60
-	var feeling := _relationships.peek(npc_id, PlayerState.ID)
-	var relationship := {}
-	if feeling != null:
-		for dimension in Relationship.DIMENSIONS:
-			relationship[dimension] = feeling.get_dimension(dimension)
 	var history: Array[Dictionary] = []
 	if conversation != null:
 		for line in conversation.lines:
@@ -178,11 +238,12 @@ func prompt_context(npc_id: String) -> Dictionary:
 			"name": _player.display_name if _knows_players_name(npc_id) else "",
 			"pronouns": _player.pronouns,
 		},
-		"relationship": relationship,
+		"relationship": _feelings(npc_id),
 		"people": _people_they_know(npc_id),
 		"knows": _what_they_believe_about_the_player(npc_id),
 		"memories": [],
 		"history": history,
+		"happened": happened,
 		"language": Localization.current_locale(),
 	}
 
@@ -238,20 +299,76 @@ func _where_problem(npc: Npc) -> String:
 	return ""
 
 
-func _authored_reply(npc_id: String, topic: String, subject: String) -> String:
+func _authored_reply(npc_id: String, topic: String, intent: Dictionary) -> String:
 	var turn := conversation.exchanges
+	var subject := str(intent.get("subject", ""))
+	var said := str(intent.get("person_said", ""))
 	match topic:
 		"about_person":
 			var other := _npcs.get_npc(subject)
-			var first := other.name.split(" ")[0] if other != null else subject
-			var known := _relationships.peek(npc_id, subject)
+			var first := other.name.split(" ")[0] if other != null else (said if said != "" else subject)
+			var known := _relationships.peek(npc_id, subject) if other != null else null
 			var variant := "about_person_known" if known != null and known.familiarity > 0.0 else "about_person_unknown"
 			return Localization.t(DialogueLines.pick(npc_id, variant, turn), {"person": first})
 		"about_place":
 			var place := _world.get_location(subject)
 			return Localization.t(DialogueLines.pick(npc_id, topic, turn),
-				{"place": place.display_name() if place != null else subject})
-	return Localization.t(DialogueLines.pick(npc_id, topic, turn))
+				{"place": place.display_name() if place != null else (said if said != "" else subject)})
+	var name := str(intent.get("name", ""))
+	return Localization.t(DialogueLines.pick(npc_id, topic, turn), {
+		"name": name if name != "" else _player.display_name,
+		"amount": str(intent.get("amount", 0)),
+	})
+
+
+## How the person feels about the player, dimension by dimension; empty for
+## a stranger.
+func _feelings(npc_id: String) -> Dictionary:
+	var feeling := _relationships.peek(npc_id, PlayerState.ID)
+	var out := {}
+	if feeling != null:
+		for dimension in Relationship.DIMENSIONS:
+			out[dimension] = feeling.get_dimension(dimension)
+	return out
+
+
+## What `ConversationRules` needs to know about the world, and nothing more.
+func _rules_state(npc_id: String) -> Dictionary:
+	return {
+		"npc_id": npc_id,
+		"player_name": _player.display_name,
+		"player_cash": _player.wallet.cash,
+		"relationship": _feelings(npc_id),
+		"warmth": conversation.warmth,
+	}
+
+
+## Carries out what the rules allowed. Nothing else in a conversation writes
+## to the world.
+func _apply(npc_id: String, effects: Array[Dictionary]) -> void:
+	var now := _clock.total_minutes if _clock != null else 0
+	for effect in effects:
+		match str(effect["do"]):
+			"feel":
+				_relationships.adjust(npc_id, PlayerState.ID, str(effect["dimension"]), float(effect["delta"]), now)
+			"pay":
+				var paid := _player.wallet.spend(int(effect["amount"]), "gift:" + npc_id, true)
+				if paid.is_err():
+					Log.warn("dialogue", "A judged payment failed", {"code": paid.code})
+			"remember":
+				if _knowledge != null:
+					var npc := _npcs.get_npc(npc_id)
+					var witnesses: Array[String] = [npc_id]
+					_knowledge.observe_event(PlayerState.ID, str(effect["predicate"]), now, witnesses, {
+						"object": npc_id, "visibility": str(effect["visibility"]),
+						"severity": float(effect["severity"]), "location": npc.location if npc != null else "",
+					})
+			"introduce_them":
+				_introduced(npc_id)
+			"introduce_player":
+				var edge := _relationships.get_edge(npc_id, PlayerState.ID)
+				if edge.familiarity < FAMILIARITY_ONCE_INTRODUCED:
+					_relationships.adjust(npc_id, PlayerState.ID, "familiarity", FAMILIARITY_ONCE_INTRODUCED - edge.familiarity, now)
 
 
 ## Someone knows the player's name if the player is a contact of theirs from
@@ -281,15 +398,18 @@ func _what_they_believe_about_the_player(npc_id: String) -> Array[String]:
 	if _knowledge == null:
 		return out
 	for belief in _knowledge.what_is_known_about(npc_id, PlayerState.ID):
-		var what := "%s %s" % [str(belief["predicate"]).replace("_", " "), _name_of(str(belief["object"]))]
+		var what := "%s %s" % [str(belief["predicate"]).replace("_", " "), _name_of(str(belief["object"]), npc_id)]
 		var how := "you saw it yourself" if belief["firsthand"] else ("you heard it and believe it" if belief["confident"] else "you heard a rumour")
 		out.append("%s (%s)" % [what.strip_edges(), how])
 	return out
 
 
-## A fact's object as words: a person's or a place's name, else the id made
-## readable. The model is never shown an id it could repeat back.
-func _name_of(id: String) -> String:
+## A fact's object as words: "you" to the person it is about, else a
+## person's or a place's name, else the id made readable. The model is never
+## shown an id it could repeat back.
+func _name_of(id: String, knower_id: String = "") -> String:
+	if id != "" and id == knower_id:
+		return "you"
 	if id.begins_with("npc_") and _npcs.get_npc(id) != null:
 		return _npcs.get_npc(id).name
 	if id.begins_with("loc_") and _world.get_location(id) != null:

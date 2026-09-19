@@ -18,6 +18,8 @@ extends RefCounted
 ##   knows        ["sentence", ...]   — what they believe about the player
 ##   memories     ["sentence", ...]   — M3 step 4
 ##   history      [{"speaker": "player" | "npc", "text": String}, ...]
+##   happened     what the player's last line actually did, as the rules
+##                judged it (D-037) — "" when it did nothing worth saying
 ##   language     "en" | "fi" — the language the game is being played in
 
 const MAX_HISTORY_LINES := 12
@@ -89,6 +91,9 @@ static func system_text(context: Dictionary, opening: Array[String] = []) -> Str
 		parts.append("What you remember:\n- " + "\n- ".join(memories))
 	if not opening.is_empty():
 		parts.append("You have just said: \"%s\"" % " ".join(opening))
+	var happened := str(context.get("happened", ""))
+	if happened != "":
+		parts.append("What just happened: " + happened)
 
 	var language: String = LANGUAGE_NAMES.get(str(context.get("language", "en")), "English")
 	parts.append("""Rules for how you answer:
@@ -96,6 +101,7 @@ static func system_text(context: Dictionary, opening: Array[String] = []) -> Str
 - Keep it short, one to three sentences, the way people really talk.
 - You know only what is written above and ordinary everyday things. If you are asked about a person, place or event that is not written above, you do not know it — say so in your own way. Never make up people, places, events, prices, or anything about the person in front of you.
 - You cannot hand over or promise things you do not have, and nothing you say makes anything happen by itself.
+- What is written under "What just happened" is true. React to it; never contradict it or pretend something else happened.
 - Answer in the language the other person writes in. The game is being played in %s.
 - Never say you are an AI, a model or a character in a game.""" % [name, language])
 	return "\n\n".join(parts)
