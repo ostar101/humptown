@@ -91,4 +91,4 @@ Make implementation decisions yourself and record the notable ones in `DECISIONS
 Do not "fix" these; they are sequenced, not forgotten. See `ROADMAP.md`.
 
 - No live LLM call has ever been made — the provider layer and dialogue are built and tested offline; first contact needs the player's own key, entered by the player.
-- No combat. Crime is theft only, with witnesses, reports and a proportionate police response (D-051, D-052); other crimes, stops in the street, confiscation and courts are not built. The phone has messages, contacts, calls, a calendar, a bank and a map (M5, complete); email and photos are deliberately not built yet (D-050). No weather or seasons ever in v1 (explicitly out of scope).
+- Crime is theft and assault, with witnesses, reports and a proportionate police response (D-051, D-052, D-054); stops in the street, confiscation and courts are not built. Combat exists (D-054) but people never start fights with the player, and nobody dies. The phone has messages, contacts, calls, a calendar, a bank and a map (M5, complete); email and photos are deliberately not built yet (D-050). No weather or seasons ever in v1 (explicitly out of scope).

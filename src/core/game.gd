@@ -33,6 +33,7 @@ var calendar := Calendar.new()
 var meetings := MeetingDirector.new()
 var crime := CrimeDirector.new()
 var asks := AskDirector.new()
+var fights := FightDirector.new()
 var reputation := Reputation.new()
 var player := PlayerState.new()
 var saves := SaveManager.new()
@@ -69,6 +70,7 @@ var _collapse_due := false
 var _collapsing := false
 ## A forced arrest waiting for the clock to stop moving (D-052), as a collapse waits.
 var _arrest_pending: Dictionary = {}
+var _time_paused_before_fight := false
 var _arresting := false
 ## Where someone who collapses wakes, when, and what the clinic charges.
 const COLLAPSE_WAKE_MINUTE := 8 * 60
@@ -143,6 +145,7 @@ func new_game(background_id: String = "", world_seed: int = 0) -> Result:
 	meetings.setup(calendar, npcs, world, player, relationships, memories, events_queue, clock, data)
 	crime.setup(npcs, knowledge, relationships, memories, events_queue, clock)
 	asks.setup(data, relationships, quests, crime, player, clock, rng)
+	fights.setup(npcs, player, relationships, crime, memories, clock, data, rng)
 	phone_director.setup(phone, npcs, relationships, quests, player, clock, dialogue, meetings)
 	phone_director.sync_contacts()
 	dialogue.setup(npcs, world, player, relationships, knowledge, clock, data, LlmDialogueModel.new(llm), memories, work, quests, asks)
@@ -228,6 +231,7 @@ func unload() -> void:
 	meetings = MeetingDirector.new()
 	crime = CrimeDirector.new()
 	asks = AskDirector.new()
+	fights = FightDirector.new()
 	_shopping = ""
 	_shop_deals = 0
 	reputation = Reputation.new()
@@ -796,6 +800,47 @@ func answer_message(message_id: int, choice: String) -> Result:
 	if answered.is_err():
 		return _reject({"kind": "phone_answer", "message": message_id, "answer": choice}, answered.code)
 	return answered
+
+
+# --- fights (D-054) -----------------------------------------------------------------
+
+## The player starts a fight with someone in front of them. A conversation
+## with them is over; the world stands still until the fight is. Refused:
+## `already_fighting`, `nobody_there`, `asleep`, `not_here`.
+func start_fight(npc_id: String) -> Result:
+	if not is_running():
+		return Result.failure("no_world")
+	var proposal := {"kind": "fight", "npc": npc_id}
+	if fights.is_fighting():
+		return _reject(proposal, "already_fighting")
+	if dialogue.is_talking():
+		end_conversation()
+	if is_shopping():
+		close_shop()
+	var began := fights.begin(npc_id)
+	if began.is_err():
+		return _reject(proposal, began.code)
+	_time_paused_before_fight = clock.paused
+	clock.paused = true
+	return began
+
+
+## The player's move. When it ends the fight, this settles it: the world moves
+## on by the minutes it took, and a player who lost collapses. Returns
+## {"over": bool, "summary": {…}}.
+func fight_act(action: String, arg: String = "") -> Result:
+	var acted := fights.act(action, arg)
+	if acted.is_err():
+		return _reject({"kind": "fight_act", "action": action}, acted.code)
+	if not fights.combat.is_over():
+		return Result.success({"over": false})
+	var summary := fights.finish()
+	clock.paused = _time_paused_before_fight
+	if player.stats.health <= 0.0 and not _collapsing:
+		_collapse_due = true
+	advance_time(int(summary["minutes"]))
+	Events.fight_ended.emit(str(summary["result"]))
+	return Result.success({"over": true, "summary": summary})
 
 
 # --- the police (D-052) -----------------------------------------------------------

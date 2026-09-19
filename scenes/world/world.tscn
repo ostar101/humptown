@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://src/presentation/world_view.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/world/region_view.tscn" id="2"]
@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/quest_window.tscn" id="12"]
 [ext_resource type="PackedScene" path="res://scenes/ui/phone_window.tscn" id="13"]
 [ext_resource type="PackedScene" path="res://scenes/ui/atm_window.tscn" id="14"]
+[ext_resource type="PackedScene" path="res://scenes/ui/combat_window.tscn" id="15"]
 
 [node name="World" type="Node2D"]
 script = ExtResource("1")
@@ -49,6 +50,8 @@ script = ExtResource("4")
 [node name="Phone" parent="." instance=ExtResource("13")]
 
 [node name="Atm" parent="." instance=ExtResource("14")]
+
+[node name="Combat" parent="." instance=ExtResource("15")]
 
 [node name="DevOverlay" type="CanvasLayer" parent="."]
 script = ExtResource("8")

@@ -23,6 +23,7 @@ extends Node2D
 @onready var _quests: QuestWindow = $Quests
 @onready var _phone: PhoneWindow = $Phone
 @onready var _atm: AtmWindow = $Atm
+@onready var _combat: CombatWindow = $Combat
 
 const NO_CELL := Vector2i(-99999, -99999)
 
@@ -54,6 +55,8 @@ func _ready() -> void:
 	_phone.closed.connect(_on_shop_closed)
 	_phone.call_requested.connect(_on_call_requested)
 	_atm.closed.connect(_on_shop_closed)
+	_combat.closed.connect(_on_shop_closed)
+	Events.fight_requested.connect(_on_fight_requested)
 	Events.phone_message.connect(_on_phone_message)
 	Events.meeting_updated.connect(_on_meeting_updated)
 	Events.place_learned.connect(_on_place_learned)
@@ -81,6 +84,7 @@ func _exit_tree() -> void:
 		Events.place_learned.disconnect(_on_place_learned)
 		Events.player_arrested.disconnect(_on_player_arrested)
 		Events.ask_resolved.disconnect(_on_ask_resolved)
+		Events.fight_requested.disconnect(_on_fight_requested)
 		Events.police_action.disconnect(_on_police_action)
 
 
@@ -304,7 +308,7 @@ func hud() -> Hud:
 ## Works out the prompt only when the faced cell, or who is standing on it,
 ## changes — not every frame.
 func _refresh_prompt() -> void:
-	if _dialogue.is_open() or _shop.is_open() or _bag.is_open() or _stash.is_open() or _quests.is_open() or _phone.is_open() or _atm.is_open():
+	if _dialogue.is_open() or _shop.is_open() or _bag.is_open() or _stash.is_open() or _quests.is_open() or _phone.is_open() or _atm.is_open() or _combat.is_open():
 		return
 	var front := _player.current_cell() + _player.facing
 	var body := _npcs.body_at(front)
@@ -335,8 +339,32 @@ func _on_player_collapsed(woke_at: String, bill: int) -> void:
 		_phone.close()
 	if _atm.is_open():
 		_atm.close()
+	if _combat.is_open():
+		_combat.close()
 	show_current_area()
 	_hud.show_message(Localization.t("ui.msg.collapsed", {"place": InteractionText.place_name(woke_at), "bill": bill}))
+
+
+## Someone said they would fight (D-054). The conversation is finished with
+## first, then the fight begins — a frame later, so nothing is torn down under
+## the line that asked for it.
+func _on_fight_requested(npc_id: String) -> void:
+	call_deferred("_begin_fight", npc_id)
+
+
+func _begin_fight(npc_id: String) -> void:
+	if _dialogue.is_open():
+		_dialogue.close()
+	var opened := _combat.open(npc_id)
+	if opened.is_err():
+		_hud.show_message(Localization.t("ui.combat.refused." + opened.code))
+		return
+	_player.input_enabled = false
+	_hud.set_prompt("")
+
+
+func combat_window() -> CombatWindow:
+	return _combat
 
 
 ## The player put an ask and it came to a grade (D-053).

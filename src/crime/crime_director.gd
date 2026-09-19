@@ -9,7 +9,7 @@ extends RefCounted
 ## the second half of this class, decide what to do about what they know.
 
 ## The predicates the police act on.
-const CRIME_PREDICATES: Array[String] = ["stole_from"]
+const CRIME_PREDICATES: Array[String] = ["stole_from", "assaulted"]
 
 ## What the player has been dealt with for: [{"fact", "outcome", "day"}], one
 ## per case. An earlier offence weighs on the next (`PoliceRules`).
@@ -74,10 +74,19 @@ func officers() -> Array[String]:
 ## did — and then nothing happened, as far as the world can tell.
 func record_theft(location_id: String, victim: String, noticed_by: Array[String], severity: float,
 		caught: bool) -> String:
+	return record_crime("stole_from", location_id, victim, noticed_by, severity, caught,
+		"took something without paying" if not caught else "tried to walk off with something without paying")
+
+
+## Records a crime that someone saw (theft, assault — D-051, D-054). `caught`
+## is whether a witness was the one it was done to or stopped it, which weighs
+## on whether they tell the police. `phrase` is how they remember it.
+func record_crime(predicate: String, location_id: String, victim: String, noticed_by: Array[String],
+		severity: float, caught: bool, phrase: String) -> String:
 	if noticed_by.is_empty():
 		return ""
 	var now := _clock.total_minutes
-	var fact_id := _knowledge.observe_event(PlayerState.ID, "stole_from", now, noticed_by, {
+	var fact_id := _knowledge.observe_event(PlayerState.ID, predicate, now, noticed_by, {
 		"object": victim, "location": location_id, "severity": severity, "visibility": "social",
 	})
 	for witness_id in noticed_by:
@@ -88,8 +97,7 @@ func record_theft(location_id: String, victim: String, noticed_by: Array[String]
 		_relationships.adjust(witness_id, PlayerState.ID, "affection", TheftRules.AFFECTION_HIT, now)
 		_relationships.adjust(witness_id, PlayerState.ID, "trust", TheftRules.TRUST_HIT, now)
 		_memories.add_episode(witness_id, now, location_id,
-			["took something without paying" if not caught else "tried to walk off with something without paying"] as Array[String],
-			0.8 if caught else 0.6)
+			[phrase] as Array[String], 0.8 if caught else 0.6)
 		if TheftRules.will_report(urge) and not officers().has(witness_id):
 			_events.schedule(now + TheftRules.report_delay(witness_id, fact_id), "crime_report",
 				{"fact": fact_id, "reporter": witness_id})

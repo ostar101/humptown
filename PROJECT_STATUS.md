@@ -1,8 +1,8 @@
 # Project status
 
 **Updated:** 2026-09-19
-**Milestone:** M6 — Consequences — **in progress** (steps 1 and 2 done: crime and the police; talking someone round). M5 complete in code (0.5.0).
-**Build:** green. 757 tests, 9541 assertions with the LimeZu art installed,
+**Milestone:** M6 — Consequences — **in progress** (steps 1–3 done: crime and the police; talking someone round; combat). M5 complete in code (0.5.0).
+**Build:** green. 794 tests, 9770 assertions with the LimeZu art installed,
 ~12 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
@@ -102,12 +102,19 @@ dialogue rules' reserved kinds `negotiate`/`persuade`/`ask_favor` now put an
 cost, failure, backfire) from skill against difficulty on seeded dice. Two are
 authored: more time from Rauno (interest, a delayed cost, on the debt) and
 going easy with Marika (her leniency moves the weight of the case). More asks
-are data; `deception` and `intimidation` have none to serve yet. **Next: (3)
-turn-based combat**, the most self-contained — a fight is the other way a
-dispute ends, and assault (a crime, with witnesses and a police response)
-finally has something to be. It is a big new system with a real design
-question about how it looks and feels, so propose it before building; (4)
-dynamic events last. The criminal-contacts
+are data; `deception` and `intimidation` have none to serve yet. (3)
+**Turn-based combat** — done (D-054): you start a fight by saying so in
+person; Attack, Heavy blow, Defend, Intimidate, Bandage, Run, Back down;
+enemies are real people with builds from who they are and health that mends by
+the hour; friends and officers step in; wounds last; assault is a crime by the
+same machinery as theft, so the police respond to it. Not yet: people starting
+fights with the player, allies, weapons and armour, death, sprites in the
+window. **Next: (4) dynamic events** — the last of M6: events generated from
+world state (the plan's "new enemy, delayed consequence, escalation, other
+logical outcomes"), which is where the consequences the last three steps
+create — a beaten man's friends, a grudge, an unpaid debt — can come back to
+find the player. Propose the shape before building. Then the M6 "done when"
+check and 0.6.0. The criminal-contacts
    view waits for crime (M6).
 
 **Known gaps worth a pass, none blocking:** interiors are still generic tiles
@@ -223,6 +230,7 @@ store (its own file) — D-036. A test that needs a model sets
 | Crime: `TheftRules`, `CrimeDirector`, "Pocket it" at counters, witnesses, reports to the police | done |
 | Police: `PoliceRules`, summons by text, the desk, fines, arrest, the record | done |
 | Asks: `AskRules`, `AskDirector`, `data/asks.json` — graded negotiation with a cost | done (two asks) |
+| Combat: `CombatRules`, `Combat`, `FightDirector`, `CombatWindow` — turn-based, real people, lasting wounds, assault as a crime | done |
 | Settings screen (language, provider, the player's key, models) | done |
 | `SaveManager` + `SaveMigrations` | done |
 | `Localization` — en complete, fi partial by design | done |
@@ -236,8 +244,8 @@ criminal-contacts view (D-050); combat, crime and police (M6). See `ROADMAP.md`.
 
 ## Size
 
-- 115 source files in `src/`
-- 49 test suites
+- 120 source files in `src/`
+- 51 test suites
 - 10 authored NPCs, 22 locations, 3 regions (1 mapped), 6 interiors, 8 schedules, 4 backgrounds, 4 shops, 14 items, 4 jobs, 4 quests, 3 errands
 
 ---

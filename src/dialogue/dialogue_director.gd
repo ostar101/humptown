@@ -587,6 +587,8 @@ func _apply(npc_id: String, effects: Array[Dictionary]) -> Dictionary:
 		match str(effect["do"]):
 			"ask":
 				came_of_it = asks.attempt(str(effect["ask"]))
+			"fight":
+				Events.fight_requested.emit(npc_id)
 			"feel":
 				_relationships.adjust(npc_id, PlayerState.ID, str(effect["dimension"]), float(effect["delta"]), now)
 			"pay":

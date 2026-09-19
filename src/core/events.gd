@@ -73,6 +73,11 @@ signal player_arrested(officer_id: String, released_at: int)
 ## The player put an ask to someone and it came to a grade: "success" |
 ## "partial" | "failure" | "backfire" (D-053).
 signal ask_resolved(ask_id: String, grade: String)
+## The player said they would fight someone (a request the world acts on when
+## it can); a fight began; it ended in "won" | "lost" | "fled" | "yielded" (D-054).
+signal fight_requested(npc_id: String)
+signal fight_started(npc_id: String)
+signal fight_ended(result: String)
 
 # --- Dialogue / LLM ---------------------------------------------------------
 signal dialogue_started(npc_id: String)

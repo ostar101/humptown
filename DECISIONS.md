@@ -1886,3 +1886,75 @@ other skills (`deception` for lying, `intimidation` for threats that work) have
 no ask to serve yet; asks that give things (an advance on wages, credit at a
 shop); the person *refusing to be asked* for reasons of their own beyond
 disposition.
+
+
+## D-054 — Combat: readable, small, and made of the same things as everything else
+
+**Decision.** M6 step 3. The design was put to the user as a concrete proposal
+and the user said "continue"; this is what was proposed, built, and is
+recorded so it can be redirected. The plan's line is *turn-based JRPG combat,
+familiar and readable, context-sensitive commands, a varying number of
+combatants, enemies who are real people* — and no tactical simulator.
+
+**Starting one.** You say so, in person: the intent `attack` ("I'm going to
+hit you", "let's fight" — English and Finnish, and a model may read it) is
+judged by `ConversationRules`; down a phone it is refused (`not_here`) — there
+is no one to hit. The rules' effect is a *request*, `Events.fight_requested`;
+the world begins it a frame later, when the conversation has been put away
+(`Game.start_fight`: refused `already_fighting`, `nobody_there`, `asleep`,
+`not_here`). Time stands still while it is on and is handed back as it was found.
+
+**The fight** (`Combat`, over `CombatRules`; pure and scripted-dice testable).
+A round is the player's move, then everyone else's. The player has **Attack,
+Heavy blow, Defend, Intimidate, Bandage, Run, Back down**; a move that cannot
+be made (too tired, nothing to use, no skill) is refused and costs no turn.
+The chance to hit is skill and agility against theirs, moved by a guard, a
+heavy swing, tired arms and the attacker's condition — never certain, never
+hopeless; damage is strength, a crowbar if carried, a spread and a crit, and a
+guard takes the edge off. A hard look ends it without a blow if their
+resolve gives way, and hurt people give way sooner. Running is agility
+against the quickest of those after you. Everything is on the same 0..1
+health bar the rest of the game uses, so a fight and a bad week are the same
+kind of thing. Dice come from the seeded `combat` stream; tests script them.
+
+**Enemies are real people.** Someone's build comes from who they are: an
+occupation with `labour` is stronger, one with `intimidation` (an officer) is
+steadier and has done this before, a `strong` person is stronger, poor
+eyesight or drink or tiredness slows them. What they do on their turn
+(`CombatRules.npc_action`) comes from how they feel: fight on, brace, swing
+hard if strong and fresh, and — once badly hurt — run or give in, less likely
+the more resolute they are. Their health is theirs: it is kept on them and
+mends by the hour, so someone you beat yesterday is not at full strength today.
+**People step in**: a friend of the one you went for (affection ≥ 0.5) joins
+their side, up to two; an officer who is there always does. A fight with a
+constable in the room is a fight with a constable.
+
+**What it leaves behind, worked out by `FightDirector.finish()`.**
+- *The player:* health carried back; hard blows leave **wounds that last** (a
+  bruise for two days, a cracked rib for five) through the existing
+  `Stats.injuries`, so effectiveness stays lower while they mend; used
+  bandages are gone. Losing is a collapse and a clinic bill, by the existing
+  flow (D-041) — nobody dies in this step.
+- *The others:* a beaten person is out cold for 45 minutes (an override, so
+  they cannot be talked to); they feel differently — affection and trust
+  down, fear up if you won — and remember it.
+- *The law:* **assault is a crime like theft, by the same machinery.**
+  Everyone awake in the place saw it; `CrimeDirector.record_crime()` (theft
+  now calls it too) files `assaulted`, severity from the damage done, witnesses
+  as firsthand knowers, and they report by the same rule. The police response
+  (D-052) needs no change: a constable who saw it herself is certain, and
+  hitting someone in front of one is not a warning.
+- *Time:* a minute a round.
+
+**The window** (`CombatWindow`): the foes, each with a coloured health bar and
+a state (down, ran off, backed off) — click one to aim at it; you, with health
+and stamina; the last eight things that happened, said in your language
+(`CombatText`; one wording when you did it, another when it was done to you);
+the commands. There is no leaving a fight by closing a window — there is
+running, and there is backing down.
+
+**Not yet.** People starting fights with the player; being attacked in the
+street; allies on the player's side; weapons beyond a carried crowbar, and
+armour; skills beyond the two; context actions beyond backing down (talk them
+down mid-fight, surrender); death; sprites and portraits in the window;
+fights that spill across places.

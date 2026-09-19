@@ -7,7 +7,7 @@ extends Node
 ## `--screen` is `title`, `creation`, `opening`, `settings` or `world`
 ## (`--overlay=1` shows the developer overlay; `--shop=location_id
 ## [--selling=1]` stands the player at that shop's counter; `--quests=1`
-## opens the quest log; `--atm=1` the cash machine; `--phone=threads|thread|contacts|calendar|bank|map` the phone). For
+## opens the quest log; `--atm=1` the cash machine; `--fight=npc_id` a fight; `--phone=threads|thread|contacts|calendar|bank|map` the phone). For
 ## settings, `--provider=id` chooses a provider — in memory only, since a
 ## preview never writes the player's settings — and `--locale=fi` the language. For creation, `--step` is
 ## 1-3 and the screen is driven through its own public methods, exactly as its
@@ -65,6 +65,8 @@ func _ready() -> void:
 		_drive_shop(screen as WorldView, str(args["shop"]), args.has("selling"))
 	if which == "world" and args.has("quests"):
 		(screen as WorldView).open_quests()
+	if which == "world" and args.has("fight"):
+		_drive_fight(screen as WorldView, str(args["fight"]))
 	if which == "world" and args.has("atm"):
 		_drive_atm(screen as WorldView)
 	if which == "world" and args.has("phone"):
@@ -123,6 +125,21 @@ func _drive_shop(view: WorldView, location_id: String, selling: bool) -> void:
 	view.open_shop()
 	if selling:
 		view.shop_window().show_selling(true)
+
+
+## `--fight=npc_id`: a fight with that person on the street, a few rounds in.
+func _drive_fight(view: WorldView, npc_id: String) -> void:
+	Game.player.location = "loc_dock_street"
+	for other in ["npc_elias", "npc_marika"]:
+		var npc := Game.npcs.get_npc(other)
+		npc.location = "loc_dock_street"
+		npc.activity = "walk"
+	Game.npcs.get_npc(npc_id).location = "loc_dock_street"
+	var window := view.combat_window()
+	if window.open(npc_id).is_err():
+		return
+	for action in ["attack", "defend", "attack"]:
+		window.press(action)
 
 
 ## `--atm=1`: inside the corner shop, at the cash machine, with some money.

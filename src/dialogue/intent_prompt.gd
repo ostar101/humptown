@@ -32,6 +32,7 @@ const KIND_HELP := {
 	"quit_job": "telling them they quit the job they do for them",
 	"offer_help": "offering to help them or do something for them",
 	"negotiate": "asking for more time, a better deal or leniency, or trying to talk them round",
+	"attack": "starting a fight: actually hitting or attacking them now, not just threatening",
 }
 
 static var _kind_shape := RegEx.create_from_string("^[a-z][a-z_]*$")

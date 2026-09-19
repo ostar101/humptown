@@ -6,6 +6,12 @@ versions are milestones rather than releases until there is something to release
 ## [Unreleased] — Milestone 6: consequences
 
 ### Decided
+- Combat: a turn-based fight you start by saying so in person; Attack, Heavy
+  blow, Defend, Intimidate, Bandage, Run, Back down; real people with builds
+  from who they are, health of their own that mends by the hour, friends and
+  officers who step in; wounds that last on the player, feelings and memories
+  in the others, and assault as a crime by the same witnesses, reports and
+  police response as theft (D-054)
 - Talking someone round: `negotiate` (and `persuade`, `ask_favor`) put an
   authored ask when there is one to put — graded success, partial (with a
   cost), failure or backfire, from skill against difficulty on seeded dice; a
@@ -27,6 +33,11 @@ versions are milestones rather than releases until there is something to release
   secondhand (D-051)
 
 ### Added
+- `CombatRules`, `Combat`, `FightDirector` (`Game.fights`), `CombatWindow`,
+  `CombatText`; `Game.start_fight()`, `fight_act()`; the intent `attack`;
+  `CrimeDirector.record_crime()` (theft uses it), the predicate `assaulted`;
+  `Events.fight_requested`, `fight_started`, `fight_ended`; the deed `fought`;
+  `ui_preview --fight=npc_id`; `test_combat` (19 tests), `test_fights` (18)
 - `AskRules`, `AskDirector` (`Game.asks`), `data/asks.json` (two asks),
   data validation for asks; `QuestLog.extend_deadline()`,
   `raise_requirement()` and a quest's `extra_need`; `CrimeDirector.leniency`;

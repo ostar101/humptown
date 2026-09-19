@@ -37,7 +37,7 @@ extends RefCounted
 const KINDS: Array[String] = [
 	"greet", "farewell", "thanks", "about_self", "about_work", "about_person", "about_place",
 	"introduce_self", "compliment", "flirt", "apologize", "insult", "threaten", "give_money",
-	"ask_for_work", "quit_job", "offer_help", "negotiate",
+	"ask_for_work", "quit_job", "offer_help", "negotiate", "attack",
 ]
 ## Kinds that put an ask, when there is something to ask (D-053).
 const ASK_KINDS: Array[String] = ["negotiate", "persuade", "ask_favor"]
@@ -72,7 +72,7 @@ const GIFT_CASH_PER_POINT := 250.0
 ## player) · {"do": "pay", "amount"} · {"do": "remember", "predicate",
 ## "visibility", "severity"} (a fact about the player they witnessed) ·
 ## {"do": "introduce_them"} · {"do": "introduce_player"} · {"do": "transfer",
-## "amount"} (from the account, by text) · {"do": "tell_place", "place"} · {"do": "ask", "ask"} (put an ask: what
+## "amount"} (from the account, by text) · {"do": "tell_place", "place"} · {"do": "fight"} · {"do": "ask", "ask"} (put an ask: what
 ## comes of it is rolled and applied by `AskDirector`).
 static func judge(intent: Dictionary, state: Dictionary) -> Result:
 	var kind := str(intent.get("kind", "unknown"))
@@ -184,6 +184,14 @@ static func judge(intent: Dictionary, state: Dictionary) -> Result:
 				effects.append({"do": "ask", "ask": str(ask["id"])})
 				happened = "They asked you for something."
 				topic = "ask_made"
+		"attack":
+			# Blows are thrown face to face; nothing is thrown down a phone (D-054).
+			if str(state.get("channel", "in_person")) != "in_person":
+				return Result.failure("not_here", "They swung at you over the phone. There is no one to hit.")
+			effects.append({"do": "fight"})
+			happened = "They attacked you."
+			topic = "attacked"
+			ends = true
 		"quit_job":
 			if bool(state.get("works_for_them", false)):
 				effects.append({"do": "quit"})
@@ -250,6 +258,8 @@ static func topic_for_refusal(code: String) -> String:
 			return code
 		"not_enough_bank":
 			return "transfer_no_funds"
+		"not_here":
+			return "not_here"
 	return "unknown"
 
 
