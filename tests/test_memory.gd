@@ -190,7 +190,7 @@ func test_memories_are_saved() -> void:
 func test_a_version_1_save_gains_an_empty_book() -> void:
 	var migrated := SaveMigrations.migrate({"schema_version": 1, "player": {"display_name": "Aino"}})
 	assert_ok(migrated)
-	assert_eq(migrated.value["schema_version"], 2)
+	assert_eq(migrated.value["schema_version"], SaveMigrations.CURRENT_VERSION)
 	assert_eq(migrated.value["memories"], {"books": {}})
 	var book := MemoryBook.new()
 	book.from_dict(migrated.value["memories"])

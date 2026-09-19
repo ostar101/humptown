@@ -17,6 +17,7 @@ extends Node2D
 ## The HUD is its own CanvasLayer and is not affected.
 @onready var _daylight: CanvasModulate = $Daylight
 @onready var _dialogue: DialogueBox = $Dialogue
+@onready var _shop: ShopWindow = $Shop
 
 const NO_CELL := Vector2i(-99999, -99999)
 
@@ -41,6 +42,7 @@ func _ready() -> void:
 	Events.time_skipped.connect(_on_time_skipped)
 	Events.game_loaded.connect(refresh_daylight)
 	_dialogue.closed.connect(_on_dialogue_closed)
+	_shop.closed.connect(_on_shop_closed)
 	show_current_area()
 	DevCapture.maybe_capture(self)
 
@@ -122,6 +124,11 @@ func interact() -> Result:
 		return talk_to(person)
 	var what := Game.interaction_at(cell)
 	var result := Game.interact_at(cell)
+	if result.is_ok() and result.value.get("kind") == "served" and Game.shops.shop_at(Game.player.interior) != "":
+		# A counter with a shop behind it opens the shop (D-039).
+		var opened := open_shop()
+		_front = NO_CELL
+		return opened
 	_hud.show_message(InteractionText.outcome_text(what, result))
 	if result.is_ok():
 		var outcome: Dictionary = result.value
@@ -129,6 +136,22 @@ func interact() -> Result:
 			show_current_area()
 	_front = NO_CELL
 	return result
+
+
+## Steps up to the counter of the shop the player is in; a refusal is shown
+## and nothing else changes.
+func open_shop() -> Result:
+	var opened := _shop.open()
+	if opened.is_err():
+		_hud.show_message(Localization.t("ui.msg.refused." + opened.code))
+		return opened
+	_player.input_enabled = false
+	_hud.set_prompt("")
+	return opened
+
+
+func shop_window() -> ShopWindow:
+	return _shop
 
 
 ## Opens a conversation with the person this body is. Whether they can be
@@ -169,7 +192,7 @@ func hud() -> Hud:
 ## Works out the prompt only when the faced cell, or who is standing on it,
 ## changes — not every frame.
 func _refresh_prompt() -> void:
-	if _dialogue.is_open():
+	if _dialogue.is_open() or _shop.is_open():
 		return
 	var front := _player.current_cell() + _player.facing
 	var body := _npcs.body_at(front)
@@ -182,6 +205,11 @@ func _refresh_prompt() -> void:
 		_hud.set_prompt(InteractionText.prompt_for({"kind": "person", "target": person}))
 	else:
 		_hud.set_prompt(InteractionText.prompt_for(Game.interaction_at(front)))
+
+
+func _on_shop_closed() -> void:
+	_player.input_enabled = true
+	_front = NO_CELL
 
 
 func _on_dialogue_closed() -> void:

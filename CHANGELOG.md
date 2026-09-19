@@ -3,6 +3,26 @@
 All notable changes to Humptown. Format loosely follows Keep a Changelog;
 versions are milestones rather than releases until there is something to release.
 
+## [Unreleased] — Milestone 4: making a living
+
+### Decided
+- Shops: shelves and tills in data and saved state; buying and selling at
+  the counter judged by `ShopRules`; midnight restocks and squares the till;
+  time stands still at the counter (D-039)
+
+### Added
+- `data/shops.json` (corner shop, Kaisla, the Anchor, the pawn shop),
+  `ShopRegistry` (`Game.shops`), `ShopRules`; `Game.open_shop()`,
+  `shop_view()`, `buy()`, `sell()`, `close_shop()`
+- `ShopWindow` in the world: a counter with a shop behind it opens it
+- A cinnamon bun, at Kaisla
+- `test_shops` (13 tests)
+- `ui_preview -- --screen=world --shop=location_id [--selling=1]`
+
+### Changed
+- Save schema version 3: adds `shops`; version 2 saves open every shop
+  with its usual stock
+
 ## [0.3.0] — 2026-09-19 — Milestone 3: conversation
 
 You can walk up to anyone and talk to them in your own words. With no model

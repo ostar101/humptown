@@ -1221,3 +1221,40 @@ it outside the developer overlay. People remember only the player so far;
 memories of each other are not needed until NPCs converse. The memory
 rewrite is fire-and-forget: a save taken in the second it is in flight keeps
 the rule summary, which is correct, just plainer.
+
+## D-039 — Shops: shelves and tills in data and state, rules decide, a counter window shows
+
+**Decision.** M4 step 1. A shop is data (`data/shops.json`): where it is,
+what it stocks and how many of each, its markup, which kinds of thing it
+buys back and at what fraction of their value, and the float in its till.
+What it has *now* — stock and till — is `ShopRegistry` state
+(`Game.shops`), saved as the `shops` section (schema v3). Stepping up to a
+counter with someone working behind it (`staff_serving`, D-018) opens the
+shop; `Game.buy()` and `Game.sell()` gather the facts, `ShopRules` (pure)
+judges them, and only then do money, goods and stock move. Refusals
+(`nobody_serving`, `not_sold_here`, `out_of_stock`, `not_enough_money`,
+`too_heavy`, `not_owned`, `not_bought_here`, `till_short`) emit
+`action_rejected` and change nothing. The `ShopWindow` shows and asks, in
+the house style, with Buy and Sell tabs; it never decides.
+
+**Prices.** An item's `value` times the shop's markup, rounded, never below
+one: the corner shop sells at value, the café charges 1.2 for the cup, the
+bar 1.3, the pawn shop 1.5. Shops buy back only the kinds they deal in,
+only things worth something, at their buyback fraction rounded down. The
+player pays cash first, then by card; a shop pays for what it buys in cash
+from its till. Haggling is the next step, against the skill.
+
+**Midnight squares everything.** Every shop restocks to its usual counts —
+never taking away what the player sold it — and its till returns to its
+usual float: the owner banks the takings or tops it up. So no shop can be
+bled dry by selling it things, or grow without limit; and there is no
+per-shop economy simulation to run between visits.
+
+**Time stands still at the counter,** as it does while talking (D-035); each
+purchase or sale is a minute, paid on leaving.
+
+**Costs accepted.** Shopkeepers have no money of their own and the till is
+not theirs: M4's job and wage steps are where people's finances start, and
+a gift (D-037) still goes nowhere. A counter with no shop behind it — the
+clinic, the police post — still only says who is serving. Buying does not
+make the shopkeeper know you: being a customer is not an introduction.

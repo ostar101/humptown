@@ -24,6 +24,7 @@ var clock: GameClock = null
 var relationships := RelationshipGraph.new()
 var knowledge := KnowledgeNetwork.new()
 var memories := MemoryBook.new()
+var shops := ShopRegistry.new()
 var reputation := Reputation.new()
 var player := PlayerState.new()
 var saves := SaveManager.new()
@@ -51,6 +52,11 @@ var _last_retier: int = -999
 var _time_paused_before_talk := false
 ## What the player's body is doing as hours pass; "sleep" during a night.
 var _player_activity := "idle"
+## The shop the player is at the counter of, or "" (D-039), and how many
+## purchases and sales it has seen — each is a minute, paid on leaving.
+var _shopping := ""
+var _shop_deals := 0
+var _time_paused_before_shopping := false
 
 
 func _ready() -> void:
@@ -96,6 +102,7 @@ func new_game(background_id: String = "", world_seed: int = 0) -> Result:
 	knowledge.setup(relationships, events_queue)
 	reputation.setup(knowledge, npcs, world)
 	player.setup(data)
+	shops.setup(data)
 
 	_seed_relationships()
 	_apply_background(background_id)
@@ -173,6 +180,9 @@ func unload() -> void:
 	relationships = RelationshipGraph.new()
 	knowledge = KnowledgeNetwork.new()
 	memories = MemoryBook.new()
+	shops = ShopRegistry.new()
+	_shopping = ""
+	_shop_deals = 0
 	reputation = Reputation.new()
 	player = PlayerState.new()
 	world = WorldState.new()
@@ -399,6 +409,121 @@ func _sleep_in_bed(proposal: Dictionary, location_id: String) -> Result:
 	return Result.success({"kind": "slept", "minutes": minutes, "saved": saved.is_ok()})
 
 
+# --- shopping ---------------------------------------------------------------------
+
+## Steps up to the counter of the shop the player is in (D-039). Refuses
+## `not_a_shop` and `nobody_serving`. Time stands still while shopping, as it
+## does while talking; each purchase or sale is a minute, paid on leaving.
+func open_shop() -> Result:
+	var proposal := {"kind": "shop", "location": player.interior}
+	if not is_running():
+		return _reject(proposal, "no_world")
+	if not _shopping.is_empty():
+		return _reject(proposal, "already_shopping")
+	if shops.shop_at(player.interior).is_empty():
+		return _reject(proposal, "not_a_shop")
+	if staff_serving(player.interior).is_empty():
+		return _reject(proposal, "nobody_serving")
+	_shopping = player.interior
+	_shop_deals = 0
+	_time_paused_before_shopping = clock.paused
+	clock.paused = true
+	return Result.success(shop_view())
+
+
+func is_shopping() -> bool:
+	return not _shopping.is_empty()
+
+
+## The counter as the player sees it: {"shop", "location", "staff", "cash",
+## "bank", "for_sale": [{item, name_key, price, stock}], "will_buy": [{item,
+## name_key, price, owned}]}. Empty when not shopping.
+func shop_view() -> Dictionary:
+	if _shopping.is_empty():
+		return {}
+	var shop_id := shops.shop_at(_shopping)
+	var for_sale: Array[Dictionary] = []
+	for item_id in shops.items_for_sale(shop_id):
+		for_sale.append({
+			"item": item_id, "name_key": str(data.get_entry("items", item_id).get("name_key", item_id)),
+			"price": shops.buy_price(shop_id, item_id), "stock": shops.stock_of(shop_id, item_id),
+		})
+	var will_buy: Array[Dictionary] = []
+	for item_id in player.inventory.item_ids():
+		if shops.buys(shop_id, item_id):
+			will_buy.append({
+				"item": item_id, "name_key": str(data.get_entry("items", item_id).get("name_key", item_id)),
+				"price": shops.sell_price(shop_id, item_id), "owned": player.inventory.count_of(item_id),
+			})
+	return {
+		"shop": shop_id, "location": _shopping, "staff": staff_serving(_shopping),
+		"cash": player.wallet.cash, "bank": player.wallet.bank,
+		"for_sale": for_sale, "will_buy": will_buy,
+	}
+
+
+## Buys from the shop the player is at. Pays cash first, then by card.
+func buy(item_id: String, quantity: int = 1) -> Result:
+	var proposal := {"kind": "buy", "item": item_id, "quantity": quantity, "location": _shopping}
+	if _shopping.is_empty():
+		return _reject(proposal, "not_shopping")
+	var shop_id := shops.shop_at(_shopping)
+	var judged := ShopRules.judge_buy({
+		"serving": not staff_serving(_shopping).is_empty(),
+		"sells": shops.sells(shop_id, item_id),
+		"stock": shops.stock_of(shop_id, item_id),
+		"quantity": quantity,
+		"price": shops.buy_price(shop_id, item_id),
+		"money": player.wallet.total(),
+		"free_weight": player.inventory.free_weight(),
+		"weight": player.inventory.item_weight(item_id),
+	})
+	if judged.is_err():
+		return _reject(proposal, judged.code)
+	var total := int(judged.value["total"])
+	player.wallet.spend(total, "buy:" + item_id)
+	player.inventory.add(item_id, quantity)
+	shops.sold(shop_id, item_id, quantity, total)
+	_shop_deals += 1
+	return Result.success({"kind": "bought", "item": item_id, "quantity": quantity, "total": total})
+
+
+## Sells to the shop the player is at, for cash from its till.
+func sell(item_id: String, quantity: int = 1) -> Result:
+	var proposal := {"kind": "sell", "item": item_id, "quantity": quantity, "location": _shopping}
+	if _shopping.is_empty():
+		return _reject(proposal, "not_shopping")
+	var shop_id := shops.shop_at(_shopping)
+	var judged := ShopRules.judge_sell({
+		"serving": not staff_serving(_shopping).is_empty(),
+		"buys": shops.buys(shop_id, item_id),
+		"owned": player.inventory.count_of(item_id),
+		"quantity": quantity,
+		"price": shops.sell_price(shop_id, item_id),
+		"till": shops.till(shop_id),
+	})
+	if judged.is_err():
+		return _reject(proposal, judged.code)
+	var total := int(judged.value["total"])
+	player.inventory.remove(item_id, quantity)
+	player.wallet.add_cash(total, "sell:" + item_id)
+	shops.bought(shop_id, item_id, quantity, total)
+	_shop_deals += 1
+	return Result.success({"kind": "sold", "item": item_id, "quantity": quantity, "total": total})
+
+
+## Steps away from the counter and pays the minutes it took.
+func close_shop() -> Result:
+	if _shopping.is_empty():
+		return Result.failure("not_shopping")
+	var deals := _shop_deals
+	_shopping = ""
+	_shop_deals = 0
+	clock.paused = _time_paused_before_shopping
+	advance_time(maxi(deals, 1))
+	return Result.success({"deals": deals})
+
+
 # --- conversation -------------------------------------------------------------
 
 ## Starts talking to someone the player is facing (D-035). Refusals are
@@ -477,6 +602,7 @@ func save_game(slot: String) -> Result:
 		"relationships": relationships.to_dict(),
 		"knowledge": knowledge.to_dict(),
 		"memories": memories.to_dict(),
+		"shops": shops.to_dict(),
 		"reputation": reputation.to_dict(),
 		"events": events_queue.to_dict(),
 		"player": player.to_dict(),
@@ -511,6 +637,7 @@ func load_game(slot: String) -> Result:
 	relationships.from_dict(sections.get("relationships", {}))
 	knowledge.from_dict(sections.get("knowledge", {}))
 	memories.from_dict(sections.get("memories", {}))
+	shops.from_dict(sections.get("shops", {}))
 	reputation.from_dict(sections.get("reputation", {}))
 	events_queue.from_dict(sections.get("events", {}))
 	player.from_dict(sections.get("player", {}))
@@ -560,6 +687,7 @@ func _on_day(day: int) -> void:
 	llm.budget.on_new_day(day)
 	knowledge.forget_stale(clock.total_minutes)
 	player.stats.heal_expired_injuries(clock.total_minutes)
+	shops.restock()
 
 
 func _on_time_skipped(from_minutes: int, to_minutes: int) -> void:

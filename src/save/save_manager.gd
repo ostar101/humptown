@@ -20,7 +20,7 @@ const AUTOSAVE_SLOT := "auto"
 ## matters: the world must exist before NPCs are placed in it.
 const SECTIONS := [
 	"clock", "rng", "world", "npcs", "relationships",
-	"knowledge", "memories", "reputation", "events", "player", "quests", "phone",
+	"knowledge", "memories", "reputation", "events", "player", "shops", "quests", "phone",
 ]
 
 var last_error: String = ""

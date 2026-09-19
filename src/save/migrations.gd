@@ -14,11 +14,12 @@ extends RefCounted
 ##   4. Add a test with a fixture of the old shape.
 ## Never renumber or edit an existing step: someone's save depends on it.
 
-const CURRENT_VERSION := 2
+const CURRENT_VERSION := 3
 
 ## version -> name of the static function upgrading it to version + 1.
 const STEPS := {
 	1: "_v1_to_v2",
+	2: "_v2_to_v3",
 }
 
 
@@ -71,6 +72,8 @@ static func _apply_step(version: int, data: Dictionary) -> Dictionary:
 	match version:
 		1:
 			return _v1_to_v2(data)
+		2:
+			return _v2_to_v3(data)
 		_:
 			return {}
 
@@ -93,4 +96,12 @@ static func _apply_step(version: int, data: Dictionary) -> Dictionary:
 static func _v1_to_v2(data: Dictionary) -> Dictionary:
 	if not data.has("memories"):
 		data["memories"] = {"books": {}}
+	return data
+
+
+## v3 adds the shops' shelves and tills (D-039). A v2 save has none; every
+## shop opens with its usual stock, as it would the morning after a restock.
+static func _v2_to_v3(data: Dictionary) -> Dictionary:
+	if not data.has("shops"):
+		data["shops"] = {"shops": {}}
 	return data

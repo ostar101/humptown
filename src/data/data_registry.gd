@@ -25,6 +25,7 @@ const REQUIRED_KEYS := {
 	"backgrounds": ["id", "name_key"],
 	"maps": ["id", "region", "width", "height", "spawn"],
 	"interiors": ["id", "interior_of", "width", "height", "door"],
+	"shops": ["id", "location", "stock"],
 }
 
 var tables: Dictionary = {}          # table -> { id -> entry }
@@ -102,6 +103,29 @@ func validate_references() -> Array[String]:
 		problems.append_array(_map_reference_problems(id, table("maps")[id]))
 	for id in table("interiors"):
 		problems.append_array(_interior_reference_problems(id, table("interiors")[id]))
+	for id in table("shops"):
+		problems.append_array(_shop_reference_problems(id, table("shops")[id]))
+	return problems
+
+
+## A shop is a place that exists, selling things that exist, buying kinds of
+## thing that exist (D-039).
+func _shop_reference_problems(id: String, shop: Dictionary) -> Array[String]:
+	var problems: Array[String] = []
+	if not has_entry("locations", str(shop.get("location", ""))):
+		problems.append("shop '%s' references unknown location '%s'" % [id, shop.get("location")])
+	var stock: Variant = shop.get("stock", {})
+	if typeof(stock) != TYPE_DICTIONARY:
+		return problems + ["shop '%s' stock must be an object of item -> count" % id]
+	for item_id in stock:
+		if not has_entry("items", str(item_id)):
+			problems.append("shop '%s' sells unknown item '%s'" % [id, item_id])
+	var kinds: Array = []
+	for item_id in table("items"):
+		kinds.append(str(table("items")[item_id].get("kind", "")))
+	for kind in shop.get("buys", []):
+		if not kinds.has(str(kind)):
+			problems.append("shop '%s' buys unknown kind '%s'" % [id, kind])
 	return problems
 
 

@@ -1,9 +1,9 @@
 # Project status
 
 **Updated:** 2026-09-19
-**Milestone:** M3 — Conversation — **complete in code** (0.3.0). Next: M4 — Making a living.
-**Build:** green. 534 tests, 8124 assertions with the LimeZu art installed,
-~9 s. No leak warnings at exit.
+**Milestone:** M4 — Making a living — **in progress** (step 1 of 6 done). M3 complete in code (0.3.0).
+**Build:** green. 547 tests, 8223 assertions with the LimeZu art installed,
+~9.5 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
@@ -34,13 +34,28 @@ with F3 open: request fields and response parsing are the likeliest
 first-contact surprises (Anthropic's were brought up to date in D-036; the
 other providers' model lists were not revisited).
 
-**Next: M4 — Making a living** (ROADMAP.md): jobs, shifts and wages; shops,
-buying and selling, haggling against the skill; the home as a base; meals
-and the condition loop; a basic quest system and its UI. Sequence it at the
-start of the milestone. Natural first step: shops — counters already say
-whether someone is serving (D-018), `Wallet` and `Inventory` exist, and
-people have no money of their own yet (a gift leaves the player and goes
-nowhere, D-037), so M4 is where NPC finances start.
+**M4 — Making a living** (ROADMAP.md), sequenced:
+
+1. ~~**Shops**~~ — done (D-039). Step up to a counter with someone working
+   behind it and the shop opens: Buy and Sell tabs, prices from value ×
+   markup, cash then card, stock and till saved, midnight restock.
+2. **Haggling against the skill** (next). A "Haggle" on a purchase: the
+   `haggling` skill against the shopkeeper's own and how they feel about
+   the player, rolled deterministically (`RngStreams`); success takes
+   5–20 % off that item for the day, failure sours them a little and closes
+   haggling on it until tomorrow; either way the skill gains experience.
+   Rules pure and tested, like `ShopRules`.
+3. **Meals and the condition loop.** Eating and drinking from the
+   inventory (items already carry `hunger`, `sleep`, `intoxication`,
+   `health`); hunger and tiredness felt in effectiveness; the HUD says so.
+4. **Jobs, shifts and wages.** The background's job (dockhand, …) or one
+   asked for; shifts at the workplace as batched time with pay, skill
+   experience and condition cost; missed shifts have consequences. People's
+   own finances start here (a gift still goes nowhere, D-037).
+5. **The home as a base.** A stash at home; the bed already saves.
+6. **Basic quests and their UI.** Authored threads (the backgrounds' story
+   hooks: the debt, the contact) plus NPC-need-driven jobs; a quest log that
+   states the goal without drawing the route.
 
 **Known gaps worth a pass, none blocking:** interiors are still generic tiles
 (the flat you wake up in included — Modern Interiors has the furniture);
@@ -93,7 +108,8 @@ with `--at=x,y --zoom=0.26`. The front end at any step:
 `--screen=settings [--provider=anthropic] [--locale=fi]` (sandboxed: never
 writes the player's settings), and `--screen=world --talk=npc_ida
 "--say=Here's 50 euros." --overlay=1` for a conversation with the developer
-overlay open.
+overlay open, and `--screen=world --shop=loc_corner_shop [--selling=1]` for a
+shop counter.
 
 **Test runner.** A test fails if the engine logs an error during it (D-015),
 and tests may `await`. Physics tests speed time up 8x (D-016); restore
@@ -140,22 +156,23 @@ store (its own file) — D-036. A test that needs a model sets
 | Dialogue: `DialogueDirector`, `OfflineTopics`, `DialogueLines`, `DialoguePrompt`, `DialogueModel`, `DialogueBox`, `IntentPrompt`, `ConversationRules` | done |
 | `MemoryBook` — what people remember of the player, bounded and summarised | done |
 | `DevOverlay` (F3) — model calls, cost, intents, rules, memories, rejections | done |
+| Shops: `ShopRegistry`, `ShopRules`, `ShopWindow` — buy, sell, restock | done |
 | Settings screen (language, provider, the player's key, models) | done |
 | `SaveManager` + `SaveMigrations` | done |
 | `Localization` — en complete, fi partial by design | done |
 | `SimViewer` debug screen | done |
 | Test suite + benchmark | done |
 
-**Not started, by design:** buying and selling, jobs, quests (M4), phone,
+**Not started, by design:** haggling, meals, jobs, quests (M4), phone,
 combat, crime and police. See `ROADMAP.md`.
 
 ---
 
 ## Size
 
-- 85 source files in `src/`
-- 34 test suites
-- 10 authored NPCs, 22 locations, 3 regions (1 mapped), 6 interiors, 8 schedules, 4 backgrounds
+- 88 source files in `src/`
+- 35 test suites
+- 10 authored NPCs, 22 locations, 3 regions (1 mapped), 6 interiors, 8 schedules, 4 backgrounds, 4 shops, 14 items
 
 ---
 

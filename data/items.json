@@ -4,6 +4,7 @@
   {"id": "item_wallet", "name_key": "item.wallet", "weight": 0.1, "stackable": false, "value": 15, "kind": "tool"},
   {"id": "item_sandwich", "name_key": "item.sandwich", "weight": 0.3, "stackable": true, "value": 5, "kind": "food", "hunger": -0.4},
   {"id": "item_coffee", "name_key": "item.coffee", "weight": 0.3, "stackable": true, "value": 3, "kind": "food", "sleep": 0.1},
+  {"id": "item_cinnamon_bun", "name_key": "item.cinnamon_bun", "weight": 0.1, "stackable": true, "value": 3, "kind": "food", "hunger": -0.25},
   {"id": "item_beer", "name_key": "item.beer", "weight": 0.5, "stackable": true, "value": 6, "kind": "drink", "intoxication": 0.15},
   {"id": "item_bandage", "name_key": "item.bandage", "weight": 0.1, "stackable": true, "value": 8, "kind": "medical", "health": 0.2},
   {"id": "item_crowbar", "name_key": "item.crowbar", "weight": 3.5, "stackable": false, "value": 25, "kind": "tool"},

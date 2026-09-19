@@ -1,0 +1,14 @@
+[
+  {"id": "shop_corner", "location": "loc_corner_shop", "markup": 1.0, "till": 300,
+   "buys": ["food", "drink", "misc"], "buyback": 0.4,
+   "stock": {"item_sandwich": 12, "item_coffee": 20, "item_beer": 24, "item_cigarettes": 10, "item_notebook": 6, "item_bandage": 6}},
+  {"id": "shop_kaisla", "location": "loc_cafe_kaisla", "markup": 1.2, "till": 200,
+   "buys": [], "buyback": 0.0,
+   "stock": {"item_coffee": 40, "item_cinnamon_bun": 24, "item_sandwich": 10}},
+  {"id": "shop_anchor", "location": "loc_anchor_bar", "markup": 1.3, "till": 250,
+   "buys": [], "buyback": 0.0,
+   "stock": {"item_beer": 60, "item_cigarettes": 10}},
+  {"id": "shop_pawn", "location": "loc_pawn_shop", "markup": 1.5, "till": 1200,
+   "buys": ["tool", "clothing", "container", "misc"], "buyback": 0.35,
+   "stock": {"item_crowbar": 2, "item_toolbox": 1, "item_work_boots": 2, "item_backpack": 2, "item_phone": 1}}
+]

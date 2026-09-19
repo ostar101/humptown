@@ -5,7 +5,8 @@ extends Node
 ##         --step=2 --background=bg_dockhand --name=Aino --screenshot=user://c.png
 ##
 ## `--screen` is `title`, `creation`, `opening`, `settings` or `world`
-## (`--overlay=1` shows the developer overlay). For
+## (`--overlay=1` shows the developer overlay; `--shop=location_id
+## [--selling=1]` stands the player at that shop's counter). For
 ## settings, `--provider=id` chooses a provider — in memory only, since a
 ## preview never writes the player's settings — and `--locale=fi` the language. For creation, `--step` is
 ## 1-3 and the screen is driven through its own public methods, exactly as its
@@ -59,6 +60,8 @@ func _ready() -> void:
 		(screen as SettingsScreen).choose_provider(str(args["provider"]))
 	elif which == "world" and args.has("talk"):
 		_drive_talk(screen as WorldView, str(args["talk"]), str(args.get("say", "")))
+	if which == "world" and args.has("shop"):
+		_drive_shop(screen as WorldView, str(args["shop"]), args.has("selling"))
 	if which == "world" and args.has("overlay"):
 		var overlay := screen.get_node_or_null("DevOverlay") as DevOverlay
 		if overlay != null:
@@ -90,6 +93,29 @@ func _drive_talk(view: WorldView, npc_id: String, text: String) -> void:
 	if text != "":
 		view.dialogue_box().submit(text)
 	view.dialogue_box().finish_reveal()
+
+
+## `--shop=location_id`: whoever works there is behind the counter, the
+## player walks in with a little money and a few things, and steps up to it.
+func _drive_shop(view: WorldView, location_id: String, selling: bool) -> void:
+	for npc_id in Game.npcs.living_ids():
+		var npc := Game.npcs.get_npc(npc_id)
+		if npc.workplace == location_id:
+			npc.location = location_id
+			npc.activity = "work"
+			break
+	var map := Game.world.map_for(Game.player.region)
+	Game.player.interior = ""
+	Game.player.position = DistrictMap.cell_to_world(map.anchor_of(location_id))
+	Game.player.wallet.cash = 23
+	Game.player.inventory.add("item_beer", 2)
+	if Game.interact_at(map.buildings[location_id]["door"]).is_err():
+		Log.warn("ui_preview", "Could not go in", {"location": location_id})
+		return
+	view.show_current_area()
+	view.open_shop()
+	if selling:
+		view.shop_window().show_selling(true)
 
 
 func _drive_creation(creation: CharacterCreation, args: Dictionary, background: String) -> void:
