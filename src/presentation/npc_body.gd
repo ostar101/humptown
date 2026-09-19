@@ -11,8 +11,12 @@ signal arrived(body: NpcBody)
 
 ## Slower than the player's walk, so the player can overtake a stroller.
 const WALK_SPEED := 72.0
+## Someone keeping up with the player: quicker than a stroller, or they would
+## fall behind for good.
+const FOLLOW_SPEED := 130.0
 
 var npc_id := ""
+var speed := WALK_SPEED
 
 var _figure := CharacterFigure.new()
 var _route := PackedVector2Array()
@@ -28,6 +32,7 @@ func _init() -> void:
 ## Takes on a person's appearance and stands still at a spot.
 func assume(p_npc_id: String, palette: Dictionary, world_position: Vector2) -> void:
 	npc_id = p_npc_id
+	speed = WALK_SPEED
 	_figure.palette = palette
 	_figure.look = CharacterSprites.look_for(p_npc_id, palette)
 	_figure.facing = Vector2i.DOWN
@@ -97,7 +102,7 @@ func _process(delta: float) -> void:
 ## Moves along the route by `delta` seconds of walking. Public so tests can
 ## finish a walk without waiting for it.
 func advance(delta: float) -> void:
-	var budget := WALK_SPEED * delta
+	var budget := speed * delta
 	while budget > 0.0 and _next < _route.size():
 		var offset := _route[_next] - position
 		var distance := offset.length()

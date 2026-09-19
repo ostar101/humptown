@@ -78,6 +78,12 @@ signal ask_resolved(ask_id: String, grade: String)
 signal fight_requested(npc_id: String)
 signal fight_started(npc_id: String)
 signal fight_ended(result: String)
+## The player asked someone to come along (for this many minutes at most) or to
+## stop; the world acts on it when it can. `follow_changed` says what came of
+## it: someone began or stopped walking with the player, and why (D-057).
+signal follow_requested(npc_id: String, minutes: int)
+signal follow_stop_requested(npc_id: String)
+signal follow_changed(npc_id: String, following: bool, why: String)
 ## Someone the player was told to meet for a fight came to it and so did the
 ## player: they start it (D-055).
 signal ambush(npc_id: String)

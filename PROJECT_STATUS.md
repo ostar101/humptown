@@ -2,13 +2,25 @@
 
 **Updated:** 2026-09-19
 **Milestone:** M6 — Consequences — **complete in code (0.6.0)**. M5 complete (0.5.0). M5 complete in code (0.5.0).
-**Build:** green. 816 tests, 9873 assertions with the LimeZu art installed,
+**Build:** green. 844 tests, 10038 assertions with the LimeZu art installed,
 ~12 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
 
 ## Next task
+
+**Latest (D-056, D-057):** live play showed replies cut off on thinking models
+(fixed: room to think on every provider) and NPCs saying yes to things that
+never happened. Now "follow me"/"wait here" work (`NpcDirector.followers`,
+`FollowRules`, bodies keep company) and fetch/bring/go/give are refused
+honestly (`cannot_do`). **Next in that line, in order:** go/come to a place
+(one-off route, the schedule already walks), give/take (check first whether
+people have an inventory), bring/take-to (a two-step errand/meeting shape),
+then animations (importer keeps only stand/idle/walk rows). Manual check still
+worth doing in the running game: follow through a shop door and back out, and
+across a long walk. Benchmark after D-057: no change beyond noise (back to back
+with the previous commit).
 
 **M3 is done in code (0.3.0, D-035 to D-038).** Face someone and press E:
 the simulation decides whether they can be talked to. Type anything. Each

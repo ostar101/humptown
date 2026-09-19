@@ -26,7 +26,9 @@ extends RefCounted
 ##   (they were asked too recently),
 ##   channel ("in_person", "call" or "text": nothing said down a phone carries cash),
 ##   errand ({"id", "what", "reward"} — something they could ask of the
-##   player today, D-044), errand_running (they are already waiting on one)
+##   player today, D-044), errand_running (they are already waiting on one),
+##   follow ({"following", "free_minutes"} — are they walking with the player,
+##   and how long their own day leaves them free to, D-057)
 ##
 ## A kind with no rule here — a model may say "persuade", "negotiate", "lie"
 ## — is talk: accepted, and it changes nothing until a system exists that it
@@ -38,11 +40,18 @@ const KINDS: Array[String] = [
 	"greet", "farewell", "thanks", "about_self", "about_work", "about_person", "about_place",
 	"introduce_self", "compliment", "flirt", "apologize", "insult", "threaten", "give_money",
 	"ask_for_work", "quit_job", "offer_help", "negotiate", "attack",
+	"ask_follow", "ask_wait", "ask_action",
 ]
 ## Kinds that put an ask, when there is something to ask (D-053).
 const ASK_KINDS: Array[String] = ["negotiate", "persuade", "ask_favor"]
 ## Kinds a model may use that are understood but change nothing yet.
 const TALK_KINDS: Array[String] = ["persuade", "ask_favor", "lie", "small_talk"]
+
+## Someone who trusts the player less than this, or likes them less, will not
+## go anywhere with them. A stranger is not held against them: nobody has done
+## anything yet.
+const FOLLOW_MIN_TRUST := -0.2
+const FOLLOW_MIN_AFFECTION := -0.3
 
 ## The most cash a single gesture may hand over. Past this it is not a gift,
 ## it is a transaction, and transactions are M4.
@@ -73,7 +82,8 @@ const GIFT_CASH_PER_POINT := 250.0
 ## "visibility", "severity"} (a fact about the player they witnessed) ·
 ## {"do": "introduce_them"} · {"do": "introduce_player"} · {"do": "transfer",
 ## "amount"} (from the account, by text) · {"do": "tell_place", "place"} · {"do": "fight"} · {"do": "ask", "ask"} (put an ask: what
-## comes of it is rolled and applied by `AskDirector`).
+## comes of it is rolled and applied by `AskDirector`) · {"do": "follow",
+## "minutes"} and {"do": "stop_following"} (D-057).
 static func judge(intent: Dictionary, state: Dictionary) -> Result:
 	var kind := str(intent.get("kind", "unknown"))
 	var feeling: Dictionary = state.get("relationship", {})
@@ -192,6 +202,33 @@ static func judge(intent: Dictionary, state: Dictionary) -> Result:
 			happened = "They attacked you."
 			topic = "attacked"
 			ends = true
+		"ask_follow":
+			var follow: Dictionary = state.get("follow", {})
+			if str(state.get("channel", "in_person")) != "in_person":
+				return Result.failure("follow_remote", "They asked you to come along, over the phone. You cannot walk with someone you cannot see.")
+			if bool(follow.get("following", false)):
+				happened = "They asked you to come along. You are already walking with them."
+				topic = "follow_already"
+			elif float(feeling.get("trust", 0.0)) < FOLLOW_MIN_TRUST or float(feeling.get("affection", 0.0)) < FOLLOW_MIN_AFFECTION:
+				return Result.failure("follow_distrust", "They asked you to come along. You do not trust them enough to go anywhere with them, and you said no.")
+			elif int(follow.get("free_minutes", 0)) < FollowRules.MIN_MINUTES:
+				return Result.failure("follow_busy", "They asked you to come along, but you have to be somewhere and cannot go with them now.")
+			else:
+				effects.append({"do": "follow", "minutes": int(follow["free_minutes"])})
+				happened = "They asked you to come along. You agreed, and you are now walking with them until you have to be elsewhere."
+				topic = "follow_yes"
+		"ask_wait":
+			if bool((state.get("follow", {}) as Dictionary).get("following", false)):
+				effects.append({"do": "stop_following"})
+				happened = "They asked you to wait here. You stopped following them and will get on with your day."
+				topic = "wait_ok"
+			else:
+				happened = "They asked you to wait here, but you were not going anywhere with them."
+				topic = "wait_nothing"
+		"ask_action":
+			# Fetching, carrying and going places for someone are not built yet
+			# (D-057): say so, instead of a promise nothing will keep.
+			return Result.failure("cannot_do", "They asked you to do something for them, like fetch or carry something or go somewhere. You cannot, and you did not promise anything.")
 		"quit_job":
 			if bool(state.get("works_for_them", false)):
 				effects.append({"do": "quit"})
@@ -260,6 +297,10 @@ static func topic_for_refusal(code: String) -> String:
 			return "transfer_no_funds"
 		"not_here":
 			return "not_here"
+		"follow_remote", "follow_busy", "cannot_do":
+			return code
+		"follow_distrust":
+			return "follow_no"
 	return "unknown"
 
 

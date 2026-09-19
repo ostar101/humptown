@@ -5,6 +5,14 @@ versions are milestones rather than releases until there is something to release
 
 ## [Unreleased]
 
+### Added
+- Walking with the player (D-057): "follow me" / "seuraa minua" makes someone
+  actually come along, through doors and along the street, until their own shift
+  or night is due, "wait here", trouble, sleep or leaving the region.
+  Refused with a reason for a shift, a grudge or a phone line.
+- Asking someone to fetch, bring, carry or go is refused honestly
+  (`cannot_do`): they no longer say yes to something the game will not do.
+
 ### Fixed
 - NPC replies cut off mid-sentence or very short on reasoning models
   (Gemini Flash via OpenRouter and similar): thinking shared the 160-token cap

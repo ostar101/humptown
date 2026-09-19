@@ -179,3 +179,18 @@ func next_change_after(weekday: int, minute_of_day: int) -> int:
 			if b.applies_on(day):
 				return b.start + back * MINUTES_PER_DAY
 	return -1
+
+
+## Like `next_change_after`, but only for blocks whose activity is one of
+## `activities`: when does the next shift or the next night's sleep begin?
+## Minutes from midnight today, so it may be past 1440. -1 when there is none.
+func next_start_of(activities: Array, weekday: int, minute_of_day: int) -> int:
+	for b in blocks:
+		if b.start > minute_of_day and b.applies_on(weekday) and b.activity in activities:
+			return b.start
+	for back in range(1, 8):
+		var day := (weekday + back) % 7
+		for b in blocks:
+			if b.applies_on(day) and b.activity in activities:
+				return b.start + back * MINUTES_PER_DAY
+	return -1

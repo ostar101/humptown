@@ -96,6 +96,10 @@ func _ready() -> void:
 	Events.meeting_updated.connect(_on_meeting_updated)
 	Events.fact_learned.connect(_on_fact_learned)
 	Events.ambush.connect(_on_ambush)
+	Events.follow_requested.connect(_on_follow_requested)
+	Events.follow_stop_requested.connect(_on_follow_stop_requested)
+	Events.fight_started.connect(_on_fight_started_follow)
+	Events.crime_committed.connect(_on_crime_committed_follow)
 	Log.min_level = int(Settings.get_value("log_level", Log.Level.INFO)) as Log.Level
 	Log.info("game", "Game root ready")
 
@@ -260,6 +264,8 @@ func is_running() -> bool:
 func advance_time(minutes: int) -> void:
 	if clock == null or minutes <= 0:
 		return
+	if _player_activity == "sleep":
+		director.stop_all_following("slept")   # nobody walks beside someone asleep
 	clock.advance(minutes)
 	_resolve_collapse()
 	_resolve_arrest()
@@ -308,6 +314,9 @@ func _travel_to_region(proposal: Dictionary, destination: String) -> Result:
 	var dest_map := world.map_for(destination)
 	if dest_map == null:
 		return _reject(proposal, "region_unmapped")
+	# Whoever was walking with the player stays behind: following into another
+	# region is not built (D-057).
+	director.stop_all_following("left_region")
 	player.region = destination
 	player.position = DistrictMap.cell_to_world(dest_map.spawn)
 	_set_player_location(dest_map.location_at(dest_map.spawn))
@@ -337,15 +346,63 @@ func player_start_position() -> Vector2:
 
 
 func _set_player_location(now_at: String) -> void:
-	if now_at == player.location:
+	if now_at != player.location:
+		var was_at := player.location
+		player.location = now_at
+		player.learn_place(now_at, "visited")
+		if not was_at.is_empty():
+			Events.location_exited.emit(PlayerState.ID, was_at)
+		if not now_at.is_empty():
+			Events.location_entered.emit(PlayerState.ID, now_at)
+	_sync_followers()
+
+
+## Where someone walking with the player is: inside if the player is inside,
+## otherwise at the player's open-air place, otherwise on the region's street
+## (a building's own door and plain pavement are both "outside").
+func follow_location() -> String:
+	if not player.interior.is_empty():
+		return player.interior
+	var map := world.map_for(player.region)
+	if not player.location.is_empty() and (map == null or not map.is_building(player.location)):
+		return player.location
+	for location_id in world.locations_in(player.region):
+		var location := world.get_location(str(location_id))
+		if location != null and location.kind == "street":
+			return str(location_id)
+	return ""
+
+
+func _sync_followers() -> void:
+	if director == null or director.followers.is_empty():
 		return
-	var was_at := player.location
-	player.location = now_at
-	player.learn_place(now_at, "visited")
-	if not was_at.is_empty():
-		Events.location_exited.emit(PlayerState.ID, was_at)
-	if not now_at.is_empty():
-		Events.location_entered.emit(PlayerState.ID, now_at)
+	director.follow_location = follow_location()
+	director.move_followers()
+
+
+## Someone agreed to come along (the rules said yes; D-057).
+func _on_follow_requested(npc_id: String, minutes: int) -> void:
+	if not is_running():
+		return
+	director.follow_location = follow_location()
+	director.start_follow(npc_id, minutes)
+
+
+func _on_follow_stop_requested(npc_id: String) -> void:
+	if is_running():
+		director.stop_follow(npc_id, "asked")
+
+
+## A fight or a crime is no outing: whoever was walking with the player is
+## either part of it or has had enough.
+func _on_fight_started_follow(_npc_id: String) -> void:
+	if is_running():
+		director.stop_all_following("trouble")
+
+
+func _on_crime_committed_follow(_fact_id: String, _location_id: String) -> void:
+	if is_running():
+		director.stop_all_following("trouble")
 
 
 # --- interaction ------------------------------------------------------------
@@ -1418,6 +1475,8 @@ func load_game(slot: String) -> Result:
 	events_queue.from_dict(sections.get("events", {}))
 	player.from_dict(sections.get("player", {}))
 
+	director.rebuild_followers()
+	director.follow_location = follow_location()
 	director.assign_tiers()
 	running = true
 	Events.game_loaded.emit()

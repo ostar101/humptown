@@ -12,7 +12,8 @@ extends RefCounted
 ##
 ## Topics, checked in this order so that "thanks, bye" is a goodbye, "hi,
 ## who are you?" is a question and "bye, idiot" is an insult: threaten,
-## insult, farewell, give_money, introduce_self, apologize, about_person,
+## insult, ask_follow, ask_wait, ask_action (asking them to come along, to
+## wait, or to fetch or go — D-057), negotiate, farewell, give_money, introduce_self, apologize, about_person,
 ## about_place, about_self, about_work, compliment, thanks, greet — else
 ## unknown. A topic is also an intent kind (D-037): what the words are
 ## taken to mean, which `ConversationRules` then judges.
@@ -20,6 +21,15 @@ extends RefCounted
 const PHRASES := {
 	"farewell": ["bye", "goodbye", "good bye", "see you", "see ya", "farewell", "later",
 		"näkemiin", "moikka", "heippa", "hei hei", "moi moi", "nähdään"],
+	"ask_follow": ["follow me", "come with me", "come along", "walk with me", "join me", "come with us",
+		"seuraa minua", "seuraa mua", "seuraa meitä", "tule mukaan", "tule mukaani", "tule mun mukaan",
+		"tule kanssani", "tule mun kanssa", "lähde mukaan", "lähde mukaani", "tule perässäni"],
+	"ask_wait": ["wait here", "stay here", "stay put", "stop following", "don't follow", "do not follow",
+		"you can go now", "wait for me", "odota tässä", "odota täällä", "odota minua", "odota mua", "pysy täällä",
+		"pysy tässä", "jää tähän", "jää tänne", "lopeta seuraaminen", "älä seuraa", "voit mennä"],
+	"ask_action": ["bring me", "bring us", "fetch me", "get me", "go and get", "go fetch", "carry this",
+		"tuo minulle", "tuo mulle", "tuo tänne", "hae minulle", "hae mulle", "vie tämä", "vie tää", "mene hakemaan",
+		"mene sinne", "tule tänne", "come here"],
 	"about_self": ["who are you", "your name", "what's your name", "whats your name", "about yourself",
 		"introduce yourself", "kuka olet", "kuka sinä olet", "kuka sä oot", "nimesi", "sinun nimesi",
 		"mikä on nimesi", "kerro itsestäsi"],
@@ -58,7 +68,7 @@ const PHRASES := {
 }
 
 const ORDER: Array[String] = [
-	"attack", "threaten", "insult", "negotiate", "farewell", "give_money", "introduce_self", "apologize",
+	"attack", "threaten", "insult", "ask_follow", "ask_wait", "ask_action", "negotiate", "farewell", "give_money", "introduce_self", "apologize",
 	"quit_job", "ask_for_work", "offer_help",
 	"about_person", "about_place", "about_self", "about_work", "compliment", "thanks", "greet",
 ]

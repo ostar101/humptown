@@ -22,6 +22,12 @@ var _pool: Array[NpcBody] = []
 ## location has already changed by the time we hear of a move, so where the
 ## walk starts has to be remembered here.
 var _known: Dictionary = {}
+## npc_id -> the cell a follower was last sent to, so a player strolling about
+## does not have a new route planned for every step.
+var _follow_goal: Dictionary = {}
+
+## A follower nearer than this (in cells) to the player is left where they are.
+const COMPANION_RANGE := 3
 
 
 func _ready() -> void:
@@ -62,6 +68,31 @@ func body_at(cell: Vector2i) -> NpcBody:
 		if body.current_cell() == cell:
 			return body
 	return null
+
+
+## The player moved to a new cell: whoever is walking with them and has fallen
+## behind catches up. Routes are planned only when someone is actually far off
+## (D-057).
+func follow_player(cell: Vector2i) -> void:
+	if _map == null or not Game.is_running() or Game.director.followers.is_empty():
+		return
+	for npc_id in Game.director.followers:
+		var body: NpcBody = _bodies.get(npc_id)
+		if body == null or _cells_apart(body.current_cell(), cell) <= COMPANION_RANGE:
+			continue
+		var goal := _companion_cell(str(npc_id), cell)
+		var last: Vector2i = _follow_goal.get(npc_id, Vector2i(-100, -100))
+		if body.is_walking() and _cells_apart(last, goal) <= 2:
+			continue
+		_follow_goal[npc_id] = goal
+		var route := _map.find_path(body.current_cell(), goal)
+		if route.size() <= 1:
+			continue
+		var points := PackedVector2Array()
+		for step: Vector2i in route.slice(1):
+			points.append(DistrictMap.cell_to_world(step))
+		body.speed = NpcBody.FOLLOW_SPEED
+		body.walk(points)
 
 
 func visible_count() -> int:
@@ -113,13 +144,19 @@ func _place(npc_id: String) -> void:
 	if not _is_shown_at(npc.location):
 		_release(npc_id)
 		return
-	_acquire(npc).stand_at(DistrictMap.cell_to_world(_spot(npc, npc.location)))
+	var cell := _spot(npc, npc.location)
+	if _walks_with_player(npc):
+		cell = _companion_cell(npc_id, _player_cell())
+	_acquire(npc).stand_at(DistrictMap.cell_to_world(cell))
 
 
 func _walk(npc: Npc, from: String, to: String) -> void:
 	var body: NpcBody = _bodies.get(npc.id)
 	var start := body.current_cell() if body != null else _endpoint(from, npc)
 	var goal := _endpoint(to, npc)
+	var companion := _walks_with_player(npc) and _is_shown_at(to)
+	if companion:
+		goal = _companion_cell(npc.id, _player_cell())
 	var route := _map.find_path(start, goal)
 	if route.size() <= 1:
 		# Nowhere to walk, or no way there: show them where they now are.
@@ -133,7 +170,40 @@ func _walk(npc: Npc, from: String, to: String) -> void:
 	var points := PackedVector2Array()
 	for cell: Vector2i in route.slice(1):
 		points.append(DistrictMap.cell_to_world(cell))
+	body.speed = NpcBody.FOLLOW_SPEED if companion else NpcBody.WALK_SPEED
 	body.walk(points)
+
+
+## Whether this person is walking with the player on the map being shown: their
+## body then keeps company with the player rather than standing at a spot.
+func _walks_with_player(npc: Npc) -> bool:
+	return Game.director.is_following(npc.id) and Game.current_map() == _map
+
+
+func _player_cell() -> Vector2i:
+	return DistrictMap.world_to_cell(Game.player.position)
+
+
+## A free cell near the player, a couple of steps off so as not to stand in
+## the way of whatever they are facing.
+func _companion_cell(npc_id: String, near: Vector2i) -> Vector2i:
+	var taken := {}
+	for id in _bodies:
+		if id != npc_id:
+			taken[(_bodies[id] as NpcBody).current_cell()] = true
+	for ring in [2, 1, 3]:
+		for dx in range(-ring, ring + 1):
+			for dy in range(-ring, ring + 1):
+				if maxi(absi(dx), absi(dy)) != ring:
+					continue
+				var cell := near + Vector2i(dx, dy)
+				if _map.in_bounds(cell) and not _map.is_blocked(cell) and not taken.has(cell):
+					return cell
+	return near
+
+
+static func _cells_apart(a: Vector2i, b: Vector2i) -> int:
+	return maxi(absi(a.x - b.x), absi(a.y - b.y))
 
 
 ## Where a walk to or from a location begins or ends on this map: the
@@ -201,3 +271,4 @@ func _release_all() -> void:
 	for npc_id in _bodies.keys():
 		_release(str(npc_id))
 	_known.clear()
+	_follow_goal.clear()

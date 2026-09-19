@@ -14,6 +14,13 @@ var clock: GameClock
 ## NPC currently in conversation/combat with the player.
 var focus_ids: Array[String] = []
 
+## Who is walking with the player (D-057): npc id -> true. The truth is in each
+## person's `state["following"]`; this is the index that keeps them awake and
+## lets the retier find them without a pass over the population.
+var followers: Dictionary = {}
+## Where those people are while they follow: the player's place, set by Game.
+var follow_location: String = ""
+
 var _last_pass_minute: int = -1
 var _stats := {"dormant": 0, "background": 0, "active": 0, "focus": 0}
 ## Ids of every non-dormant NPC. Ticking walks this, never the population, so
@@ -56,6 +63,8 @@ func assign_tiers() -> void:
 		considered[id] = true
 	for id in focus_ids:
 		considered[id] = true
+	for id in followers:
+		considered[id] = true
 
 	# Demote anyone awake who is no longer a candidate. Walking the awake set
 	# rather than the population is what keeps this bounded.
@@ -74,6 +83,14 @@ func assign_tiers() -> void:
 		if id in focus_ids:
 			_set_tier(npc, SimLod.Tier.FOCUS)
 			_stats["focus"] += 1
+			continue
+
+		if followers.has(id):
+			# Someone walking with the player is always simulated in detail: a
+			# retier must not send them back to their routine (D-057).
+			_set_tier(npc, SimLod.Tier.ACTIVE)
+			active_budget = maxi(active_budget - 1, 0)
+			_stats["active"] += 1
 			continue
 
 		var loc := registry.location_of(id, now, weekday)
@@ -167,6 +184,8 @@ func _tick_npc(npc: Npc, total_minutes: int, weekday: int) -> void:
 ## urgent need bend that routine. No LLM is involved: deciding to walk to the
 ## shop is a state machine's job, not a language model's.
 func _apply_schedule(npc: Npc, total_minutes: int, weekday: int) -> void:
+	if npc.state.has("following") and _follows(npc, total_minutes):
+		return
 	var sched: NpcSchedule = registry.schedule_for(npc)
 	if sched == null:
 		return
@@ -190,6 +209,93 @@ func _apply_schedule(npc: Npc, total_minutes: int, weekday: int) -> void:
 	if want_activity != npc.activity:
 		npc.activity = want_activity
 		Events.npc_activity_changed.emit(npc.id, want_activity)
+
+
+# --- walking with the player (D-057) -------------------------------------------
+
+## Someone begins walking with the player, for at most `minutes` (their own day
+## may end it sooner). The rules have already said yes.
+func start_follow(npc_id: String, minutes: int) -> bool:
+	var npc: Npc = registry.npcs.get(npc_id) if registry != null else null
+	if npc == null or not npc.alive or clock == null:
+		return false
+	npc.state["following"] = {"since": clock.total_minutes, "until": clock.total_minutes + maxi(minutes, 0)}
+	followers[npc_id] = true
+	assign_tiers()
+	if not follow_location.is_empty() and npc.location != follow_location:
+		registry.move_to(npc_id, follow_location)
+	if npc.activity != "follow":
+		npc.activity = "follow"
+		Events.npc_activity_changed.emit(npc_id, "follow")
+	Events.follow_changed.emit(npc_id, true, "asked")
+	return true
+
+
+## They stop and go back to their routine, wherever that now takes them.
+func stop_follow(npc_id: String, why: String) -> void:
+	var npc: Npc = registry.npcs.get(npc_id) if registry != null else null
+	if npc == null or not npc.state.has("following"):
+		followers.erase(npc_id)
+		return
+	_end_follow(npc, why)
+	if clock != null:
+		_apply_schedule(npc, clock.total_minutes, clock.weekday())
+	assign_tiers()
+
+
+func stop_all_following(why: String) -> void:
+	for id in followers.keys():
+		stop_follow(str(id), why)
+
+
+func is_following(npc_id: String) -> bool:
+	return followers.has(npc_id)
+
+
+## Where the followers are, to the person they follow: called when the player
+## changes place. Moving is the registry's; bodies walk to it.
+func move_followers() -> void:
+	if follow_location.is_empty():
+		return
+	for id in followers:
+		var npc: Npc = registry.npcs.get(id)
+		if npc != null and npc.alive and npc.location != follow_location:
+			registry.move_to(npc.id, follow_location)
+			registry.invalidate_location_cache(npc.id)
+
+
+## Rebuilds the index from what people carry, after a load.
+func rebuild_followers() -> void:
+	followers.clear()
+	if registry == null:
+		return
+	for id in registry.npcs:
+		var npc: Npc = registry.npcs[id]
+		if npc.alive and npc.state.has("following"):
+			followers[id] = true
+
+
+## Whether someone is still walking with the player at this minute; when their
+## time is up they are let go and the routine takes over. By absolute minute,
+## because a night's sleep can jump over the end.
+func _follows(npc: Npc, total_minutes: int) -> bool:
+	var follow: Dictionary = npc.state["following"]
+	if total_minutes >= int(follow.get("until", 0)):
+		_end_follow(npc, "time_up")
+		return false
+	if not follow_location.is_empty() and npc.location != follow_location:
+		registry.move_to(npc.id, follow_location)
+		registry.invalidate_location_cache(npc.id)
+	if npc.activity != "follow":
+		npc.activity = "follow"
+		Events.npc_activity_changed.emit(npc.id, "follow")
+	return true
+
+
+func _end_follow(npc: Npc, why: String) -> void:
+	npc.state.erase("following")
+	followers.erase(npc.id)
+	Events.follow_changed.emit(npc.id, false, why)
 
 
 func _set_tier(npc: Npc, tier: SimLod.Tier) -> void:

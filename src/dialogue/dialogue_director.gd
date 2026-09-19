@@ -536,8 +536,21 @@ func _rules_state(npc_id: String, convo: Conversation, channel: String) -> Dicti
 		"hiring": _hiring(npc_id),
 		"errand": _errand_offer(npc_id),
 		"errand_running": quests.errand_running_for(npc_id) != "",
+		"follow": _follow_state(npc_id),
 		"works_for_them": work.has_job() and _data != null \
 			and str(_data.get_entry("jobs", work.job_id).get("employer", "")) == npc_id,
+	}
+
+
+## Whether this person is walking with the player, and how long their own day
+## leaves them free to (D-057).
+func _follow_state(npc_id: String) -> Dictionary:
+	var npc := _npcs.get_npc(npc_id) if _npcs != null else null
+	if npc == null or _clock == null:
+		return {"following": false, "free_minutes": 0}
+	return {
+		"following": npc.state.has("following"),
+		"free_minutes": FollowRules.free_minutes(_npcs.schedule_for(npc), _clock.total_minutes, _clock.weekday()),
 	}
 
 
@@ -589,6 +602,10 @@ func _apply(npc_id: String, effects: Array[Dictionary]) -> Dictionary:
 				came_of_it = asks.attempt(str(effect["ask"]))
 			"fight":
 				Events.fight_requested.emit(npc_id)
+			"follow":
+				Events.follow_requested.emit(npc_id, int(effect["minutes"]))
+			"stop_following":
+				Events.follow_stop_requested.emit(npc_id)
 			"feel":
 				_relationships.adjust(npc_id, PlayerState.ID, str(effect["dimension"]), float(effect["delta"]), now)
 			"pay":

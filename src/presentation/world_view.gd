@@ -432,10 +432,11 @@ func _on_dialogue_closed() -> void:
 	_front = NO_CELL
 
 
-func _on_player_cell_changed(_cell: Vector2i) -> void:
+func _on_player_cell_changed(cell: Vector2i) -> void:
 	var result := Game.move_player(_player.position)
 	if result.is_ok():
 		_last_accepted = _player.position
+		_npcs.follow_player(cell)
 		if result.value is Dictionary and result.value.get("kind") == "travelled":
 			show_current_area()
 	else:

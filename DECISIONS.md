@@ -2039,3 +2039,56 @@ reply still stops on the limit (`LlmResponse.hit_length_limit`),
 **Not done.** Direct Google `thinkingConfig` (the shape differs per model
 generation; headroom is enough and cannot be rejected).
 
+
+## D-057 — Promises are made of rules: walking with the player, and no empty yeses
+
+**Found on first live play.** The player said "follow me", the person said
+"sure", and nothing happened: following did not exist, so the line was talk
+with no rules, and the model, which writes the reply without knowing what the
+game will do, agreed. Any promise (bring, go, wait) could fail the same way.
+
+**Decision.** A request is a proposal like any other. Three new intent kinds
+(`ask_follow`, `ask_wait`, `ask_action`), read by the cheap model or by words
+(English and Finnish, checked before place, work and farewell so "follow me to
+the harbour" is a request), judged by `ConversationRules`, and told to the
+speaker in `happened` — so the reply is written from what is true.
+- **Follow** is refused (`follow_remote` by phone or text, `follow_busy` when
+  their own day is due — a shift or the night — within 30 minutes,
+  `follow_distrust` when trust is below -0.2 or affection below -0.3) or
+  agreed, deterministically, no dice. A stranger is not held against them.
+- **Wait** stops it; harmless when nobody was following.
+- **`ask_action`** (fetch, bring, carry, give, go somewhere) is the honest
+  refusal `cannot_do` while those are not built: the person is told nothing
+  will happen and that they promised nothing. This is the general fix; the
+  later verbs (D-057's "not yet") replace it one at a time.
+
+**How it is carried out.** `npc.state["following"] = {since, until}` — not the
+single `schedule_override` slot, which meetings and knock-outs already contend
+for and which cannot track a moving player. `until` is the shorter of four
+hours and the start of their next shift or night (`FollowRules`,
+`NpcSchedule.next_start_of`), tested by absolute minute so a long skip cannot
+step over it. `NpcDirector` keeps a `followers` index: it consults the state
+first in `_apply_schedule`, holds followers ACTIVE through every retier (they
+would otherwise be demoted and snap back to their routine), and rebuilds the
+index after a load. Where they are is the player's place (`Game.follow_location`:
+the building the player is in, else the open-air place, else the region's
+street), moved whenever the player changes place. It ends on "wait", the time
+running out, a crime or a fight, a sleeping or collapsing skip, an arrest, and
+leaving the region (following across regions is not built, and travel does not
+yet call `world.enter_region` — a latent issue noted, not fixed).
+
+**Bodies** stay with the player: placed beside them, and, when the player moves
+on, sent after them by one route planned only when the follower is more than
+three cells behind (`NpcBodies.follow_player`), at a speed between walking and
+running.
+
+**Not yet.** Following across regions; going to a place, giving, taking,
+bringing and carrying (they are `cannot_do`); animations — the imported
+character sheets keep only standing, idle and walk rows (`tools/import_limezu.py`),
+so nothing shows a hand-over; more than one thing promised at a time; a
+reluctant person who could be talked into it (the asks of D-053 are the model
+for that).
+
+**Saved.** In each person's `state` (already in the `npcs` section), so no new
+section or migration; a number read back from JSON is an `int()`.
+

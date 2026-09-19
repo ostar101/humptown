@@ -32,6 +32,9 @@ const KIND_HELP := {
 	"quit_job": "telling them they quit the job they do for them",
 	"offer_help": "offering to help them or do something for them",
 	"negotiate": "asking for more time, a better deal or leniency, or trying to talk them round",
+	"ask_follow": "asking them to come along, to follow or walk with the player",
+	"ask_wait": "telling them to wait here, stay put, or stop following",
+	"ask_action": "asking them to do something physical for the player other than following: fetch, bring, carry, give something, go somewhere",
 	"attack": "starting a fight: actually hitting or attacking them now, not just threatening",
 }
 
