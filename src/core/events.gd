@@ -78,6 +78,9 @@ signal ask_resolved(ask_id: String, grade: String)
 signal fight_requested(npc_id: String)
 signal fight_started(npc_id: String)
 signal fight_ended(result: String)
+## Someone the player was told to meet for a fight came to it and so did the
+## player: they start it (D-055).
+signal ambush(npc_id: String)
 
 # --- Dialogue / LLM ---------------------------------------------------------
 signal dialogue_started(npc_id: String)

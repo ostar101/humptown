@@ -34,6 +34,7 @@ var meetings := MeetingDirector.new()
 var crime := CrimeDirector.new()
 var asks := AskDirector.new()
 var fights := FightDirector.new()
+var consequences := ConsequenceDirector.new()
 var reputation := Reputation.new()
 var player := PlayerState.new()
 var saves := SaveManager.new()
@@ -94,6 +95,7 @@ func _ready() -> void:
 	Events.dialogue_ended.connect(_on_dialogue_ended)
 	Events.meeting_updated.connect(_on_meeting_updated)
 	Events.fact_learned.connect(_on_fact_learned)
+	Events.ambush.connect(_on_ambush)
 	Log.min_level = int(Settings.get_value("log_level", Log.Level.INFO)) as Log.Level
 	Log.info("game", "Game root ready")
 
@@ -146,6 +148,7 @@ func new_game(background_id: String = "", world_seed: int = 0) -> Result:
 	crime.setup(npcs, knowledge, relationships, memories, events_queue, clock)
 	asks.setup(data, relationships, quests, crime, player, clock, rng)
 	fights.setup(npcs, player, relationships, crime, memories, clock, data, rng)
+	consequences.setup(npcs, knowledge, relationships, crime, quests, work, phone_director, meetings, data, clock)
 	phone_director.setup(phone, npcs, relationships, quests, player, clock, dialogue, meetings)
 	phone_director.sync_contacts()
 	dialogue.setup(npcs, world, player, relationships, knowledge, clock, data, LlmDialogueModel.new(llm), memories, work, quests, asks)
@@ -232,6 +235,7 @@ func unload() -> void:
 	crime = CrimeDirector.new()
 	asks = AskDirector.new()
 	fights = FightDirector.new()
+	consequences = ConsequenceDirector.new()
 	_shopping = ""
 	_shop_deals = 0
 	reputation = Reputation.new()
@@ -456,6 +460,8 @@ func _use_counter(proposal: Dictionary, location_id: String) -> Result:
 		return _reject(proposal, "nobody_serving")
 	if crime.officers().has(staff):
 		return _at_the_desk(staff)
+	if location_id == CLINIC:
+		return _treat_injuries(proposal, staff)
 	return Result.success({"kind": "served", "npc": staff})
 
 
@@ -763,6 +769,8 @@ func _on_meeting_updated(meeting_id: int, status: String) -> void:
 	if status != "missed" or not is_running():
 		return
 	var meeting := calendar.get_meeting(meeting_id)
+	if bool(meeting.get("hostile", false)):
+		return   # they wanted a fight, not company
 	phone_director.meeting_missed(str(meeting.get("npc", "")), str(meeting.get("location", "")))
 
 
@@ -802,12 +810,34 @@ func answer_message(message_id: int, choice: String) -> Result:
 	return answered
 
 
+# --- the clinic (D-055) -----------------------------------------------------------------
+
+## The nurse at the clinic desk sees to the player's injuries: what is left to
+## heal takes a third of the time, and they are a little better for it today.
+## It costs per wound, up to a limit. Refused: `nothing_to_treat`,
+## `not_enough_money`.
+func _treat_injuries(proposal: Dictionary, nurse: String) -> Result:
+	var judged := ClinicRules.judge_treatment({
+		"injuries": player.stats.injuries.size(), "health": player.stats.health, "money": player.wallet.total()})
+	if judged.is_err():
+		return _reject(proposal, judged.code)
+	var fee := int(judged.value["fee"])
+	var now := clock.total_minutes
+	if fee > 0:
+		player.wallet.spend(fee, "clinic")
+	for injury in player.stats.injuries:
+		injury["heals_at"] = now + int(float(int(injury["heals_at"]) - now) * ClinicRules.REMAINING_FRACTION)
+	player.stats.modify("health", ClinicRules.HEALTH_GAINED)
+	advance_time(ClinicRules.MINUTES_TAKEN)
+	return Result.success({"kind": "treated", "npc": nurse, "fee": fee})
+
+
 # --- fights (D-054) -----------------------------------------------------------------
 
 ## The player starts a fight with someone in front of them. A conversation
 ## with them is over; the world stands still until the fight is. Refused:
 ## `already_fighting`, `nobody_there`, `asleep`, `not_here`.
-func start_fight(npc_id: String) -> Result:
+func start_fight(npc_id: String, aggressor: String = "player") -> Result:
 	if not is_running():
 		return Result.failure("no_world")
 	var proposal := {"kind": "fight", "npc": npc_id}
@@ -817,7 +847,7 @@ func start_fight(npc_id: String) -> Result:
 		end_conversation()
 	if is_shopping():
 		close_shop()
-	var began := fights.begin(npc_id)
+	var began := fights.begin(npc_id, aggressor)
 	if began.is_err():
 		return _reject(proposal, began.code)
 	_time_paused_before_fight = clock.paused
@@ -933,6 +963,12 @@ func _arrest(result: Dictionary) -> void:
 	_arresting = false
 	Log.info("police", "Player arrested", {"officer": officer_id})
 	Events.player_arrested.emit(officer_id, clock.total_minutes)
+
+
+## Someone came for a fight they had named (D-055): that grudge has had its say.
+func _on_ambush(npc_id: String) -> void:
+	if is_running():
+		consequences.on_ambush(npc_id)
 
 
 func _on_fact_learned(knower_id: String, fact_id: String, _source_id: String) -> void:
@@ -1335,6 +1371,7 @@ func save_game(slot: String) -> Result:
 		"calendar": calendar.to_dict(),
 		"crime": crime.to_dict(),
 		"asks": asks.to_dict(),
+		"consequences": consequences.to_dict(),
 		"reputation": reputation.to_dict(),
 		"events": events_queue.to_dict(),
 		"player": player.to_dict(),
@@ -1376,6 +1413,7 @@ func load_game(slot: String) -> Result:
 	calendar.from_dict(sections.get("calendar", {}))
 	crime.from_dict(sections.get("crime", {}))
 	asks.from_dict(sections.get("asks", {}))
+	consequences.from_dict(sections.get("consequences", {}))
 	reputation.from_dict(sections.get("reputation", {}))
 	events_queue.from_dict(sections.get("events", {}))
 	player.from_dict(sections.get("player", {}))
@@ -1440,6 +1478,7 @@ func _on_day(day: int) -> void:
 	player.stats.heal_expired_injuries(clock.total_minutes)
 	shops.restock()
 	meetings.lapse()
+	consequences.run_daily()
 	_count_missed_shifts(day)
 	for failed in quests.expire(day):
 		_quest_ended(failed, "failed")

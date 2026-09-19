@@ -161,6 +161,9 @@ func _quest_reference_problems(id: String, quest: Dictionary) -> Array[String]:
 	var giver := str(quest.get("giver", ""))
 	if giver != "" and not has_entry("npcs", giver):
 		problems.append("quest '%s' references unknown giver '%s'" % [id, giver])
+	var collection: Dictionary = quest.get("collection", {})
+	if not collection.is_empty() and not has_entry("npcs", str(collection.get("holder", ""))):
+		problems.append("quest '%s' is collected by unknown person '%s'" % [id, collection.get("holder")])
 	var background := str((quest.get("starts", {}) as Dictionary).get("background", ""))
 	if background != "" and not has_entry("backgrounds", background):
 		problems.append("quest '%s' starts for unknown background '%s'" % [id, background])

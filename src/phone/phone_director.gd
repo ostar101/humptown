@@ -136,6 +136,18 @@ func summons(officer_id: String, due_minute: int) -> void:
 		"args": {"place": "loc_police_post", "start": due_minute}}})
 
 
+## Someone who has something to say to the player and does not need to be asked
+## (D-055): a grudge, a debt, a dismissal. As with the police they have your
+## number; it waits for a civil hour like any message.
+func notice(npc_id: String, kind: String, key: String, args: Dictionary) -> void:
+	if not has_phone():
+		return
+	add_contact(npc_id)
+	if args.has("place"):
+		_player.learn_place(str(args["place"]), "told")
+	state.pending.append({"queued": _clock.total_minutes, "cause": {"npc": npc_id, "kind": kind, "key": key, "args": args}})
+
+
 ## Someone waited at a meeting the player never came to; they say so, at a
 ## civil hour (D-047).
 func meeting_missed(npc_id: String, place_id: String) -> void:
@@ -242,8 +254,9 @@ func answer(message_id: int, choice: String) -> Result:
 	return Result.success(choice)
 
 
-## Tries what is waiting. Something held back only for the hour, sleep or a full
-## day keeps waiting, up to a day; anything else is dropped.
+## Tries what is waiting. Something held back only for the hour, sleep, a full
+## day or someone having just written keeps waiting, up to a day; anything else
+## is dropped.
 func _deliver_pending() -> int:
 	var arrived := 0
 	var waiting: Array[Dictionary] = []
@@ -251,7 +264,7 @@ func _deliver_pending() -> int:
 		var judged := deliver(entry["cause"])
 		if judged.is_ok():
 			arrived += 1
-		elif judged.code in ["quiet_hours", "asleep", "daily_cap"] and _clock.total_minutes - int(entry["queued"]) < MINUTES_PER_DAY:
+		elif judged.code in ["quiet_hours", "asleep", "daily_cap", "too_soon"] and _clock.total_minutes - int(entry["queued"]) < MINUTES_PER_DAY:
 			waiting.append(entry)
 	state.pending = waiting
 	return arrived

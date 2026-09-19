@@ -1,8 +1,8 @@
 # Project status
 
 **Updated:** 2026-09-19
-**Milestone:** M6 — Consequences — **in progress** (steps 1–3 done: crime and the police; talking someone round; combat). M5 complete in code (0.5.0).
-**Build:** green. 794 tests, 9770 assertions with the LimeZu art installed,
+**Milestone:** M6 — Consequences — **complete in code (0.6.0)**. M5 complete (0.5.0). M5 complete in code (0.5.0).
+**Build:** green. 816 tests, 9873 assertions with the LimeZu art installed,
 ~12 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
@@ -109,12 +109,22 @@ enemies are real people with builds from who they are and health that mends by
 the hour; friends and officers step in; wounds last; assault is a crime by the
 same machinery as theft, so the police respond to it. Not yet: people starting
 fights with the player, allies, weapons and armour, death, sprites in the
-window. **Next: (4) dynamic events** — the last of M6: events generated from
-world state (the plan's "new enemy, delayed consequence, escalation, other
-logical outcomes"), which is where the consequences the last three steps
-create — a beaten man's friends, a grudge, an unpaid debt — can come back to
-find the player. Propose the shape before building. Then the M6 "done when"
-check and 0.6.0. The criminal-contacts
+window. (4) **Dynamic events** — done (D-055), and with it M6: once a day
+the world asks what it already knows — who believes what of the player, who is
+fond of whom, what is owed — and, with no dice and at most one step a day,
+answers with a dismissal (an employer who believes something serious), a
+grudge (a warning, then a time and place that, if kept, they start — the first
+fights the player did not begin) or a collection (three reminders, then
+someone stronger). The clinic now treats injuries. M6 is complete; 0.6.0.
+
+**Next: M7 — Opening out** (ROADMAP.md): Old Town and Eastfield, travel,
+progressive map revelation, factions with goals of their own, the main story
+threads, more inhabitants, audio. It is the largest milestone and the first
+with real *content* work (two maps, art, a story), so **start it by proposing
+a shape and an order to the user** — and before it, **the game wants playing
+by a person**: nothing from M4 to M6 has been seen at a keyboard, only tested
+and screenshotted, and a play-through is the cheapest way to learn what the
+tests cannot (pacing, what is confusing, what is dull). The criminal-contacts
    view waits for crime (M6).
 
 **Known gaps worth a pass, none blocking:** interiors are still generic tiles
@@ -231,6 +241,7 @@ store (its own file) — D-036. A test that needs a model sets
 | Police: `PoliceRules`, summons by text, the desk, fines, arrest, the record | done |
 | Asks: `AskRules`, `AskDirector`, `data/asks.json` — graded negotiation with a cost | done (two asks) |
 | Combat: `CombatRules`, `Combat`, `FightDirector`, `CombatWindow` — turn-based, real people, lasting wounds, assault as a crime | done |
+| Consequences: `ConsequenceRules`, `ConsequenceDirector` (dismissal, grudge, collection), hostile meetings, `ClinicRules` | done |
 | Settings screen (language, provider, the player's key, models) | done |
 | `SaveManager` + `SaveMigrations` | done |
 | `Localization` — en complete, fi partial by design | done |
@@ -238,14 +249,14 @@ store (its own file) — D-036. A test that needs a model sets
 | Test suite + benchmark | done |
 
 **Not started, by design:** email, photos and the
-criminal-contacts view (D-050); combat, crime and police (M6). See `ROADMAP.md`.
+criminal-contacts view (D-050); everything in M7. See `ROADMAP.md`.
 
 ---
 
 ## Size
 
-- 120 source files in `src/`
-- 51 test suites
+- 123 source files in `src/`
+- 52 test suites
 - 10 authored NPCs, 22 locations, 3 regions (1 mapped), 6 interiors, 8 schedules, 4 backgrounds, 4 shops, 14 items, 4 jobs, 4 quests, 3 errands
 
 ---

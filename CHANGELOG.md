@@ -3,9 +3,24 @@
 All notable changes to Humptown. Format loosely follows Keep a Changelog;
 versions are milestones rather than releases until there is something to release.
 
-## [Unreleased] — Milestone 6: consequences
+## [0.6.0] — 2026-09-19 — Milestone 6: consequences
+
+What you do stays done. Take something and someone who saw it may tell the
+police, who answer in proportion to what they *believe*; talk your way out of
+trouble, or into worse; start a fight with real people who keep their wounds
+and their friends, and be met for one in turn. A serious offence costs a job;
+someone you hurt warns you, then names a time and place; a debt let go is
+collected, then someone is sent. The clinic treats what a fight leaves.
+816 tests, 9873 assertions.
 
 ### Decided
+- Dynamic events: once a day the world asks what it already knows — who
+  believes what of the player, who is fond of whom, what is owed — with no
+  dice and at most one new step a day: a dismissal (an employer who believes
+  something serious), a grudge (a warning, then a named time and place that,
+  if kept, they start), a collection (three reminders, then someone stronger).
+  Being met for a fight you were told of is not a crime. The clinic treats
+  injuries (D-055)
 - Combat: a turn-based fight you start by saying so in person; Attack, Heavy
   blow, Defend, Intimidate, Bandage, Run, Back down; real people with builds
   from who they are, health of their own that mends by the hour, friends and
@@ -33,6 +48,12 @@ versions are milestones rather than releases until there is something to release
   secondhand (D-051)
 
 ### Added
+- `ConsequenceRules`, `ConsequenceDirector` (`Game.consequences`);
+  `MeetingDirector.arrange_confrontation()`, hostile meetings on the calendar;
+  `FightDirector`'s aggressor; `CrimeDirector.known_offences()`;
+  `PhoneDirector.notice()`; `ClinicRules` and treatment at the clinic desk;
+  `Events.ambush`; `collection` on a quest; save schema v10
+  (`consequences`); `test_consequences` (22 tests)
 - `CombatRules`, `Combat`, `FightDirector` (`Game.fights`), `CombatWindow`,
   `CombatText`; `Game.start_fight()`, `fight_act()`; the intent `attack`;
   `CrimeDirector.record_crime()` (theft uses it), the predicate `assaulted`;
@@ -54,6 +75,8 @@ versions are milestones rather than releases until there is something to release
   `stole`; the world event `crime_report`; `test_theft` (14 tests)
 
 ### Changed
+- A message held back only because someone had just written now waits (up to a
+  day) instead of being dropped
 - Offline reading: asking to bargain outranks saying goodbye ("can I pay
   later?" is no longer a farewell)
 

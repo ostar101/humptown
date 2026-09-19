@@ -6,7 +6,8 @@ extends RefCounted
 ##
 ## A meeting: {"id", "npc", "location", "start" (absolute minute), "duration",
 ## "status": "proposed" | "accepted" | "declined" | "kept" | "missed" |
-## "stood_up" | "lapsed"}.
+## "stood_up" | "lapsed", "hostile": bool}. A hostile meeting is one someone has
+## named for a fight (D-055); the player is told, not asked.
 
 const KEEP_FINISHED := 12
 
@@ -14,9 +15,9 @@ var meetings: Array[Dictionary] = []
 var _next_id := 1
 
 
-func propose(npc_id: String, location_id: String, start: int, duration: int) -> Dictionary:
+func propose(npc_id: String, location_id: String, start: int, duration: int, hostile: bool = false) -> Dictionary:
 	var meeting := {"id": _next_id, "npc": npc_id, "location": location_id, "start": start,
-		"duration": duration, "status": "proposed"}
+		"duration": duration, "status": "proposed", "hostile": hostile}
 	_next_id += 1
 	meetings.append(meeting)
 	return meeting
@@ -88,7 +89,8 @@ func from_dict(d: Dictionary) -> void:
 	for raw: Dictionary in d.get("meetings", []):
 		meetings.append({"id": int(raw.get("id", 0)), "npc": str(raw.get("npc", "")),
 			"location": str(raw.get("location", "")), "start": int(raw.get("start", 0)),
-			"duration": int(raw.get("duration", 0)), "status": str(raw.get("status", "lapsed"))})
+			"duration": int(raw.get("duration", 0)), "status": str(raw.get("status", "lapsed")),
+			"hostile": bool(raw.get("hostile", false))})
 	_next_id = int(d.get("next_id", 1))
 	for meeting in meetings:
 		_next_id = maxi(_next_id, int(meeting["id"]) + 1)

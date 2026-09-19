@@ -29,6 +29,10 @@ const MIN_GAP := {
 	"meeting_request": 4 * 24 * 60,
 	"meeting_missed": 24 * 60,
 	"summons": 6 * 60,
+	"grudge_warning": 2 * 24 * 60,
+	"confrontation": 24 * 60,
+	"collection": 3 * 24 * 60,
+	"dismissal": 24 * 60,
 }
 
 ## The longest text the player may send, as the longest line they may say.

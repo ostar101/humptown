@@ -11,7 +11,7 @@ const EXPLAINED_REFUSALS: Array[String] = [
 	"locked", "private", "closed", "no_interior", "nobody_serving", "not_your_bed", "not_tired",
 	"asleep", "on_their_way", "nobody_there", "already_talking",
 	"not_a_work_day", "too_early", "too_late", "already_worked", "too_drunk", "too_exhausted", "busy",
-	"not_your_stash",
+	"not_your_stash", "nothing_to_treat", "not_enough_money",
 ]
 
 
@@ -68,6 +68,9 @@ static func outcome_text(interaction: Dictionary, result: Result) -> String:
 			return Localization.t(key, {"time": Game.clock.format_time()})
 		"read":
 			return Localization.t(str(outcome.get("text_key", "")))
+		"treated":
+			var nurse := Game.dialogue.display_name(str(outcome.get("npc", "")), Game.data)
+			return Localization.t("ui.msg.treated", {"name": nurse, "fee": outcome.get("fee", 0)})
 		"desk":
 			var officer := Game.npcs.get_npc(str(outcome.get("officer", "")))
 			var who := Game.dialogue.display_name(str(outcome.get("officer", "")), Game.data) if officer != null else ""

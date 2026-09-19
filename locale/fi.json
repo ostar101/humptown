@@ -575,5 +575,16 @@
   "ui.combat.log.down.them": "{target} kaatuu.",
   "dialogue.generic.attacked.1": "No tule sitten.",
   "dialogue.generic.attacked.2": "Tulet katumaan.",
-  "dialogue.generic.not_here.1": "Löisitkö minua puhelimessa? Tätä haluaisin nähdä."
+  "dialogue.generic.not_here.1": "Löisitkö minua puhelimessa? Tätä haluaisin nähdä.",
+  "phone.msg.grudge_self": "Löit minua. En ole unohtanut sitä.",
+  "phone.msg.grudge_friend": "Satutit henkilöä {victim}. Älä luule, että tämä loppui tähän.",
+  "phone.msg.confrontation.grudge": "{place}, {when} klo {time}. Tule yksin, jos uskallat.",
+  "phone.msg.confrontation.collection": "Olet saanut aikaa. {place}, {when} klo {time}. Selvitämme sen siellä.",
+  "phone.msg.collection.1": "{owed} €. Tiedät mitä olet velkaa. Odotan yhä.",
+  "phone.msg.collection.2": "Kärsivällisyyteni loppuu. {owed} €, eikä se pienene.",
+  "phone.msg.collection.3": "Viimeinen varoitus. {owed} €. Älä pakota minua lähettämään ketään.",
+  "phone.msg.dismissed": "En voi pitää sinua töissä sen jälkeen, mitä olen kuullut. Älä tule huomenna.",
+  "ui.msg.treated": "{name} hoitaa vammasi. {fee} €.",
+  "ui.msg.refused.nothing_to_treat": "Täällä ei ole mitään hoidettavaa.",
+  "ui.msg.refused.not_enough_money": "Sinulla ei ole varaa siihen."
 }

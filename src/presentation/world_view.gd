@@ -57,6 +57,7 @@ func _ready() -> void:
 	_atm.closed.connect(_on_shop_closed)
 	_combat.closed.connect(_on_shop_closed)
 	Events.fight_requested.connect(_on_fight_requested)
+	Events.ambush.connect(_on_ambush)
 	Events.phone_message.connect(_on_phone_message)
 	Events.meeting_updated.connect(_on_meeting_updated)
 	Events.place_learned.connect(_on_place_learned)
@@ -85,6 +86,7 @@ func _exit_tree() -> void:
 		Events.player_arrested.disconnect(_on_player_arrested)
 		Events.ask_resolved.disconnect(_on_ask_resolved)
 		Events.fight_requested.disconnect(_on_fight_requested)
+		Events.ambush.disconnect(_on_ambush)
 		Events.police_action.disconnect(_on_police_action)
 
 
@@ -352,10 +354,17 @@ func _on_fight_requested(npc_id: String) -> void:
 	call_deferred("_begin_fight", npc_id)
 
 
-func _begin_fight(npc_id: String) -> void:
+## Someone the player was told to meet has come, and so has the player (D-055).
+func _on_ambush(npc_id: String) -> void:
+	call_deferred("_begin_fight", npc_id, "npc")
+
+
+func _begin_fight(npc_id: String, aggressor: String = "player") -> void:
 	if _dialogue.is_open():
 		_dialogue.close()
-	var opened := _combat.open(npc_id)
+	if _phone.is_open():
+		_phone.close()
+	var opened := _combat.open(npc_id, aggressor)
 	if opened.is_err():
 		_hud.show_message(Localization.t("ui.combat.refused." + opened.code))
 		return

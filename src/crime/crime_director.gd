@@ -134,6 +134,22 @@ func case_for(officer_id: String) -> Array[Dictionary]:
 	return out
 
 
+## Everything this person believes the player has done that people are
+## punished or shunned for — dealt with by the police or not (D-055):
+## [{"fact", "predicate", "severity", "strength"}]. An employer asks this; the
+## police ask `case_for`, which leaves out what is already settled.
+func known_offences(npc_id: String) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for fact_id in _knowledge.known_fact_ids(npc_id):
+		var fact := _knowledge.get_fact(fact_id)
+		if fact == null or fact.subject != PlayerState.ID or not (CRIME_PREDICATES.has(fact.predicate) or fact.predicate == "arrested"):
+			continue
+		var belief := _knowledge.belief_of(npc_id, fact_id)
+		out.append({"fact": fact_id, "predicate": fact.predicate, "severity": fact.severity,
+			"strength": PoliceRules.strength(belief.confidence, belief.distortion)})
+	return out
+
+
 ## An officer has come to know something: she gets round to deciding what to
 ## do about it, in her own time.
 func on_fact_learned(knower_id: String, fact_id: String) -> void:

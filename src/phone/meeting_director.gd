@@ -7,6 +7,9 @@ extends RefCounted
 ## settled. Whether it was kept is read off the simulation — who stands where —
 ## never off anyone's word. No model is involved.
 
+## The hour a fight is called for.
+const CONFRONTATION_HOUR := 21
+
 var calendar: Calendar = Calendar.new()
 
 var _npcs: NpcRegistry = null
@@ -80,6 +83,14 @@ func accept(meeting_id: int) -> Result:
 	var judged := judge_accept(meeting_id)
 	if judged.is_err():
 		return judged
+	_schedule(meeting_id)
+	Events.meeting_updated.emit(meeting_id, "accepted")
+	return Result.success()
+
+
+## Puts an agreed meeting in the calendar and sets its day going: a reminder,
+## the person heading over, the moment it is settled, and the end.
+func _schedule(meeting_id: int) -> void:
 	var meeting := calendar.get_meeting(meeting_id)
 	var start := int(meeting["start"])
 	calendar.set_status(meeting_id, "accepted")
@@ -89,8 +100,29 @@ func accept(meeting_id: int) -> Result:
 	_events.schedule(maxi(start - MeetingRules.GATHER_LEAD, now + 1), "meeting_gather", payload)
 	_events.schedule(start + MeetingRules.GRACE, "meeting_check", payload)
 	_events.schedule(calendar.end_of(meeting), "meeting_end", payload)
-	Events.meeting_updated.emit(meeting_id, "accepted")
-	return Result.success()
+
+
+## Someone names a time and place for a fight (D-055): tomorrow evening, at a
+## park. The player is told and not asked — it goes on the calendar, they may go
+## or not. Returns the meeting's id, or 0 when there is nowhere to name.
+func arrange_confrontation(npc_id: String) -> int:
+	var npc := _npcs.get_npc(npc_id)
+	if npc == null or not npc.alive:
+		return 0
+	var day := _clock.day_index() + 1
+	var places: Array[String] = []
+	for location_id: String in _data.ids("locations"):
+		var place := _world.get_location(location_id)
+		if place != null and place.kind == "park" and bool(_data.get_entry("locations", location_id).get("meeting_place", false)):
+			places.append(location_id)
+	if places.is_empty():
+		return 0
+	places.sort()
+	var chosen := places[posmod(("fight/%s/%d" % [npc_id, day]).hash(), places.size())]
+	var meeting := calendar.propose(npc_id, chosen, day * GameClock.MINUTES_PER_DAY + CONFRONTATION_HOUR * 60,
+		MeetingRules.DURATION, true)
+	_schedule(int(meeting["id"]))
+	return int(meeting["id"])
 
 
 func decline(meeting_id: int) -> void:
@@ -141,6 +173,14 @@ func _settle(meeting: Dictionary) -> void:
 		"late": now - (int(meeting["start"]) + MeetingRules.GRACE) > MeetingRules.GRACE,
 	})
 	var id := int(meeting["id"])
+	if bool(meeting.get("hostile", false)):
+		# They came for a fight. If the player is there and so are they, they
+		# get one; if not, it is not the player's manners that are in question.
+		calendar.set_status(id, verdict)
+		if verdict == "kept":
+			Events.ambush.emit(npc_id)
+		Events.meeting_updated.emit(id, verdict)
+		return
 	match verdict:
 		"kept":
 			_relationships.adjust(npc_id, PlayerState.ID, "affection", 0.05, now)

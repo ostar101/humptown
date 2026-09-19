@@ -41,8 +41,8 @@ func _ready() -> void:
 
 
 ## Starts the fight and shows it. Refused as `Game.start_fight()` refuses.
-func open(npc_id: String) -> Result:
-	var started := Game.start_fight(npc_id)
+func open(npc_id: String, aggressor: String = "player") -> Result:
+	var started := Game.start_fight(npc_id, aggressor)
 	if started.is_err():
 		return started
 	_target = str((started.value["foes"] as Array)[0])

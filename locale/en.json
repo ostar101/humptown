@@ -630,5 +630,16 @@
   "ui.combat.log.foe_yield.them": "{actor} backs off.",
   "dialogue.generic.attacked.1": "Then come on.",
   "dialogue.generic.attacked.2": "You'll regret that.",
-  "dialogue.generic.not_here.1": "Hit me over the phone? Now that I'd like to see."
+  "dialogue.generic.not_here.1": "Hit me over the phone? Now that I'd like to see.",
+  "phone.msg.grudge_self": "You hit me. I haven't forgotten it.",
+  "phone.msg.grudge_friend": "You hurt {victim}. Don't think that's the end of it.",
+  "phone.msg.confrontation.grudge": "{place}, {when} at {time}. Come alone, if you've got the nerve.",
+  "phone.msg.confrontation.collection": "You've had time. {place}, {when} at {time}. We'll settle it there.",
+  "phone.msg.collection.1": "€{owed}. You know what you owe. I'm still waiting.",
+  "phone.msg.collection.2": "I'm losing patience. €{owed}, and it isn't getting smaller.",
+  "phone.msg.collection.3": "Last warning. €{owed}. Don't make me send someone.",
+  "phone.msg.dismissed": "I can't have you working for me after what I've heard. Don't come in tomorrow.",
+  "ui.msg.treated": "{name} sees to your injuries. €{fee}.",
+  "ui.msg.refused.nothing_to_treat": "There is nothing here to treat.",
+  "ui.msg.refused.not_enough_money": "You cannot pay for it."
 }

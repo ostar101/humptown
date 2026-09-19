@@ -37,6 +37,9 @@ var _data: DataRegistry = null
 var _rng: RngStreams = null
 var _location := ""
 var _witnesses: Array[String] = []
+## Who began it: "player" or "npc" (D-055). What the player did to start it is
+## what the law cares about; being met for a fight one was told of is not a crime.
+var _aggressor := "player"
 
 
 func setup(npcs: NpcRegistry, player: PlayerState, relationships: RelationshipGraph, crime: CrimeDirector,
@@ -57,7 +60,7 @@ func is_fighting() -> bool:
 
 ## Starts a fight with someone in front of the player. Refused: `already_fighting`,
 ## `nobody_there`, `asleep`, `not_here`.
-func begin(npc_id: String) -> Result:
+func begin(npc_id: String, aggressor: String = "player") -> Result:
 	if combat != null:
 		return Result.failure("already_fighting")
 	var npc := _npcs.get_npc(npc_id)
@@ -76,6 +79,7 @@ func begin(npc_id: String) -> Result:
 		if _would_step_in(other_id, npc_id):
 			foes.append(_foe(_npcs.get_npc(other_id), "joiner"))
 	_witnesses = here
+	_aggressor = aggressor
 	last = null
 	combat = Combat.new(_player_combatant(), foes, Callable(self, "_roll"), _items())
 	Events.fight_started.emit(npc_id)
@@ -122,17 +126,20 @@ func finish() -> Dictionary:
 			down.append(npc.id)
 			npc.set_override(now, now + KNOCKED_OUT_MINUTES, npc.location, "sleep", "knocked_out")
 			_npcs.invalidate_location_cache(npc.id)
-		_relationships.adjust(npc.id, PlayerState.ID, "affection", -0.40 if first else -0.15, now)
-		_relationships.adjust(npc.id, PlayerState.ID, "trust", -0.30 if first else -0.10, now)
+		var by_player := _aggressor == "player"
+		_relationships.adjust(npc.id, PlayerState.ID, "affection", (-0.40 if first else -0.15) if by_player else -0.10, now)
+		_relationships.adjust(npc.id, PlayerState.ID, "trust", (-0.30 if first else -0.10) if by_player else -0.05, now)
 		if done.result == "won":
 			_relationships.adjust(npc.id, PlayerState.ID, "fear", 0.15, now)
-		_memories.add_episode(npc.id, now, _location, ["attacked you"] as Array[String], 0.9)
-	var seen: Array[String] = []
-	for witness_id in _witnesses:
-		seen.append(witness_id)
-	_crime.record_crime("assaulted", _location, primary, seen,
-		clampf(ASSAULT_SEVERITY_BASE + done.damage_dealt * ASSAULT_SEVERITY_PER_DAMAGE, 0.5, 0.95), true,
-		"attacked you in front of everyone")
+		_memories.add_episode(npc.id, now, _location,
+			["attacked you" if by_player else "fought you, as they said they would"] as Array[String], 0.9)
+	if _aggressor == "player":
+		var seen: Array[String] = []
+		for witness_id in _witnesses:
+			seen.append(witness_id)
+		_crime.record_crime("assaulted", _location, primary, seen,
+			clampf(ASSAULT_SEVERITY_BASE + done.damage_dealt * ASSAULT_SEVERITY_PER_DAMAGE, 0.5, 0.95), true,
+			"attacked you in front of everyone")
 	Events.player_deed.emit("fought", {"npc": primary, "result": done.result})
 	return {"result": done.result, "minutes": maxi(done.rounds, 1), "hurt": not done.blows_taken.is_empty(),
 		"down": down, "primary": primary}

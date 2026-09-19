@@ -20,6 +20,8 @@ static func render(message: Dictionary) -> String:
 		args["quest"] = Localization.t(str(args["quest_key"]))
 	if args.has("place"):
 		args["place"] = InteractionText.place_name(str(args["place"]))
+	if args.has("victim"):
+		args["victim"] = npc_name(str(args["victim"]))
 	if args.has("start"):
 		args["when"] = day_word(int(args["start"]))
 		args["time"] = clock_of(int(args["start"]))

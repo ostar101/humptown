@@ -1958,3 +1958,62 @@ street; allies on the player's side; weapons beyond a carried crowbar, and
 armour; skills beyond the two; context actions beyond backing down (talk them
 down mid-fight, surrender); death; sprites and portraits in the window;
 fights that spill across places.
+
+
+## D-055 — Dynamic events: what people know comes back for you
+
+**Decision.** M6 step 4, the last of the milestone. The plan's line — *new
+enemy, delayed consequence, escalation, other logical outcomes* — is met not by
+a new engine but by one small daily pass, `ConsequenceDirector.run_daily()`,
+run when the day turns, that asks of the world what it already knows: who
+believes what of the player, who is fond of whom, what is owed. It uses only
+existing systems — the knowledge network, the relationship graph, the phone,
+the calendar, the event queue, and (if the player goes) a fight — and it has
+no dice: a consequence is a matter of who knows what and how they feel, so it
+can be read, tested and, in play, seen coming. At most one new step a day.
+
+**A dismissal — a delayed consequence.** An employer who has come to believe
+something serious of the player (`CrimeDirector.known_offences`: severity ×
+how sure they are ≥ 0.30, and sure enough to act on) lets them go: the job
+ends (`Events.job_lost`, reason `reputation`), they think less of the player,
+and they say so by text. A sandwich is not enough; a rumour is not enough;
+what the employer does not know does not count; casual work has no one to mind.
+
+**A grudge — a new enemy.** Someone the player beat, and the friends of theirs
+who know it (affection ≥ 0.5, the same test as stepping into a fight), send a
+warning by text — the victim in their own voice, a friend in another's.
+Officers never do; they have procedures. Two days on, if it has not been
+answered, they **name a time and a place**: tomorrow at nine in the evening, at
+a park, "come alone if you've got the nerve" — a *hostile meeting* on the
+calendar (D-047): the player is told, not asked. If the player goes, and so does
+the person, **they start it** (`Events.ambush`, and the fight (D-054) begins
+with them as the aggressor: being met for a fight you were told of is not
+assault, so there is no crime for the police to weigh, the feelings between you
+change less, and it is remembered as "fought you, as they said they would").
+If the player stays away, nothing is asked of their manners — no missed-meeting
+text, no penalty. Someone still mending (health under half) does not come until
+they can stand. A grudge answered by a meeting, win or lose, rests for twelve
+days; one that was never answered says its piece twice and lets it lie, and may
+begin again.
+
+**A collection — an escalation.** A quest may name who is owed (`collection` in
+`data/quests.json`; Rauno's debt does). Once it has been let fail, he reminds
+the player three times, more firmly each, and then sends someone stronger from
+his crowd — Joonas — to a meeting. The same machinery.
+
+**Two supporting changes.** A text held back only because someone had just
+written now waits, up to a day, rather than being dropped — so a confrontation
+queued behind a warning is not lost. And the clinic finally *treats*: at the
+desk, a nurse sees to injuries for €20 a wound (up to €60), the rest of the
+healing takes a third of the time, and the player is a little better for it
+today (`ClinicRules`) — the last line of the roadmap's "injuries that persist
+and a clinic that treats them".
+
+**Saved.** A `consequences` section (grudges' steps and the jobs lost),
+schema v10.
+
+**Not yet.** People starting fights out of the blue, or in the street; a
+grudge that grows into a group; a dismissed employer refusing to rehire;
+consequences from the player's *good* deeds coming back (favours returned,
+gossip that helps); events that are not about the player at all (that is M7's
+factions).

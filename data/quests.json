@@ -15,6 +15,7 @@
 
   {"id": "q_rauno_debt", "name_key": "quest.rauno_debt", "giver": "npc_rauno", "starts": {"background": "bg_in_debt"},
    "deadline_days": 14,
+   "collection": {"holder": "npc_rauno", "owed": 300},
    "stages": [
      {"goal_key": "quest.rauno_debt.1", "when": {"deed": "gave_money", "match": {"npc": "npc_rauno"}, "sum": "amount", "at_least": 300}}
    ],
