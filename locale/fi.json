@@ -519,5 +519,8 @@
   "ui.phone.call.already_talking": "Puhut jo jonkun kanssa.",
   "dialogue.generic.call_answer.1": "Haloo?",
   "dialogue.generic.call_answer.2": "Niin? Sinäkö se olet.",
-  "dialogue.generic.call_answer.3": "Moi. Mitä asiaa?"
+  "dialogue.generic.call_answer.3": "Moi. Mitä asiaa?",
+  "ui.shop.pocket": "Pihistä",
+  "ui.shop.stole_taken": "Livautat tuotteen ({item}) taskuusi.",
+  "ui.shop.stole_caught": "{name} tarttuu käteesi. Laitat tuotteen ({item}) takaisin."
 }

@@ -3,6 +3,22 @@
 All notable changes to Humptown. Format loosely follows Keep a Changelog;
 versions are milestones rather than releases until there is something to release.
 
+## [Unreleased] — Milestone 6: consequences
+
+### Decided
+- Crime is only what someone saw: theft at a shop counter is judged against
+  who is there and how closely they watch (post, character, the player's
+  stealth), on seeded dice; someone on duty who notices stops it, a bystander
+  lets it happen and remembers; nobody noticing leaves nothing behind. A
+  witness is a firsthand fact, a change of heart and a memory, and tells the
+  police only if it matters enough to them — by rule — a while later, and
+  secondhand (D-051)
+
+### Added
+- `TheftRules`, `CrimeDirector` (`Game.crime`); `Game.steal()`; "Pocket it" on
+  the shop window; `Events.crime_committed`, `crime_reported`; the deed
+  `stole`; the world event `crime_report`; `test_theft` (14 tests)
+
 ## [0.5.0] — 2026-09-19 — Milestone 5: the phone
 
 Your own phone, in a window of its own: messages, contacts, a calendar, a bank

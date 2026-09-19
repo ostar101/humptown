@@ -66,7 +66,7 @@ bank and cash machine, map of what the player has learned (D-045 to D-050).
 it), photos (nothing to photograph), the criminal-contacts view (waits for
 crime, M6).
 
-## M6 — Consequences
+## M6 — Consequences (in progress)
 
 - Turn-based JRPG combat: attack, defend, skills, items, flee, context actions
 - Conflict resolution that is not only fighting — partial successes, costs,

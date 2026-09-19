@@ -553,5 +553,8 @@
   "ui.phone.call.already_talking": "You are already talking to someone.",
   "dialogue.generic.call_answer.1": "Hello?",
   "dialogue.generic.call_answer.2": "Yes? It's you.",
-  "dialogue.generic.call_answer.3": "Hi. What is it?"
+  "dialogue.generic.call_answer.3": "Hi. What is it?",
+  "ui.shop.pocket": "Pocket it",
+  "ui.shop.stole_taken": "You slip the {item} into your pocket.",
+  "ui.shop.stole_caught": "{name} catches your hand. You put the {item} back."
 }

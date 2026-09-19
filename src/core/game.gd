@@ -31,6 +31,7 @@ var phone := PhoneState.new()
 var phone_director := PhoneDirector.new()
 var calendar := Calendar.new()
 var meetings := MeetingDirector.new()
+var crime := CrimeDirector.new()
 var reputation := Reputation.new()
 var player := PlayerState.new()
 var saves := SaveManager.new()
@@ -131,6 +132,7 @@ func new_game(background_id: String = "", world_seed: int = 0) -> Result:
 	_know_where_you_work()
 	_start_background_quests(background_id)
 	meetings.setup(calendar, npcs, world, player, relationships, memories, events_queue, clock, data)
+	crime.setup(npcs, knowledge, relationships, memories, events_queue, clock)
 	phone_director.setup(phone, npcs, relationships, quests, player, clock, dialogue, meetings)
 	phone_director.sync_contacts()
 	dialogue.setup(npcs, world, player, relationships, knowledge, clock, data, LlmDialogueModel.new(llm), memories, work, quests)
@@ -214,6 +216,7 @@ func unload() -> void:
 	phone_director = PhoneDirector.new()
 	calendar = Calendar.new()
 	meetings = MeetingDirector.new()
+	crime = CrimeDirector.new()
 	_shopping = ""
 	_shop_deals = 0
 	reputation = Reputation.new()
@@ -578,6 +581,42 @@ func haggle(item_id: String) -> Result:
 		"kind": "haggled", "item": item_id, "won": won, "discount": float(outcome["discount"]),
 		"price": shops.buy_price(shop_id, item_id), "chance": odds, "staff": staff,
 	})
+
+
+## Tries to walk off with something without paying (D-051). Everyone present
+## might notice — someone on duty who does stops it and the item stays; anyone
+## else who does lets it happen and remembers. Nobody noticing leaves no trace.
+## The dice are the game's seeded ones. Refuses `not_shopping`,
+## `nobody_serving`, `not_sold_here`, `out_of_stock`, `too_heavy`.
+func steal(item_id: String) -> Result:
+	var proposal := {"kind": "steal", "item": item_id, "location": _shopping}
+	if _shopping.is_empty():
+		return _reject(proposal, "not_shopping")
+	var shop_id := shops.shop_at(_shopping)
+	var staff := staff_serving(_shopping)
+	var watchers := crime.watchers(_shopping, staff, player.skills.level_of("stealth"), player.stats.effectiveness())
+	for watcher in watchers:
+		watcher["roll"] = rng.stream("theft").randf()
+	var judged := TheftRules.judge({
+		"serving": not staff.is_empty(), "sells": shops.sells(shop_id, item_id),
+		"stock": shops.stock_of(shop_id, item_id), "weight": player.inventory.item_weight(item_id),
+		"free_weight": player.inventory.free_weight(), "watchers": watchers,
+	})
+	if judged.is_err():
+		return _reject(proposal, judged.code)
+	var outcome: Dictionary = judged.value
+	var noticed: Array[String] = []
+	noticed.assign(outcome["noticed_by"])
+	if bool(outcome["taken"]):
+		player.inventory.add(item_id, 1)
+		shops.sold(shop_id, item_id, 1, 0)
+	player.skills.practise("stealth", TheftRules.xp(bool(outcome["caught"]), not noticed.is_empty()), TheftRules.SKILL_DIFFICULTY)
+	crime.record_theft(_shopping, staff, noticed, TheftRules.severity(int(data.get_entry("items", item_id).get("value", 0))),
+		bool(outcome["caught"]))
+	_shop_deals += 1
+	Events.player_deed.emit("stole", {"item": item_id, "shop": shop_id, "caught": bool(outcome["caught"])})
+	return Result.success({"kind": "stole", "item": item_id, "taken": bool(outcome["taken"]),
+		"caught": bool(outcome["caught"]), "staff": staff})
 
 
 ## Sells to the shop the player is at, for cash from its till.
@@ -1206,6 +1245,8 @@ func _on_world_event(event: WorldEventQueue.QueuedEvent) -> void:
 			player.stats.heal_expired_injuries(clock.total_minutes)
 		"meeting_reminder", "meeting_gather", "meeting_check", "meeting_end":
 			meetings.on_event(event.kind, event.payload)
+		"crime_report":
+			crime.deliver_report(event.payload)
 		_:
 			Log.debug("events", "Unhandled world event", {"kind": event.kind})
 

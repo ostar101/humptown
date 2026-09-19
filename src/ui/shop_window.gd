@@ -71,6 +71,23 @@ func buy(item_id: String) -> Result:
 	return bought
 
 
+## Tries to walk off with it (D-051). The counter says only what the player
+## can tell: their hand was stopped, or it was not — never who saw.
+func steal(item_id: String) -> Result:
+	var tried := Game.steal(item_id)
+	if tried.is_ok():
+		var outcome: Dictionary = tried.value
+		var item := Game.data.get_entry("items", item_id)
+		_message.text = Localization.t("ui.shop.stole_caught" if outcome["caught"] else "ui.shop.stole_taken", {
+			"name": Game.dialogue.display_name(str(outcome["staff"]), Game.data),
+			"item": Localization.t(str(item.get("name_key", item_id))),
+		})
+		_render()
+	else:
+		_report(tried, "")
+	return tried
+
+
 ## Tries to talk the price down (D-040); the counter says how it went.
 func haggle(item_id: String) -> Result:
 	var tried := Game.haggle(item_id)
@@ -190,7 +207,13 @@ func _row(entry: Dictionary) -> HBoxContainer:
 		bargain.text = Localization.t("ui.shop.haggle")
 		bargain.disabled = bool(entry.get("haggled", false))
 		bargain.pressed.connect(func() -> void: haggle(item_id))
-		for child: Control in [item_name, price, detail, bargain, action]:
+		var pocket := Button.new()
+		pocket.theme_type_variation = &"SmallButton"
+		pocket.custom_minimum_size = Vector2(90, 0)
+		pocket.text = Localization.t("ui.shop.pocket")
+		pocket.disabled = int(entry["stock"]) <= 0
+		pocket.pressed.connect(func() -> void: steal(item_id))
+		for child: Control in [item_name, price, detail, pocket, bargain, action]:
 			row.add_child(child)
 		return row
 	for child: Control in [item_name, price, detail, action]:

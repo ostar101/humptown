@@ -1719,3 +1719,52 @@ this through the real world scene.
   the player would need a way to answer, and a missed call is a text.
 - Other things noted along the way and left: the player proposing a meeting;
   someone cancelling one; missed-call texts.
+
+
+## D-051 — Crime: only what someone saw, and only what they tell
+
+**Decision.** M6 step 1, first half. The order of M6 (crime first, then
+conflict resolution, then combat, then dynamic events) was put to the user with
+the offer to start on crime; this begins it. The premise is the one the design
+already states and `Reputation` already enforces: *a crime nobody witnessed and
+nobody heard about changes nothing.* So a crime here is not an event the world
+records; it is a fact that exists only if a person perceived it.
+
+**Theft, at the counter.** The shop window gains "Pocket it" beside Haggle and
+Buy. `Game.steal()` follows the shape of haggling (D-040): the facts are
+gathered, `TheftRules.judge()` decides from dice rolled on the game's seeded
+stream (`theft`), so a reloaded save is seen or not the same way. Everyone in
+the shop by the simulation's account — awake and *there* — has a chance of
+noticing (`TheftRules.notice_chance`): someone on duty behind the counter
+watches closely, a bystander less; character moves it (Ida is observant,
+Pirjo cannot see far, a drunk or tired person misses more); the player's
+stealth and condition move it back; never certain, never impossible. The one
+on duty who notices *stops it*: the item stays and they are a witness. A
+bystander who notices lets it happen and remembers. Nobody noticing: it is
+simply taken, and nothing has happened. Stealth is practised either way, most
+by getting away clean.
+
+**A witness is a fact, a change of heart, and a memory.** `CrimeDirector.
+record_theft()` files `stole_from` in the knowledge network with the
+witnesses as firsthand knowers — so it spreads by gossip like anything else
+and appears in what a model is told they believe about the player — lowers
+each witness's affection and trust, and writes it in their `MemoryBook`. The
+shop window says only what the player can tell: their hand was caught, or it
+was not. Never who saw.
+
+**Whether they tell the police is theirs to decide, by rule**, not by a die
+(`TheftRules.report_urge`): how much it was worth (a bun is petty, a tool is
+not), whether they stopped it themselves, how fond they are of the player, and
+who they are (`by_the_book` tells; `discreet` and `generous_when_useful`
+hold back). So the shopkeeper who caught you tells; a bystander shrugs at a
+sandwich; a friend who caught you lets it go. A report is a world event 20 to
+90 minutes later; when it comes, the officer learns the fact *from them* —
+secondhand, less sure of it (`KnowledgeNetwork.tell`) — and an officer who saw
+it herself needs no report. Officers are whoever is in a group beginning
+`police`.
+
+**Not yet — the next half (D-052).** What the police *do* with what they know:
+a response proportional to it, not to what actually happened. Here they only
+come to know. Also not yet: other crimes (pickpocketing, trespass, assault —
+the last waits for combat), fences and stolen goods, and shopkeepers refusing
+service.

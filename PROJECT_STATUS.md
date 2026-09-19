@@ -1,8 +1,8 @@
 # Project status
 
 **Updated:** 2026-09-19
-**Milestone:** M5 — The phone — **complete in code (0.5.0)**. M4 complete in code (0.4.0).
-**Build:** green. 705 tests, 9147 assertions with the LimeZu art installed,
+**Milestone:** M6 — Consequences — **in progress** (step 1, crime, half done). M5 complete in code (0.5.0).
+**Build:** green. 719 tests, 9282 assertions with the LimeZu art installed,
 ~12 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
@@ -86,17 +86,20 @@ Pirjo help, pay Rauno back in parts, open the phone on P.
    picks up. Email, photos and the criminal-contacts view are deliberately not
    built, with reasons in D-050. M5 is complete; 0.5.0.
 
-**Next: M6 — Consequences** (ROADMAP.md): combat, conflict resolution that is
-not only fighting, crime/witnesses/police, persistent injuries, dynamic
-events. It is the largest milestone left before the world opens out (M7), and
-the first whose shape is a real choice, so **start it by proposing an order
-to the user rather than picking one.** A suggestion, not a decision: (1) crime
-and witnesses, since `KnowledgeNetwork` and `Reputation` already carry what
-police response should be proportional to, and email and the criminal-
-contacts view get their reason to exist there; (2) conflict resolution —
+**M6 — Consequences** (ROADMAP.md) is under way. The order was proposed to
+the user (crime first) and work began on that; if they want a different order
+they will say. (1) **Crime and the police** — first half done (D-051): theft
+at a shop counter, judged against who is there; a crime exists only if
+someone saw it; witnesses change their feelings, remember, and — if it
+matters enough to them — tell the police later, secondhand. **Next (D-052):
+the police response, proportional to what the police *know*, not to what
+happened**: an officer with a belief about the player weighs it (how sure she
+is, how serious, whether there is a record) and answers with nothing, a
+warning, a fine or an arrest; a summons by text is the natural first step
+(the phone exists); an arrest costs a night in the cells, cash and the
+goods, and a `police`-scope reputation hit. Then (2) conflict resolution —
 partial successes, debts, delayed consequences (the debt quest already has
-one); (3) turn-based combat, the most self-contained; (4) dynamic events last,
-once there is enough to generate them from. The criminal-contacts
+one); (3) turn-based combat, the most self-contained; (4) dynamic events last. The criminal-contacts
    view waits for crime (M6).
 
 **Known gaps worth a pass, none blocking:** interiors are still generic tiles
@@ -209,6 +212,7 @@ store (its own file) — D-036. A test that needs a model sets
 | Meetings: `Calendar`, `MeetingRules`, `MeetingDirector`, the phone's Calendar tab | done |
 | Banking: `BankText`, `AtmWindow`, the phone's Bank tab, transfers by text | done |
 | Map: `MapView`, `PlayerState.known_places`, the phone's Map tab | done |
+| Crime: `TheftRules`, `CrimeDirector`, "Pocket it" at counters, witnesses, reports to the police | done (first half of M6 step 1) |
 | Settings screen (language, provider, the player's key, models) | done |
 | `SaveManager` + `SaveMigrations` | done |
 | `Localization` — en complete, fi partial by design | done |
@@ -222,8 +226,8 @@ criminal-contacts view (D-050); combat, crime and police (M6). See `ROADMAP.md`.
 
 ## Size
 
-- 110 source files in `src/`
-- 46 test suites
+- 112 source files in `src/`
+- 47 test suites
 - 10 authored NPCs, 22 locations, 3 regions (1 mapped), 6 interiors, 8 schedules, 4 backgrounds, 4 shops, 14 items, 4 jobs, 4 quests, 3 errands
 
 ---

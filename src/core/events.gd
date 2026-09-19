@@ -61,6 +61,9 @@ signal phone_contact_added(npc_id: String)
 signal meeting_updated(meeting_id: int, status: String)
 ## A place joined the player's map: `how` is "visited" or "told" (D-049).
 signal place_learned(location_id: String, how: String)
+## Someone saw the player commit a crime (D-051); a witness told the police.
+signal crime_committed(fact_id: String, location_id: String)
+signal crime_reported(fact_id: String, reporter_id: String, officer_id: String)
 
 # --- Dialogue / LLM ---------------------------------------------------------
 signal dialogue_started(npc_id: String)

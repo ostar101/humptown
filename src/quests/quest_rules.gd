@@ -7,6 +7,7 @@ extends RefCounted
 ## Progress comes from *deeds* — things the player did that Godot already
 ## decided and carried out, announced as `Events.player_deed(kind, data)`:
 ## worked_shift {job}, gave_money {npc, amount}, talked {npc, kind, subject},
+## stole {item, shop, caught},
 ## texted / called {npc, kind, subject} (as talked, by phone), met {npc, location} (a
 ## meeting kept), hired {job}, bought
 ## {item, shop, quantity}, entered {location},
@@ -22,7 +23,7 @@ extends RefCounted
 ##                                                              that continues later
 
 ## Every deed the game announces; a quest may wait only on these.
-const DEEDS: Array[String] = ["worked_shift", "gave_money", "talked", "texted", "called", "met", "hired", "bought", "entered", "errand_done"]
+const DEEDS: Array[String] = ["worked_shift", "gave_money", "talked", "texted", "called", "met", "hired", "bought", "stole", "entered", "errand_done"]
 
 
 ## Counts a deed towards a stage. Returns the new progress ({"count", "sum"})
