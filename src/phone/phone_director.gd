@@ -132,6 +132,16 @@ func meeting_missed(npc_id: String, place_id: String) -> void:
 		"npc": npc_id, "kind": "meeting_missed", "key": "phone.msg.meeting_missed", "args": {"place": place_id}}})
 
 
+## Whether they would pick up if the player rang now (D-050).
+func can_call(npc_id: String) -> Result:
+	var npc := _npcs.get_npc(npc_id)
+	return PhoneRules.judge_call({
+		"has_phone": has_phone(), "is_contact": state.is_contact(npc_id) and npc != null and npc.alive,
+		"npc_awake": npc != null and npc.alive and npc.activity != "sleep",
+		"npc_busy": npc != null and npc.activity == "work", "hour": _clock.hour(),
+	})
+
+
 ## The player sends a text. Judged by `PhoneRules.judge_send`; it goes into the
 ## outbox to be read when the person gets to it. Returns the message.
 func send_text(npc_id: String, line: String) -> Result:

@@ -91,4 +91,4 @@ Make implementation decisions yourself and record the notable ones in `DECISIONS
 Do not "fix" these; they are sequenced, not forgotten. See `ROADMAP.md`.
 
 - No live LLM call has ever been made — the provider layer and dialogue are built and tested offline; first contact needs the player's own key, entered by the player.
-- No combat, crime or police. The phone has messages, contacts, a calendar, a bank and a map (M5 steps 1-4); calls, email and photos are sequenced in `PROJECT_STATUS.md`. No weather or seasons ever in v1 (explicitly out of scope).
+- No combat, crime or police. The phone has messages, contacts, calls, a calendar, a bank and a map (M5, complete); email and photos are deliberately not built yet (D-050). No weather or seasons ever in v1 (explicitly out of scope).

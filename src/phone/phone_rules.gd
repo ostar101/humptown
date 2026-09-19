@@ -107,6 +107,22 @@ static func judge_send(line: String, state: Dictionary) -> Result:
 	return Result.success(text)
 
 
+## Whether someone picks up when the player rings (D-050). `state` =
+## {"has_phone", "is_contact", "npc_awake", "npc_busy", "hour"}. Codes:
+## `no_phone`, `not_a_contact`, `asleep`, `quiet_hours`, `busy` (at work).
+static func judge_call(state: Dictionary) -> Result:
+	if not bool(state.get("has_phone", false)):
+		return Result.failure("no_phone")
+	if not bool(state.get("is_contact", false)):
+		return Result.failure("not_a_contact")
+	var reading := judge_reading({"npc_awake": state.get("npc_awake", false), "hour": state.get("hour", 12)})
+	if reading.is_err():
+		return reading
+	if bool(state.get("npc_busy", false)):
+		return Result.failure("busy")
+	return Result.success()
+
+
 ## Minutes until someone gets to a text, from what they are doing.
 static func reading_delay(activity: String) -> int:
 	return int(READ_DELAY.get(activity, READ_DELAY_DEFAULT))

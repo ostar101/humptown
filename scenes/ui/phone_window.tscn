@@ -105,6 +105,11 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "ui.phone.send"
 
+[node name="Call" type="Button" parent="Root/Frame/Layout/Compose"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "ui.phone.call"
+
 [node name="Tabs" type="HBoxContainer" parent="Root/Frame/Layout"]
 layout_mode = 2
 

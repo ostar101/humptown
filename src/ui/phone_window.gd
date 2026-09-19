@@ -8,6 +8,8 @@ extends CanvasLayer
 ## after it is put away.
 
 signal closed()
+## The player pressed Call on a thread; the world opens the call (D-050).
+signal call_requested(npc_id: String)
 
 enum Page { THREADS, THREAD, CONTACTS, CALENDAR, BANK, MAP }
 
@@ -31,6 +33,7 @@ var _time_was_paused := false
 @onready var _compose: HBoxContainer = %Compose
 @onready var _line: LineEdit = %Line
 @onready var _send: Button = %Send
+@onready var _call: Button = %Call
 @onready var _notice: Label = %Notice
 
 
@@ -44,6 +47,7 @@ func _ready() -> void:
 	_tab_bank.pressed.connect(func() -> void: show_page(Page.BANK))
 	_tab_map.pressed.connect(func() -> void: show_page(Page.MAP))
 	_send.pressed.connect(_send_line)
+	_call.pressed.connect(_press_call)
 	_line.text_submitted.connect(func(_text: String) -> void: _send_line())
 	Events.phone_message.connect(_on_phone_message)
 
@@ -99,6 +103,27 @@ func open_thread(npc_id: String) -> void:
 func type_and_send(text: String) -> Result:
 	_line.text = text
 	return _send_line()
+
+
+## Rings the person whose thread is open. Whether they pick up is judged
+## first; if not, the note under the thread says why. Returns the verdict.
+func press_call() -> Result:
+	return _press_call()
+
+
+func _press_call() -> Result:
+	var may := Game.can_call(_npc)
+	if may.is_err():
+		show_notice(Localization.t("ui.phone.call." + may.code))
+		return may
+	call_requested.emit(_npc)
+	return may
+
+
+## A note under the thread, for what the phone has to say about what was just tried.
+func show_notice(text: String) -> void:
+	_notice.text = text
+	_notice.visible = true
 
 
 ## What the small note under the thread says, "" when it says nothing.

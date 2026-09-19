@@ -20,6 +20,8 @@ var over: bool = false
 var warmth: float = 0.0
 ## Where it happened: the person's location when it started.
 var place: String = ""
+## How it is being had: "in_person", "call" (D-050) or, for a text exchange, "text".
+var channel: String = "in_person"
 ## What the player did in it, as the person will remember it — phrases that
 ## follow "they", from what the rules judged (D-038). No repeats.
 var things: Array[String] = []

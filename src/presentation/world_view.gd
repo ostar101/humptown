@@ -52,6 +52,7 @@ func _ready() -> void:
 	_stash.closed.connect(_on_shop_closed)
 	_quests.closed.connect(_on_shop_closed)
 	_phone.closed.connect(_on_shop_closed)
+	_phone.call_requested.connect(_on_call_requested)
 	_atm.closed.connect(_on_shop_closed)
 	Events.phone_message.connect(_on_phone_message)
 	Events.meeting_updated.connect(_on_meeting_updated)
@@ -155,6 +156,19 @@ func open_phone() -> void:
 		_hud.set_prompt("")
 	else:
 		_hud.show_message(Localization.t("ui.phone.no_phone"))
+
+
+## The player rang someone from the phone (D-050): the phone is put away
+## first, so the time it paused is handed back before the call pauses it again.
+func _on_call_requested(npc_id: String) -> void:
+	_phone.close()
+	var opened := _dialogue.open(npc_id, true)
+	if opened.is_err():
+		_hud.show_message(Localization.t("ui.phone.call." + opened.code))
+		return
+	_talking_body = null
+	_player.input_enabled = false
+	_hud.set_prompt("")
 
 
 func phone_window() -> PhoneWindow:

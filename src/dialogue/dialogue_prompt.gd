@@ -61,11 +61,15 @@ static func system_text(context: Dictionary, opening: Array[String] = []) -> Str
 	var name := str(npc.get("name", "someone"))
 	var parts: Array[String] = []
 
-	var texting := str(context.get("channel", "in_person")) == "phone"
+	var channel := str(context.get("channel", "in_person"))
+	var texting := channel == "text"
+	var meeting := "Someone has stopped to talk to you, face to face."
+	if texting:
+		meeting = "Someone has sent you a text message on your phone; you are not with them."
+	elif channel == "call":
+		meeting = "You are on the phone with someone; you can hear them but not see them."
 	parts.append("You are %s, %s, %s in Harbourside, the harbour district of a small Finnish port town. %s" % [
-		name, str(npc.get("age", "")), str(npc.get("occupation", "a local")),
-		"Someone has sent you a text message on your phone; you are not with them." if texting
-			else "Someone has stopped to talk to you, face to face."])
+		name, str(npc.get("age", "")), str(npc.get("occupation", "a local")), meeting])
 	if str(npc.get("bio", "")) != "":
 		parts.append("Who you are: " + str(npc["bio"]))
 	if str(npc.get("voice", "")) != "":
@@ -109,6 +113,8 @@ static func system_text(context: Dictionary, opening: Array[String] = []) -> Str
 - Never say you are an AI, a model or a character in a game.""" % [name, language])
 	if texting:
 		parts.append("This is a text message: write it as one. You cannot see them or hand them anything.")
+	elif channel == "call":
+		parts.append("This is a phone call: speak, do not write. You cannot see them or hand them anything.")
 	return "\n\n".join(parts)
 
 

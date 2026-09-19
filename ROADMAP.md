@@ -54,11 +54,17 @@ conversation without breaking the game.
 - Basic quest system: authored threads plus NPC-need-driven jobs
 - Quest UI that states the goal without drawing the route
 
-## M5 — The phone
+## M5 — The phone ✅ complete (0.5.0)
 
 Messages, calls, contacts, map, photos, calendar, email, and the criminal
 contacts view. NPCs reach out on their own when it makes sense, rate-limited so
 it never becomes spam. Its own UI window, not a reskinned pause menu.
+
+Built: messages both ways, contacts, calls, calendar with meeting requests,
+bank and cash machine, map of what the player has learned (D-045 to D-050).
+**Deliberately not built, with reasons (D-050):** email (nothing yet writes to
+it), photos (nothing to photograph), the criminal-contacts view (waits for
+crime, M6).
 
 ## M6 — Consequences
 

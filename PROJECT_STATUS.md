@@ -1,8 +1,8 @@
 # Project status
 
 **Updated:** 2026-09-19
-**Milestone:** M5 — The phone — **in progress** (steps 1–4 of 5 done). M4 complete in code (0.4.0).
-**Build:** green. 693 tests, 9083 assertions with the LimeZu art installed,
+**Milestone:** M5 — The phone — **complete in code (0.5.0)**. M4 complete in code (0.4.0).
+**Build:** green. 705 tests, 9147 assertions with the LimeZu art installed,
 ~12 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
@@ -81,8 +81,22 @@ Pirjo help, pay Rauno back in parts, open the phone on P.
    player on it and nobody else. The map shows what the player has learned, not the
    whole town (progressive revelation, M7); banking is the wallet's
    transaction log.
-5. **Calls, email, photos** (next) — only what earns its place; each is a
-   decision whether it does. Then the M5 "done when" check (below) and 0.5.0. The criminal-contacts
+5. ~~**Calls, email, photos**~~ — done (D-050). Calls built: a conversation
+   down a phone, the same road as speech, whoever is awake and not at work
+   picks up. Email, photos and the criminal-contacts view are deliberately not
+   built, with reasons in D-050. M5 is complete; 0.5.0.
+
+**Next: M6 — Consequences** (ROADMAP.md): combat, conflict resolution that is
+not only fighting, crime/witnesses/police, persistent injuries, dynamic
+events. It is the largest milestone left before the world opens out (M7), and
+the first whose shape is a real choice, so **start it by proposing an order
+to the user rather than picking one.** A suggestion, not a decision: (1) crime
+and witnesses, since `KnowledgeNetwork` and `Reputation` already carry what
+police response should be proportional to, and email and the criminal-
+contacts view get their reason to exist there; (2) conflict resolution —
+partial successes, debts, delayed consequences (the debt quest already has
+one); (3) turn-based combat, the most self-contained; (4) dynamic events last,
+once there is enough to generate them from. The criminal-contacts
    view waits for crime (M6).
 
 **Known gaps worth a pass, none blocking:** interiors are still generic tiles
@@ -201,15 +215,15 @@ store (its own file) — D-036. A test that needs a model sets
 | `SimViewer` debug screen | done |
 | Test suite + benchmark | done |
 
-**Not started, by design:** calls,
-email, photos (rest of M5); combat, crime and police. See `ROADMAP.md`.
+**Not started, by design:** email, photos and the
+criminal-contacts view (D-050); combat, crime and police (M6). See `ROADMAP.md`.
 
 ---
 
 ## Size
 
 - 110 source files in `src/`
-- 45 test suites
+- 46 test suites
 - 10 authored NPCs, 22 locations, 3 regions (1 mapped), 6 interiors, 8 schedules, 4 backgrounds, 4 shops, 14 items, 4 jobs, 4 quests, 3 errands
 
 ---

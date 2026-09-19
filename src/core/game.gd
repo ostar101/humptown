@@ -1047,6 +1047,34 @@ func start_conversation(npc_id: String) -> Result:
 	return started
 
 
+## Whether the player could ring this person now, and if not why:
+## `no_phone`, `not_a_contact`, `asleep`, `quiet_hours`, `busy`,
+## `already_talking` (D-050).
+func can_call(npc_id: String) -> Result:
+	if not is_running():
+		return Result.failure("no_world")
+	if dialogue.is_talking():
+		return Result.failure("already_talking")
+	return phone_director.can_call(npc_id)
+
+
+## Rings someone. If they pick up, a conversation begins, as in person — the
+## same box, the same rules, minutes paid when it ends — but down the phone.
+func start_call(npc_id: String) -> Result:
+	var may := can_call(npc_id)
+	if may.is_err():
+		return _reject({"kind": "call", "npc": npc_id}, may.code)
+	var started := dialogue.start_call(npc_id, clock.total_minutes)
+	if started.is_err():
+		return _reject({"kind": "call", "npc": npc_id}, started.code)
+	_time_paused_before_talk = clock.paused
+	clock.paused = true
+	var opening: Dictionary = started.value
+	Events.dialogue_started.emit(npc_id)
+	Events.dialogue_line.emit(npc_id, str(opening["text"]))
+	return started
+
+
 ## The player says something to whoever they are talking to; returns the
 ## reply as `DialogueDirector.say()` describes it. Await it: with a model
 ## answering, the reply takes as long as the model does.

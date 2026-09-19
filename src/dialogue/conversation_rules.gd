@@ -22,7 +22,7 @@ extends RefCounted
 ##   "problem"} — the job this person hires for, if any, and why the player
 ##   could not have it), works_for_them (the player's job is theirs to give),
 ##   player_bank (what is in the account: by phone money goes through it),
-##   channel ("in_person" or "phone": a text carries no cash),
+##   channel ("in_person", "call" or "text": nothing said down a phone carries cash),
 ##   errand ({"id", "what", "reward"} — something they could ask of the
 ##   player today, D-044), errand_running (they are already waiting on one)
 ##
@@ -123,7 +123,7 @@ static func judge(intent: Dictionary, state: Dictionary) -> Result:
 			var amount := int(intent.get("amount", 0))
 			if amount <= 0 or amount > MAX_GIFT:
 				return Result.failure("invalid_amount", "They talked about giving you money, but offered nothing you could take.")
-			if str(state.get("channel", "in_person")) == "phone":
+			if str(state.get("channel", "in_person")) != "in_person":
 				# By phone there are no hands: it goes through the account (D-048).
 				if int(state.get("player_bank", 0)) < amount:
 					return Result.failure("not_enough_bank",

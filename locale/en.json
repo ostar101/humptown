@@ -543,5 +543,15 @@
   "ui.map.visited": "been there",
   "ui.map.told": "heard of",
   "ui.map.unmapped": "You do not know this part of town yet.",
-  "ui.msg.place_new": "New on your map: {place}"
+  "ui.msg.place_new": "New on your map: {place}",
+  "ui.phone.call": "Call",
+  "ui.phone.call.no_phone": "You do not have a phone on you.",
+  "ui.phone.call.not_a_contact": "You do not have their number.",
+  "ui.phone.call.asleep": "It rings and rings. No answer.",
+  "ui.phone.call.quiet_hours": "It is too late to ring anyone.",
+  "ui.phone.call.busy": "They are at work and do not pick up.",
+  "ui.phone.call.already_talking": "You are already talking to someone.",
+  "dialogue.generic.call_answer.1": "Hello?",
+  "dialogue.generic.call_answer.2": "Yes? It's you.",
+  "dialogue.generic.call_answer.3": "Hi. What is it?"
 }

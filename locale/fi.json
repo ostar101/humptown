@@ -509,5 +509,15 @@
   "ui.map.visited": "käyty",
   "ui.map.told": "kuultu",
   "ui.map.unmapped": "Et tunne tätä kaupunginosaa vielä.",
-  "ui.msg.place_new": "Uutta kartallasi: {place}"
+  "ui.msg.place_new": "Uutta kartallasi: {place}",
+  "ui.phone.call": "Soita",
+  "ui.phone.call.no_phone": "Sinulla ei ole puhelinta mukana.",
+  "ui.phone.call.not_a_contact": "Sinulla ei ole heidän numeroaan.",
+  "ui.phone.call.asleep": "Puhelin soi ja soi. Ei vastausta.",
+  "ui.phone.call.quiet_hours": "On liian myöhä soittaa kenellekään.",
+  "ui.phone.call.busy": "He ovat töissä eivätkä vastaa.",
+  "ui.phone.call.already_talking": "Puhut jo jonkun kanssa.",
+  "dialogue.generic.call_answer.1": "Haloo?",
+  "dialogue.generic.call_answer.2": "Niin? Sinäkö se olet.",
+  "dialogue.generic.call_answer.3": "Moi. Mitä asiaa?"
 }

@@ -119,6 +119,26 @@ func start(npc_id: String, now_minute: int) -> Result:
 	return Result.success({"npc": npc_id, "text": text, "key": key})
 
 
+## Starts a phone call (D-050). Whether they would pick up is judged by
+## `PhoneRules.judge_call`, before this; here the call is made, and they
+## answer. The rest is a conversation like any other, over the phone:
+## `say()` and `end()` as usual. Returns what `start()` does.
+func start_call(npc_id: String, now_minute: int) -> Result:
+	if is_talking():
+		return Result.failure("already_talking")
+	var npc := _npcs.get_npc(npc_id) if _npcs != null else null
+	if npc == null or not npc.alive:
+		return Result.failure("nobody_there")
+	conversation = Conversation.new(npc_id, now_minute)
+	conversation.channel = "call"
+	conversation.place = npc.location
+	_build_word_maps(npc_id)
+	var key := DialogueLines.pick(npc_id, "call_answer", now_minute)
+	var text := Localization.t(key)
+	conversation.add(npc_id, text, "authored")
+	return Result.success({"npc": npc_id, "text": text, "key": key})
+
+
 ## The player says something; returns the reply:
 ## {"text", "topic", "subject", "ends": bool, "source": "model" | "authored",
 ## "fallback_reason": String, "intent": Dictionary, "happened": String,
@@ -141,7 +161,7 @@ func say(text: String) -> Result:
 	var talking_to := conversation
 	talking_to.add(PlayerState.ID, line, "player")
 	talking_to.exchanges += 1
-	return await _respond(talking_to, line, "in_person")
+	return await _respond(talking_to, line, talking_to.channel)
 
 
 ## A text the person has now read (D-046). The same road as a spoken line:
@@ -157,24 +177,26 @@ func text_exchange(npc_id: String, line: String) -> Result:
 	convo.place = npc.location
 	convo.add(PlayerState.ID, line, "player")
 	convo.exchanges = 1
-	var replied: Result = await _respond(convo, line, "phone", _word_maps(npc_id))
+	var replied: Result = await _respond(convo, line, "text", _word_maps(npc_id))
 	if replied.is_ok():
 		_settle(convo, FAMILIARITY_PER_TEXT)
 	return replied
 
 
 ## One line, however it was said: what was meant, what that may change, what
-## comes back. `channel` is "in_person" or "phone"; `words` are the people and
+## comes back. `channel` is "in_person", "call" or "text"; `words` are the people and
 ## places that can be mentioned (the conversation's own, when empty).
 func _respond(convo: Conversation, line: String, channel: String, words: Dictionary = {}) -> Result:
 	var npc_id := convo.npc_id
 	var npc := _npcs.get_npc(npc_id)
-	var in_person := channel == "in_person"
+	# In person or on a call there is a conversation open, and walking away from it
+	# ends things; a text is read on its own.
+	var live := channel != "text"
 
 	# 1. What the player meant.
 	var intent: Dictionary = await _interpret(line, npc_id,
 		words.get("people", _people_words), words.get("places", _place_words))
-	if in_person and convo != conversation:
+	if live and convo != conversation:
 		return Result.failure("not_talking")   # they walked away while it was thinking
 
 	# 2. What that is allowed to change — rules, not the model — and doing it.
@@ -193,12 +215,12 @@ func _respond(convo: Conversation, line: String, channel: String, words: Diction
 		ends = verdict["ends"]
 	else:
 		rejection = {"code": judged.code, "proposal": {
-			"kind": "say" if in_person else "text", "intent": intent["kind"], "npc": npc_id, "amount": intent.get("amount", 0),
+			"kind": {"in_person": "say", "call": "call", "text": "text"}[channel], "intent": intent["kind"], "npc": npc_id, "amount": intent.get("amount", 0),
 		}}
 	var kept := ConversationRules.memory_of(intent, judged, _subject_name(intent))
 	if not kept.is_empty():
 		convo.remember(str(kept["text"]), float(kept["weight"]))
-	Events.player_deed.emit("talked" if in_person else "texted",
+	Events.player_deed.emit({"in_person": "talked", "call": "called", "text": "texted"}[channel],
 		{"npc": npc_id, "kind": str(intent["kind"]), "subject": str(intent.get("subject", ""))})
 	var reply_args := _errand_args(npc_id) if topic in ["errand_asked", "errand_waiting"] else {}
 
@@ -209,7 +231,7 @@ func _respond(convo: Conversation, line: String, channel: String, words: Diction
 	if model.is_available():
 		var request := DialoguePrompt.build(prompt_context(npc_id, happened, convo, channel))
 		var response: LlmResponse = await model.send(request)
-		if in_person and convo != conversation:
+		if live and convo != conversation:
 			return Result.failure("not_talking")
 		if response.ok:
 			reply = DialoguePrompt.clean_reply(response.text, npc.name if npc != null else "")
@@ -223,7 +245,7 @@ func _respond(convo: Conversation, line: String, channel: String, words: Diction
 		reply = _authored_reply(npc_id, topic, intent, reply_args, convo.exchanges)
 
 	convo.add(npc_id, reply, source)
-	if in_person:
+	if live:
 		convo.over = ends
 	turn_log.append({
 		"npc": npc_id, "channel": channel, "line": line.left(60), "intent": intent["kind"], "read_by": intent["source"],

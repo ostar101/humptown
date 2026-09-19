@@ -3,9 +3,22 @@
 All notable changes to Humptown. Format loosely follows Keep a Changelog;
 versions are milestones rather than releases until there is something to release.
 
-## [Unreleased] — Milestone 5: the phone
+## [0.5.0] — 2026-09-19 — Milestone 5: the phone
+
+Your own phone, in a window of its own: messages, contacts, a calendar, a bank
+and a map, and calls. People text you when the simulation gives them a reason,
+held to quiet hours and a daily cap; you can write back, or ring them, in your
+own words, and it goes through the same rules as speech. A friend may suggest
+meeting; whether you kept it is read from where you stood. Money moves through
+your account; the map shows only what you have learned. Email and photos are
+deliberately not there yet (D-050). 705 tests, 9147 assertions.
 
 ### Decided
+- Calls: a call is a conversation down a phone — the same box, the same
+  rules, the same road as speech; whether they pick up (awake, not at work, a
+  civil hour) stands in for presence; a call is not standing in front of
+  someone, so it is the deed `called`. Email, photos and the criminal-contacts
+  view are deliberately deferred, with reasons (D-050)
 - The map: the phone's Map tab draws the district as the player knows it —
   places been to solid, places heard of outlined, numbered with a legend, the
   player on it and nobody else; a place is learned by going there, by being
@@ -31,6 +44,10 @@ versions are milestones rather than releases until there is something to release
   other proposal (D-045)
 
 ### Added
+- `PhoneRules.judge_call()`, `PhoneDirector.can_call()`, `Game.can_call()`,
+  `start_call()`, `DialogueDirector.start_call()`, `Conversation.channel`;
+  a Call button on the thread; `DialogueBox.open(npc, by_phone)`;
+  `test_calls` (12 tests)
 - `PhoneState` (`Game.phone`), `PhoneRules`, `PhoneDirector`
   (`Game.phone_director`), `PhoneText`, `PhoneWindow` (new `phone` input
   action); `Game.has_phone()`, `answer_message()`, `read_thread()`;

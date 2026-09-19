@@ -1676,3 +1676,46 @@ is the phone's map, a record of knowledge, not a minimap. No routes, no
 markers on other people, no "go here" (the design's rule for quests, §51, holds
 for the map too). Faded, unnumbered detail such as streets between places
 waits for M7's wider "progressive revelation" of Old Town and Eastfield.
+
+
+## D-050 — Calls; and what the phone deliberately does not have
+
+**Decision.** M5 step 5. A **call** is a conversation had down a phone. The
+thread has a Call button; pressing it asks whether they would pick up
+(`PhoneRules.judge_call`: `no_phone`, `not_a_contact`, `asleep`,
+`quiet_hours`, `busy` — at work nobody picks up — and `already_talking`);
+if so the phone is put away and the ordinary dialogue box opens, with the
+person answering "Hello?". There is no presence check, because there is no
+presence; whether they can pick up is what stands in for it. That makes a call
+the fast, costly alternative to a text: an answer *now*, but only from someone
+reachable, and it takes the minutes a conversation takes (paid when it ends,
+D-035) instead of costing nothing.
+
+**Same road as speech and texts.** Nothing is written a third time. The one
+`_respond()` behind `say()` and `text_exchange()` (D-046) now knows three
+channels: `in_person`, `call`, `text`. Cash cannot be handed over down any
+phone and goes through the account (D-048). The deed is `called` — a quest
+that wants you *in front of* someone is not satisfied by ringing them, nor is
+a text. The prompt tells a model it is a phone call and to speak, not write.
+Errand goods still change hands only in person. The conversation is passed in
+rather than held, so a call cannot be confused with the person in front of
+you (there is only one open at a time: `already_talking`).
+
+**A time-pause bug, avoided.** The phone stops time while open. Starting a
+call with it still open would record "paused" as the state to restore, and the
+clock would stay frozen after the call. So the phone is put away first — which
+hands time back — and only then does the call pause it again; a test drives
+this through the real world scene.
+
+**What the phone does not have, on purpose.**
+- **Email.** It would carry rent, official notices and the like, and nothing
+  in the game generates those yet. An inbox nothing writes to is a
+  half-working system. It belongs with whatever first needs it: a landlord and
+  bills, or the police (M6).
+- **Photos.** There is no camera and nothing to photograph or to do with a
+  photograph. Later, if evidence or memory-keeping earns it.
+- **The criminal-contacts view.** Waits for crime (M6), as the design says.
+- **Incoming calls,** and a call log. NPCs reach the player by text; ringing
+  the player would need a way to answer, and a missed call is a text.
+- Other things noted along the way and left: the player proposing a meeting;
+  someone cancelling one; missed-call texts.

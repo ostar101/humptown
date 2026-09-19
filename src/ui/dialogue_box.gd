@@ -56,10 +56,10 @@ func _input(event: InputEvent) -> void:
 		finish_reveal()
 
 
-## Starts talking to someone. Refused (and left closed) when Game says they
-## cannot be talked to; the caller shows why.
-func open(npc_id: String) -> Result:
-	var started := Game.start_conversation(npc_id)
+## Starts talking to someone — face to face, or as a phone call. Refused (and
+## left closed) when Game says they cannot be talked to; the caller shows why.
+func open(npc_id: String, by_phone: bool = false) -> Result:
+	var started := Game.start_call(npc_id) if by_phone else Game.start_conversation(npc_id)
 	if started.is_err():
 		return started
 	_npc_id = npc_id
