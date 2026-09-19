@@ -20,7 +20,9 @@ extends RefCounted
 ##   (how the person feels about the player), warmth (how much this
 ##   conversation has already warmed them), hiring ({"job", "name",
 ##   "problem"} — the job this person hires for, if any, and why the player
-##   could not have it), works_for_them (the player's job is theirs to give)
+##   could not have it), works_for_them (the player's job is theirs to give),
+##   errand ({"id", "what", "reward"} — something they could ask of the
+##   player today, D-044), errand_running (they are already waiting on one)
 ##
 ## A kind with no rule here — a model may say "persuade", "negotiate", "lie"
 ## — is talk: accepted, and it changes nothing until a system exists that it
@@ -31,10 +33,10 @@ extends RefCounted
 const KINDS: Array[String] = [
 	"greet", "farewell", "thanks", "about_self", "about_work", "about_person", "about_place",
 	"introduce_self", "compliment", "flirt", "apologize", "insult", "threaten", "give_money",
-	"ask_for_work", "quit_job",
+	"ask_for_work", "quit_job", "offer_help",
 ]
 ## Kinds a model may use that are understood but change nothing yet.
-const TALK_KINDS: Array[String] = ["persuade", "negotiate", "ask_favor", "offer_help", "lie", "small_talk"]
+const TALK_KINDS: Array[String] = ["persuade", "negotiate", "ask_favor", "lie", "small_talk"]
 
 ## The most cash a single gesture may hand over. Past this it is not a gift,
 ## it is a transaction, and transactions are M4.
@@ -137,6 +139,19 @@ static func judge(intent: Dictionary, state: Dictionary) -> Result:
 				effects.append({"do": "hire", "job": str(hiring["job"])})
 				happened = "They asked you for work, and you took them on as a %s, from the next shift." % hiring.get("name", "worker")
 				topic = "hired"
+		"offer_help":
+			var errand: Dictionary = state.get("errand", {})
+			if bool(state.get("errand_running", false)):
+				happened = "They offered to help, but they have not yet brought what you asked for."
+				topic = "errand_waiting"
+			elif not errand.is_empty():
+				effects.append({"do": "take_errand", "errand": str(errand["id"])})
+				happened = "They offered to help. You asked them to bring you %s, and you will pay them %d." % [
+					errand.get("what", "something"), int(errand.get("reward", 0))]
+				topic = "errand_asked"
+			else:
+				happened = "They offered to help. You do not need anything from them."
+				topic = "no_errand"
 		"quit_job":
 			if bool(state.get("works_for_them", false)):
 				effects.append({"do": "quit"})
@@ -189,6 +204,8 @@ static func memory_of(intent: Dictionary, judged: Result, subject_name: String =
 				else "asked you for work", "weight": 0.4 if verdict["topic"] == "hired" else 0.2}
 		"quit_job":
 			return {"text": "quit working for you", "weight": 0.5} if verdict["topic"] == "quit" else {}
+		"offer_help":
+			return {"text": "offered to help you", "weight": 0.2}
 	return {}
 
 

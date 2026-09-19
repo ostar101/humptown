@@ -46,6 +46,12 @@ signal player_collapsed(woke_at: String, bill: int)
 ## The player's job changed: hired ("" when they quit), or let go (D-042).
 signal job_changed(job_id: String)
 signal job_lost(job_id: String, reason: String)
+## Something the player did that Godot decided and carried out, for quests
+## to count (D-044): kind and what it was about.
+signal player_deed(kind: String, data: Dictionary)
+## A quest or errand moved: started, advanced, done, failed, errand_taken,
+## errand_done.
+signal quest_updated(quest_id: String, status: String)
 
 # --- Dialogue / LLM ---------------------------------------------------------
 signal dialogue_started(npc_id: String)

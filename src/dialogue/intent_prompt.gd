@@ -30,6 +30,7 @@ const KIND_HELP := {
 	"give_money": "actually handing them money now (put the number in amount)",
 	"ask_for_work": "asking them for a job",
 	"quit_job": "telling them they quit the job they do for them",
+	"offer_help": "offering to help them or do something for them",
 }
 
 static var _kind_shape := RegEx.create_from_string("^[a-z][a-z_]*$")

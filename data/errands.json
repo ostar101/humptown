@@ -1,0 +1,8 @@
+[
+  {"id": "errand_pirjo_groceries", "name_key": "errand.pirjo_groceries", "giver": "npc_pirjo",
+   "item": "item_sandwich", "count": 2, "reward": 16, "every_days": 3},
+  {"id": "errand_elias_cigarettes", "name_key": "errand.elias_cigarettes", "giver": "npc_elias",
+   "item": "item_cigarettes", "count": 1, "reward": 14, "every_days": 4},
+  {"id": "errand_tuomas_notebook", "name_key": "errand.tuomas_notebook", "giver": "npc_tuomas",
+   "item": "item_notebook", "count": 2, "reward": 12, "every_days": 7}
+]

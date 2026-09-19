@@ -20,6 +20,7 @@ extends Node2D
 @onready var _shop: ShopWindow = $Shop
 @onready var _bag: InventoryWindow = $Inventory
 @onready var _stash: StashWindow = $Stash
+@onready var _quests: QuestWindow = $Quests
 
 const NO_CELL := Vector2i(-99999, -99999)
 
@@ -47,6 +48,8 @@ func _ready() -> void:
 	_shop.closed.connect(_on_shop_closed)
 	_bag.closed.connect(_on_shop_closed)
 	_stash.closed.connect(_on_shop_closed)
+	_quests.closed.connect(_on_shop_closed)
+	Events.quest_updated.connect(_on_quest_updated)
 	Events.player_collapsed.connect(_on_player_collapsed)
 	Events.job_lost.connect(_on_job_lost)
 	show_current_area()
@@ -61,6 +64,7 @@ func _exit_tree() -> void:
 	if Events.player_collapsed.is_connected(_on_player_collapsed):
 		Events.player_collapsed.disconnect(_on_player_collapsed)
 		Events.job_lost.disconnect(_on_job_lost)
+		Events.quest_updated.disconnect(_on_quest_updated)
 
 
 ## (Re)builds the view for wherever the player is: the region, or the inside
@@ -125,6 +129,21 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("inventory") and _player.input_enabled:
 		get_viewport().set_input_as_handled()
 		open_inventory()
+	elif event.is_action_pressed("quests") and _player.input_enabled:
+		get_viewport().set_input_as_handled()
+		open_quests()
+
+
+## Opens the quest log (D-044); walking waits until it closes.
+func open_quests() -> void:
+	_quests.open()
+	if _quests.is_open():
+		_player.input_enabled = false
+		_hud.set_prompt("")
+
+
+func quest_window() -> QuestWindow:
+	return _quests
 
 
 ## Opens what the player carries (D-041); walking waits until it closes.
@@ -227,7 +246,7 @@ func hud() -> Hud:
 ## Works out the prompt only when the faced cell, or who is standing on it,
 ## changes — not every frame.
 func _refresh_prompt() -> void:
-	if _dialogue.is_open() or _shop.is_open() or _bag.is_open() or _stash.is_open():
+	if _dialogue.is_open() or _shop.is_open() or _bag.is_open() or _stash.is_open() or _quests.is_open():
 		return
 	var front := _player.current_cell() + _player.facing
 	var body := _npcs.body_at(front)
@@ -252,8 +271,14 @@ func _on_player_collapsed(woke_at: String, bill: int) -> void:
 		_bag.close()
 	if _stash.is_open():
 		_stash.close()
+	if _quests.is_open():
+		_quests.close()
 	show_current_area()
 	_hud.show_message(Localization.t("ui.msg.collapsed", {"place": InteractionText.place_name(woke_at), "bill": bill}))
+
+
+func _on_quest_updated(quest_id: String, status: String) -> void:
+	_hud.show_message(QuestText.update_message(quest_id, status))
 
 
 func _on_job_lost(job_id: String, _reason: String) -> void:

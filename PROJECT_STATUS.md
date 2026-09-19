@@ -1,9 +1,9 @@
 # Project status
 
 **Updated:** 2026-09-19
-**Milestone:** M4 — Making a living — **in progress** (steps 1–5 of 6 done). M3 complete in code (0.3.0).
-**Build:** green. 583 tests, 8434 assertions with the LimeZu art installed,
-~10 s. No leak warnings at exit.
+**Milestone:** M4 — Making a living — **complete in code (0.4.0)**. M3 complete in code (0.3.0).
+**Build:** green. 595 tests, 8511 assertions with the LimeZu art installed,
+~12 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
@@ -49,9 +49,16 @@ other providers' model lists were not revisited).
    own money is still not modelled (wages come from nowhere, gifts go
    nowhere) — later work, not M4.
 5. ~~**The home as a base**~~ — done (D-043). A cupboard in the flat.
-6. **Basic quests and their UI** (next). Authored threads (the backgrounds' story
-   hooks: the debt, the contact) plus NPC-need-driven jobs; a quest log that
-   states the goal without drawing the route.
+6. ~~**Basic quests and their UI**~~ — done (D-044). Four authored threads,
+   one per background (the debt, the old face, the warehouse, the cover
+   shift), plus errands people ask for when you offer to help; stages move on
+   *deeds* Godot carried out, never on what a model said; the log on J states
+   the goal and the days left, never the route.
+
+**Next: M5 — The phone** (ROADMAP.md). Before starting it, the user may want
+to play M4 through once: work a shift, buy and haggle, offer Pirjo help, pay
+Rauno back in parts. Nothing in M4 has been played by a person yet, only
+tested and screenshotted.
 
 **Known gaps worth a pass, none blocking:** interiors are still generic tiles
 (the flat you wake up in included — Modern Interiors has the furniture);
@@ -87,7 +94,7 @@ answered from the simulation (`NpcRegistry`), never from the bodies, which lag
 it (D-017).
 
 **Running it.** `godot --path .` boots to the title screen. In the world:
-WASD/arrows, Shift runs, E (or Space) interacts, I opens the bag, F3 the
+WASD/arrows, Shift runs, E (or Space) interacts, I opens the bag, J the quest log, F3 the
 developer overlay; your bed saves. Harbourside's
 two edge exits (top, x=42-45; right, y=31-34) refuse today since Old Town and
 Eastfield have no map yet (M7). `developer_mode: true` in
@@ -106,7 +113,8 @@ with `--at=x,y --zoom=0.26`. The front end at any step:
 writes the player's settings), and `--screen=world --talk=npc_ida
 "--say=Here's 50 euros." --overlay=1` for a conversation with the developer
 overlay open, and `--screen=world --shop=loc_corner_shop [--selling=1]` for a
-shop counter.
+shop counter, `--screen=world --quests=1` for the quest log (pair with
+`--background=bg_in_debt`).
 
 **Test runner.** A test fails if the engine logs an error during it (D-015),
 and tests may `await`. Physics tests speed time up 8x (D-016); restore
@@ -157,22 +165,23 @@ store (its own file) — D-036. A test that needs a model sets
 | Condition loop: `ItemRules`, `InventoryWindow` (I), collapse to the clinic, HUD status corner | done |
 | Work: `data/jobs.json`, `Employment`, `WorkRules` — shifts, wages, standing, hiring by conversation | done |
 | Home: the cupboard (`PlayerState.stash`, `StashWindow`) | done |
+| Quests: `QuestLog`, `QuestRules`, `QuestText`, `QuestWindow` (J), `data/quests.json`, `data/errands.json` | done |
 | Settings screen (language, provider, the player's key, models) | done |
 | `SaveManager` + `SaveMigrations` | done |
 | `Localization` — en complete, fi partial by design | done |
 | `SimViewer` debug screen | done |
 | Test suite + benchmark | done |
 
-**Not started, by design:** quests (M4), phone,
+**Not started, by design:** phone,
 combat, crime and police. See `ROADMAP.md`.
 
 ---
 
 ## Size
 
-- 95 source files in `src/`
-- 39 test suites
-- 10 authored NPCs, 22 locations, 3 regions (1 mapped), 6 interiors, 8 schedules, 4 backgrounds, 4 shops, 14 items, 4 jobs
+- 99 source files in `src/`
+- 40 test suites
+- 10 authored NPCs, 22 locations, 3 regions (1 mapped), 6 interiors, 8 schedules, 4 backgrounds, 4 shops, 14 items, 4 jobs, 4 quests, 3 errands
 
 ---
 

@@ -3,7 +3,11 @@
 All notable changes to Humptown. Format loosely follows Keep a Changelog;
 versions are milestones rather than releases until there is something to release.
 
-## [Unreleased] — Milestone 4: making a living
+## [0.4.0] — 2026-09-19 — Milestone 4: making a living
+
+You can earn a wage, buy and sell and haggle, eat, sleep and collapse, keep
+things in your own cupboard, and take on the threads your past left you with
+and the small jobs people need done. 595 tests, 8511 assertions.
 
 ### Decided
 - Shops: shelves and tills in data and saved state; buying and selling at
@@ -21,6 +25,9 @@ versions are milestones rather than releases until there is something to release
   for work and quitting are conversation intents the rules judge (D-042)
 - The home as a base: a cupboard in your flat keeps what you do not carry,
   saved with you (D-043)
+- Quests: threads and errands as data; stages move on deeds Godot already
+  carried out, never on what a model said; the log states the goal and never
+  the route (D-044)
 
 ### Added
 - `data/shops.json` (corner shop, Kaisla, the Anchor, the pawn shop),
@@ -42,6 +49,13 @@ versions are milestones rather than releases until there is something to release
 - `test_shops` (13 tests), `test_haggling` (8 tests), `test_condition`
   (11 tests), `test_work` (11 tests)
 - `ui_preview -- --screen=world --shop=location_id [--selling=1]`
+- `data/quests.json` (the debt, the old face, the warehouse, the cover
+  shift), `data/errands.json`; `QuestLog` (`Game.quests`), `QuestRules`,
+  `QuestText`, `QuestWindow` on J (new `quests` input action);
+  `Events.player_deed`, `Events.quest_updated`
+- Conversation kind `offer_help` asks for an errand; delivering it in
+  conversation pays; `test_quests` (12 tests)
+- `ui_preview -- --screen=world --quests=1`
 
 ### Changed
 - Hunger fills over ten waking hours instead of six
@@ -50,6 +64,7 @@ versions are milestones rather than releases until there is something to release
   with its usual stock
 - Save schema version 4: the job moves from `player.job_id` to its own
   `work` section
+- Save schema version 5: adds `quests`; a version 4 save gets an empty log
 
 ## [0.3.0] — 2026-09-19 — Milestone 3: conversation
 

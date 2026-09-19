@@ -26,6 +26,7 @@ var knowledge := KnowledgeNetwork.new()
 var memories := MemoryBook.new()
 var shops := ShopRegistry.new()
 var work := Employment.new()
+var quests := QuestLog.new()
 var reputation := Reputation.new()
 var player := PlayerState.new()
 var saves := SaveManager.new()
@@ -74,6 +75,8 @@ func _ready() -> void:
 	llm.name = "LlmClient"
 	add_child(llm)
 	Localization.setup()
+	Events.player_deed.connect(_on_player_deed)
+	Events.relationship_changed.connect(_on_relationship_changed)
 	Log.min_level = int(Settings.get_value("log_level", Log.Level.INFO)) as Log.Level
 	Log.info("game", "Game root ready")
 
@@ -113,11 +116,13 @@ func new_game(background_id: String = "", world_seed: int = 0) -> Result:
 	reputation.setup(knowledge, npcs, world)
 	player.setup(data)
 	shops.setup(data)
+	quests.setup(data)
 
 	_seed_relationships()
 	_apply_background(background_id)
 	_start_background_job(background_id)
-	dialogue.setup(npcs, world, player, relationships, knowledge, clock, data, LlmDialogueModel.new(llm), memories, work)
+	_start_background_quests(background_id)
+	dialogue.setup(npcs, world, player, relationships, knowledge, clock, data, LlmDialogueModel.new(llm), memories, work, quests)
 	_connect_simulation()
 
 	# Open the starting region and place the player.
@@ -193,6 +198,7 @@ func unload() -> void:
 	memories = MemoryBook.new()
 	shops = ShopRegistry.new()
 	work = Employment.new()
+	quests = QuestLog.new()
 	_shopping = ""
 	_shop_deals = 0
 	reputation = Reputation.new()
@@ -391,6 +397,7 @@ func _enter_building(proposal: Dictionary, location_id: String) -> Result:
 	player.interior = location_id
 	player.position = DistrictMap.cell_to_world(inside.entry_cell())
 	_set_player_location(location_id)
+	Events.player_deed.emit("entered", {"location": location_id})
 	return Result.success({"kind": "entered", "location": location_id})
 
 
@@ -510,6 +517,7 @@ func buy(item_id: String, quantity: int = 1) -> Result:
 	player.inventory.add(item_id, quantity)
 	shops.sold(shop_id, item_id, quantity, total)
 	_shop_deals += 1
+	Events.player_deed.emit("bought", {"item": item_id, "shop": shop_id, "quantity": quantity})
 	return Result.success({"kind": "bought", "item": item_id, "quantity": quantity, "total": total})
 
 
@@ -588,6 +596,78 @@ func close_shop() -> Result:
 	clock.paused = _time_paused_before_shopping
 	advance_time(maxi(deals, 1))
 	return Result.success({"deals": deals})
+
+
+# --- quests ----------------------------------------------------------------------
+
+func _start_background_quests(background_id: String) -> void:
+	for quest_id in data.ids("quests"):
+		var starts: Dictionary = data.get_entry("quests", quest_id).get("starts", {})
+		if str(starts.get("background", "")) == background_id and background_id != "":
+			if quests.start(str(quest_id), clock.day_index()):
+				Events.quest_updated.emit(str(quest_id), "started")
+
+
+## A deed, counted towards every active quest (D-044).
+func _on_player_deed(kind: String, deed: Dictionary) -> void:
+	if not is_running():
+		return
+	for moved in quests.on_deed(kind, deed, _feeling):
+		_quest_moved(moved)
+
+
+## Stages that wait on how someone feels are looked at again when a feeling
+## toward the player changes.
+func _on_relationship_changed(_from_id: String, to_id: String, _dimension: String, _delta: float) -> void:
+	if not is_running() or to_id != PlayerState.ID or quests.active.is_empty():
+		return
+	for moved in quests.recheck(_feeling):
+		_quest_moved(moved)
+
+
+func _quest_moved(moved: Dictionary) -> void:
+	var quest_id := str(moved["quest"])
+	if moved["status"] == "done":
+		_quest_ended(quest_id, "done")
+	else:
+		Events.quest_updated.emit(quest_id, str(moved["status"]))
+
+
+func _quest_ended(quest_id: String, status: String) -> void:
+	var quest := data.get_entry("quests", quest_id)
+	_apply_quest_effects(quest.get("on_done" if status == "done" else "on_fail", []))
+	Log.info("quests", "Quest ended", {"quest": quest_id, "status": status})
+	Events.quest_updated.emit(quest_id, status)
+
+
+## What finishing or failing a quest does, from its data: feelings, flags,
+## cash, items, and facts people witness.
+func _apply_quest_effects(effects: Array) -> void:
+	for raw in effects:
+		var effect: Dictionary = raw
+		match str(effect.get("do", "")):
+			"feel":
+				relationships.adjust(str(effect["npc"]), PlayerState.ID, str(effect["dimension"]),
+					float(effect["delta"]), clock.total_minutes)
+			"flag":
+				player.quest_flags[str(effect["flag"])] = bool(effect.get("value", true))
+			"cash":
+				player.wallet.add_cash(int(effect["amount"]), "quest")
+			"item":
+				player.inventory.add(str(effect["item"]), int(effect.get("count", 1)))
+			"fact":
+				var witnesses: Array[String] = []
+				if str(effect.get("witness", "")) != "":
+					witnesses.append(str(effect["witness"]))
+				knowledge.observe_event(PlayerState.ID, str(effect["predicate"]), clock.total_minutes, witnesses, {
+					"object": str(effect.get("object", "")), "visibility": str(effect.get("visibility", "social")),
+					"severity": float(effect.get("severity", 0.5)),
+				})
+
+
+func _feeling(npc_id: String, dimension: String) -> float:
+	var edge := relationships.peek(npc_id, PlayerState.ID)
+	return edge.get_dimension(dimension) if edge != null else 0.0
 
 
 # --- home ------------------------------------------------------------------------
@@ -697,6 +777,7 @@ func work_shift() -> Result:
 	if employer != "" and npcs.get_npc(employer) != null:
 		relationships.adjust(employer, PlayerState.ID, "familiarity", 0.02, clock.total_minutes)
 		relationships.adjust(PlayerState.ID, employer, "familiarity", 0.02, clock.total_minutes)
+	Events.player_deed.emit("worked_shift", {"job": str(job["id"])})
 	return Result.success({
 		"kind": "worked", "job": str(job["id"]), "pay": wage, "pay_to": str(job.get("pay_to", "cash")),
 		"late": shift["late"], "until": clock.format_time(),
@@ -709,6 +790,7 @@ func hire_player(job_id: String) -> Result:
 		return _reject({"kind": "hire", "job": job_id}, "no_such_job")
 	work.hire(job_id, clock.day_index())
 	Events.job_changed.emit(job_id)
+	Events.player_deed.emit("hired", {"job": job_id})
 	return Result.success(job_id)
 
 
@@ -903,6 +985,7 @@ func save_game(slot: String) -> Result:
 		"memories": memories.to_dict(),
 		"shops": shops.to_dict(),
 		"work": work.to_dict(),
+		"quests": quests.to_dict(),
 		"reputation": reputation.to_dict(),
 		"events": events_queue.to_dict(),
 		"player": player.to_dict(),
@@ -939,6 +1022,7 @@ func load_game(slot: String) -> Result:
 	memories.from_dict(sections.get("memories", {}))
 	shops.from_dict(sections.get("shops", {}))
 	work.from_dict(sections.get("work", {}))
+	quests.from_dict(sections.get("quests", {}))
 	reputation.from_dict(sections.get("reputation", {}))
 	events_queue.from_dict(sections.get("events", {}))
 	player.from_dict(sections.get("player", {}))
@@ -992,6 +1076,8 @@ func _on_day(day: int) -> void:
 	player.stats.heal_expired_injuries(clock.total_minutes)
 	shops.restock()
 	_count_missed_shifts(day)
+	for failed in quests.expire(day):
+		_quest_ended(failed, "failed")
 
 
 func _on_time_skipped(from_minutes: int, to_minutes: int) -> void:

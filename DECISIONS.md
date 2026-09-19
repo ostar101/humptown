@@ -1401,3 +1401,52 @@ the corner shop makes sense. Cooking, rent and furniture are later.
 the simulation benchmark was re-run: 567 / 796 / 1390 / 3188 µs per
 simulated minute for 50 / 200 / 1000 / 3000 people, below the last
 measurement on this machine (706 / 1084 / 2052 / 3980) — no regression.
+
+
+## D-044 — Quests: threads move on deeds, errands are asked for in conversation
+
+**Decision.** M4 step 6. A quest is data (`data/quests.json`): a giver, the
+background it starts for, an ordered list of stages, an optional deadline, and
+`on_done` / `on_fail` effects. A stage waits on a *deed* — something the
+player did that Godot already decided and carried out — announced as
+`Events.player_deed(kind, data)`: `worked_shift`, `gave_money`, `talked`,
+`hired`, `bought`, `entered`, `errand_done`. A stage may want the deed once,
+n times, or its amounts summing to a total; or it waits on how someone feels
+about the player (re-read when a relationship changes); or it is `open`, a
+thread that continues in a later milestone. `QuestRules` is pure and says when
+a stage is met; `QuestLog` (`Game.quests`) holds where each one stands;
+`Game` carries out what finishing or failing does (feelings, flags, cash,
+items, witnessed facts) — the same route as everything else, so a quest never
+writes the world by a side door.
+
+**The model never advances a quest.** It reads words into an intent; the rules
+judge it; Godot applies it; *that* is a deed; the deed is what counts. A
+quest cannot be finished by persuading a model that it was.
+
+**The four threads.** One per background: the debt (pay Rauno €300, in parts,
+in 14 days — miss it and he cools and it becomes a public fact that travels as
+gossip), the old face (Ida, until she is fond enough), the dockhand's
+warehouse (work a shift, ask Veikko about it, then open), the trained
+hand's cover shift (hired at the clinic, work it).
+
+**Errands are the NPC-need-driven jobs.** `data/errands.json`: someone needs
+an item and pays. Offering to help (`offer_help`, now a real conversation
+kind, English and Finnish phrases) gets one if that person has one to give
+today; they then wait on it; handing it over in conversation pays, and the
+same errand comes round again after `every_days`. No LLM decides whether an
+errand exists.
+
+**The log states the goal, never the route.** `J` opens `QuestWindow`: title,
+who it is from, the goal in a sentence, the count where it is a count, the
+days left. No markers, no map lines. Time stands still while it is open, like
+every other window. The HUD says a quest moved.
+
+**Saved.** A `quests` section (`active`, `finished`, `errands`,
+`errands_done`); schema v5. A v4 save gains an empty log rather than
+starting threads halfway through a life; from_dict drops quests the data no
+longer has.
+
+**Not done, on purpose.** Errands come only from people with an entry in
+`errands.json`; people's own money is still not modelled (D-042), so rewards
+come from nowhere. Quest text is English-first with the Finnish gap the
+project already tolerates.

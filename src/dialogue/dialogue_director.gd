@@ -41,6 +41,8 @@ var model: DialogueModel = DialogueModel.new()
 var memories: MemoryBook = MemoryBook.new()
 ## The player's job (D-042), for hiring and quitting in conversation.
 var work: Employment = null
+## The player's quests and errands (D-044).
+var quests: QuestLog = QuestLog.new()
 ## The last few lines and how each was handled, newest last, for the
 ## developer overlay: what was meant and by whose reading, what the rules
 ## did, and where the answer came from.
@@ -60,7 +62,8 @@ var _place_words: Dictionary = {}
 
 func setup(npcs: NpcRegistry, world: WorldState, player: PlayerState, relationships: RelationshipGraph,
 		knowledge: KnowledgeNetwork = null, clock: GameClock = null, data: DataRegistry = null,
-		p_model: DialogueModel = null, p_memories: MemoryBook = null, p_work: Employment = null) -> void:
+		p_model: DialogueModel = null, p_memories: MemoryBook = null, p_work: Employment = null,
+		p_quests: QuestLog = null) -> void:
 	_npcs = npcs
 	_world = world
 	_player = player
@@ -71,6 +74,9 @@ func setup(npcs: NpcRegistry, world: WorldState, player: PlayerState, relationsh
 	model = p_model if p_model != null else DialogueModel.new()
 	memories = p_memories if p_memories != null else MemoryBook.new()
 	work = p_work if p_work != null else Employment.new()
+	quests = p_quests if p_quests != null else QuestLog.new()
+	if p_quests == null and data != null:
+		quests.setup(data)
 	conversation = null
 
 
@@ -103,8 +109,10 @@ func start(npc_id: String, now_minute: int) -> Result:
 	conversation = Conversation.new(npc_id, now_minute)
 	conversation.place = _npcs.get_npc(npc_id).location
 	_build_word_maps(npc_id)
-	var key := DialogueLines.pick(npc_id, "greet", now_minute)
-	var text := Localization.t(key)
+	# Bringing what they asked for is noticed before anything is said (D-044).
+	var delivered := _deliver_errand(npc_id)
+	var key := DialogueLines.pick(npc_id, "errand_done" if not delivered.is_empty() else "greet", now_minute)
+	var text := Localization.t(key, delivered)
 	conversation.add(npc_id, text, "authored")
 	return Result.success({"npc": npc_id, "text": text, "key": key})
 
@@ -160,6 +168,8 @@ func say(text: String) -> Result:
 	var kept := ConversationRules.memory_of(intent, judged, _subject_name(intent))
 	if not kept.is_empty():
 		talking_to.remember(str(kept["text"]), float(kept["weight"]))
+	Events.player_deed.emit("talked", {"npc": npc_id, "kind": str(intent["kind"]), "subject": str(intent.get("subject", ""))})
+	var reply_args := _errand_args(npc_id) if topic in ["errand_asked", "errand_waiting"] else {}
 
 	# 3. What they say back, knowing what actually happened.
 	var reply := ""
@@ -179,7 +189,7 @@ func say(text: String) -> Result:
 	else:
 		fallback_reason = "offline"
 	if reply == "":
-		reply = _authored_reply(npc_id, topic, intent)
+		reply = _authored_reply(npc_id, topic, intent, reply_args)
 
 	talking_to.add(npc_id, reply, source)
 	talking_to.over = ends
@@ -345,7 +355,7 @@ func _where_problem(npc: Npc) -> String:
 	return ""
 
 
-func _authored_reply(npc_id: String, topic: String, intent: Dictionary) -> String:
+func _authored_reply(npc_id: String, topic: String, intent: Dictionary, extra: Dictionary = {}) -> String:
 	var turn := conversation.exchanges
 	var subject := str(intent.get("subject", ""))
 	var said := str(intent.get("person_said", ""))
@@ -361,10 +371,56 @@ func _authored_reply(npc_id: String, topic: String, intent: Dictionary) -> Strin
 			return Localization.t(DialogueLines.pick(npc_id, topic, turn),
 				{"place": place.display_name() if place != null else (said if said != "" else subject)})
 	var name := str(intent.get("name", ""))
-	return Localization.t(DialogueLines.pick(npc_id, topic, turn), {
+	var args := {
 		"name": name if name != "" else _player.display_name,
 		"amount": str(intent.get("amount", 0)),
-	})
+	}
+	args.merge(extra, true)
+	return Localization.t(DialogueLines.pick(npc_id, topic, turn), args)
+
+
+## The errand this person could ask for, or is waiting on, as words for a
+## line: {"count", "item", "reward"}.
+func _errand_args(npc_id: String) -> Dictionary:
+	var errand_id := quests.errand_running_for(npc_id)
+	if errand_id == "":
+		errand_id = quests.errand_offered_by(npc_id, _today())
+	var errand := quests.errand(errand_id)
+	if errand.is_empty():
+		return {}
+	var item := _data.get_entry("items", str(errand.get("item", ""))) if _data != null else {}
+	return {"count": int(errand.get("count", 1)), "item": Localization.t(str(item.get("name_key", ""))),
+		"reward": int(errand.get("reward", 0))}
+
+
+## If the player brings what this person asked for, it is handed over and
+## paid for (D-044). Returns the words for the thanks ({"reward", …}), or {}
+## when there is nothing to deliver.
+func _deliver_errand(npc_id: String) -> Dictionary:
+	var errand_id := quests.errand_running_for(npc_id)
+	if errand_id == "":
+		return {}
+	var errand := quests.errand(errand_id)
+	var item_id := str(errand.get("item", ""))
+	var count := int(errand.get("count", 1))
+	if _player.inventory.count_of(item_id) < count:
+		return {}
+	var args := _errand_args(npc_id)
+	_player.inventory.remove(item_id, count)
+	var reward := int(errand.get("reward", 0))
+	_player.wallet.add_cash(reward, "errand:" + errand_id)
+	var now := _clock.total_minutes if _clock != null else 0
+	_relationships.adjust(npc_id, PlayerState.ID, "affection", 0.05, now)
+	_relationships.adjust(npc_id, PlayerState.ID, "trust", 0.03, now)
+	quests.finish_errand(errand_id, _today())
+	conversation.remember("brought you what you asked for", 0.4)
+	Events.player_deed.emit("errand_done", {"errand": errand_id, "npc": npc_id})
+	Events.quest_updated.emit(errand_id, "errand_done")
+	return args
+
+
+func _today() -> int:
+	return _clock.day_index() if _clock != null else 0
 
 
 ## A person or place a line was about, as a name, for memory.
@@ -402,9 +458,23 @@ func _rules_state(npc_id: String) -> Dictionary:
 		"relationship": _feelings(npc_id),
 		"warmth": conversation.warmth,
 		"hiring": _hiring(npc_id),
+		"errand": _errand_offer(npc_id),
+		"errand_running": quests.errand_running_for(npc_id) != "",
 		"works_for_them": work.has_job() and _data != null \
 			and str(_data.get_entry("jobs", work.job_id).get("employer", "")) == npc_id,
 	}
+
+
+## An errand this person could ask of the player today, in the prompt's
+## words: {"id", "what", "reward"}, or {}.
+func _errand_offer(npc_id: String) -> Dictionary:
+	var errand_id := quests.errand_offered_by(npc_id, _today())
+	if errand_id == "":
+		return {}
+	var errand := quests.errand(errand_id)
+	var item := _data.get_entry("items", str(errand.get("item", "")))
+	return {"id": errand_id, "reward": int(errand.get("reward", 0)),
+		"what": "%d × %s" % [int(errand.get("count", 1)), DialoguePrompt.english(str(item.get("name_key", ""))).to_lower()]}
 
 
 ## The job this person hires for, if any: {"job", "name", "problem"}, where
@@ -444,6 +514,8 @@ func _apply(npc_id: String, effects: Array[Dictionary]) -> void:
 				var paid := _player.wallet.spend(int(effect["amount"]), "gift:" + npc_id, true)
 				if paid.is_err():
 					Log.warn("dialogue", "A judged payment failed", {"code": paid.code})
+				else:
+					Events.player_deed.emit("gave_money", {"npc": npc_id, "amount": int(effect["amount"])})
 			"remember":
 				if _knowledge != null:
 					var npc := _npcs.get_npc(npc_id)
@@ -455,8 +527,12 @@ func _apply(npc_id: String, effects: Array[Dictionary]) -> void:
 			"introduce_them":
 				_introduced(npc_id)
 			"hire":
-				work.hire(str(effect["job"]), _clock.day_index() if _clock != null else 0)
+				work.hire(str(effect["job"]), _today())
 				Events.job_changed.emit(str(effect["job"]))
+				Events.player_deed.emit("hired", {"job": str(effect["job"])})
+			"take_errand":
+				quests.take_errand(str(effect["errand"]), _today())
+				Events.quest_updated.emit(str(effect["errand"]), "errand_taken")
 			"quit":
 				work.leave()
 				Events.job_changed.emit("")

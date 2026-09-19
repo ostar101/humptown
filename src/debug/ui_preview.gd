@@ -6,7 +6,8 @@ extends Node
 ##
 ## `--screen` is `title`, `creation`, `opening`, `settings` or `world`
 ## (`--overlay=1` shows the developer overlay; `--shop=location_id
-## [--selling=1]` stands the player at that shop's counter). For
+## [--selling=1]` stands the player at that shop's counter; `--quests=1`
+## opens the quest log). For
 ## settings, `--provider=id` chooses a provider — in memory only, since a
 ## preview never writes the player's settings — and `--locale=fi` the language. For creation, `--step` is
 ## 1-3 and the screen is driven through its own public methods, exactly as its
@@ -62,6 +63,8 @@ func _ready() -> void:
 		_drive_talk(screen as WorldView, str(args["talk"]), str(args.get("say", "")))
 	if which == "world" and args.has("shop"):
 		_drive_shop(screen as WorldView, str(args["shop"]), args.has("selling"))
+	if which == "world" and args.has("quests"):
+		(screen as WorldView).open_quests()
 	if which == "world" and args.has("overlay"):
 		var overlay := screen.get_node_or_null("DevOverlay") as DevOverlay
 		if overlay != null:

@@ -14,13 +14,14 @@ extends RefCounted
 ##   4. Add a test with a fixture of the old shape.
 ## Never renumber or edit an existing step: someone's save depends on it.
 
-const CURRENT_VERSION := 4
+const CURRENT_VERSION := 5
 
 ## version -> name of the static function upgrading it to version + 1.
 const STEPS := {
 	1: "_v1_to_v2",
 	2: "_v2_to_v3",
 	3: "_v3_to_v4",
+	4: "_v4_to_v5",
 }
 
 
@@ -77,6 +78,8 @@ static func _apply_step(version: int, data: Dictionary) -> Dictionary:
 			return _v2_to_v3(data)
 		3:
 			return _v3_to_v4(data)
+		4:
+			return _v4_to_v5(data)
 		_:
 			return {}
 
@@ -123,4 +126,13 @@ static func _v3_to_v4(data: Dictionary) -> Dictionary:
 	player.erase("job_id")
 	if not data.has("work"):
 		data["work"] = {"job": str(V3_JOBS.get(occupation, "")), "standing": 1.0}
+	return data
+
+
+## v5 keeps quests (D-044). A v4 save has none under way: its story threads
+## did not exist yet, and starting them halfway through a life would be
+## stranger than their absence.
+static func _v4_to_v5(data: Dictionary) -> Dictionary:
+	if not data.has("quests"):
+		data["quests"] = {"active": {}, "finished": {}, "errands": {}, "errands_done": {}}
 	return data

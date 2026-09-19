@@ -1,0 +1,31 @@
+[
+  {"id": "q_old_face", "name_key": "quest.old_face", "giver": "npc_ida", "starts": {"background": "bg_returning"},
+   "stages": [
+     {"goal_key": "quest.old_face.1", "when": {"deed": "talked", "match": {"npc": "npc_ida"}}},
+     {"goal_key": "quest.old_face.2", "when": {"feeling": {"npc": "npc_ida", "dimension": "affection", "at_least": 0.25}}}
+   ],
+   "on_done": [{"do": "feel", "npc": "npc_ida", "dimension": "trust", "delta": 0.1}, {"do": "flag", "flag": "ida_glad"}]},
+
+  {"id": "q_warehouse_9", "name_key": "quest.warehouse_9", "giver": "npc_veikko", "starts": {"background": "bg_dockhand"},
+   "stages": [
+     {"goal_key": "quest.warehouse_9.1", "when": {"deed": "worked_shift", "match": {"job": "job_dockhand"}}},
+     {"goal_key": "quest.warehouse_9.2", "when": {"deed": "talked", "match": {"npc": "npc_veikko", "subject": "loc_warehouse_9"}}},
+     {"goal_key": "quest.warehouse_9.3", "when": {"open": true}}
+   ]},
+
+  {"id": "q_rauno_debt", "name_key": "quest.rauno_debt", "giver": "npc_rauno", "starts": {"background": "bg_in_debt"},
+   "deadline_days": 14,
+   "stages": [
+     {"goal_key": "quest.rauno_debt.1", "when": {"deed": "gave_money", "match": {"npc": "npc_rauno"}, "sum": "amount", "at_least": 300}}
+   ],
+   "on_done": [{"do": "feel", "npc": "npc_rauno", "dimension": "trust", "delta": 0.2}, {"do": "flag", "flag": "owes_money", "value": false}],
+   "on_fail": [{"do": "feel", "npc": "npc_rauno", "dimension": "affection", "delta": -0.3},
+               {"do": "fact", "predicate": "owes_money_to", "object": "npc_rauno", "witness": "npc_rauno", "visibility": "public", "severity": 0.7}]},
+
+  {"id": "q_cover_shift", "name_key": "quest.cover_shift", "giver": "npc_sanna", "starts": {"background": "bg_trained"},
+   "stages": [
+     {"goal_key": "quest.cover_shift.1", "when": {"deed": "hired", "match": {"job": "job_clinic_aide"}}},
+     {"goal_key": "quest.cover_shift.2", "when": {"deed": "worked_shift", "match": {"job": "job_clinic_aide"}}}
+   ],
+   "on_done": [{"do": "feel", "npc": "npc_sanna", "dimension": "trust", "delta": 0.15}, {"do": "feel", "npc": "npc_sanna", "dimension": "respect", "delta": 0.1}]}
+]

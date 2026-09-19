@@ -27,6 +27,8 @@ const REQUIRED_KEYS := {
 	"interiors": ["id", "interior_of", "width", "height", "door"],
 	"shops": ["id", "location", "stock"],
 	"jobs": ["id", "occupation", "workplace", "shift_start", "shift_end", "wage"],
+	"quests": ["id", "name_key", "stages"],
+	"errands": ["id", "name_key", "giver", "item", "count", "reward"],
 }
 
 var tables: Dictionary = {}          # table -> { id -> entry }
@@ -108,10 +110,48 @@ func validate_references() -> Array[String]:
 		problems.append_array(_shop_reference_problems(id, table("shops")[id]))
 	for id in table("jobs"):
 		problems.append_array(_job_reference_problems(id, table("jobs")[id]))
+	for id in table("quests"):
+		problems.append_array(_quest_reference_problems(id, table("quests")[id]))
+	for id in table("errands"):
+		var errand: Dictionary = table("errands")[id]
+		if not has_entry("npcs", str(errand.get("giver", ""))):
+			problems.append("errand '%s' references unknown giver '%s'" % [id, errand.get("giver")])
+		if not has_entry("items", str(errand.get("item", ""))):
+			problems.append("errand '%s' asks for unknown item '%s'" % [id, errand.get("item")])
 	for id in table("backgrounds"):
 		var occupation := str(table("backgrounds")[id].get("job", ""))
 		if occupation != "" and find_by("jobs", "occupation", occupation).is_empty():
 			problems.append("background '%s' gives occupation '%s', which no job offers" % [id, occupation])
+	return problems
+
+
+## A quest's giver, starting background and every person, place and job its
+## stages wait on must exist, and every deed it counts must be one the game
+## announces (D-044).
+func _quest_reference_problems(id: String, quest: Dictionary) -> Array[String]:
+	var problems: Array[String] = []
+	var giver := str(quest.get("giver", ""))
+	if giver != "" and not has_entry("npcs", giver):
+		problems.append("quest '%s' references unknown giver '%s'" % [id, giver])
+	var background := str((quest.get("starts", {}) as Dictionary).get("background", ""))
+	if background != "" and not has_entry("backgrounds", background):
+		problems.append("quest '%s' starts for unknown background '%s'" % [id, background])
+	for stage in quest.get("stages", []):
+		var when: Dictionary = (stage as Dictionary).get("when", {})
+		var deed := str(when.get("deed", ""))
+		if deed != "" and not QuestRules.DEEDS.has(deed):
+			problems.append("quest '%s' waits on unknown deed '%s'" % [id, deed])
+		var pattern: Dictionary = when.get("match", {})
+		for field in pattern:
+			var table_name: String = {"npc": "npcs", "job": "jobs", "location": "locations", "subject": "", "item": "items"}.get(field, "")
+			var value := str(pattern[field])
+			if field == "subject":
+				table_name = "npcs" if value.begins_with("npc_") else "locations"
+			if table_name != "" and not has_entry(table_name, value):
+				problems.append("quest '%s' waits on unknown %s '%s'" % [id, field, value])
+		var feeling: Dictionary = when.get("feeling", {})
+		if not feeling.is_empty() and not has_entry("npcs", str(feeling.get("npc", ""))):
+			problems.append("quest '%s' waits on how unknown '%s' feels" % [id, feeling.get("npc")])
 	return problems
 
 
