@@ -14,11 +14,11 @@ extends RefCounted
 ##   4. Add a test with a fixture of the old shape.
 ## Never renumber or edit an existing step: someone's save depends on it.
 
-const CURRENT_VERSION := 1
+const CURRENT_VERSION := 2
 
 ## version -> name of the static function upgrading it to version + 1.
 const STEPS := {
-	# 1: "_v1_to_v2",
+	1: "_v1_to_v2",
 }
 
 
@@ -69,7 +69,8 @@ static func can_load(version: int) -> bool:
 ## and an explicit list of versions is easier to audit anyway.
 static func _apply_step(version: int, data: Dictionary) -> Dictionary:
 	match version:
-		# 1: return _v1_to_v2(data)
+		1:
+			return _v1_to_v2(data)
 		_:
 			return {}
 
@@ -85,3 +86,11 @@ static func _apply_step(version: int, data: Dictionary) -> Dictionary:
 #         player["wallet"] = {"cash": int(player["money"]), "bank": 0, "ledger": []}
 #         player.erase("money")
 #     return data
+
+
+## v2 adds what people remember of the player (D-038). A v1 save has no
+## memories; everyone starts from an empty book, which is exactly the truth.
+static func _v1_to_v2(data: Dictionary) -> Dictionary:
+	if not data.has("memories"):
+		data["memories"] = {"books": {}}
+	return data

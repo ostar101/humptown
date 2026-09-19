@@ -23,6 +23,7 @@ var events_queue := WorldEventQueue.new()
 var clock: GameClock = null
 var relationships := RelationshipGraph.new()
 var knowledge := KnowledgeNetwork.new()
+var memories := MemoryBook.new()
 var reputation := Reputation.new()
 var player := PlayerState.new()
 var saves := SaveManager.new()
@@ -98,7 +99,7 @@ func new_game(background_id: String = "", world_seed: int = 0) -> Result:
 
 	_seed_relationships()
 	_apply_background(background_id)
-	dialogue.setup(npcs, world, player, relationships, knowledge, clock, data, LlmDialogueModel.new(llm))
+	dialogue.setup(npcs, world, player, relationships, knowledge, clock, data, LlmDialogueModel.new(llm), memories)
 	_connect_simulation()
 
 	# Open the starting region and place the player.
@@ -171,6 +172,7 @@ func unload() -> void:
 	events_queue.clear()
 	relationships = RelationshipGraph.new()
 	knowledge = KnowledgeNetwork.new()
+	memories = MemoryBook.new()
 	reputation = Reputation.new()
 	player = PlayerState.new()
 	world = WorldState.new()
@@ -442,7 +444,19 @@ func end_conversation() -> Result:
 	clock.paused = _time_paused_before_talk
 	advance_time(maxi(int(outcome["exchanges"]), 1))
 	Events.dialogue_ended.emit(str(outcome["npc"]))
+	var folded: Array[String] = outcome["folded"]
+	if not folded.is_empty() and dialogue.model.is_available():
+		_rewrite_memory(str(outcome["npc"]), folded, int(outcome["fold"]))
 	return ended
+
+
+## Lets the model rewrite a folded memory in the background; the game does
+## not wait for it, and the rule-written summary stands if it fails (D-038).
+func _rewrite_memory(npc_id: String, folded: Array[String], fold: int) -> void:
+	var talking_to := dialogue
+	var rewritten: Result = await talking_to.summarise(npc_id, folded, fold)
+	if rewritten.is_err():
+		Log.info("dialogue", "Memory kept as written by rule", {"npc": npc_id, "reason": rewritten.code})
 
 
 func _reject(proposal: Dictionary, code: String) -> Result:
@@ -462,6 +476,7 @@ func save_game(slot: String) -> Result:
 		"npcs": npcs.to_dict(),
 		"relationships": relationships.to_dict(),
 		"knowledge": knowledge.to_dict(),
+		"memories": memories.to_dict(),
 		"reputation": reputation.to_dict(),
 		"events": events_queue.to_dict(),
 		"player": player.to_dict(),
@@ -495,6 +510,7 @@ func load_game(slot: String) -> Result:
 	npcs.from_dict(sections.get("npcs", {}))
 	relationships.from_dict(sections.get("relationships", {}))
 	knowledge.from_dict(sections.get("knowledge", {}))
+	memories.from_dict(sections.get("memories", {}))
 	reputation.from_dict(sections.get("reputation", {}))
 	events_queue.from_dict(sections.get("events", {}))
 	player.from_dict(sections.get("player", {}))

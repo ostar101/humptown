@@ -123,6 +123,45 @@ static func judge(intent: Dictionary, state: Dictionary) -> Result:
 	return Result.success({"kind": kind, "topic": topic, "effects": effects, "happened": happened, "ends": ends})
 
 
+## What a judged line leaves in the person's memory: {"text", "weight"},
+## a phrase that follows "they", or {} for nothing worth keeping. Written from
+## the verdict, never from anything a model said (D-038). `subject_name` is
+## the person or place asked about, as a name.
+static func memory_of(intent: Dictionary, judged: Result, subject_name: String = "") -> Dictionary:
+	var kind := str(intent.get("kind", ""))
+	if judged.is_err():
+		if judged.code == "not_enough_cash":
+			return {"text": "offered you %d in cash they did not have" % int(intent.get("amount", 0)), "weight": 0.3}
+		return {}
+	var verdict: Dictionary = judged.value
+	match kind:
+		"about_self":
+			return {"text": "asked who you are", "weight": 0.1}
+		"about_work":
+			return {"text": "asked about your work", "weight": 0.1}
+		"about_person", "about_place":
+			return {"text": "asked you about %s" % subject_name, "weight": 0.2} if subject_name != "" else {}
+		"introduce_self":
+			var said_name := str(intent.get("name", "")).strip_edges()
+			var honest := false
+			for effect: Dictionary in verdict["effects"]:
+				honest = honest or effect["do"] == "introduce_player"
+			return {"text": "told you their name" if honest else "said their name was %s" % said_name, "weight": 0.3}
+		"compliment":
+			return {"text": "complimented you", "weight": 0.2}
+		"flirt":
+			return {"text": "flirted with you" if verdict["topic"] == "flirt_welcome" else "flirted with you, uninvited", "weight": 0.3}
+		"apologize":
+			return {"text": "apologised", "weight": 0.3 if not (verdict["effects"] as Array).is_empty() else 0.1}
+		"insult":
+			return {"text": "insulted you", "weight": 0.6}
+		"threaten":
+			return {"text": "threatened you", "weight": 0.9}
+		"give_money":
+			return {"text": "gave you %d in cash" % int(intent.get("amount", 0)), "weight": 0.5}
+	return {}
+
+
 ## The authored topic that answers a refusal.
 static func topic_for_refusal(code: String) -> String:
 	return "gift_no_cash" if code == "not_enough_cash" else "unknown"

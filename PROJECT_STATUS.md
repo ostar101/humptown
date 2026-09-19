@@ -1,74 +1,46 @@
 # Project status
 
 **Updated:** 2026-09-19
-**Milestone:** M3 — Conversation — **in progress** (steps 1–4 of 5 done). M2 complete (0.2.0).
-**Build:** green. 517 tests, 7976 assertions with the LimeZu art installed,
-~8.7 s. No leak warnings at exit any more.
+**Milestone:** M3 — Conversation — **complete in code** (0.3.0). Next: M4 — Making a living.
+**Build:** green. 534 tests, 8124 assertions with the LimeZu art installed,
+~9 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
 
 ## Next task
 
-**M2 is done.** Its "done when" holds: from the title screen you create a
-character (background, look, name, pronouns, a two-point attribute
-reshuffle), read a short opening written for that background, wake up in your
-own flat, walk Harbourside while its people keep their routines, and sleep in
-your bed to the next morning — which saves, so Continue on the title screen
-brings you back. Day and night tint the world and light the street lamps.
-The whole story is in DECISIONS.md D-019 to D-034 and the 0.2.0 changelog.
+**M3 is done in code (0.3.0, D-035 to D-038).** Face someone and press E:
+the simulation decides whether they can be talked to. Type anything. Each
+line is read into an intent — by the cheap model when the player has set one
+up, by words when not (`OfflineTopics`, `IntentPrompt`); `ConversationRules`
+judges it; Godot applies what it allows (cash gifts, introductions,
+compliments capped per conversation, apologies, flirting, insults and
+threats that become witnessed facts and travel as gossip); a refusal emits
+`action_rejected`; and the person answers — from the model, told what
+actually happened and only what they know (`DialoguePrompt`), or from
+authored lines. They remember it (`MemoryBook`, D-038): episodes written by
+rule, folded into a bounded summary that the cheap model may rewrite. F3
+shows the developer overlay. Title → Settings takes the player's own key.
 
-**M3 step 1 is done (D-035): talking to people, offline.** Face someone and
-press E: the simulation decides whether they can be talked to, the dialogue
-box opens, and typed lines are answered from authored lines by topic, in
-English and Finnish. Every story NPC has their own voice; people only know
-who they know; names are learned; time stands still while talking.
+**The one part of M3's "done when" not yet seen: a live model.** "You can
+talk to Ida in your own words, she answers in character knowing only what
+she should" is built and tested against a scripted model; "unplugging the
+network degrades the conversation without breaking the game" is tested.
+No real provider has ever been contacted — that needs the user's own key,
+entered by the user in Settings (`SecretStore`, D-006), **never by Claude**.
+When the user has done that, the first live conversation is worth watching
+with F3 open: request fields and response parsing are the likeliest
+first-contact surprises (Anthropic's were brought up to date in D-036; the
+other providers' model lists were not revisited).
 
-**M3 step 3 is done (D-036): the model behind the same `say()`.** When the
-player has chosen a provider and saved their own key in the new settings
-screen (title → Settings), people answer in their own words; the prompt is
-a pure function of what that person is, sees, feels and believes
-(`DialoguePrompt`, `DialogueDirector.prompt_context()`); a reply changes
-nothing by itself; any failure falls back to the authored line. The
-Anthropic provider speaks to current models (no `temperature` where it is
-rejected, `effort: low`, thinking headroom, `refusal` handled). **No real
-provider has been contacted yet** — the key is the player's to enter.
-
-**M3 step 4 is done (D-037): what the player meant is a proposal.** Each
-line is read — by the cheap model when there is one (`IntentPrompt`), by
-words when not (`OfflineTopics`) — into an intent; `ConversationRules`
-judges it (a pure function: effects or a refusal code); `DialogueDirector`
-applies the effects; refusals emit `action_rejected`; the reply is told what
-actually happened. Gifts of cash, compliments (capped per conversation),
-insults and threats (remembered as witnessed facts that travel as gossip),
-apologies, flirting, and introductions both ways all work offline too.
-
-**Next: M3 step 5 — NPC memory with summarisation, and the developer
-overlay.** The steps as planned:
-
-1. ~~**Dialogue UI**~~ — done (D-035). As designed: a real scene in the house theme: portrait upper left,
-   name, typewriter reveal, free text entry at the bottom, optional quick
-   replies that never replace typing. Opened by `interact` on a person —
-   which needs "who is standing on the faced cell" answered from the
-   simulation (D-017: never from the bodies).
-2. ~~Authored fallback lines first~~ — done with step 1.
-3. ~~**Prompt assembly**~~ — done (D-036), with the settings screen and the
-   Anthropic fixes.
-4. ~~**Intent interpretation on the cheap model; validation in Godot**~~ —
-   done (D-037).
-5. **NPC memory** with summarisation, and the developer overlay (tokens,
-   latency, cost, cache hits, selected memories, rejected proposals) (next).
-   A conversation's transcript is transient (`Conversation`); what a person
-   keeps of it should be a saved, bounded memory per NPC, summarised on the
-   cheap model when one is available and by rule when not, and fed to
-   `DialoguePrompt`'s `memories` key (empty today). Every `say()` result
-   already carries `intent`, `happened`, `rejection`, `source` and
-   `fallback_reason` for the overlay; `LlmClient.stats()` and `debug_log`
-   have the rest.
-
-A live provider needs the user's own API key, entered by the user in a
-settings screen (`SecretStore`, D-006) — never by Claude. Everything above
-is built and tested offline first.
+**Next: M4 — Making a living** (ROADMAP.md): jobs, shifts and wages; shops,
+buying and selling, haggling against the skill; the home as a base; meals
+and the condition loop; a basic quest system and its UI. Sequence it at the
+start of the milestone. Natural first step: shops — counters already say
+whether someone is serving (D-018), `Wallet` and `Inventory` exist, and
+people have no money of their own yet (a gift leaves the player and goes
+nowhere, D-037), so M4 is where NPC finances start.
 
 **Known gaps worth a pass, none blocking:** interiors are still generic tiles
 (the flat you wake up in included — Modern Interiors has the furniture);
@@ -119,7 +91,9 @@ with `--at=x,y --zoom=0.26`. The front end at any step:
 `res://scenes/debug/ui_preview.tscn -- --screen=title|creation|opening|world
 [--step=1-3] [--background=bg_dockhand] [--lines=n]`, and
 `--screen=settings [--provider=anthropic] [--locale=fi]` (sandboxed: never
-writes the player's settings).
+writes the player's settings), and `--screen=world --talk=npc_ida
+"--say=Here's 50 euros." --overlay=1` for a conversation with the developer
+overlay open.
 
 **Test runner.** A test fails if the engine logs an error during it (D-015),
 and tests may `await`. Physics tests speed time up 8x (D-016); restore
@@ -164,21 +138,23 @@ store (its own file) — D-036. A test that needs a model sets
 | `Stats` (attributes, condition, injuries), `Skills` (use-based, 1–99) | done |
 | LLM: router, budget, circuit breaker, 4 providers + offline, secret store | done; called by `say()` once the player configures it |
 | Dialogue: `DialogueDirector`, `OfflineTopics`, `DialogueLines`, `DialoguePrompt`, `DialogueModel`, `DialogueBox`, `IntentPrompt`, `ConversationRules` | done |
+| `MemoryBook` — what people remember of the player, bounded and summarised | done |
+| `DevOverlay` (F3) — model calls, cost, intents, rules, memories, rejections | done |
 | Settings screen (language, provider, the player's key, models) | done |
 | `SaveManager` + `SaveMigrations` | done |
 | `Localization` — en complete, fi partial by design | done |
 | `SimViewer` debug screen | done |
 | Test suite + benchmark | done |
 
-**Not started, by design:** NPC memory and the developer overlay (M3 step
-5), buying and selling, quests, phone, combat, crime and police. See `ROADMAP.md`.
+**Not started, by design:** buying and selling, jobs, quests (M4), phone,
+combat, crime and police. See `ROADMAP.md`.
 
 ---
 
 ## Size
 
-- 83 source files in `src/`
-- 32 test suites
+- 85 source files in `src/`
+- 34 test suites
 - 10 authored NPCs, 22 locations, 3 regions (1 mapped), 6 interiors, 8 schedules, 4 backgrounds
 
 ---

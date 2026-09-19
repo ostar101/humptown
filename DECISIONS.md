@@ -1159,3 +1159,65 @@ reading can run on the cheap model. The offline reading is still words, not
 understanding — "I won't give you 20 euros" reads as an offer offline — and
 the rules check the wallet whoever interpreted. One intent per line: "sorry,
 here's 20 euros" is a gift, not also an apology.
+
+## D-038 — People remember the player, by rule and in bounds; a developer overlay shows the machinery
+
+**Decision.** M3 step 5, which completes M3 in code. `MemoryBook`
+(`Game.memories`, saved as the new `memories` section, schema v2) keeps, per
+person, what they remember of their dealings with the player: each
+conversation as an episode — when, where, and what the player did, as
+phrases from the person's side ("they asked who you are, gave you 20 in
+cash, and complimented you"). A conversation with nothing notable is still
+remembered: "they stopped for a chat".
+
+**Memories are written from verdicts, never from replies.**
+`ConversationRules.memory_of()` turns each judged line into a phrase, and
+only judged things are kept: what a model *said* — a promised discount, an
+invented brother — is never a memory, so no hallucination can become
+something a person remembers. This is D-037's rule applied to time.
+
+**Hierarchical and bounded.** The last four episodes are kept whole; when
+there are more than six, the oldest are folded into a summary at once, by
+rule — each becomes a timeless sentence, and while the summary is longer
+than 480 characters the least weighty sentence goes (a threat outlasts
+small talk). When a model is available the game then asks the cheap model,
+in the background and without waiting, to rewrite that summary in at most
+three sentences from what the rules recorded; the rewrite is accepted only
+if it answers the latest fold and contains no ids, and the rule summary
+stands if it fails. A long game grows neither a prompt nor a save without
+limit.
+
+**Recalled into the prompt with time.** The summary, then the latest
+episodes with how long ago they were ("Yesterday, at Lahtinen's Corner
+Shop: …"), fill the prompt's "What you remember of them" section (D-036).
+Relative time is rendered when the prompt is built, so a memory ages
+without being rewritten.
+
+**Separate from knowledge on purpose.** `KnowledgeNetwork` holds facts —
+what someone believes happened, which can travel as gossip and distort.
+The memory book holds how it went between two people, which does not
+travel. An insult is both: a witnessed fact that spreads, and a memory the
+insulted person keeps.
+
+**The developer overlay.** F3 in the world, in debug builds or with
+`developer_mode` on, shows: provider, models, availability, requests
+against the daily cap, tokens, estimated cost, cache hits, the circuit
+breaker; the last model calls by purpose with latency, tokens and errors;
+the last lines of conversation with who read the intent (model or words,
+and why not the model), what the rules did (or refused), what happened,
+and where the reply came from; the memories and beliefs selected for the
+person being talked to; and recent rejected proposals. It reads and never
+writes, and refreshes only while shown. Debug text is English.
+
+**Price estimates updated.** The overlay's cost uses `LlmBudget`'s table,
+now matching current models specifically before their families (Opus 4.5+
+and 5 at $5/$25 per million tokens, Fable at $10/$50, Haiku 4.5 at $1/$5).
+Estimates, not a bill.
+
+**Costs accepted.** Episodes are English phrases stored in the save, so a
+memory is not re-rendered if the game's language changes — it feeds the
+model's prompt, which is English anyway (D-036), and the player never reads
+it outside the developer overlay. People remember only the player so far;
+memories of each other are not needed until NPCs converse. The memory
+rewrite is fire-and-forget: a save taken in the second it is in flight keeps
+the rule summary, which is correct, just plainer.

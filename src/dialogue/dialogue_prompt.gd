@@ -16,7 +16,7 @@ extends RefCounted
 ##   relationship {trust, affection, respect, fear, familiarity}
 ##   people       ["Ida Lahtinen (friend)", ...]
 ##   knows        ["sentence", ...]   — what they believe about the player
-##   memories     ["sentence", ...]   — M3 step 4
+##   memories     ["sentence", ...]   — what they remember of the player (D-038)
 ##   history      [{"speaker": "player" | "npc", "text": String}, ...]
 ##   happened     what the player's last line actually did, as the rules
 ##                judged it (D-037) — "" when it did nothing worth saying
@@ -88,7 +88,7 @@ static func system_text(context: Dictionary, opening: Array[String] = []) -> Str
 	parts.append("What you know about this person:" + ("\n- " + "\n- ".join(knows) if not knows.is_empty() else " nothing beyond what you can see."))
 	var memories: Array = context.get("memories", [])
 	if not memories.is_empty():
-		parts.append("What you remember:\n- " + "\n- ".join(memories))
+		parts.append("What you remember of them:\n- " + "\n- ".join(memories))
 	if not opening.is_empty():
 		parts.append("You have just said: \"%s\"" % " ".join(opening))
 	var happened := str(context.get("happened", ""))
@@ -105,6 +105,22 @@ static func system_text(context: Dictionary, opening: Array[String] = []) -> Str
 - Answer in the language the other person writes in. The game is being played in %s.
 - Never say you are an AI, a model or a character in a game.""" % [name, language])
 	return "\n\n".join(parts)
+
+
+## Asks the cheap model to rewrite what someone remembers of the player into
+## a short summary, from what the rules recorded and nothing else (D-038).
+static func summary_request(npc_name: String, summary: String, folded: Array[String]) -> LlmRequest:
+	var system := """You keep the memory of %s, a character in a life-simulation game. Below is what %s remembers of one person. Rewrite it as at most three short sentences, from %s's point of view: call %s "you" and the person "they". Keep what matters most — money, threats, insults, kindness, names — and drop small talk. Use only what is written; never add anything. Answer with the sentences only.""" % [npc_name, npc_name, npc_name, npc_name]
+	var lines: Array[String] = []
+	if summary != "":
+		lines.append(summary)
+	lines.append_array(folded)
+	var request := LlmRequest.create(LlmRequest.Purpose.SUMMARISE, system,
+		[{"role": "user", "content": "\n".join(lines)}])
+	request.max_output_tokens = 200
+	request.temperature = 0.2
+	request.meta = {"npc": npc_name}
+	return request
 
 
 ## Plain words for how someone feels about the player, from the relationship

@@ -3,7 +3,16 @@
 All notable changes to Humptown. Format loosely follows Keep a Changelog;
 versions are milestones rather than releases until there is something to release.
 
-## [Unreleased] — Milestone 3: conversation
+## [0.3.0] — 2026-09-19 — Milestone 3: conversation
+
+You can walk up to anyone and talk to them in your own words. With no model
+they answer from authored lines by topic, in English and Finnish; with the
+player's own key and a provider chosen in Settings, they answer in their own
+words, knowing only what they should. What you say can do things — give
+money, introduce yourself, compliment, insult, threaten — but only what the
+rules allow, and they remember it. 534 tests, 8124 assertions.
+**No live provider has been contacted yet**: the key is the player's to
+enter, so first contact happens on the player's machine.
 
 ### Decided
 - M3 step 1: talking to people works offline first. Interact while facing
@@ -20,6 +29,9 @@ versions are milestones rather than releases until there is something to release
   reads the intent, `ConversationRules` judges it, Godot carries it out, a
   refusal emits `action_rejected`, and the reply is told what actually
   happened (D-037)
+- People remember the player: episodes written by rule from what the rules
+  judged, folded into a bounded summary that the cheap model may rewrite,
+  recalled into prompts with how long ago; a developer overlay on F3 (D-038)
 
 ### Added
 - `DialogueDirector` (`Game.dialogue`), `Conversation`, `OfflineTopics`,
@@ -45,6 +57,11 @@ versions are milestones rather than releases until there is something to release
   English and Finnish
 - `test_conversation_rules` (13 tests), `test_intent` (15 tests); the
   scripted test model is shared (`tests/scripted_dialogue_model.gd`)
+- `MemoryBook` (`Game.memories`), saved as the `memories` section;
+  `ConversationRules.memory_of()`, `DialogueDirector.summarise()`,
+  `DialoguePrompt.summary_request()`, `DialogueDirector.turn_log`
+- `DevOverlay` in the world scene; `ui_preview -- --screen=world --overlay=1`
+- `test_memory` (13 tests), `test_dev_overlay` (4 tests)
 
 ### Changed
 - `say()` and `Game.say_to_npc()` are coroutines; the dialogue box waits with
@@ -54,6 +71,9 @@ versions are milestones rather than releases until there is something to release
   where supported, thinking headroom on models that think by default; a
   `refusal` stop reason is the `refused` failure
 - The test runner starts from default settings and never writes them
+- Save schema version 2: adds `memories`; version 1 saves migrate to an
+  empty book
+- `LlmBudget` price estimates match current models before their families
 
 ### Fixed
 - The ObjectDB leak reported at the end of every test run: lambdas in

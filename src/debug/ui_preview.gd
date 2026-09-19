@@ -4,7 +4,8 @@ extends Node
 ##     godot --path . res://scenes/debug/ui_preview.tscn -- --screen=creation \
 ##         --step=2 --background=bg_dockhand --name=Aino --screenshot=user://c.png
 ##
-## `--screen` is `title`, `creation`, `opening`, `settings` or `world`. For
+## `--screen` is `title`, `creation`, `opening`, `settings` or `world`
+## (`--overlay=1` shows the developer overlay). For
 ## settings, `--provider=id` chooses a provider — in memory only, since a
 ## preview never writes the player's settings — and `--locale=fi` the language. For creation, `--step` is
 ## 1-3 and the screen is driven through its own public methods, exactly as its
@@ -58,6 +59,10 @@ func _ready() -> void:
 		(screen as SettingsScreen).choose_provider(str(args["provider"]))
 	elif which == "world" and args.has("talk"):
 		_drive_talk(screen as WorldView, str(args["talk"]), str(args.get("say", "")))
+	if which == "world" and args.has("overlay"):
+		var overlay := screen.get_node_or_null("DevOverlay") as DevOverlay
+		if overlay != null:
+			overlay.toggle()
 	DevCapture.maybe_capture(self)
 
 

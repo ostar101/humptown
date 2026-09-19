@@ -37,6 +37,13 @@ var conversation: Conversation = null
 ## (`LlmDialogueModel`), a scripted stand-in in tests, and the base class —
 ## which answers nothing — for authored lines only.
 var model: DialogueModel = DialogueModel.new()
+## What people remember of the player (D-038). The game's own book in play.
+var memories: MemoryBook = MemoryBook.new()
+## The last few lines and how each was handled, newest last, for the
+## developer overlay: what was meant and by whose reading, what the rules
+## did, and where the answer came from.
+var turn_log: Array[Dictionary] = []
+const TURN_LOG_LIMIT := 8
 
 var _npcs: NpcRegistry = null
 var _world: WorldState = null
@@ -51,7 +58,7 @@ var _place_words: Dictionary = {}
 
 func setup(npcs: NpcRegistry, world: WorldState, player: PlayerState, relationships: RelationshipGraph,
 		knowledge: KnowledgeNetwork = null, clock: GameClock = null, data: DataRegistry = null,
-		p_model: DialogueModel = null) -> void:
+		p_model: DialogueModel = null, p_memories: MemoryBook = null) -> void:
 	_npcs = npcs
 	_world = world
 	_player = player
@@ -60,6 +67,7 @@ func setup(npcs: NpcRegistry, world: WorldState, player: PlayerState, relationsh
 	_clock = clock
 	_data = data
 	model = p_model if p_model != null else DialogueModel.new()
+	memories = p_memories if p_memories != null else MemoryBook.new()
 	conversation = null
 
 
@@ -90,6 +98,7 @@ func start(npc_id: String, now_minute: int) -> Result:
 	if allowed.is_err():
 		return allowed
 	conversation = Conversation.new(npc_id, now_minute)
+	conversation.place = _npcs.get_npc(npc_id).location
 	_build_word_maps(npc_id)
 	var key := DialogueLines.pick(npc_id, "greet", now_minute)
 	var text := Localization.t(key)
@@ -145,6 +154,9 @@ func say(text: String) -> Result:
 		rejection = {"code": judged.code, "proposal": {
 			"kind": "say", "intent": intent["kind"], "npc": npc_id, "amount": intent.get("amount", 0),
 		}}
+	var kept := ConversationRules.memory_of(intent, judged, _subject_name(intent))
+	if not kept.is_empty():
+		talking_to.remember(str(kept["text"]), float(kept["weight"]))
 
 	# 3. What they say back, knowing what actually happened.
 	var reply := ""
@@ -168,6 +180,13 @@ func say(text: String) -> Result:
 
 	talking_to.add(npc_id, reply, source)
 	talking_to.over = ends
+	turn_log.append({
+		"npc": npc_id, "line": line.left(60), "intent": intent["kind"], "read_by": intent["source"],
+		"read_fallback": intent.get("fallback_reason", ""), "happened": happened,
+		"rejected": str(rejection.get("code", "")), "reply_by": source, "reply_fallback": fallback_reason,
+	})
+	while turn_log.size() > TURN_LOG_LIMIT:
+		turn_log.remove_at(0)
 	return Result.success({
 		"text": reply, "topic": topic, "subject": str(intent.get("subject", "")), "ends": ends,
 		"source": source, "fallback_reason": fallback_reason,
@@ -241,25 +260,49 @@ func prompt_context(npc_id: String, happened: String = "") -> Dictionary:
 		"relationship": _feelings(npc_id),
 		"people": _people_they_know(npc_id),
 		"knows": _what_they_believe_about_the_player(npc_id),
-		"memories": [],
+		"memories": memories.recall(npc_id, _clock.total_minutes if _clock != null else 0, _place_name),
 		"history": history,
 		"happened": happened,
 		"language": Localization.current_locale(),
 	}
 
 
-## Ends the conversation. Returns {"npc": id, "exchanges": int} so the caller
-## can pay the time it took. Talking at all makes two people a little more
-## familiar, in both directions.
+## Ends the conversation. Returns {"npc": id, "exchanges": int, "folded":
+## [sentences], "fold": int} so the caller can pay the time it took and, when
+## older memories were folded, have a model rewrite the summary. Talking at
+## all makes two people a little more familiar, in both directions, and
+## leaves the person a memory of it (D-038).
 func end() -> Result:
 	if not is_talking():
 		return Result.failure("not_talking")
 	var ended := conversation
 	conversation = null
+	var folded: Array[String] = []
 	if ended.exchanges > 0:
 		_relationships.adjust(PlayerState.ID, ended.npc_id, "familiarity", FAMILIARITY_PER_CONVERSATION)
 		_relationships.adjust(ended.npc_id, PlayerState.ID, "familiarity", FAMILIARITY_PER_CONVERSATION)
-	return Result.success({"npc": ended.npc_id, "exchanges": ended.exchanges})
+		memories.add_episode(ended.npc_id, ended.started_minute, ended.place, ended.things, ended.weight)
+		folded = memories.fold_by_rule(ended.npc_id, _place_name)
+	return Result.success({
+		"npc": ended.npc_id, "exchanges": ended.exchanges,
+		"folded": folded, "fold": memories.folds(ended.npc_id),
+	})
+
+
+## Has the model rewrite what someone remembers of the player, after older
+## memories were folded by rule. Await it; the rule summary stands if this
+## fails, and a rewrite that arrives after a newer fold is dropped.
+func summarise(npc_id: String, folded: Array[String], for_fold: int) -> Result:
+	if not model.is_available():
+		return Result.failure("offline")
+	var npc := _npcs.get_npc(npc_id)
+	if npc == null:
+		return Result.failure("nobody_there")
+	var request := DialoguePrompt.summary_request(npc.name, memories.summary(npc_id), folded)
+	var response: LlmResponse = await model.send(request)
+	if not response.ok:
+		return Result.failure(response.error_code)
+	return memories.set_summary(npc_id, DialoguePrompt.clean_reply(response.text, npc.name), for_fold)
 
 
 ## Whether the player knows this person's name: a contact from their
@@ -319,6 +362,21 @@ func _authored_reply(npc_id: String, topic: String, intent: Dictionary) -> Strin
 		"name": name if name != "" else _player.display_name,
 		"amount": str(intent.get("amount", 0)),
 	})
+
+
+## A person or place a line was about, as a name, for memory.
+func _subject_name(intent: Dictionary) -> String:
+	var subject := str(intent.get("subject", ""))
+	if subject.begins_with("npc_") and _npcs.get_npc(subject) != null:
+		return _npcs.get_npc(subject).name
+	if subject.begins_with("loc_") and _world.get_location(subject) != null:
+		return _place_name(subject)
+	return str(intent.get("person_said", ""))
+
+
+func _place_name(location_id: String) -> String:
+	var place := _world.get_location(location_id) if _world != null else null
+	return DialoguePrompt.english(place.name_key) if place != null else "somewhere in Harbourside"
 
 
 ## How the person feels about the player, dimension by dimension; empty for

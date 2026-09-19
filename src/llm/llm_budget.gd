@@ -40,11 +40,21 @@ var _last_call_at: float = -999.0
 ## Approximate USD per million tokens, for the developer cost readout only.
 ## Wrong numbers here cost nothing but a misleading debug line; they are a
 ## rough guide, not billing.
+## Matched by substring, first match wins — so the specific names come
+## before the families they belong to. Estimates for the developer overlay,
+## not a bill.
 const PRICE_PER_MTOK := {
 	"default": {"in": 1.0, "out": 4.0},
+	"opus-5": {"in": 5.0, "out": 25.0},
+	"opus-4-8": {"in": 5.0, "out": 25.0},
+	"opus-4-7": {"in": 5.0, "out": 25.0},
+	"opus-4-6": {"in": 5.0, "out": 25.0},
+	"opus-4-5": {"in": 5.0, "out": 25.0},
+	"fable": {"in": 10.0, "out": 50.0},
+	"haiku-4-5": {"in": 1.0, "out": 5.0},
+	"flash": {"in": 0.1, "out": 0.4},
 	"mini": {"in": 0.15, "out": 0.6},
 	"haiku": {"in": 0.8, "out": 4.0},
-	"flash": {"in": 0.1, "out": 0.4},
 	"sonnet": {"in": 3.0, "out": 15.0},
 	"opus": {"in": 15.0, "out": 75.0},
 	"gpt-4o": {"in": 2.5, "out": 10.0},
