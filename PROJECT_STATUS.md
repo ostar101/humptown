@@ -1,8 +1,8 @@
 # Project status
 
 **Updated:** 2026-09-19
-**Milestone:** M5 — The phone — **in progress** (steps 1–2 of 5 done). M4 complete in code (0.4.0).
-**Build:** green. 639 tests, 8749 assertions with the LimeZu art installed,
+**Milestone:** M5 — The phone — **in progress** (steps 1–3 of 5 done). M4 complete in code (0.4.0).
+**Build:** green. 664 tests, 8914 assertions with the LimeZu art installed,
 ~12 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
@@ -69,10 +69,12 @@ Pirjo help, pay Rauno back in parts, open the phone on P.
    same intent, rules and effects as speech (`DialogueDirector._respond`);
    it is read when the person gets to it (awake, 07:00–22:00, sooner if idle)
    and answered as a text; cash cannot be sent by text.
-3. **Calendar and meeting requests** (next). Agreed meetings become scheduled events
-   (`WorldEventQueue`) that move an NPC's schedule (`NpcSchedule.Override`);
-   missing one is a deed with consequences.
-4. **Map and banking.** The map shows what the player has learned, not the
+3. ~~**Calendar and meeting requests**~~ — done (D-047). A fond friend
+   suggests meeting tomorrow at an open public place; accepting schedules a
+   reminder, the person heading over (`NpcSchedule.Override`) and the moment it
+   is settled; kept or missed is read from where people stand. Not yet: the
+   player proposing one, someone cancelling.
+4. **Map and banking** (next). The map shows what the player has learned, not the
    whole town (progressive revelation, M7); banking is the wallet's
    transaction log.
 5. **Calls, email, photos** — only what earns its place. The criminal-contacts
@@ -185,6 +187,7 @@ store (its own file) — D-036. A test that needs a model sets
 | Home: the cupboard (`PlayerState.stash`, `StashWindow`) | done |
 | Quests: `QuestLog`, `QuestRules`, `QuestText`, `QuestWindow` (J), `data/quests.json`, `data/errands.json` | done |
 | Phone: `PhoneState`, `PhoneRules`, `PhoneDirector`, `PhoneText`, `PhoneWindow` (P) — contacts, texts both ways, errands by text | done (core, texting) |
+| Meetings: `Calendar`, `MeetingRules`, `MeetingDirector`, the phone's Calendar tab | done |
 | Settings screen (language, provider, the player's key, models) | done |
 | `SaveManager` + `SaveMigrations` | done |
 | `Localization` — en complete, fi partial by design | done |
@@ -192,14 +195,14 @@ store (its own file) — D-036. A test that needs a model sets
 | Test suite + benchmark | done |
 
 **Not started, by design:** calls,
-calendar, map, banking, email, photos (rest of M5); combat, crime and police. See `ROADMAP.md`.
+map, banking, email, photos (rest of M5); combat, crime and police. See `ROADMAP.md`.
 
 ---
 
 ## Size
 
-- 104 source files in `src/`
-- 42 test suites
+- 107 source files in `src/`
+- 43 test suites
 - 10 authored NPCs, 22 locations, 3 regions (1 mapped), 6 interiors, 8 schedules, 4 backgrounds, 4 shops, 14 items, 4 jobs, 4 quests, 3 errands
 
 ---
@@ -223,6 +226,12 @@ Re-measured 2026-09-18 on the user's Windows machine after M2 steps 1 and 3:
 numbers there run ~30-45% above the table (different hardware), and the
 pre-change commit measured the same on that machine both times, so no
 regression. Bodies and pathing are presentation-side and not in the benchmark.
+
+Re-measured after D-047 (`NpcRegistry.scheduled_location_of`, off the
+per-minute path), back to back with the previous commit on the same Windows
+machine, which was ~12% slower than in the D-043 session: 635–642 / 853–883 /
+1586–1600 / 3450–3529 µs per minute for 50 / 200 / 1000 / 3000 people, against
+641–664 / 874–916 / 1604–1616 / 3577 for the commit before — no regression.
 
 Re-measured after D-043 (a new map object kind) on the Windows machine:
 567 / 796 / 1390 / 3188 µs per minute for 50 / 200 / 1000 / 3000 people —

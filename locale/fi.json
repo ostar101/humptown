@@ -467,5 +467,22 @@
   "ui.phone.refused.no_phone": "Sinulla ei ole puhelinta mukana.",
   "ui.phone.refused.not_a_contact": "Sinulla ei ole heidän numeroaan.",
   "dialogue.generic.not_in_person.1": "Ei puhelimessa. Jos tarkoitat sitä, anna se kasvokkain.",
-  "dialogue.generic.not_in_person.2": "Käteistä ei voi lähettää viestillä. Tule käymään."
+  "dialogue.generic.not_in_person.2": "Käteistä ei voi lähettää viestillä. Tule käymään.",
+  "phone.msg.meeting_request": "Tavataanko paikassa {place}? {when} klo {time} sopisi minulle.",
+  "phone.msg.meeting_missed": "Odotin paikassa {place}. Et tullut.",
+  "phone.reply.meet_accept": "Sopii. Nähdään siellä.",
+  "ui.phone.calendar": "Kalenteri",
+  "ui.phone.calendar_empty": "Ei mitään suunniteltua.",
+  "ui.phone.calendar_with": "{name} kanssa",
+  "ui.phone.calendar_behind": "Takanapäin",
+  "ui.phone.today": "Tänään",
+  "ui.phone.tomorrow": "Huomenna",
+  "ui.phone.meeting.kept": "pidetty",
+  "ui.phone.meeting.missed": "jäi väliin",
+  "ui.phone.meeting.stood_up": "he eivät tulleet",
+  "ui.msg.meeting.accepted": "Tapaaminen sovittu: {name}, {place}, {when} klo {time}",
+  "ui.msg.meeting.reminder": "Tunnin päästä: {name}, {place}",
+  "ui.msg.meeting.kept": "Tapasit henkilön {name}.",
+  "ui.msg.meeting.missed": "Jätit tulematta: {name}, {place}.",
+  "ui.msg.meeting.stood_up": "{name} ei tullut paikalle."
 }

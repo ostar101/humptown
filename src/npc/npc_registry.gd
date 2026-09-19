@@ -160,6 +160,21 @@ func location_of(npc_id: String, total_minutes: int, weekday: int) -> String:
 	return location
 
 
+## Where the routine, and any override, puts an NPC at a given time — read from
+## the schedule whatever tier they are in and however far the simulation has
+## caught up, so an appointment can be settled at its own minute even in the
+## middle of a skip (D-047). Not cached; not for the per-minute path.
+func scheduled_location_of(npc_id: String, total_minutes: int, weekday: int) -> String:
+	var npc: Npc = npcs.get(npc_id)
+	if npc == null or not npc.alive:
+		return ""
+	var sched: NpcSchedule = schedules.get(npc.schedule_id)
+	if sched == null:
+		return npc.home
+	var resolved := sched.resolve_at(total_minutes, weekday, npc.schedule_override)
+	return resolve_location_token(npc, str(resolved.get("location", "")))
+
+
 ## When the cached position stops being trustworthy: the next routine
 ## boundary, clipped by the start or end of an active override.
 func _validity_end(sched: NpcSchedule, npc: Npc, total_minutes: int, weekday: int) -> int:

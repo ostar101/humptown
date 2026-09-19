@@ -20,6 +20,9 @@ static func render(message: Dictionary) -> String:
 		args["quest"] = Localization.t(str(args["quest_key"]))
 	if args.has("place"):
 		args["place"] = InteractionText.place_name(str(args["place"]))
+	if args.has("start"):
+		args["when"] = day_word(int(args["start"]))
+		args["time"] = clock_of(int(args["start"]))
 	return Localization.t(str(message.get("key", "")), args)
 
 
@@ -30,6 +33,38 @@ static func occupation(npc_id: String) -> String:
 		return ""
 	var entry := Game.data.get_entry("occupations", npc.occupation)
 	return Localization.t(str(entry.get("name_key", ""))) if not entry.is_empty() else ""
+
+
+## "Today", "Tomorrow" or a weekday, for a moment in the future (or past).
+static func day_word(minute: int) -> String:
+	var clock := Game.clock
+	var ahead := minute / GameClock.MINUTES_PER_DAY - clock.day_index()
+	if ahead == 0:
+		return Localization.t("ui.phone.today")
+	if ahead == 1:
+		return Localization.t("ui.phone.tomorrow")
+	return Localization.t(GameClock.WEEKDAY_KEYS[posmod(clock.weekday() + ahead, 7)])
+
+
+static func clock_of(minute: int) -> String:
+	return "%02d:%02d" % [(minute % GameClock.MINUTES_PER_DAY) / 60, minute % 60]
+
+
+## "Tomorrow 18:00 · Kaisla Café" — a meeting as one line.
+static func meeting_when_where(meeting: Dictionary) -> String:
+	return "%s %s · %s" % [day_word(int(meeting["start"])), clock_of(int(meeting["start"])),
+		InteractionText.place_name(str(meeting["location"]))]
+
+
+## The HUD's line when a meeting moves.
+static func meeting_message(meeting_id: int, status: String) -> String:
+	var meeting := Game.calendar.get_meeting(meeting_id) if Game.is_running() else {}
+	if meeting.is_empty():
+		return ""
+	return Localization.t("ui.msg.meeting." + status, {
+		"name": npc_name(str(meeting["npc"])), "place": InteractionText.place_name(str(meeting["location"])),
+		"when": day_word(int(meeting["start"])), "time": clock_of(int(meeting["start"])),
+	})
 
 
 ## When it was sent: "18:40", "Yesterday 18:40", "Tue 18:40".

@@ -6,6 +6,11 @@ versions are milestones rather than releases until there is something to release
 ## [Unreleased] — Milestone 5: the phone
 
 ### Decided
+- Meetings: a fond friend may suggest meeting tomorrow at an open public
+  place; accepting is judged (notice, clashes) and schedules a reminder, the
+  person heading over, and the moment it is settled as world events; kept or
+  missed is read from where people stand, never from anyone's word; missing
+  one costs trust and earns a text, being stood up costs nothing (D-047)
 - Texting: a text goes through the same intent, rules and effects as a spoken
   line (one `_respond` behind two doors); cash cannot be sent by text; a text
   is read when the person gets to it — awake, at a civil hour, sooner if idle
@@ -28,12 +33,18 @@ versions are milestones rather than releases until there is something to release
   `PhoneRules.judge_send()`, `judge_reading()`; `DialogueDirector.
   text_exchange()`; `Game.send_text()`; the deed `texted`; a compose row in
   the phone; contacts open as threads; `test_phone_texts` (20 tests)
+- `Calendar` (`Game.calendar`), `MeetingRules`, `MeetingDirector`
+  (`Game.meetings`); the phone's Calendar tab; `NpcRegistry.
+  scheduled_location_of()`; `Events.meeting_updated`; the deed `met`;
+  `meeting_place` on four locations; `test_meetings` (25 tests)
+- `ui_preview --phone=calendar`
 - `test_phone` (24 tests); `ui_preview -- --screen=world --phone=threads|thread|contacts`
 
 ### Changed
 - `DialogueDirector.say()` is now a thin door onto `_respond()`; the
   conversation is passed in rather than held, `interpret()`, `end()` and the
   prompt context unchanged for callers
+- Save schema version 7: adds `calendar`; a version 6 save gets an empty one
 - Save schema version 6: adds `phone`; a version 5 save gets an empty one
 
 ## [0.4.0] — 2026-09-19 — Milestone 4: making a living

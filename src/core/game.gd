@@ -29,6 +29,8 @@ var work := Employment.new()
 var quests := QuestLog.new()
 var phone := PhoneState.new()
 var phone_director := PhoneDirector.new()
+var calendar := Calendar.new()
+var meetings := MeetingDirector.new()
 var reputation := Reputation.new()
 var player := PlayerState.new()
 var saves := SaveManager.new()
@@ -80,6 +82,7 @@ func _ready() -> void:
 	Events.player_deed.connect(_on_player_deed)
 	Events.relationship_changed.connect(_on_relationship_changed)
 	Events.dialogue_ended.connect(_on_dialogue_ended)
+	Events.meeting_updated.connect(_on_meeting_updated)
 	Log.min_level = int(Settings.get_value("log_level", Log.Level.INFO)) as Log.Level
 	Log.info("game", "Game root ready")
 
@@ -125,7 +128,8 @@ func new_game(background_id: String = "", world_seed: int = 0) -> Result:
 	_apply_background(background_id)
 	_start_background_job(background_id)
 	_start_background_quests(background_id)
-	phone_director.setup(phone, npcs, relationships, quests, player, clock, dialogue)
+	meetings.setup(calendar, npcs, world, player, relationships, memories, events_queue, clock, data)
+	phone_director.setup(phone, npcs, relationships, quests, player, clock, dialogue, meetings)
 	phone_director.sync_contacts()
 	dialogue.setup(npcs, world, player, relationships, knowledge, clock, data, LlmDialogueModel.new(llm), memories, work, quests)
 	_connect_simulation()
@@ -206,6 +210,8 @@ func unload() -> void:
 	quests = QuestLog.new()
 	phone = PhoneState.new()
 	phone_director = PhoneDirector.new()
+	calendar = Calendar.new()
+	meetings = MeetingDirector.new()
 	_shopping = ""
 	_shop_deals = 0
 	reputation = Reputation.new()
@@ -690,6 +696,14 @@ func _phone_tick() -> void:
 		phone_director.process_due()
 
 
+## Someone who waited for the player says so, later, by text (D-047).
+func _on_meeting_updated(meeting_id: int, status: String) -> void:
+	if status != "missed" or not is_running():
+		return
+	var meeting := calendar.get_meeting(meeting_id)
+	phone_director.meeting_missed(str(meeting.get("npc", "")), str(meeting.get("location", "")))
+
+
 func _on_dialogue_ended(_npc_id: String) -> void:
 	if is_running():
 		phone_director.sync_contacts()
@@ -1047,6 +1061,7 @@ func save_game(slot: String) -> Result:
 		"work": work.to_dict(),
 		"quests": quests.to_dict(),
 		"phone": phone.to_dict(),
+		"calendar": calendar.to_dict(),
 		"reputation": reputation.to_dict(),
 		"events": events_queue.to_dict(),
 		"player": player.to_dict(),
@@ -1085,6 +1100,7 @@ func load_game(slot: String) -> Result:
 	work.from_dict(sections.get("work", {}))
 	quests.from_dict(sections.get("quests", {}))
 	phone.from_dict(sections.get("phone", {}))
+	calendar.from_dict(sections.get("calendar", {}))
 	reputation.from_dict(sections.get("reputation", {}))
 	events_queue.from_dict(sections.get("events", {}))
 	player.from_dict(sections.get("player", {}))
@@ -1112,6 +1128,8 @@ func _on_world_event(event: WorldEventQueue.QueuedEvent) -> void:
 				npc.clear_override()
 		"injury_healed":
 			player.stats.heal_expired_injuries(clock.total_minutes)
+		"meeting_reminder", "meeting_gather", "meeting_check", "meeting_end":
+			meetings.on_event(event.kind, event.payload)
 		_:
 			Log.debug("events", "Unhandled world event", {"kind": event.kind})
 
@@ -1140,6 +1158,7 @@ func _on_day(day: int) -> void:
 	knowledge.forget_stale(clock.total_minutes)
 	player.stats.heal_expired_injuries(clock.total_minutes)
 	shops.restock()
+	meetings.lapse()
 	_count_missed_shifts(day)
 	for failed in quests.expire(day):
 		_quest_ended(failed, "failed")

@@ -26,6 +26,8 @@ const MIN_GAP := {
 	"quest_nudge": 24 * 60,
 	"missed_shift": 24 * 60,
 	"check_in": 5 * 24 * 60,
+	"meeting_request": 4 * 24 * 60,
+	"meeting_missed": 24 * 60,
 }
 
 ## The longest text the player may send, as the longest line they may say.
@@ -69,8 +71,10 @@ static func judge_outreach(cause: Dictionary, state: Dictionary) -> Result:
 
 
 ## Whether the player may answer a message's question, and how. `answer` is
-## "accept" or "decline"; `state` = {"has_phone", "open", "still_possible"}.
-## Codes: `no_phone`, `no_such_answer`, `already_answered`, `no_longer_possible`.
+## "accept" or "decline"; `state` = {"has_phone", "open", "still_possible", "why"
+## (the refusal to give when it is not possible, `no_longer_possible` by default)}.
+## Codes: `no_phone`, `no_such_answer`, `already_answered`, `no_longer_possible`,
+## and for meetings `too_late` and `clash`.
 static func judge_answer(message: Dictionary, answer: String, state: Dictionary) -> Result:
 	if not bool(state.get("has_phone", false)):
 		return Result.failure("no_phone")
@@ -81,7 +85,7 @@ static func judge_answer(message: Dictionary, answer: String, state: Dictionary)
 	if answer != "accept" and answer != "decline":
 		return Result.failure("no_such_answer")
 	if answer == "accept" and not bool(state.get("still_possible", false)):
-		return Result.failure("no_longer_possible")
+		return Result.failure(str(state.get("why", "no_longer_possible")))
 	return Result.success(answer)
 
 

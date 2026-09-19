@@ -1556,3 +1556,52 @@ saved before this loads unchanged (no schema step: the reader defaults them).
 
 **Not yet.** Meeting requests and the calendar (step 3), banking (step 4),
 calls.
+
+
+## D-047 — Meetings and the calendar: kept or missed by where people stand
+
+**Decision.** M5 step 3. A friend fond of the player (familiarity 0.25,
+affection 0.2 — the same bar as checking in) may, instead of a check-in,
+suggest meeting up: tomorrow, at an hour between 12:00 and 19:00 chosen by a
+hash, at a place flagged `meeting_place` in `data/locations.json` (the court,
+the harbour park, Kaisla's, the Anchor) that is public and *open when they
+arrive and when it ends*. It comes as a text with "I'll do it" / "Not now"
+(D-045), rate-limited like any other (a gap of four days, three people a day).
+Nobody suggests one while another with them is open, or when it would land
+within an hour of a meeting already agreed.
+
+**Accepting is judged.** `MeetingRules.judge_accept`: `already_answered`,
+`too_late` (less than half an hour's notice, or the suggestion lapsed
+unanswered), `clash` (within an hour of another). Saying no is always
+allowed. Accepting puts it on the `Calendar` (`Game.calendar`, saved as the
+`calendar` section, schema v7) and schedules four world events, so it runs
+whether or not the player is looking: a reminder an hour before (HUD line);
+the person heading over half an hour before (a `schedule_override` to that
+place, activity "socialising" — the first use of overrides); the moment it is
+settled twenty minutes after the start; and the end, when they go back to their
+day. Being saved in the event queue, all of it survives a load.
+
+**Kept or missed is read off the simulation, never off anyone's word.**
+`MeetingRules.judge_attendance`, at the settling: the player at that place
+(`player.location`) and the person there by their schedule → *kept*; the
+person there and the player not → *missed*; the person not there → *stood up*.
+A check that fires long after its time (the player slept or skipped through
+it) is *missed* whatever anyone was doing — nobody can say where they were.
+Kept: a little affection, trust and familiarity, a memory for them ("met you
+when you agreed to"), and the deed `met` for quests. Missed: trust and
+affection fall, they remember, and they text — at a civil hour, through the
+same pending queue a missed shift uses (D-045). Stood up costs the player
+nothing. The `NpcRegistry` gained `scheduled_location_of()` for this: it
+reads the routine and any override at a given minute whatever the person's tier,
+because a check that fires in the middle of a time skip must not trust a
+position the simulation has not caught up to. It is not on the per-minute
+path; the benchmark was re-run against the previous commit on the same machine
+and is unchanged.
+
+**The calendar.** A third tab on the phone: your job's fixed hours, what is
+agreed and coming, and the last few that are behind you, with how each went.
+
+**Not yet, on purpose.** *The player* proposing a meeting ("want to grab a
+coffee tomorrow?") — it needs a time and a place read out of a line of speech
+and a person who may say no for reasons of their own; sequenced after banking.
+Someone cancelling; meetings with more than one person; reminders as texts.

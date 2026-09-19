@@ -57,6 +57,8 @@ signal quest_updated(quest_id: String, status: String)
 signal phone_message(npc_id: String, message_id: int)
 signal phone_read(npc_id: String)
 signal phone_contact_added(npc_id: String)
+## A meeting moved: accepted, reminder, kept, missed, stood_up (D-047).
+signal meeting_updated(meeting_id: int, status: String)
 
 # --- Dialogue / LLM ---------------------------------------------------------
 signal dialogue_started(npc_id: String)

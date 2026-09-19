@@ -52,6 +52,7 @@ func _ready() -> void:
 	_quests.closed.connect(_on_shop_closed)
 	_phone.closed.connect(_on_shop_closed)
 	Events.phone_message.connect(_on_phone_message)
+	Events.meeting_updated.connect(_on_meeting_updated)
 	Events.quest_updated.connect(_on_quest_updated)
 	Events.player_collapsed.connect(_on_player_collapsed)
 	Events.job_lost.connect(_on_job_lost)
@@ -69,6 +70,7 @@ func _exit_tree() -> void:
 		Events.job_lost.disconnect(_on_job_lost)
 		Events.quest_updated.disconnect(_on_quest_updated)
 		Events.phone_message.disconnect(_on_phone_message)
+		Events.meeting_updated.disconnect(_on_meeting_updated)
 
 
 ## (Re)builds the view for wherever the player is: the region, or the inside
@@ -298,6 +300,10 @@ func _on_player_collapsed(woke_at: String, bill: int) -> void:
 		_phone.close()
 	show_current_area()
 	_hud.show_message(Localization.t("ui.msg.collapsed", {"place": InteractionText.place_name(woke_at), "bill": bill}))
+
+
+func _on_meeting_updated(meeting_id: int, status: String) -> void:
+	_hud.show_message(PhoneText.meeting_message(meeting_id, status))
 
 
 func _on_phone_message(npc_id: String, _message_id: int) -> void:

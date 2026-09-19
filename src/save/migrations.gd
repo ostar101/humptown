@@ -14,7 +14,7 @@ extends RefCounted
 ##   4. Add a test with a fixture of the old shape.
 ## Never renumber or edit an existing step: someone's save depends on it.
 
-const CURRENT_VERSION := 6
+const CURRENT_VERSION := 7
 
 ## version -> name of the static function upgrading it to version + 1.
 const STEPS := {
@@ -23,6 +23,7 @@ const STEPS := {
 	3: "_v3_to_v4",
 	4: "_v4_to_v5",
 	5: "_v5_to_v6",
+	6: "_v6_to_v7",
 }
 
 
@@ -83,6 +84,8 @@ static func _apply_step(version: int, data: Dictionary) -> Dictionary:
 			return _v4_to_v5(data)
 		5:
 			return _v5_to_v6(data)
+		6:
+			return _v6_to_v7(data)
 		_:
 			return {}
 
@@ -147,4 +150,11 @@ static func _v4_to_v5(data: Dictionary) -> Dictionary:
 static func _v5_to_v6(data: Dictionary) -> Dictionary:
 	if not data.has("phone"):
 		data["phone"] = {"contacts": {}, "messages": [], "last_started": {}, "next_id": 1}
+	return data
+
+
+## v7 keeps the calendar (D-047). A v6 save has no meetings.
+static func _v6_to_v7(data: Dictionary) -> Dictionary:
+	if not data.has("calendar"):
+		data["calendar"] = {"meetings": [], "next_id": 1}
 	return data

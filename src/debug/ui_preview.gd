@@ -7,7 +7,7 @@ extends Node
 ## `--screen` is `title`, `creation`, `opening`, `settings` or `world`
 ## (`--overlay=1` shows the developer overlay; `--shop=location_id
 ## [--selling=1]` stands the player at that shop's counter; `--quests=1`
-## opens the quest log; `--phone=threads|thread|contacts` the phone). For
+## opens the quest log; `--phone=threads|thread|contacts|calendar` the phone). For
 ## settings, `--provider=id` chooses a provider — in memory only, since a
 ## preview never writes the player's settings — and `--locale=fi` the language. For creation, `--step` is
 ## 1-3 and the screen is driven through its own public methods, exactly as its
@@ -123,7 +123,7 @@ func _drive_shop(view: WorldView, location_id: String, selling: bool) -> void:
 		view.shop_window().show_selling(true)
 
 
-## `--phone=threads|thread|contacts`: some numbers and a few messages on the
+## `--phone=threads|thread|contacts|calendar`: some numbers and a few messages on the
 ## phone, then the phone open on that page. Written straight into the phone
 ## state — the rules that would deliver them are tested elsewhere.
 func _drive_phone(view: WorldView, page: String) -> void:
@@ -144,6 +144,11 @@ func _drive_phone(view: WorldView, page: String) -> void:
 			phone.open_thread("npc_pirjo")
 		"contacts":
 			phone.show_page(PhoneWindow.Page.CONTACTS)
+		"calendar":
+			var spec := Game.meetings.suggest("npc_pirjo")
+			if not spec.is_empty():
+				Game.meetings.accept(Game.meetings.propose("npc_pirjo", spec))
+			phone.show_page(PhoneWindow.Page.CALENDAR)
 
 
 func _drive_creation(creation: CharacterCreation, args: Dictionary, background: String) -> void:

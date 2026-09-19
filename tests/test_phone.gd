@@ -274,8 +274,8 @@ func test_fond_friends_check_in_but_not_everyone() -> void:
 	var kinds: Array[String] = []
 	for message in Game.phone.messages:
 		kinds.append("%s:%s" % [message["npc"], message["kind"]])
-	assert_has(kinds, "npc_ida:check_in")
-	assert_false(kinds.has("npc_elias:check_in"), "an acquaintance does not")
+	assert_true(kinds.has("npc_ida:check_in") or kinds.has("npc_ida:meeting_request"), "a friend reaches out")
+	assert_false(kinds.has("npc_elias:check_in") or kinds.has("npc_elias:meeting_request"), "an acquaintance does not")
 
 
 func test_the_hourly_pass_runs_from_the_clock() -> void:

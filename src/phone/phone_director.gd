@@ -9,7 +9,9 @@ extends RefCounted
 ## - a deadline coming up on a quest, from whoever gave it (`quest_nudge`)
 ## - a shift missed, from the employer (`missed_shift`, told by `Game`)
 ## - an errand someone needs done and you could do (`errand_offer`)
-## - a friend thinking of you (`check_in`)
+## - a friend thinking of you (`check_in`), or wanting to meet (`meeting_request`,
+##   D-047)
+## - a meeting you did not come to (`meeting_missed`, told by `MeetingDirector`)
 ##
 ## Without a phone in the bag nothing arrives and nothing is queued: the
 ## messages you would have had are simply not there.
@@ -31,13 +33,16 @@ var _quests: QuestLog = null
 var _player: PlayerState = null
 var _clock: GameClock = null
 var _dialogue: DialogueDirector = null
+var _meetings: MeetingDirector = null
 ## Message ids being read right now (a model may take a while).
 var _busy: Array[int] = []
 
 
 func setup(p_state: PhoneState, npcs: NpcRegistry, relationships: RelationshipGraph, quests: QuestLog,
-		player: PlayerState, clock: GameClock, dialogue: DialogueDirector = null) -> void:
+		player: PlayerState, clock: GameClock, dialogue: DialogueDirector = null,
+		meetings: MeetingDirector = null) -> void:
 	_dialogue = dialogue
+	_meetings = meetings
 	state = p_state
 	_npcs = npcs
 	_relationships = relationships
@@ -99,8 +104,11 @@ func deliver(cause: Dictionary) -> Result:
 	if judged.is_err():
 		Log.debug("phone", "Message held back", {"npc": npc_id, "kind": cause.get("kind"), "why": judged.code})
 		return judged
+	var action: Dictionary = cause.get("action", {})
+	if cause.has("meeting") and _meetings != null:
+		action = {"do": "meeting", "meeting": _meetings.propose(npc_id, cause["meeting"])}
 	var message := state.add_message(npc_id, true, str(cause["kind"]), str(cause["key"]),
-		cause.get("args", {}), now, cause.get("action", {}))
+		cause.get("args", {}), now, action)
 	Events.phone_message.emit(npc_id, int(message["id"]))
 	return Result.success(message)
 
@@ -112,6 +120,15 @@ func missed_shift(employer_id: String, workplace_id: String) -> void:
 		return
 	state.pending.append({"queued": _clock.total_minutes, "cause": {
 		"npc": employer_id, "kind": "missed_shift", "key": "phone.msg.missed_shift", "args": {"place": workplace_id}}})
+
+
+## Someone waited at a meeting the player never came to; they say so, at a
+## civil hour (D-047).
+func meeting_missed(npc_id: String, place_id: String) -> void:
+	if not has_phone():
+		return
+	state.pending.append({"queued": _clock.total_minutes, "cause": {
+		"npc": npc_id, "kind": "meeting_missed", "key": "phone.msg.meeting_missed", "args": {"place": place_id}}})
 
 
 ## The player sends a text. Judged by `PhoneRules.judge_send`; it goes into the
@@ -168,22 +185,35 @@ func answer(message_id: int, choice: String) -> Result:
 	var message := state.get_message(message_id)
 	var action: Dictionary = message.get("action", {})
 	var possible := false
-	if str(action.get("do", "")) == "take_errand":
-		possible = _quests.errand_offered_by(str(message.get("npc", "")), _clock.day_index()) == str(action.get("errand", "-"))
+	var why := "no_longer_possible"
+	var meeting_id := int(action.get("meeting", 0))
+	match str(action.get("do", "")):
+		"take_errand":
+			possible = _quests.errand_offered_by(str(message.get("npc", "")), _clock.day_index()) == str(action.get("errand", "-"))
+		"meeting":
+			var can := _meetings.judge_accept(meeting_id) if _meetings != null else Result.failure("no_longer_possible")
+			possible = can.is_ok()
+			why = can.code if can.is_err() else why
 	var judged := PhoneRules.judge_answer(message, choice, {
-		"has_phone": has_phone(), "open": state.is_open(message), "still_possible": possible,
+		"has_phone": has_phone(), "open": state.is_open(message), "still_possible": possible, "why": why,
 	})
 	if judged.is_err():
 		return judged
 	var npc_id := str(message["npc"])
 	var now := _clock.total_minutes
 	if choice == "accept":
-		_quests.take_errand(str(action["errand"]), _clock.day_index())
 		state.answer(message_id, "accepted")
-		state.add_message(npc_id, false, "reply", "phone.reply.accept", {}, now)
-		Events.quest_updated.emit(str(action["errand"]), "errand_taken")
+		if str(action["do"]) == "meeting":
+			_meetings.accept(meeting_id)
+			state.add_message(npc_id, false, "reply", "phone.reply.meet_accept", {}, now)
+		else:
+			_quests.take_errand(str(action["errand"]), _clock.day_index())
+			state.add_message(npc_id, false, "reply", "phone.reply.accept", {}, now)
+			Events.quest_updated.emit(str(action["errand"]), "errand_taken")
 	else:
 		state.answer(message_id, "declined")
+		if str(action["do"]) == "meeting":
+			_meetings.decline(meeting_id)
 		state.add_message(npc_id, false, "reply", "phone.reply.decline", {}, now)
 	return Result.success(choice)
 
@@ -234,8 +264,16 @@ func _causes() -> Array[Dictionary]:
 		var edge := _relationships.peek(npc_id, PlayerState.ID)
 		if edge != null and edge.familiarity >= PhoneRules.CHECK_IN_FAMILIARITY \
 				and edge.affection >= PhoneRules.CHECK_IN_AFFECTION:
-			out.append({"npc": npc_id, "kind": "check_in", "args": {},
-				"key": "phone.msg.check_in.%d" % (1 + posmod(("%s/%d" % [npc_id, today]).hash(), 3))})
+			# A fond friend either suggests meeting up or just checks in.
+			var meeting := {}
+			if _meetings != null and posmod(("%s/%d" % [npc_id, today]).hash(), 2) == 0:
+				meeting = _meetings.suggest(npc_id)
+			if not meeting.is_empty():
+				out.append({"npc": npc_id, "kind": "meeting_request", "key": "phone.msg.meeting_request",
+					"args": {"place": str(meeting["location"]), "start": int(meeting["start"])}, "meeting": meeting})
+			else:
+				out.append({"npc": npc_id, "kind": "check_in", "args": {},
+					"key": "phone.msg.check_in.%d" % (1 + posmod(("%s/%d" % [npc_id, today]).hash(), 3))})
 	return out
 
 

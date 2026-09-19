@@ -9,7 +9,7 @@ extends CanvasLayer
 
 signal closed()
 
-enum Page { THREADS, THREAD, CONTACTS }
+enum Page { THREADS, THREAD, CONTACTS, CALENDAR }
 
 const PREVIEW_CHARS := 30
 
@@ -24,6 +24,7 @@ var _time_was_paused := false
 @onready var _back: Button = %Back
 @onready var _tab_messages: Button = %TabMessages
 @onready var _tab_contacts: Button = %TabContacts
+@onready var _tab_calendar: Button = %TabCalendar
 @onready var _close: Button = %Close
 @onready var _compose: HBoxContainer = %Compose
 @onready var _line: LineEdit = %Line
@@ -37,6 +38,7 @@ func _ready() -> void:
 	_back.pressed.connect(func() -> void: show_page(Page.THREADS))
 	_tab_messages.pressed.connect(func() -> void: show_page(Page.THREADS))
 	_tab_contacts.pressed.connect(func() -> void: show_page(Page.CONTACTS))
+	_tab_calendar.pressed.connect(func() -> void: show_page(Page.CALENDAR))
 	_send.pressed.connect(_send_line)
 	_line.text_submitted.connect(func(_text: String) -> void: _send_line())
 	Events.phone_message.connect(_on_phone_message)
@@ -184,8 +186,9 @@ func _render() -> void:
 	_back.visible = _page == Page.THREAD
 	_compose.visible = _page == Page.THREAD
 	_notice.visible = false
-	_tab_messages.button_pressed = _page != Page.CONTACTS
+	_tab_messages.button_pressed = _page == Page.THREADS or _page == Page.THREAD
 	_tab_contacts.button_pressed = _page == Page.CONTACTS
+	_tab_calendar.button_pressed = _page == Page.CALENDAR
 	match _page:
 		Page.THREADS:
 			_title.text = Localization.t("ui.phone.messages")
@@ -196,6 +199,9 @@ func _render() -> void:
 		Page.CONTACTS:
 			_title.text = Localization.t("ui.phone.contacts")
 			_render_contacts()
+		Page.CALENDAR:
+			_title.text = Localization.t("ui.phone.calendar")
+			_render_calendar()
 
 
 func _render_threads() -> void:
@@ -271,6 +277,40 @@ func _render_contacts() -> void:
 		_rows.add_child(row)
 	if ids.is_empty():
 		_rows.add_child(_note(Localization.t("ui.phone.no_contacts")))
+
+
+func _render_calendar() -> void:
+	var now := Game.clock.total_minutes
+	var job := StatusText.job()
+	if job != "":
+		_rows.add_child(_note(job))
+	var upcoming := Game.calendar.upcoming(now)
+	for meeting in upcoming:
+		_rows.add_child(_meeting_row(meeting, false))
+	if upcoming.is_empty():
+		_rows.add_child(_note(Localization.t("ui.phone.calendar_empty")))
+	var behind := Game.calendar.finished()
+	if not behind.is_empty():
+		_rows.add_child(_note(Localization.t("ui.phone.calendar_behind")))
+		for meeting in behind.slice(0, 4):
+			_rows.add_child(_meeting_row(meeting, true))
+
+
+func _meeting_row(meeting: Dictionary, finished: bool) -> VBoxContainer:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 2)
+	var title := Label.new()
+	title.text = PhoneText.meeting_when_where(meeting)
+	title.add_theme_font_size_override("font_size", 20)
+	var who := Label.new()
+	who.theme_type_variation = &"MutedLabel"
+	who.text = Localization.t("ui.phone.calendar_with", {"name": PhoneText.npc_name(str(meeting["npc"]))})
+	if finished:
+		who.text += " · " + Localization.t("ui.phone.meeting." + str(meeting["status"]))
+		title.theme_type_variation = &"MutedLabel"
+	box.add_child(title)
+	box.add_child(who)
+	return box
 
 
 func _send_line() -> Result:
