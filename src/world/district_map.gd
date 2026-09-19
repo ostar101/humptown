@@ -53,7 +53,7 @@ const SOLID_NAMES := {
 }
 
 ## What a person can do something with. See Game.interact_at().
-const OBJECT_KINDS := ["counter", "bed", "sign"]
+const OBJECT_KINDS := ["counter", "bed", "sign", "stash"]
 ## Rows of wall along the top of an interior: the far wall shows its face.
 const INTERIOR_TOP_WALL := 2
 

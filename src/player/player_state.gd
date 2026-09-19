@@ -33,6 +33,10 @@ var stats := Stats.new()
 var skills := Skills.new()
 var wallet := Wallet.new()
 var inventory := Inventory.new()
+## What the player keeps at home (D-043): the cupboard in their flat.
+var stash := Inventory.new()
+## A cupboard holds far more than a person carries, but not everything.
+const STASH_CAPACITY := 150.0
 
 # --- progress ---------------------------------------------------------------
 var known_contacts: Array[String] = []
@@ -43,6 +47,8 @@ var home_location: String = ""
 func setup(data: DataRegistry) -> void:
 	skills.setup(data)
 	inventory.setup(data)
+	stash.setup(data)
+	stash.base_capacity = STASH_CAPACITY
 	_apply_carry_capacity()
 
 
@@ -118,6 +124,7 @@ func to_dict() -> Dictionary:
 		"skills": skills.to_dict(),
 		"wallet": wallet.to_dict(),
 		"inventory": inventory.to_dict(),
+		"stash": stash.to_dict(),
 		"known_contacts": known_contacts,
 		"quest_flags": quest_flags,
 		"home_location": home_location,
@@ -139,6 +146,9 @@ func from_dict(d: Dictionary) -> void:
 	skills.from_dict(d.get("skills", {}))
 	wallet.from_dict(d.get("wallet", {}))
 	inventory.from_dict(d.get("inventory", {}))
+	# Absent in saves from before the home had a cupboard: it starts empty.
+	stash.from_dict(d.get("stash", {}))
+	stash.base_capacity = STASH_CAPACITY
 	var contacts: Array[String] = []
 	for c in d.get("known_contacts", []):
 		contacts.append(str(c))

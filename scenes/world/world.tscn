@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://src/presentation/world_view.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/world/region_view.tscn" id="2"]
@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://src/debug/dev_overlay.gd" id="8"]
 [ext_resource type="PackedScene" path="res://scenes/ui/shop_window.tscn" id="9"]
 [ext_resource type="PackedScene" path="res://scenes/ui/inventory_window.tscn" id="10"]
+[ext_resource type="PackedScene" path="res://scenes/ui/stash_window.tscn" id="11"]
 
 [node name="World" type="Node2D"]
 script = ExtResource("1")
@@ -37,6 +38,8 @@ script = ExtResource("4")
 [node name="Shop" parent="." instance=ExtResource("9")]
 
 [node name="Inventory" parent="." instance=ExtResource("10")]
+
+[node name="Stash" parent="." instance=ExtResource("11")]
 
 [node name="DevOverlay" type="CanvasLayer" parent="."]
 script = ExtResource("8")

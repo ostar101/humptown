@@ -1376,3 +1376,28 @@ the job, its place, days and hours.
 with consequences, not a minigame. People have no money of their own yet —
 wages come from nowhere and gifts go nowhere; an economy of accounts is
 later work. One job at a time; taking a new one replaces the old.
+
+## D-043 — The home as a base: a cupboard that keeps what you do not carry
+
+**Decision.** M4 step 5. The player's flat has a cupboard (an object of the
+new kind `stash` on the shelf there). Facing it at home opens a two-sided
+window — what you carry, what you keep — and `Game.store()` / `Game.take()`
+move one thing across at a time. Only in your own home (`not_at_home`, and
+another home's cupboard is `not_your_stash`), only what is there
+(`not_owned`), only what fits: the cupboard holds 150 kg; what you take
+must fit your carrying weight (`too_heavy`), what you put away must fit the
+cupboard (`stash_full`). Time stands still while it is open.
+
+**Saved with the player.** The stash is a second `Inventory` on
+`PlayerState`, written into the player section; a save from before it has
+none and loads with an empty cupboard, so no schema step is needed.
+
+**Why this is enough of a base for now.** The home already is where you
+sleep and where the game is saved (D-033); with a place to keep things, a
+carry limit becomes a choice rather than a wall, and buying in bulk at
+the corner shop makes sense. Cooking, rent and furniture are later.
+
+**Benchmark.** `src/world/district_map.gd` changed (a new object kind), so
+the simulation benchmark was re-run: 567 / 796 / 1390 / 3188 µs per
+simulated minute for 50 / 200 / 1000 / 3000 people, below the last
+measurement on this machine (706 / 1084 / 2052 / 3980) — no regression.

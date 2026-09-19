@@ -391,5 +391,18 @@
   "ui.status.job": "{job}, {place} · {days} {from}–{until}",
   "ui.status.weekdays": "ma–pe",
   "ui.status.weekends": "la–su",
-  "ui.status.every_day": "joka päivä"
+  "ui.status.every_day": "joka päivä",
+  "ui.prompt.stash": "Avaa kaappi",
+  "ui.stash.title": "Kaappi",
+  "ui.stash.carrying": "Mukana",
+  "ui.stash.stored": "Kaapissa",
+  "ui.stash.put": "Laita kaappiin",
+  "ui.stash.take": "Ota",
+  "ui.stash.empty": "Kaappi on tyhjä.",
+  "ui.stash.weights": "Mukana {carried} / {capacity} kg · kaapissa {stored} / {room} kg",
+  "ui.stash.refused.too_heavy": "Et jaksa kantaa sitäkin.",
+  "ui.stash.refused.stash_full": "Kaappiin ei mahdu enempää.",
+  "ui.stash.refused.not_owned": "Sitä ei ole siellä.",
+  "ui.stash.refused.not_at_home": "Et ole kotona.",
+  "ui.msg.refused.not_your_stash": "Se ei ole sinun."
 }

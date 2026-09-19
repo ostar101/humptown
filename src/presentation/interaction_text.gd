@@ -11,6 +11,7 @@ const EXPLAINED_REFUSALS: Array[String] = [
 	"locked", "private", "closed", "no_interior", "nobody_serving", "not_your_bed", "not_tired",
 	"asleep", "on_their_way", "nobody_there", "already_talking",
 	"not_a_work_day", "too_early", "too_late", "already_worked", "too_drunk", "too_exhausted", "busy",
+	"not_your_stash",
 ]
 
 
@@ -28,6 +29,8 @@ static func prompt_for(interaction: Dictionary) -> String:
 			return Localization.t("ui.prompt.sleep")
 		"sign":
 			return Localization.t("ui.prompt.read")
+		"stash":
+			return Localization.t("ui.prompt.stash")
 		"work":
 			var job := Game.data.get_entry("jobs", target) if Game.is_running() else {}
 			return Localization.t("ui.prompt.work", {"wage": job.get("wage", 0)})

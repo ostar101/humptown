@@ -412,5 +412,18 @@
   "ui.status.job": "{job} at {place} · {days} {from}–{until}",
   "ui.status.weekdays": "Mon–Fri",
   "ui.status.weekends": "Sat–Sun",
-  "ui.status.every_day": "every day"
+  "ui.status.every_day": "every day",
+  "ui.prompt.stash": "Open the cupboard",
+  "ui.stash.title": "The cupboard",
+  "ui.stash.carrying": "Carrying",
+  "ui.stash.stored": "In the cupboard",
+  "ui.stash.put": "Put away",
+  "ui.stash.take": "Take",
+  "ui.stash.empty": "The cupboard is empty.",
+  "ui.stash.weights": "Carrying {carried} / {capacity} kg · cupboard {stored} / {room} kg",
+  "ui.stash.refused.too_heavy": "You can't carry that as well.",
+  "ui.stash.refused.stash_full": "There's no room left in the cupboard.",
+  "ui.stash.refused.not_owned": "It isn't there.",
+  "ui.stash.refused.not_at_home": "You're not at home.",
+  "ui.msg.refused.not_your_stash": "That isn't yours."
 }

@@ -19,6 +19,7 @@ extends Node2D
 @onready var _dialogue: DialogueBox = $Dialogue
 @onready var _shop: ShopWindow = $Shop
 @onready var _bag: InventoryWindow = $Inventory
+@onready var _stash: StashWindow = $Stash
 
 const NO_CELL := Vector2i(-99999, -99999)
 
@@ -45,6 +46,7 @@ func _ready() -> void:
 	_dialogue.closed.connect(_on_dialogue_closed)
 	_shop.closed.connect(_on_shop_closed)
 	_bag.closed.connect(_on_shop_closed)
+	_stash.closed.connect(_on_shop_closed)
 	Events.player_collapsed.connect(_on_player_collapsed)
 	Events.job_lost.connect(_on_job_lost)
 	show_current_area()
@@ -137,6 +139,10 @@ func inventory_window() -> InventoryWindow:
 	return _bag
 
 
+func stash_window() -> StashWindow:
+	return _stash
+
+
 ## Uses whatever the player is facing — a person first, then whatever is on
 ## the cell. Public so tests and scripted scenes can press the button.
 func interact() -> Result:
@@ -151,6 +157,13 @@ func interact() -> Result:
 		var opened := open_shop()
 		_front = NO_CELL
 		return opened
+	if result.is_ok() and result.value.get("kind") == "stash":
+		# The cupboard at home (D-043).
+		_stash.open()
+		_player.input_enabled = false
+		_hud.set_prompt("")
+		_front = NO_CELL
+		return result
 	_hud.show_message(InteractionText.outcome_text(what, result))
 	if result.is_ok():
 		var outcome: Dictionary = result.value
@@ -214,7 +227,7 @@ func hud() -> Hud:
 ## Works out the prompt only when the faced cell, or who is standing on it,
 ## changes — not every frame.
 func _refresh_prompt() -> void:
-	if _dialogue.is_open() or _shop.is_open() or _bag.is_open():
+	if _dialogue.is_open() or _shop.is_open() or _bag.is_open() or _stash.is_open():
 		return
 	var front := _player.current_cell() + _player.facing
 	var body := _npcs.body_at(front)
@@ -237,6 +250,8 @@ func _on_player_collapsed(woke_at: String, bill: int) -> void:
 		_shop.close()
 	if _bag.is_open():
 		_bag.close()
+	if _stash.is_open():
+		_stash.close()
 	show_current_area()
 	_hud.show_message(Localization.t("ui.msg.collapsed", {"place": InteractionText.place_name(woke_at), "bill": bill}))
 

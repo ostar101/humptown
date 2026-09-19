@@ -19,6 +19,8 @@ versions are milestones rather than releases until there is something to release
 - Jobs, shifts and wages: jobs are data; a shift is one batched step paid by
   the part worked; reliability is kept and missed days cost the job; asking
   for work and quitting are conversation intents the rules judge (D-042)
+- The home as a base: a cupboard in your flat keeps what you do not carry,
+  saved with you (D-043)
 
 ### Added
 - `data/shops.json` (corner shop, Kaisla, the Anchor, the pawn shop),
@@ -35,6 +37,8 @@ versions are milestones rather than releases until there is something to release
   `job_here()`, `hire_player()`, `quit_job()`; `Wallet.add_to_bank()`;
   `Events.job_changed`, `Events.job_lost`
 - Conversation kinds `ask_for_work` and `quit_job`, with generic lines
+- `PlayerState.stash`, the `stash` object kind, `Game.store()` and
+  `Game.take()`, `StashWindow`; `test_home` (6 tests)
 - `test_shops` (13 tests), `test_haggling` (8 tests), `test_condition`
   (11 tests), `test_work` (11 tests)
 - `ui_preview -- --screen=world --shop=location_id [--selling=1]`

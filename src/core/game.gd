@@ -357,6 +357,10 @@ func interact_at(cell: Vector2i) -> Result:
 			return Result.success({"kind": "read", "text_key": what["text_key"]})
 		"work":
 			return work_shift()
+		"stash":
+			if map.interior_of != player.home_location:
+				return _reject(proposal, "not_your_stash")
+			return Result.success({"kind": "stash", "location": map.interior_of})
 	return _reject(proposal, "nothing_there")
 
 
@@ -584,6 +588,39 @@ func close_shop() -> Result:
 	clock.paused = _time_paused_before_shopping
 	advance_time(maxi(deals, 1))
 	return Result.success({"deals": deals})
+
+
+# --- home ------------------------------------------------------------------------
+
+## Puts something away in the cupboard at home (D-043). Only at home, and only
+## what the player carries and the cupboard has room for. Refuses
+## `not_at_home`, `bad_quantity`, `not_owned`, `stash_full`.
+func store(item_id: String, quantity: int = 1) -> Result:
+	return _move_between(player.inventory, player.stash, item_id, quantity,
+		{"kind": "store", "item": item_id, "quantity": quantity}, "stash_full")
+
+
+## Takes something from the cupboard at home. Refuses `not_at_home`,
+## `bad_quantity`, `not_owned`, `too_heavy`.
+func take(item_id: String, quantity: int = 1) -> Result:
+	return _move_between(player.stash, player.inventory, item_id, quantity,
+		{"kind": "take", "item": item_id, "quantity": quantity}, "too_heavy")
+
+
+func _move_between(from: Inventory, to: Inventory, item_id: String, quantity: int,
+		proposal: Dictionary, no_room: String) -> Result:
+	if not is_running() or player.interior != player.home_location or player.home_location.is_empty():
+		return _reject(proposal, "not_at_home")
+	if quantity < 1:
+		return _reject(proposal, "bad_quantity")
+	if from.count_of(item_id) < quantity:
+		return _reject(proposal, "not_owned")
+	if to.item_weight(item_id) * quantity > to.free_weight() + 0.0001:
+		return _reject(proposal, no_room)
+	var moved := from.transfer_to(to, item_id, quantity)
+	if moved.is_err():
+		return _reject(proposal, moved.code)
+	return Result.success({"kind": str(proposal["kind"]), "item": item_id, "quantity": quantity})
 
 
 # --- work ------------------------------------------------------------------------

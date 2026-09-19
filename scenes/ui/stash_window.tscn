@@ -1,0 +1,116 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/ui/stash_window.gd" id="1"]
+
+[node name="StashWindow" type="CanvasLayer"]
+layer = 10
+script = ExtResource("1")
+
+[node name="Root" type="Control" parent="."]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.07, 0.07, 0.13, 0.35)
+
+[node name="Frame" type="PanelContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -540.0
+offset_top = -280.0
+offset_right = 540.0
+offset_bottom = 280.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Layout" type="VBoxContainer" parent="Root/Frame"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Root/Frame/Layout"]
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "ui.stash.title"
+
+[node name="Columns" type="HBoxContainer" parent="Root/Frame/Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 28
+
+[node name="Carried" type="VBoxContainer" parent="Root/Frame/Layout/Columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CarriedTitle" type="Label" parent="Root/Frame/Layout/Columns/Carried"]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "ui.stash.carrying"
+
+[node name="CarriedList" type="ScrollContainer" parent="Root/Frame/Layout/Columns/Carried"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="CarriedRows" type="VBoxContainer" parent="Root/Frame/Layout/Columns/Carried/CarriedList"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="Stored" type="VBoxContainer" parent="Root/Frame/Layout/Columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="StoredTitle" type="Label" parent="Root/Frame/Layout/Columns/Stored"]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "ui.stash.stored"
+
+[node name="StoredList" type="ScrollContainer" parent="Root/Frame/Layout/Columns/Stored"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="StoredRows" type="VBoxContainer" parent="Root/Frame/Layout/Columns/Stored/StoredList"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="Message" type="Label" parent="Root/Frame/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+auto_translate_mode = 2
+autowrap_mode = 3
+
+[node name="Footer" type="HBoxContainer" parent="Root/Frame/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Weights" type="Label" parent="Root/Frame/Layout/Footer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"MutedLabel"
+auto_translate_mode = 2
+
+[node name="Close" type="Button" parent="Root/Frame/Layout/Footer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+text = "ui.bag.close"
