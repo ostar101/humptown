@@ -347,7 +347,7 @@ func _on_player_collapsed(woke_at: String, bill: int) -> void:
 	if _combat.is_open():
 		_combat.close()
 	show_current_area()
-	_hud.show_message(Localization.t("ui.msg.collapsed", {"place": InteractionText.place_name(woke_at), "bill": bill}))
+	_hud.notify(Localization.t("ui.msg.collapsed", {"place": InteractionText.place_name(woke_at), "bill": bill}))
 
 
 ## Someone said they would fight (D-054). The conversation is finished with
@@ -382,7 +382,7 @@ func combat_window() -> CombatWindow:
 ## The player put an ask and it came to a grade (D-053).
 func _on_ask_resolved(ask_id: String, grade: String) -> void:
 	var ask := Game.data.get_entry("asks", ask_id)
-	_hud.show_message(Localization.t("ui.msg.ask." + grade, {"ask": Localization.t(str(ask.get("name_key", ask_id)))}))
+	_hud.notify(Localization.t("ui.msg.ask." + grade, {"ask": Localization.t(str(ask.get("name_key", ask_id)))}))
 
 
 ## A night in the cells, or a fine for not coming in (D-052).
@@ -391,22 +391,22 @@ func _on_player_arrested(officer_id: String, _released_at: int) -> void:
 		if window.has_method("is_open") and window.is_open():
 			window.close()
 	show_current_area()
-	_hud.show_message(Localization.t("ui.msg.arrested", {"name": Game.dialogue.display_name(officer_id, Game.data)}))
+	_hud.notify(Localization.t("ui.msg.arrested", {"name": Game.dialogue.display_name(officer_id, Game.data)}))
 
 
 func _on_police_action(outcome: String, officer_id: String, fine: int, forced: bool) -> void:
 	if not forced or outcome == "arrest" or outcome == "none":
 		return
-	_hud.show_message(Localization.t("ui.msg.police_forced." + outcome, {
+	_hud.notify(Localization.t("ui.msg.police_forced." + outcome, {
 		"name": Game.dialogue.display_name(officer_id, Game.data), "fine": fine}))
 
 
 func _on_place_learned(location_id: String, _how: String) -> void:
-	_hud.show_message(Localization.t("ui.msg.place_new", {"place": InteractionText.place_name(location_id)}))
+	_hud.notify(Localization.t("ui.msg.place_new", {"place": InteractionText.place_name(location_id)}))
 
 
 func _on_meeting_updated(meeting_id: int, status: String) -> void:
-	_hud.show_message(PhoneText.meeting_message(meeting_id, status))
+	_hud.notify(PhoneText.meeting_message(meeting_id, status))
 
 
 ## Money handed over to someone face to face: the player holds it out (D-058).
@@ -417,16 +417,16 @@ func _on_player_deed(kind: String, data: Dictionary) -> void:
 
 
 func _on_phone_message(npc_id: String, _message_id: int) -> void:
-	_hud.show_message(PhoneText.new_message_line(npc_id))
+	_hud.notify(PhoneText.new_message_line(npc_id))
 
 
 func _on_quest_updated(quest_id: String, status: String) -> void:
-	_hud.show_message(QuestText.update_message(quest_id, status))
+	_hud.notify(QuestText.update_message(quest_id, status))
 
 
 func _on_job_lost(job_id: String, _reason: String) -> void:
 	var job := Game.data.get_entry("jobs", job_id)
-	_hud.show_message(Localization.t("ui.msg.job_lost", {"place": InteractionText.place_name(str(job.get("workplace", "")))}))
+	_hud.notify(Localization.t("ui.msg.job_lost", {"place": InteractionText.place_name(str(job.get("workplace", "")))}))
 
 
 func _on_shop_closed() -> void:

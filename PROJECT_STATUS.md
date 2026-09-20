@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-19
 **Milestone:** M6 — Consequences — **complete in code (0.6.0)**. M5 complete (0.5.0). M5 complete in code (0.5.0).
-**Build:** green. 850 tests, 10071 assertions with the LimeZu art installed,
+**Build:** green. 863 tests, 10138 assertions with the LimeZu art installed,
 ~12 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
@@ -10,7 +10,7 @@
 
 ## Next task
 
-**Latest (D-056, D-057):** live play showed replies cut off on thinking models
+**Latest (D-059):** memory now holds the words and everything between two people (talks, calls, texts either way), openers depend on it, and the HUD has an event feed. Worth trying in play: talk, leave, come back; get a text, then talk; hand over money and watch the feed. **Before that (D-056, D-057):** live play showed replies cut off on thinking models
 (fixed: room to think on every provider) and NPCs saying yes to things that
 never happened. Now "follow me"/"wait here" work (`NpcDirector.followers`,
 `FollowRules`, bodies keep company) and fetch/bring/go/give are refused

@@ -87,6 +87,7 @@ func withdraw(amount: int) -> Result:
 
 
 func _record(amount: int, kind: String, reason: String) -> void:
+	Events.money_moved.emit(amount, kind, reason)
 	ledger.append({"amount": amount, "kind": kind, "reason": reason,
 		"at": int(stamp.call()) if stamp.is_valid() else -1})
 	if ledger.size() > LEDGER_LIMIT:

@@ -33,6 +33,10 @@ const FAMILIARITY_PER_TEXT := 0.02
 ## model is available: a model adds nothing to "hi" but cost and a wait.
 const PLAIN_TOPICS: Array[String] = ["greet", "farewell", "thanks"]
 const PLAIN_MAX_WORDS := 4
+## A text of theirs is still "did you get my message?" for this long.
+const UNANSWERED_TEXT_MINUTES := 720
+## Someone this familiar is greeted as an acquaintance even before they have spoken.
+const KNOWN_FAMILIARITY := 0.3
 
 var conversation: Conversation = null
 ## Whatever answers as the person. The game's LLM client in play
@@ -114,12 +118,29 @@ func start(npc_id: String, now_minute: int) -> Result:
 	conversation = Conversation.new(npc_id, now_minute)
 	conversation.place = _npcs.get_npc(npc_id).location
 	_build_word_maps(npc_id)
-	# Bringing what they asked for is noticed before anything is said (D-044).
+	# Bringing what they asked for is noticed before anything is said (D-044);
+	# otherwise they greet the player as someone they have, or have not, met (D-059).
 	var delivered := _deliver_errand(npc_id)
-	var key := DialogueLines.pick(npc_id, "errand_done" if not delivered.is_empty() else "greet", now_minute)
+	var key := DialogueLines.pick(npc_id, "errand_done" if not delivered.is_empty() else _opening_topic(npc_id, now_minute), now_minute)
 	var text := Localization.t(key, delivered)
 	conversation.add(npc_id, text, "authored")
 	return Result.success({"npc": npc_id, "text": text, "key": key})
+
+
+## How they greet the player, from what is in their memory of them: a text of
+## theirs still waiting for an answer, someone they spoke to earlier today,
+## someone they have met before, someone they already know, or a stranger.
+func _opening_topic(npc_id: String, now_minute: int) -> String:
+	if memories.unanswered_text(npc_id, now_minute, UNANSWERED_TEXT_MINUTES) != "":
+		return "greet_texted"
+	var last := memories.last_at(npc_id)
+	if last >= 0:
+		return "greet_again_today" if int(now_minute / GameClock.MINUTES_PER_DAY) == int(last / GameClock.MINUTES_PER_DAY) \
+			else "greet_again"
+	var edge := _relationships.peek(npc_id, PlayerState.ID) if _relationships != null else null
+	if edge != null and edge.familiarity >= KNOWN_FAMILIARITY:
+		return "greet_known"
+	return "greet"
 
 
 ## Starts a phone call (D-050). Whether they would pick up is judged by
@@ -178,6 +199,7 @@ func text_exchange(npc_id: String, line: String) -> Result:
 		return Result.failure("nobody_there")
 	var convo := Conversation.new(npc_id, _clock.total_minutes if _clock != null else 0)
 	convo.place = npc.location
+	convo.channel = "text"
 	convo.add(PlayerState.ID, line, "player")
 	convo.exchanges = 1
 	var replied: Result = await _respond(convo, line, "text", _word_maps(npc_id))
@@ -366,12 +388,57 @@ func _settle(ended: Conversation, familiarity: float) -> Dictionary:
 	if ended.exchanges > 0:
 		_relationships.adjust(PlayerState.ID, ended.npc_id, "familiarity", familiarity)
 		_relationships.adjust(ended.npc_id, PlayerState.ID, "familiarity", familiarity)
-		memories.add_episode(ended.npc_id, ended.started_minute, ended.place, ended.things, ended.weight)
+		# What was said goes in with what was done, whatever the road it came by (D-059).
+		var words := _words_of(ended)
+		if ended.channel == "text":
+			memories.add_text(ended.npc_id, ended.started_minute, words, ended.things, ended.weight)
+		else:
+			memories.add_episode(ended.npc_id, ended.started_minute, ended.place, ended.things, ended.weight,
+				ended.channel, words)
 		folded = memories.fold_by_rule(ended.npc_id, _place_name)
 	return {
 		"npc": ended.npc_id, "exchanges": ended.exchanges,
 		"folded": folded, "fold": memories.folds(ended.npc_id),
 	}
+
+
+## The words of a conversation as memory holds them: the person is "you", the
+## player "they".
+static func _words_of(convo: Conversation) -> Array:
+	var out: Array = []
+	for line in convo.lines:
+		out.append({"who": "they" if line["speaker"] == PlayerState.ID else "you", "text": str(line["text"])})
+	return out
+
+
+## A text passed between them that was not part of a conversation of ours: the
+## person started it (`from_person`) or the player answered one. It goes in the
+## same book as everything else they have said to each other (D-059).
+func note_text(npc_id: String, from_person: bool, text: String) -> void:
+	if text.strip_edges() != "":
+		memories.add_text(npc_id, _clock.total_minutes if _clock != null else 0,
+			[{"who": "you" if from_person else "they", "text": text}])
+
+
+## A stored phone message as words, in English, for a prompt: places, items and
+## people by name, not by id.
+func message_words(message: Dictionary) -> String:
+	if str(message.get("text", "")) != "":
+		return str(message["text"])
+	var args: Dictionary = (message.get("args", {}) as Dictionary).duplicate()
+	if args.has("item"):
+		args["item"] = _name_of(str(args["item"]))
+	if args.has("quest_key"):
+		args["quest"] = DialoguePrompt.english(str(args["quest_key"]))
+	if args.has("place"):
+		args["place"] = _name_of(str(args["place"]))
+	if args.has("victim"):
+		args["victim"] = _name_of(str(args["victim"]))
+	if args.has("start"):
+		var ahead := int(int(args["start"]) / GameClock.MINUTES_PER_DAY) - (_clock.day_index() if _clock != null else 0)
+		args["when"] = "today" if ahead == 0 else ("tomorrow" if ahead == 1 else WEEKDAYS[posmod((_clock.weekday() if _clock != null else 0) + ahead, 7)])
+		args["time"] = "%02d:%02d" % [(int(args["start"]) % GameClock.MINUTES_PER_DAY) / 60, int(args["start"]) % 60]
+	return DialoguePrompt.english(str(message.get("key", "")), args)
 
 
 ## Has the model rewrite what someone remembers of the player, after older

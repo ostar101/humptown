@@ -2157,3 +2157,57 @@ Running is still the walk cycle.
 only files someone wears are loaded. Worth re-checking in the running game if
 the cast grows.
 
+
+## D-059 — Everything between two people is one memory; the feed says what happened
+
+**Found in play.** People did not reliably remember an earlier talk and greeted
+the player as a stranger every time; a person did not know they had sent a text.
+Two causes. `MemoryBook` (D-038) kept only what the player *did* ("stopped for a
+chat" when nothing in particular), never the words, so "do you remember what we
+talked about?" had nothing to be answered from; and texts lived only in
+`PhoneState`, never in anyone's memory. The opening line was always the generic
+first-meeting greeting.
+
+**One book.** Every dealing is an episode with a `channel` — `in_person`, `call`,
+`text` or `event` — what was done, and an `excerpt`: the last six lines of the
+actual words, each cut to 110 characters, the person as "you" and the player as
+"they" (as in the prompt). Written by `DialogueDirector._settle` for talks, calls
+and texts the player sends (a text and its answer are one exchange; texts within
+90 minutes join), by `note_text` for what people write first
+(`PhoneDirector.deliver`, the player's canned answers) and, as before, by the
+crime, fight and meeting directors for deeds. Recall lists them oldest first with
+how long ago and where or how, and gives the words of the latest two, so a prompt
+stays bounded. The prompt says plainly that this really happened, that texts and
+calls count, and that what is not written there is not remembered.
+
+**What is remembered is speech, not fact.** The words include what a model made
+someone say. That is right — they did say it — but it is kept apart from what
+*happened*, which is still only what the rules judged (`things`): a promised
+lifetime discount is remembered as something said, never as something done.
+
+**Greeting.** `DialogueDirector._opening_topic` picks the opener from memory: a
+text of theirs the player has not answered (`greet_texted`, within twelve hours),
+spoken to earlier today (`greet_again_today`), met before (`greet_again`),
+already familiar from the start (`greet_known`, familiarity 0.3), else a stranger
+(`greet`). Authored lines, so no wait for a model at the door; a model-made
+opening that draws on the memory is possible later.
+
+**Saved.** In the existing `memories` section; new fields default when an old
+save has none, so no migration.
+
+**The event feed.** A short list at the top right of the HUD: money moved and
+what for (`Events.money_moved`, from every wallet record), things going in or out
+of the bag (`Events.item_moved`, only the player's own bag, not the cupboard),
+skill levels, someone starting or stopping to walk with you, and every message
+the HUD calls `notify` — new texts, meetings, quest steps, new places, a lost job,
+an arrest, a collapse, the police. Six lines, each kept fourteen seconds and
+faded out; passing remarks (`show_message`) stay out of it. Words are in
+`FeedText`. It only shows; the rules already decided.
+
+**Layout.** The speech window is 72 px lower, so the time and place in the top
+left stay visible while someone talks.
+
+**Not yet.** A full scrollable history of the feed; a model-written opener;
+telling the feed about money and goods given *to* the player by people, when that
+exists.
+

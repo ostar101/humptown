@@ -30,6 +30,10 @@ const TEMPERATURE := 0.8
 ## this town do not make speeches.
 const MAX_REPLY_CHARS := 420
 
+## Added to the rules when they have any memory of the player (D-059).
+const RULE_REMEMBER := """
+- What is written under "What you remember of them" really happened between you: you remember it, including your own texts and calls. If they mention an earlier talk, a call or a text, go along with it as written there. If it is not written there, you do not remember it, and you say so instead of guessing."""
+
 const LANGUAGE_NAMES := {"en": "English", "fi": "Finnish"}
 
 static var _stage_directions := RegEx.create_from_string("\\*[^*]*\\*|\\([^)]*\\)")
@@ -96,7 +100,7 @@ static func system_text(context: Dictionary, opening: Array[String] = []) -> Str
 	parts.append("What you know about this person:" + ("\n- " + "\n- ".join(knows) if not knows.is_empty() else " nothing beyond what you can see."))
 	var memories: Array = context.get("memories", [])
 	if not memories.is_empty():
-		parts.append("What you remember of them:\n- " + "\n- ".join(memories))
+		parts.append("What you remember of them, oldest first (talks in person, calls, and texts you wrote or got, with the words that were said):\n- " + "\n- ".join(memories))
 	if not opening.is_empty():
 		parts.append("You have just said: \"%s\"" % " ".join(opening))
 	var happened := str(context.get("happened", ""))
@@ -111,7 +115,7 @@ static func system_text(context: Dictionary, opening: Array[String] = []) -> Str
 - You cannot hand over or promise things you do not have, and nothing you say makes anything happen by itself.
 - What is written under "What just happened" is true. React to it; never contradict it or pretend something else happened.
 - Answer in the language the other person writes in. The game is being played in %s.
-- Never say you are an AI, a model or a character in a game.""" % [name, language])
+- Never say you are an AI, a model or a character in a game.%s""" % [name, language, RULE_REMEMBER if not memories.is_empty() else ""])
 	if texting:
 		parts.append("This is a text message: write it as one. You cannot see them or hand them anything.")
 	elif channel == "call":

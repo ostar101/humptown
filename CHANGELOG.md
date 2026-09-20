@@ -6,6 +6,16 @@ versions are milestones rather than releases until there is something to release
 ## [Unreleased]
 
 ### Added
+- An event feed at the top right (D-059): money paid and received and what for,
+  things going in and out of your bag, skill levels, and the important messages
+  (texts, meetings, quest steps, new places, arrests).
+
+### Changed
+- People remember what was actually said, in person, on calls and in texts, and
+  the texts they wrote themselves (D-059); they greet you as someone they have
+  met, spoken to today, or texted, instead of always as a stranger.
+- The speech window sits lower so the time and place stay visible.
+
 - Character animations beyond walking (D-058): people idle now and then, the
   player holds money out when handing it over and holds the phone to their ear
   on a call. The importer keeps more of LimeZu's rows and the sprite code reads

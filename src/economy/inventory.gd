@@ -82,6 +82,11 @@ func item_ids() -> Array[String]:
 	return out
 
 
+## Whether changes here are told to the event feed: the player's own bag is,
+## the cupboard and every inventory a test makes are not.
+var announces := false
+
+
 func add(item_id: String, amount: int = 1, state: Dictionary = {}) -> Result:
 	if amount <= 0:
 		return Result.failure("invalid_amount")
@@ -95,6 +100,7 @@ func add(item_id: String, amount: int = 1, state: Dictionary = {}) -> Result:
 		for s in stacks:
 			if s.item_id == item_id and s.state.is_empty():
 				s.count += amount
+				_told(item_id, amount)
 				Events.inventory_changed.emit()
 				return Result.success(amount)
 	var stack := Stack.new()
@@ -102,6 +108,7 @@ func add(item_id: String, amount: int = 1, state: Dictionary = {}) -> Result:
 	stack.count = amount
 	stack.state = state.duplicate()
 	stacks.append(stack)
+	_told(item_id, amount)
 	Events.inventory_changed.emit()
 	return Result.success(amount)
 
@@ -120,8 +127,14 @@ func remove(item_id: String, amount: int = 1) -> Result:
 			if s.count <= 0:
 				stacks.remove_at(i)
 		i -= 1
+	_told(item_id, -amount)
 	Events.inventory_changed.emit()
 	return Result.success(amount)
+
+
+func _told(item_id: String, delta: int) -> void:
+	if announces:
+		Events.item_moved.emit(item_id, delta)
 
 
 ## Moves items to another inventory, respecting the destination's capacity.

@@ -19,9 +19,9 @@ mouse_filter = 2
 [node name="Speech" type="PanelContainer" parent="Root"]
 layout_mode = 0
 offset_left = 24.0
-offset_top = 24.0
+offset_top = 96.0
 offset_right = 760.0
-offset_bottom = 200.0
+offset_bottom = 272.0
 
 [node name="Row" type="HBoxContainer" parent="Root/Speech"]
 layout_mode = 2

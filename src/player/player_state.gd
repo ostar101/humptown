@@ -49,6 +49,7 @@ var known_places: Dictionary = {}
 func setup(data: DataRegistry) -> void:
 	skills.setup(data)
 	inventory.setup(data)
+	inventory.announces = true   # what goes in and out of the bag is told to the feed (D-059)
 	stash.setup(data)
 	stash.base_capacity = STASH_CAPACITY
 	_apply_carry_capacity()

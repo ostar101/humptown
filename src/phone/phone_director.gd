@@ -110,6 +110,8 @@ func deliver(cause: Dictionary) -> Result:
 		_player.learn_place(str(cause["meeting"]["location"]), "told")   # they said where
 	var message := state.add_message(npc_id, true, str(cause["kind"]), str(cause["key"]),
 		cause.get("args", {}), now, action)
+	if _dialogue != null:
+		_dialogue.note_text(npc_id, true, _dialogue.message_words(message))   # they remember writing it (D-059)
 	Events.phone_message.emit(npc_id, int(message["id"]))
 	return Result.success(message)
 
@@ -241,17 +243,25 @@ func answer(message_id: int, choice: String) -> Result:
 		state.answer(message_id, "accepted")
 		if str(action["do"]) == "meeting":
 			_meetings.accept(meeting_id)
-			state.add_message(npc_id, false, "reply", "phone.reply.meet_accept", {}, now)
+			_reply(npc_id, "phone.reply.meet_accept", now)
 		else:
 			_quests.take_errand(str(action["errand"]), _clock.day_index())
-			state.add_message(npc_id, false, "reply", "phone.reply.accept", {}, now)
+			_reply(npc_id, "phone.reply.accept", now)
 			Events.quest_updated.emit(str(action["errand"]), "errand_taken")
 	else:
 		state.answer(message_id, "declined")
 		if str(action["do"]) == "meeting":
 			_meetings.decline(meeting_id)
-		state.add_message(npc_id, false, "reply", "phone.reply.decline", {}, now)
+		_reply(npc_id, "phone.reply.decline", now)
 	return Result.success(choice)
+
+
+## The player's canned answer to a message, kept on the phone and in the
+## person's memory of it (D-059).
+func _reply(npc_id: String, key: String, now: int) -> void:
+	var message := state.add_message(npc_id, false, "reply", key, {}, now)
+	if _dialogue != null:
+		_dialogue.note_text(npc_id, false, _dialogue.message_words(message))
 
 
 ## Tries what is waiting. Something held back only for the hour, sleep, a full

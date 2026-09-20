@@ -37,6 +37,12 @@ signal reputation_changed(scope: String, delta: float)
 
 # --- Player -----------------------------------------------------------------
 signal money_changed(cash: int, bank: int)
+## The player's money moved by `amount` (negative: paid out), and why: `kind` is
+## how ("cash", "bank", "mixed", "deposit", "withdraw", "transfer") and `reason`
+## what for ("gift:npc_ida", "wage:job_x", ""). For the event feed (D-059).
+signal money_moved(amount: int, kind: String, reason: String)
+## Something in the player's bag: `delta` more (or fewer) of an item.
+signal item_moved(item_id: String, delta: int)
 signal inventory_changed()
 signal skill_xp_gained(skill_id: String, amount: float)
 signal skill_level_up(skill_id: String, level: int)
