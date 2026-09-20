@@ -2211,3 +2211,22 @@ left stay visible while someone talks.
 telling the feed about money and goods given *to* the player by people, when that
 exists.
 
+
+
+## D-060 — The police post is LimeZu's police station
+
+**Found.** The post shared the grey `civic` storefront with the clinic, its sign
+repainted flat. The police theme sheet (`15_Police_Station`) has a building with
+POLICE across it and a badge: `Police_Station_Small_1`, 7×13 cells, door in the
+bottom row, no porch.
+
+**Decision.** `BuildingArt` gets a `police` entry and `BY_LOCATION`, which maps a
+location to its own art (`art_kind`); `sprite_for` asks it, so callers keep
+passing the kind. The kind stays `civic` everywhere else (map colours, themes,
+rules). The post's map rect is now 7×13 and its door `[61, 28]`, column 3 of the
+building, as the art draws it. `import_limezu_buildings.py` writes `police_1.png`.
+
+**Other buildings that could be swapped later** (not done): the corner shop for a
+`Market_Big` (7×12) or `Market_Medium` (7×9), the warehouse for something from the
+worksite or generic-building sheets, the clinic for the hotel/hospital sheet (its
+buildings are much larger). Each needs a rect and door change like this one.

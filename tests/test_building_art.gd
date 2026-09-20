@@ -2,7 +2,7 @@ extends TestCase
 ## BuildingArt: which whole-building overlay a building gets, if any, and the
 ## geometry that art implies for the map (D-024, D-026, D-028).
 
-const KINDS_WITH_ART := ["home", "shop", "bar", "civic", "work"]
+const KINDS_WITH_ART := ["home", "shop", "bar", "civic", "work", "police"]
 
 
 func test_wrong_size_never_gets_a_sprite() -> void:
@@ -83,6 +83,26 @@ func test_shop_bar_civic_and_work_each_get_a_distinct_file() -> void:
 	assert_eq(distinct.size(), 4, "each of shop/bar/civic/work is a different sign colour")
 
 
+## D-060: the post is drawn with the police building, not the shared civic one,
+## and the map is authored to that building's size and door.
+func test_the_police_post_is_drawn_with_its_own_building() -> void:
+	assert_eq(BuildingArt.art_kind("civic", "loc_police_post"), "police")
+	assert_eq(BuildingArt.art_kind("civic", "loc_clinic"), "civic", "other civic buildings keep the shared art")
+	assert_eq(BuildingArt.footprint("police"), Vector2i(7, 13))
+	var data := DataRegistry.new()
+	data.load_all()
+	var world := WorldState.new()
+	world.build_from(data)
+	var map := world.map_for("harbourside")
+	var rect: Rect2i = map.buildings["loc_police_post"]["rect"]
+	assert_eq(rect.size, BuildingArt.footprint("police"), "the post is authored to the art's size")
+	var file := BuildingArt.sprite_for("civic", "loc_police_post", rect.size)
+	if file == "":
+		assert_true(true, "art not installed on this machine; nothing to check")
+	else:
+		assert_true(file.ends_with("police_1.png"), file)
+
+
 # --- the map agrees with the art ----------------------------------------
 
 func test_authored_buildings_put_their_door_where_the_art_draws_one() -> void:
@@ -94,7 +114,7 @@ func test_authored_buildings_put_their_door_where_the_art_draws_one() -> void:
 	var checked := 0
 	for loc_id in map.buildings:
 		var rect: Rect2i = map.buildings[loc_id]["rect"]
-		var kind := map.kind_of(loc_id)
+		var kind := BuildingArt.art_kind(map.kind_of(loc_id), loc_id)
 		if rect.size != BuildingArt.footprint(kind):
 			continue   # keeps the generic per-cell look; its door is free to sit anywhere
 		var door: Vector2i = map.buildings[loc_id]["door"]
@@ -115,7 +135,7 @@ func test_the_porch_in_front_of_every_home_is_walkable() -> void:
 	var checked := 0
 	for loc_id in map.buildings:
 		var rect: Rect2i = map.buildings[loc_id]["rect"]
-		var kind := map.kind_of(loc_id)
+		var kind := BuildingArt.art_kind(map.kind_of(loc_id), loc_id)
 		if rect.size != BuildingArt.footprint(kind):
 			continue
 		var porch: int = BuildingArt.BUILDINGS[kind]["porch_rows"]
@@ -146,6 +166,7 @@ func test_region_view_gives_correctly_sized_buildings_a_sprite_and_others_none()
 		assert_true(by_name.has("Building_loc_corner_shop"), "an 8x13 shop gets a sprite")
 		assert_true(by_name.has("Building_loc_anchor_bar"), "an 8x13 bar gets a sprite")
 		assert_true(by_name.has("Building_loc_clinic"), "an 8x13 civic building gets a sprite")
+		assert_true(by_name.has("Building_loc_police_post"), "the police post gets its own building")
 		assert_true(by_name.has("Building_loc_warehouse_9"), "an 8x13 work building gets a sprite")
 	else:
 		assert_true(by_name.is_empty(), "art not installed on this machine; nothing gets a sprite")

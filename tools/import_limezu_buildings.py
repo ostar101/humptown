@@ -46,6 +46,7 @@ ROOT = Path(__file__).resolve().parent.parent
 EXT = ROOT / "art/_limezu_source/exteriors/Modern_Exteriors_32x32/ME_Theme_Sorter_32x32"
 VILLAS = EXT / "7_Villas_Singles_32x32"
 POST_OFFICE = EXT / "22_Post_Office_Singles_32x32"
+POLICE = EXT / "15_Police_Station_Singles_32x32"
 OUT = ROOT / "art/vendor/limezu/buildings"
 
 T = 32
@@ -91,6 +92,10 @@ def main() -> int:
         accent, plate = SIGN_COLOURS[kind]
         _repaint_sign(image, accent, plate).save(OUT / f"{kind}_1.png")
         n += 1
+    # The police station is its own building, 7x13 cells and used whole (D-060).
+    police = POLICE / "ME_Singles_Police_Station_32x32_Police_Station_Small_1.png"
+    Image.open(police).convert("RGBA").save(OUT / "police_1.png")
+    n += 1
     print(f"{n} building sprites written to {OUT}")
     return 0
 

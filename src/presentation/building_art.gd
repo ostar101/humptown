@@ -36,7 +36,14 @@ const BUILDINGS := {
 	"bar": {"prefix": "bar_", "count": 1, "cells": Vector2i(8, 13), "porch_rows": 0, "door_column": 4},
 	"civic": {"prefix": "civic_", "count": 1, "cells": Vector2i(8, 13), "porch_rows": 0, "door_column": 4},
 	"work": {"prefix": "work_", "count": 1, "cells": Vector2i(8, 13), "porch_rows": 0, "door_column": 4},
+	# LimeZu's own police station ("Small", 7x13, badge and POLICE sign drawn in), D-060.
+	"police": {"prefix": "police_", "count": 1, "cells": Vector2i(7, 13), "porch_rows": 0, "door_column": 3},
 }
+
+## Buildings whose art is their own rather than their kind's: `civic` covers
+## the clinic, the police post and others, but only the post has a building
+## with POLICE across it. Location id -> a key of BUILDINGS.
+const BY_LOCATION := {"loc_police_post": "police"}
 
 ## Resolved once per path: `sprite_for()` is called per cell by
 ## `RegionTiles.coords_for()` through `covers()`, and hitting the filesystem
@@ -67,11 +74,19 @@ static func door_column(kind: String) -> int:
 	return int(entry["door_column"]) if not entry.is_empty() else -1
 
 
+## The BUILDINGS key a location is drawn with: its own art if it has any
+## (`BY_LOCATION`), otherwise its kind's. Geometry checks must ask this, not the
+## bare kind, or they measure the wrong building.
+static func art_kind(kind: String, loc_id: String) -> String:
+	return str(BY_LOCATION.get(loc_id, kind))
+
+
 ## The overlay file for this building, or "" if its kind has no whole-building
 ## art, its rect is the wrong shape for the art available, or the file simply
 ## is not installed. `loc_id` only picks *which* variant, for a little
 ## street-to-street variety; the same building always gets the same one.
 static func sprite_for(kind: String, loc_id: String, rect_size: Vector2i) -> String:
+	kind = art_kind(kind, loc_id)
 	var entry: Dictionary = BUILDINGS.get(kind, {})
 	if entry.is_empty() or rect_size != footprint(kind):
 		return ""

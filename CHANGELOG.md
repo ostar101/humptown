@@ -6,6 +6,7 @@ versions are milestones rather than releases until there is something to release
 ## [Unreleased]
 
 ### Added
+- The police post is now LimeZu's police station, with the badge and POLICE sign (D-060). Re-run `python tools/import_limezu_buildings.py` to get it.
 - An event feed at the top right (D-059): money paid and received and what for,
   things going in and out of your bag, skill levels, and the important messages
   (texts, meetings, quest steps, new places, arrests).

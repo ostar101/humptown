@@ -32,7 +32,7 @@
       {"location": "loc_corner_shop", "rect": [4, 16, 8, 13], "door": [8, 28]},
       {"location": "loc_cafe_kaisla", "rect": [13, 16, 8, 13], "door": [17, 28]},
       {"location": "loc_clinic", "rect": [49, 16, 8, 13], "door": [53, 28]},
-      {"location": "loc_police_post", "rect": [58, 16, 8, 13], "door": [62, 28]},
+      {"location": "loc_police_post", "rect": [58, 16, 7, 13], "door": [61, 28]},
       {"location": "loc_anchor_bar", "rect": [6, 37, 8, 13], "door": [10, 49]},
       {"location": "loc_warehouse_9", "rect": [76, 37, 8, 13], "door": [80, 49]}
     ],
