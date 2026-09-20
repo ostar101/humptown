@@ -15,9 +15,15 @@ extends RefCounted
 const DIR := "res://art/vendor/limezu/characters/"
 const MANIFEST := DIR + "manifest.json"
 const FRAME := Vector2i(32, 64)
-const FRAMES_PER_FACING := 6
-const ROW_STAND := 0
-const ROW_WALK := 2
+## Where each animation sits in a layer's atlas, and how long it is, for an
+## import that predates the `actions` table in the manifest, and for tests:
+## the three rows the game always had. `frames` is per facing when the action
+## is directional, else the whole run, facing the viewer (D-058).
+const DEFAULT_ACTIONS := {
+	"stand": {"y": 0, "frames": 1, "directional": true},
+	"idle": {"y": 64, "frames": 6, "directional": true},
+	"walk": {"y": 128, "frames": 6, "directional": true},
+}
 ## Column order of the four facings in every sheet.
 const FACINGS: Array[Vector2i] = [Vector2i.RIGHT, Vector2i.UP, Vector2i.LEFT, Vector2i.DOWN]
 ## Drawing order, bottom to top.
@@ -110,13 +116,39 @@ static func textures_for(look: Dictionary) -> Array[Texture2D]:
 	return out
 
 
+## The animations the art has, by name: {"y", "frames", "directional"}.
+static func actions() -> Dictionary:
+	var listed: Variant = manifest().get("actions", {})
+	return listed if typeof(listed) == TYPE_DICTIONARY and not (listed as Dictionary).is_empty() else DEFAULT_ACTIONS
+
+
+static func has_action(action: String) -> bool:
+	return actions().has(action)
+
+
+## How many frames an action runs for (per facing, if it has facings); 0 when
+## the art has no such animation.
+static func action_frames(action: String) -> int:
+	return int((actions().get(action, {}) as Dictionary).get("frames", 0))
+
+
+## The part of an atlas that shows this action, facing and frame. An action the
+## art does not have is shown as standing, so asking for one is never an error.
+static func frame_rect_for(action: String, facing: Vector2i, frame: int) -> Rect2i:
+	var table := actions()
+	if not table.has(action):
+		action = "stand"
+	var entry: Dictionary = table.get(action, DEFAULT_ACTIONS["stand"])
+	var frames := maxi(int(entry.get("frames", 1)), 1)
+	var column := posmod(frame, frames)
+	if bool(entry.get("directional", true)):
+		column += maxi(FACINGS.find(facing), 0) * frames
+	return Rect2i(Vector2i(column * FRAME.x, int(entry.get("y", 0))), FRAME)
+
+
 ## The part of a sheet that shows this facing, standing or at a walk frame.
 static func frame_rect(facing: Vector2i, moving: bool, frame: int) -> Rect2i:
-	var side := maxi(FACINGS.find(facing), 0)
-	if not moving:   # the standing row holds one frame per facing
-		return Rect2i(Vector2i(side * FRAME.x, ROW_STAND * FRAME.y), FRAME)
-	var column := side * FRAMES_PER_FACING + posmod(frame, FRAMES_PER_FACING)
-	return Rect2i(Vector2i(column * FRAME.x, ROW_WALK * FRAME.y), FRAME)
+	return frame_rect_for("walk" if moving else "stand", facing, frame)
 
 
 ## A number per person and layer. Hashing the pair, rather than shifting one

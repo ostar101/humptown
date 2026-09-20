@@ -100,3 +100,73 @@ func test_real_art_is_adult_and_loads_when_present() -> void:
 			assert_false(str(entry["file"]).to_lower().contains("kid"), "adults only: %s" % entry["file"])
 	var look := CharacterSprites.look_for("npc_joonas", NpcLook.generated("npc_joonas"))
 	assert_eq(CharacterSprites.textures_for(look).size(), CharacterSprites.LAYERS.size(), "every layer loads")
+
+
+# --- other animations (D-058) -----------------------------------------------------
+
+func test_actions_come_from_the_manifest_and_default_to_the_old_rows() -> void:
+	CharacterSprites.use_manifest(FAKE)
+	assert_true(CharacterSprites.has_action("walk"), "an import without the table still has the three rows")
+	assert_false(CharacterSprites.has_action("gift"))
+	var richer := FAKE.duplicate()
+	richer["actions"] = {
+		"stand": {"y": 0, "frames": 1, "directional": true},
+		"phone": {"y": 192, "frames": 12, "directional": false},
+		"gift": {"y": 256, "frames": 10, "directional": true},
+	}
+	CharacterSprites.use_manifest(richer)
+	assert_true(CharacterSprites.has_action("gift"))
+	assert_eq(CharacterSprites.action_frames("gift"), 10)
+	# Directional: a block of frames per facing, right, up, left, down.
+	assert_eq(CharacterSprites.frame_rect_for("gift", Vector2i.DOWN, 2), Rect2i(32 * 32, 256, 32, 64))
+	assert_eq(CharacterSprites.frame_rect_for("gift", Vector2i.RIGHT, 12), Rect2i(64, 256, 32, 64), "frames wrap")
+	# Not directional: one run, whichever way they face.
+	assert_eq(CharacterSprites.frame_rect_for("phone", Vector2i.LEFT, 5), Rect2i(160, 192, 32, 64))
+	assert_eq(CharacterSprites.frame_rect_for("phone", Vector2i.UP, 5), Rect2i(160, 192, 32, 64))
+
+
+func test_an_action_the_art_lacks_is_shown_as_standing() -> void:
+	CharacterSprites.use_manifest(FAKE)
+	assert_eq(CharacterSprites.frame_rect_for("juggle", Vector2i.DOWN, 3), CharacterSprites.frame_rect(Vector2i.DOWN, false, 0))
+	assert_eq(CharacterSprites.action_frames("juggle"), 0)
+
+
+func test_the_painted_figure_has_nothing_to_play() -> void:
+	CharacterSprites.use_manifest({})
+	var figure := CharacterFigure.new()
+	assert_false(figure.play("gift"), "no art, no animation; nothing waits on it")
+	assert_false(figure.is_posing())
+	figure.free()
+
+
+func test_a_played_action_runs_out_and_a_held_one_waits_to_be_put_away() -> void:
+	CharacterSprites.reset()
+	if not CharacterSprites.has_action("gift") or not CharacterSprites.available():
+		assert_true(true, "art not installed (or imported before D-058); nothing to play")
+		return
+	var figure := CharacterFigure.new()
+	figure.look = CharacterSprites.look_for("npc_joonas", NpcLook.generated("npc_joonas"))
+	var finished: Array[String] = []
+	figure.pose_finished.connect(func(action: String) -> void: finished.append(action))
+
+	assert_true(figure.play("gift"))
+	assert_true(figure.is_posing())
+	figure._process(0.1)
+	assert_true(figure.is_posing(), "a moment in")
+	figure._process(5.0)
+	assert_false(figure.is_posing())
+	assert_eq(finished, ["gift"])
+
+	assert_true(figure.play("phone", true))
+	figure._process(30.0)
+	assert_true(figure.is_posing(), "held: the loop repeats until it is put away")
+	figure.end_pose()
+	figure._process(5.0)
+	assert_false(figure.is_posing())
+	assert_eq(finished, ["gift", "phone"])
+
+	assert_true(figure.play("gift"))
+	figure.moving = true
+	assert_false(figure.is_posing(), "setting off ends it")
+	assert_false(figure.play("gift"), "and nobody strikes a pose mid-stride")
+	figure.free()

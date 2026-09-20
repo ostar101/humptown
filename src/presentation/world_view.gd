@@ -67,6 +67,7 @@ func _ready() -> void:
 	Events.quest_updated.connect(_on_quest_updated)
 	Events.player_collapsed.connect(_on_player_collapsed)
 	Events.job_lost.connect(_on_job_lost)
+	Events.player_deed.connect(_on_player_deed)
 	show_current_area()
 	DevCapture.maybe_capture(self)
 
@@ -88,6 +89,7 @@ func _exit_tree() -> void:
 		Events.fight_requested.disconnect(_on_fight_requested)
 		Events.ambush.disconnect(_on_ambush)
 		Events.police_action.disconnect(_on_police_action)
+		Events.player_deed.disconnect(_on_player_deed)
 
 
 ## (Re)builds the view for wherever the player is: the region, or the inside
@@ -180,6 +182,7 @@ func _on_call_requested(npc_id: String) -> void:
 		return
 	_talking_body = null
 	_player.input_enabled = false
+	_player.play("phone", true)   # held to the ear until the call ends (D-058)
 	_hud.set_prompt("")
 
 
@@ -406,6 +409,13 @@ func _on_meeting_updated(meeting_id: int, status: String) -> void:
 	_hud.show_message(PhoneText.meeting_message(meeting_id, status))
 
 
+## Money handed over to someone face to face: the player holds it out (D-058).
+## Only the picture; the cash moved when the rules said so.
+func _on_player_deed(kind: String, data: Dictionary) -> void:
+	if kind == "gave_money" and _talking_body != null and _talking_body.npc_id == str(data.get("npc", "")):
+		_player.play("gift")
+
+
 func _on_phone_message(npc_id: String, _message_id: int) -> void:
 	_hud.show_message(PhoneText.new_message_line(npc_id))
 
@@ -425,6 +435,7 @@ func _on_shop_closed() -> void:
 
 
 func _on_dialogue_closed() -> void:
+	_player.end_pose()
 	_player.input_enabled = true
 	if _talking_body != null and _talking_body.npc_id != "":
 		_talking_body.resume()

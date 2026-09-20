@@ -232,3 +232,44 @@ func test_the_player_moving_does_not_create_a_body() -> void:
 	Game.move_player(DistrictMap.cell_to_world(_map().anchor_of("loc_dock_street")))
 	assert_eq(bodies.visible_count(), before)
 	view.free()
+
+
+func test_a_standing_body_idles_now_and_then_and_a_walker_does_not() -> void:
+	CharacterSprites.reset()
+	if not CharacterSprites.has_action("idle") or not CharacterSprites.available():
+		assert_true(true, "art not installed; nothing to animate")
+		return
+	var npc := _active_npc()
+	npc.location = "loc_harbour"
+	var view := _spawn_world()
+	var bodies := view.npc_bodies()
+	var body := bodies.body_for(npc.id)
+	assert_not_null(body)
+	bodies._ambient_idle()   # the crowd's timer picks someone; it must not trip over anyone
+	body.end_pose()
+	body.play("idle")
+	assert_true(body.is_posing(), "standing still: free to idle")
+	body.end_pose()
+	Game.npcs.move_to(npc.id, "loc_corner_shop")
+	assert_true(body.is_walking())
+	assert_false(body.play("idle"), "a walker does not stop to idle")
+	view.free()
+
+
+func test_handing_over_money_is_shown_and_a_call_is_held_to_the_ear() -> void:
+	CharacterSprites.reset()
+	if not CharacterSprites.has_action("gift") or not CharacterSprites.available():
+		assert_true(true, "art not installed; nothing to animate")
+		return
+	var npc := _active_npc()
+	npc.location = "loc_harbour"
+	var view := _spawn_world()
+	var body := view.npc_bodies().body_for(npc.id)
+	var player := view.player_body()
+	assert_ok(view.talk_to(body))
+	Events.player_deed.emit("gave_money", {"npc": npc.id, "amount": 5})
+	assert_true(player.is_posing(), "the player holds it out")
+	Events.player_deed.emit("gave_money", {"npc": "npc_someone_else", "amount": 5})   # nobody in front of them
+	view.dialogue_box().close()
+	assert_false(player.is_posing(), "and it is over when the talk is")
+	view.free()

@@ -28,6 +28,11 @@ var _follow_goal: Dictionary = {}
 
 ## A follower nearer than this (in cells) to the player is left where they are.
 const COMPANION_RANGE := 3
+## Every so often one person who is standing still does a small idle animation
+## (D-058). One timer for the whole crowd: a standing body still does not process.
+const IDLE_EVERY := 2.5
+
+var _rng := RandomNumberGenerator.new()   # cosmetic, not the world's seeded stream
 
 
 func _ready() -> void:
@@ -37,6 +42,12 @@ func _ready() -> void:
 	Events.time_skipped.connect(_on_time_skipped)
 	Events.game_loaded.connect(resync)
 	Game.world_unloaded.connect(_release_all)
+	_rng.randomize()
+	var timer := Timer.new()
+	timer.wait_time = IDLE_EVERY
+	timer.timeout.connect(_ambient_idle)
+	add_child(timer)
+	timer.start()
 
 
 ## Shows the people of this map. Call when the region is (re)built.
@@ -93,6 +104,16 @@ func follow_player(cell: Vector2i) -> void:
 			points.append(DistrictMap.cell_to_world(step))
 		body.speed = NpcBody.FOLLOW_SPEED
 		body.walk(points)
+
+
+## One standing person, at random, does their idle animation once.
+func _ambient_idle() -> void:
+	if _bodies.is_empty():
+		return
+	var ids := _bodies.keys()
+	var body: NpcBody = _bodies[ids[_rng.randi_range(0, ids.size() - 1)]]
+	if not body.is_posing():
+		body.play("idle")
 
 
 func visible_count() -> int:

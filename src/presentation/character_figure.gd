@@ -24,6 +24,8 @@ var moving := false:
 		if value != moving:
 			moving = value
 			_phase = 0.0
+			if moving and _pose != "":
+				_end_pose()   # setting off ends whatever they were doing
 			queue_redraw()
 var running := false
 ## Layer files from CharacterSprites.look_for. Empty means code-painted.
@@ -44,18 +46,35 @@ const DEFAULTS := {
 ## Walk frames per second of the sprite sheet.
 const SPRITE_FPS := 10.0
 const SPRITE_RUN_FPS := 15.0
+## Frames per second of the other animations (D-058); anything unlisted plays at POSE_FPS.
+const POSE_FPS := 8.0
+const POSE_SPEEDS := {"idle": 5.0}
+## An action that can be held: {first frame of the loop, last frame of the
+## loop}. It plays up to the loop, repeats it until `end_pose()`, then plays
+## out the rest — a phone is lifted, talked into, and put away.
+const POSE_LOOPS := {"phone": Vector2i(4, 9)}
+
+## An action played to its end (or to `end_pose()`) has finished.
+signal pose_finished(action: String)
 
 var _phase := 0.0
+var _pose := ""
+var _pose_frame := 0.0
+var _pose_holding := false
 var _layers: Array[Texture2D] = []
 
 
 func _process(delta: float) -> void:
+	if _pose != "":
+		_advance_pose(delta)
+		return
 	if not moving:
 		return
 	if _layers.is_empty():
 		_phase = fmod(_phase + delta * (13.0 if running else 9.0), TAU)
 	else:
-		_phase = fmod(_phase + delta * (SPRITE_RUN_FPS if running else SPRITE_FPS), CharacterSprites.FRAMES_PER_FACING)
+		_phase = fmod(_phase + delta * (SPRITE_RUN_FPS if running else SPRITE_FPS),
+			maxi(CharacterSprites.action_frames("walk"), 1))
 	queue_redraw()
 
 
@@ -127,11 +146,61 @@ func _draw_sprite() -> void:
 	draw_set_transform(Vector2(0, -1), 0.0, Vector2(1.0, 0.4))
 	draw_circle(Vector2.ZERO, 9.0, Color(0, 0, 0, 0.28))
 	draw_set_transform(Vector2.ZERO)
-	var source := CharacterSprites.frame_rect(facing, moving, int(_phase))
+	var source := CharacterSprites.frame_rect(facing, true, int(_phase)) if moving 		else CharacterSprites.frame_rect_for(_pose if _pose != "" else "stand", facing, int(_pose_frame))
 	var size := Vector2(CharacterSprites.FRAME)
 	var target := Rect2(Vector2(-size.x / 2.0, -size.y), size)   # feet on the origin
 	for layer in _layers:
 		draw_texture_rect_region(layer, target, source)
+
+
+## Starts an action from the art (idle, phone, gift, …). Returns false, and does
+## nothing, when there is no art or it has no such animation — the code-painted
+## figure has nothing to play. `hold` keeps a loopable action repeating until
+## `end_pose()`. Presentation only: what the world does never waits for this.
+func play(action: String, hold: bool = false) -> bool:
+	if _layers.is_empty() or moving or not CharacterSprites.has_action(action):
+		return false
+	_pose = action
+	_pose_frame = 0.0
+	_pose_holding = hold and POSE_LOOPS.has(action)
+	queue_redraw()
+	return true
+
+
+## Lets a held action finish: it plays out its last frames and is done.
+func end_pose() -> void:
+	_pose_holding = false
+	if _pose != "" and not POSE_LOOPS.has(_pose):
+		_end_pose()
+
+
+func is_posing() -> bool:
+	return _pose != ""
+
+
+func pose() -> String:
+	return _pose
+
+
+func _advance_pose(delta: float) -> void:
+	_pose_frame += delta * float(POSE_SPEEDS.get(_pose, POSE_FPS))
+	if _pose_holding and POSE_LOOPS.has(_pose):
+		var loop: Vector2i = POSE_LOOPS[_pose]
+		if _pose_frame >= float(loop.y + 1):
+			_pose_frame = float(loop.x) + fmod(_pose_frame - float(loop.x), float(loop.y + 1 - loop.x))
+	if _pose_frame >= float(CharacterSprites.action_frames(_pose)):
+		_end_pose()
+		return
+	queue_redraw()
+
+
+func _end_pose() -> void:
+	var finished := _pose
+	_pose = ""
+	_pose_frame = 0.0
+	_pose_holding = false
+	queue_redraw()
+	pose_finished.emit(finished)
 
 
 ## Four-way facing from any direction. Horizontal wins ties so diagonal walking

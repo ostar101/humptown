@@ -2092,3 +2092,68 @@ for that).
 **Saved.** In each person's `state` (already in the `npcs` section), so no new
 section or migration; a number read back from JSON is an `int()`.
 
+
+## D-058 — The characters already had more animations; the importer was throwing them away
+
+**Found.** The LimeZu character sheets hold about twenty animations, one per 64 px
+row, in every layer (body, eyes, outfit, hair) in the same layout, so they work
+for every look with no new art. The importer kept the top three rows (stand,
+idle, walk) and dropped the rest to keep video memory small: a whole sheet is
+~9 MB and a person wears four.
+
+**Row map** (read off `Premade_Character_32x32_01.png` with
+`tools/catalog_limezu_rows.py`; the Aseprite sources carry no tags, so this is by
+eye). Facing order in every directional row is right, up, left, down; frames per
+facing in brackets.
+
+| row | y | what it is | frames |
+|---|---|---|---|
+| 0 | 0 | stand | 1 per facing |
+| 1 | 64 | idle | 6 per facing |
+| 2 | 128 | walk | 6 per facing |
+| 3 | 192 | sleep (head only, plus bed props) | 6, no facing |
+| 4 | 256 | sit | 3 per facing |
+| 5 | 320 | sit, holding something (a device) | 3 per facing |
+| 6 | 384 | phone, front only: 0-3 lift, **4-9 loop**, 10-11 away | 12 |
+| 7 | 448 | reading a book, front only (book is a separate prop, frames 14-25) | 12 |
+| 8 | 512 | pushing a cart (cart frames 24-47 are props) | 6 per facing |
+| 9 | 576 | picking something up | 12 per facing |
+| 10 | 640 | **gift**: holding something out (box props at 44-45) | 10 per facing |
+| 11, 12 | 704, 768 | two long arm actions, probably lift and throw | 14 per facing |
+| 13, 14 | 832, 896 | two short arm actions, probably hit and punch | 6 per facing |
+| 15 | 960 | probably a stab (small weapon props at 24-47) | 6 per facing + props |
+| 16-18 | 1024-1152 | probably grab a gun, hold it, shoot | 4, 6, 3 per facing |
+| 19 | 1216 | hurt: red flash | 3 per facing |
+
+Only the rows read with confidence are imported; the guesses are left until
+something in the game needs them and someone has watched them play.
+
+**Decision.** `tools/import_limezu.py` keeps a list of `ACTIONS` (now stand,
+idle, walk, phone, gift) and stacks those rows into one compact atlas per layer
+(1280×320, 1.6 MB, against 0.6 MB before), and the manifest gets an `actions`
+table: where each sits and how long it is. `CharacterSprites.frame_rect_for`
+reads it, and an action the art lacks is shown as standing, so asking is never
+an error; an import from before this decision falls back to the old three rows.
+`CharacterFigure.play(action, hold)` plays one — once, or a loop (`phone`,
+frames 4-9) until `end_pose()` — signals `pose_finished`, and is ended by setting
+off. It returns false with no art, so nothing ever waits on a picture.
+
+**What plays.**
+- **Idle:** every 2.5 s one standing person, chosen at random, does their idle
+  animation once (`NpcBodies._ambient_idle`, one timer for the crowd; a standing
+  body still does not process).
+- **Gift:** the player holds it out when they hand someone money face to face
+  (`player_deed "gave_money"`).
+- **Phone:** the player's phone goes to their ear for the length of a call.
+Presentation only, all of it: what the world does never waits for it.
+
+**Not yet, and what each needs.** Sit (a chair cell and which way it faces),
+sleep (a bed cell), the fight actions (a fight scene that shows bodies, D-054),
+pickup/lift/carry (the bring-and-take verbs promised after D-057), reading (a
+book layer), an NPC's own hand-over (they receive, they do not give, so far).
+Running is still the walk cycle.
+
+**Memory.** Each look now costs 1.6 MB per layer file loaded instead of 0.6 MB;
+only files someone wears are loaded. Worth re-checking in the running game if
+the cast grows.
+

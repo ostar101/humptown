@@ -65,6 +65,20 @@ func release() -> void:
 	visible = false
 
 
+## Plays an action from the character art (a small idle, mostly) if the body is
+## standing and the art has it. Never changes where anyone is.
+func play(action: String, hold: bool = false) -> bool:
+	return not is_walking() and _figure.play(action, hold)
+
+
+func end_pose() -> void:
+	_figure.end_pose()
+
+
+func is_posing() -> bool:
+	return _figure.is_posing()
+
+
 func is_walking() -> bool:
 	return _next < _route.size()
 

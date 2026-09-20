@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-19
 **Milestone:** M6 — Consequences — **complete in code (0.6.0)**. M5 complete (0.5.0). M5 complete in code (0.5.0).
-**Build:** green. 844 tests, 10038 assertions with the LimeZu art installed,
+**Build:** green. 850 tests, 10071 assertions with the LimeZu art installed,
 ~12 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
@@ -17,7 +17,7 @@ never happened. Now "follow me"/"wait here" work (`NpcDirector.followers`,
 honestly (`cannot_do`). **Next in that line, in order:** go/come to a place
 (one-off route, the schedule already walks), give/take (check first whether
 people have an inventory), bring/take-to (a two-step errand/meeting shape),
-then animations (importer keeps only stand/idle/walk rows). Manual check still
+then more animations: D-058 imported idle/phone/gift and mapped the rest of the sheet (sit, sleep, pickup, fight rows are read but not imported; each needs something in the world to trigger it). Manual check still
 worth doing in the running game: follow through a shop door and back out, and
 across a long walk. Benchmark after D-057: no change beyond noise (back to back
 with the previous commit).

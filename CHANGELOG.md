@@ -6,6 +6,10 @@ versions are milestones rather than releases until there is something to release
 ## [Unreleased]
 
 ### Added
+- Character animations beyond walking (D-058): people idle now and then, the
+  player holds money out when handing it over and holds the phone to their ear
+  on a call. The importer keeps more of LimeZu's rows and the sprite code reads
+  an `actions` table; re-run `python tools/import_limezu.py` to get them.
 - Walking with the player (D-057): "follow me" / "seuraa minua" makes someone
   actually come along, through doors and along the street, until their own shift
   or night is due, "wait here", trouble, sleep or leaving the region.

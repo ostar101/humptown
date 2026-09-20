@@ -10,12 +10,18 @@ then lets Godot import it (`godot --headless --path . --import`). Without the
 output the game falls back to the code-drawn figures.
 
 What it does, per layer (body, eyes, outfit, hairstyle):
-- keeps only the rows the game animates (standing, idle, walk), which is the
-  top 768x192 of each 32 px sheet;
+- keeps only the animations the game plays (ACTIONS below: standing, idle,
+  walk, and the few others it shows) and stacks them, one 64 px row each, into
+  a compact atlas per layer, because a whole sheet is ~9 MB of video memory
+  and a person wears four of them;
 - measures the layer's mean colour, so an authored palette colour can pick
   the closest variant (CharacterSprites.look_for);
-- writes manifest.json listing everything, because an exported game cannot
-  list res:// directories reliably.
+- writes manifest.json listing everything, including where each action sits
+  in the atlas, because an exported game cannot list res:// directories
+  reliably.
+
+Which source row is which animation was read off the sheet by eye, with
+tools/catalog_limezu_rows.py (D-058); the files themselves name nothing.
 
 Children's layers are never imported: every simulated person is an adult.
 """
@@ -34,7 +40,18 @@ SOURCE = ROOT / "art/_limezu_source/interiors/2_Characters/Character_Generator"
 OUT = ROOT / "art/vendor/limezu/characters"
 
 FRAME_W, FRAME_H = 32, 64
-KEEP = (0, 0, 24 * FRAME_W, 3 * FRAME_H)      # rows: stand, idle, walk
+# The animations kept, in atlas order: (name, source row, frames, directional).
+# A directional row is four blocks of `frames`, in the order right, up, left,
+# down; anything else is one run of frames facing the viewer. Rows are 64 px
+# apart in every layer's sheet. Extra columns on a row (labels, props) are not
+# copied.
+ACTIONS = (
+    ("stand", 0, 1, True),
+    ("idle", 1, 6, True),
+    ("walk", 2, 6, True),
+    ("phone", 6, 12, False),    # frames 0-3 lift it, 4-9 loop, 10-11 put it away
+    ("gift", 10, 10, True),     # holding something out
+)
 DOWN_STAND = (3 * FRAME_W, 0, 4 * FRAME_W, FRAME_H)
 # The dark blue-grey every layer is outlined and shaded with.
 OUTLINE = {(58, 58, 80), (70, 70, 94), (86, 89, 114)}
@@ -55,6 +72,24 @@ LAYERS = {
     "outfits": ("Outfits", r"Outfit_(\d+)_"),
     "hairstyles": ("Hairstyles", r"Hairstyle_(\d+)_"),
 }
+
+
+def atlas_of(sheet: Image.Image) -> Image.Image:
+    """The kept rows of a layer's sheet, stacked left-aligned into one image."""
+    width = max(frames * (4 if directional else 1) * FRAME_W for _, _, frames, directional in ACTIONS)
+    atlas = Image.new("RGBA", (width, len(ACTIONS) * FRAME_H), (0, 0, 0, 0))
+    for slot, (_, row, frames, directional) in enumerate(ACTIONS):
+        columns = frames * (4 if directional else 1)
+        strip = sheet.crop((0, row * FRAME_H, columns * FRAME_W, (row + 1) * FRAME_H))
+        atlas.paste(strip, (0, slot * FRAME_H))
+    return atlas
+
+
+def action_table() -> dict[str, dict[str, object]]:
+    return {
+        name: {"y": slot * FRAME_H, "frames": frames, "directional": directional}
+        for slot, (name, _, frames, directional) in enumerate(ACTIONS)
+    }
 
 
 def mean_colour(sheet: Image.Image) -> str:
@@ -90,7 +125,7 @@ def main() -> int:
     if not SOURCE.is_dir():
         print(f"LimeZu source not found at {SOURCE}. Extract the packs first.")
         return 1
-    manifest: dict[str, object] = {"frame": [FRAME_W, FRAME_H]}
+    manifest: dict[str, object] = {"frame": [FRAME_W, FRAME_H], "actions": action_table()}
     for kind, (folder, pattern) in LAYERS.items():
         entries = []
         dest = OUT / kind
@@ -106,7 +141,7 @@ def main() -> int:
                 style = match.group(1)
                 if style in SKIP.get(kind, set()):
                     continue
-            sheet = Image.open(path).convert("RGBA").crop(KEEP)
+            sheet = atlas_of(Image.open(path).convert("RGBA"))
             sheet.save(dest / path.name, optimize=True)
             colour = mean_colour(sheet)
             if kind == "hairstyles" and is_blue_tinted(colour):

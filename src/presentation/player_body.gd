@@ -53,6 +53,26 @@ func current_cell() -> Vector2i:
 	return _cell
 
 
+## Turns to face a direction without moving (towards someone being handed something).
+func face(direction: Vector2i) -> void:
+	facing = direction
+	_figure.facing = direction
+
+
+## Plays an action from the character art while standing still: a phone held to
+## the ear, something held out. False when the art has none. Moving ends it.
+func play(action: String, hold: bool = false) -> bool:
+	return _figure.play(action, hold)
+
+
+func end_pose() -> void:
+	_figure.end_pose()
+
+
+func is_posing() -> bool:
+	return _figure.is_posing()
+
+
 func _physics_process(_delta: float) -> void:
 	var direction := _wanted_direction()
 	is_running = scripted_running if scripted_direction != Vector2.ZERO \
