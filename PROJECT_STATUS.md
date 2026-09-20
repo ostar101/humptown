@@ -10,6 +10,8 @@
 
 ## Next task
 
+**Newest (D-060):** the police post is drawn with LimeZu's police station (7×13, own `police_1.png`; re-run `tools/import_limezu_buildings.py` and `--import`). Other swap candidates are listed in D-060. Tests green (864).
+
 **Latest (D-059):** memory now holds the words and everything between two people (talks, calls, texts either way), openers depend on it, and the HUD has an event feed. Worth trying in play: talk, leave, come back; get a text, then talk; hand over money and watch the feed. **Before that (D-056, D-057):** live play showed replies cut off on thinking models
 (fixed: room to think on every provider) and NPCs saying yes to things that
 never happened. Now "follow me"/"wait here" work (`NpcDirector.followers`,
