@@ -171,13 +171,50 @@ func test_lamps_repeat_at_a_regular_interval_along_a_street() -> void:
 			"lamps at x=%d and x=%d are not one interval apart" % [lit[i - 1], lit[i]])
 
 
-func test_a_bin_stands_beside_a_door_and_never_in_front_of_it() -> void:
+## D-068: a building's bin stands at the front corner away from its door.
+func test_a_bin_stands_at_the_corner_away_from_the_door() -> void:
 	var map := _map()
+	var rect: Rect2i = map.buildings["loc_corner_shop"]["rect"]
 	var door: Vector2i = map.buildings["loc_corner_shop"]["door"]
-	var beside := door + Vector2i(StreetProps.TRASH_OFFSET, 1)
-	assert_eq(StreetProps.kind_at(map, beside), "trash", "a bin stands along the pavement from the door")
+	var corner := StreetFurniture.bin_cell(map, "loc_corner_shop")
+	assert_eq(corner, Vector2i(rect.end.x - 1, rect.end.y), "the door is in the left half, so the right corner")
+	assert_eq(StreetProps.kind_at(map, corner), "trash")
+	assert_true(map.furniture.has(corner))
+	assert_gt(float(absi(corner.x - door.x)), 1.0, "well to one side of the door")
 	assert_eq(StreetProps.kind_at(map, map.anchor_of("loc_corner_shop")), "",
 		"the cell someone must stand on to use the door stays clear")
+
+
+func test_bins_and_hydrants_block_their_cell() -> void:
+	var map := _map()
+	assert_false(map.furniture.is_empty())
+	for cell: Vector2i in map.furniture:
+		assert_true(map.is_blocked(cell), "%s" % cell)
+		assert_eq(map.ground_at(cell), T.PAVEMENT)
+
+
+## The real town: every building with pavement in front of it has its bin,
+## none stands in front of a door, and no hydrant is near a door or a bin.
+func test_the_real_streets_keep_doors_clear() -> void:
+	var data := DataRegistry.new()
+	data.load_all()
+	var world := WorldState.new()
+	world.build_from(data)
+	var map := world.map_for("harbourside")
+	var bins := 0
+	for cell: Vector2i in map.furniture:
+		var kind := str(map.furniture[cell]["kind"])
+		for loc_id in map.buildings:
+			var door: Vector2i = map.buildings[loc_id]["door"]
+			assert_false(absi(cell.x - door.x) <= 1 and cell.y > door.y and cell.y <= door.y + 3,
+				"%s at %s is in front of the door of %s" % [kind, cell, loc_id])
+			if kind == "hydrant":
+				assert_false(absi(cell.x - door.x) <= StreetFurniture.DOOR_CLEARANCE and cell.y > door.y and cell.y <= door.y + 4,
+					"a hydrant at %s is near the door of %s" % [cell, loc_id])
+		bins += 1 if kind == "trash" else 0
+	for loc_id in map.buildings:
+		assert_ne(StreetFurniture.bin_cell(map, loc_id), Vector2i(-1, -1), "%s has a bin" % loc_id)
+	assert_eq(bins, map.buildings.size(), "one bin a building")
 
 
 func test_placement_is_deterministic_across_calls() -> void:

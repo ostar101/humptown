@@ -17,6 +17,7 @@ versions are milestones rather than releases until there is something to release
   (texts, meetings, quest steps, new places, arrests).
 
 ### Changed
+- Bins stand at the corner of each building away from its door and hydrants keep clear of doors and bins; both block their cell (D-068).
 - Hydrants, bins, trees, benches, cones, the worksite frame and the digger stop the player where they are drawn (D-067).
 - Street lamps stand on the pavement cell next to the road, mirrored so the lamp head is on the road's side, with a collision at the foot of the pole; none at crossings or in front of doors (D-066).
 - Tuomas's flat is the same villa as the other flats, so every house has the drawn roof and its collision (D-065).

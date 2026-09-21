@@ -2409,3 +2409,26 @@ Physics only: no map cell is blocked for these, so routes and NPC bodies are as
 before (NPC bodies collide with nothing, known issue 6). With the art installed,
 like the drawing. The outline's points count from the corner of the clipped
 part, so `ArtShape.body` offsets by `clip.position`.
+
+## D-068 — Bins at the building's corner, hydrants clear of doors; furniture is the world's
+
+**Asked for.** Bins and hydrants out from in front of doors, e.g. at a house's
+corner.
+
+**Decision.**
+- **Bins.** One for each building, at the front corner *farthest from its door*,
+  on the first pavement cell below the footprint (past the porch a home's art
+  draws): `StreetFurniture.bin_cell`. Never in front of a door: a test walks
+  every bin and hydrant in the real town against every door.
+- **Hydrants.** Still the back edge of a pavement strip on their own offset, but
+  kept `DOOR_CLEARANCE` columns and four rows from any door, and
+  `HYDRANT_CLEARANCE` cells from any bin or other hydrant.
+- **Where it lives.** The placement moved out of `StreetProps` (presentation)
+  into `StreetFurniture` (world), pure and art-free, because a bin is going to be
+  searched (D-069) and a hydrant is in the way whatever is drawn. Bins and hydrants
+  are `DistrictMap.furniture`: cell -> {kind, id}; they **block their cell**
+  (`is_blocked`), so routes go round them. Lamps stay computed on demand
+  (`lamp_at`) and block only their foot. `StreetProps` keeps the drawing and thin
+  wrappers, so the drawing code and the tests read as before.
+- The check that runs for every cell is the cheap one first (the spacing sum),
+  which took map building from ~50 ms back to noise.

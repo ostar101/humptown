@@ -69,6 +69,10 @@ var spawn: Vector2i = Vector2i.ZERO
 ## rectangle.
 var open_cells: Dictionary = {}
 
+## Bins and hydrants (`StreetFurniture`, D-068): cell -> {"kind": "trash" |
+## "hydrant", "id": String}. They block their cell; a bin can be searched.
+var furniture: Dictionary = {}
+
 ## location_id -> {"rect": Rect2i, "door": Vector2i} for buildings,
 ## {"rects": Array[Rect2i]} for open-air places.
 var buildings: Dictionary = {}
@@ -179,6 +183,7 @@ static func from_data(d: Dictionary) -> Result:
 
 	for raw_object in d.get("objects", []):
 		m._add_object(raw_object, problems)
+	m.furniture = StreetFurniture.place(m)
 
 	if m.is_interior():
 		var staff_raw: Variant = d.get("staff")
@@ -236,7 +241,7 @@ func allows_body(cell: Vector2i) -> bool:
 func is_blocked(cell: Vector2i) -> bool:
 	if not in_bounds(cell):
 		return true
-	return ground_at(cell) == Terrain.WATER or structure_at(cell) != Terrain.NONE
+	return ground_at(cell) == Terrain.WATER or structure_at(cell) != Terrain.NONE or furniture.has(cell)
 
 
 ## Which location a cell belongs to. Buildings win over the open-air place
