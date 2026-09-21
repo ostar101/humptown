@@ -17,6 +17,7 @@ versions are milestones rather than releases until there is something to release
   (texts, meetings, quest steps, new places, arrests).
 
 ### Changed
+- Street lamps stand on the pavement cell next to the road, mirrored so the lamp head is on the road's side, with a collision at the foot of the pole; none at crossings or in front of doors (D-066).
 - Tuomas's flat is the same villa as the other flats, so every house has the drawn roof and its collision (D-065).
 - Houses collide along the drawn roof's outer edge instead of the grid rectangle: you can walk into the bare corners and stop at the ridge and the slope (D-065).
 - Grass, not paving, shows in the bare corners of house roofs (D-064).

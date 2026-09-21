@@ -51,41 +51,119 @@ func test_props_only_stand_on_pavement_and_off_any_structure() -> void:
 		assert_true(ResourceLoader.exists(prop["file"]), prop["file"])
 
 
-## The complaint that started D-029: lamps stood at the kerb, and a lamp is
-## four cells tall with an arm over the carriageway, so every light hung in
-## the middle of the road.
-func test_no_lamp_or_hydrant_ever_stands_at_the_kerb() -> void:
+## D-066: a lamp stands on the pavement cell next to the road, and hydrants
+## keep to the back of the pavement, off the pavement below a carriageway.
+func test_a_lamp_stands_at_the_kerb_and_a_hydrant_at_the_back() -> void:
 	var map := _map()
+	var lamps := 0
 	for y in map.size.y:
 		for x in map.size.x:
 			var cell := Vector2i(x, y)
 			var kind := StreetProps.kind_at(map, cell)
-			if kind == "lamp" or kind == "hydrant":
-				assert_false(StreetProps.touches_road(map, cell),
-					"%s is at the kerb, not the back of the pavement" % cell)
+			if kind == "lamp":
+				lamps += 1
+				assert_true(StreetProps.touches_road(map, cell), "%s is the pavement cell by the road" % cell)
+			if kind == "hydrant":
 				assert_true(StreetProps.is_back_of_pavement(map, cell), "%s" % cell)
-			if kind != "":
-				assert_true(StreetProps.has_headroom(map, cell, kind),
-					"a %s at %s reaches out over the road" % [kind, cell])
+				assert_true(StreetProps.has_headroom(map, cell, "hydrant"))
+	assert_gt(float(lamps), 0.0)
 
 
-## A lamp is four cells tall and drawn rising up the screen, so the pavement
-## on the near side of a carriageway cannot hold one wherever it stands.
-func test_a_lamp_never_leans_over_the_carriageway() -> void:
+func test_lamps_stand_on_both_sides_of_a_street() -> void:
 	var map := _map()
-	assert_true(StreetProps.is_back_of_pavement(map, Vector2i(9, 11)), "row 11 is the far pavement")
-	assert_false(StreetProps.has_headroom(map, Vector2i(9, 11), "lamp"),
-		"a lamp here would stand in the road it is meant to light")
-	assert_ne(StreetProps.kind_at(map, Vector2i(9, 11)), "lamp")
-	assert_true(StreetProps.has_headroom(map, Vector2i(9, 11), "hydrant"),
-		"a hydrant is short enough to stand there")
+	var near := 0
+	var far := 0
+	for x in map.size.x:
+		near += 1 if StreetProps.kind_at(map, Vector2i(x, 7)) == "lamp" else 0
+		far += 1 if StreetProps.kind_at(map, Vector2i(x, 10)) == "lamp" else 0
+	assert_gt(float(near), 0.0, "the pavement above the road")
+	assert_gt(float(far), 0.0, "the pavement below it")
+	assert_eq(StreetProps.kind_at(map, Vector2i(9, 11)), "", "the back of the pavement gets no lamp")
+
+
+## The art draws the head to the right of the pole, so with the road on its left
+## a lamp is mirrored: the head is always on the road's side.
+func test_a_lamp_beside_a_road_that_runs_down_the_screen_faces_the_road() -> void:
+	var built := DistrictMap.from_data({
+		"id": "test_props_vertical", "region": "harbourside", "width": 30, "height": 40,
+		"fill": "grass", "spawn": [1, 1],
+		"areas": [
+			{"terrain": "pavement", "rect": [10, 0, 2, 40]},
+			{"terrain": "road", "rect": [12, 0, 4, 40]},
+			{"terrain": "pavement", "rect": [16, 0, 2, 40]},
+		],
+	})
+	assert_ok(built)
+	var map: DistrictMap = built.value
+	assert_false(StreetProps.lamp_faces_left(map, Vector2i(11, 5)), "road on its right: head on the right")
+	assert_true(StreetProps.lamp_faces_left(map, Vector2i(16, 5)), "road on its left: mirrored")
+	if not StreetProps.available():
+		return
+	var west := 0
+	var east := 0
+	for prop: Dictionary in StreetProps.props_in(map, Rect2i(Vector2i.ZERO, map.size)):
+		if prop["kind"] != "lamp":
+			continue
+		var cell: Vector2i = prop["cell"]
+		assert_eq(prop["flip"], cell.x == 16, "%s" % cell)
+		west += 1 if cell.x == 11 else 0
+		east += 1 if cell.x == 16 else 0
+	assert_gt(float(west), 0.0)
+	assert_gt(float(east), 0.0)
+
+
+func test_no_lamp_at_a_crossing_or_in_front_of_a_door() -> void:
+	var built := DistrictMap.from_data({
+		"id": "test_props_crossing", "region": "harbourside", "width": 40, "height": 40, "fill": "grass", "spawn": [1, 1],
+		"areas": [
+			{"terrain": "pavement", "rect": [0, 20, 40, 2]}, {"terrain": "road", "rect": [0, 22, 40, 2]},
+			{"terrain": "pavement", "rect": [10, 0, 2, 20]}, {"terrain": "road", "rect": [12, 0, 4, 20]},
+		],
+		"buildings": [{"location": "loc_corner_shop", "rect": [20, 8, 6, 12], "door": [22, 19]}],
+	})
+	assert_ok(built)
+	var map: DistrictMap = built.value
+	for y in map.size.y:
+		for x in map.size.x:
+			var cell := Vector2i(x, y)
+			if StreetProps.kind_at(map, cell) != "lamp":
+				continue
+			for dy in range(-StreetProps.CORNER_CLEARANCE, StreetProps.CORNER_CLEARANCE + 1):
+				for dx in range(-StreetProps.CORNER_CLEARANCE, StreetProps.CORNER_CLEARANCE + 1):
+					assert_false(StreetProps._is_corner(map, cell + Vector2i(dx, dy)), "lamp %s is at a crossing" % cell)
+			assert_ne(cell.x, 22, "not straight in front of the door: %s" % cell)
+
+
+## The pole's foot is a body the player cannot walk through; the rest of the
+## lamp is drawn over the walker, as before.
+func test_a_lamps_foot_collides() -> void:
+	if not StreetProps.available():
+		return
+	var map := _map()
+	var view := RegionView.new()
+	(Engine.get_main_loop() as SceneTree).root.add_child(view)
+	view.show_map(map)
+	view.focus_on(DistrictMap.cell_to_world(Vector2i(20, 8)))
+	var feet := 0
+	for chunk_root: Node in view.get_children():
+		for child in chunk_root.get_children():
+			if child is Sprite2D and str((child as Sprite2D).texture.resource_path).ends_with("lamp.png"):
+				var foot := child.get_node_or_null("Foot") as StaticBody2D
+				assert_not_null(foot, "every lamp has a foot")
+				if foot != null:
+					feet += 1
+					assert_eq(foot.collision_layer, RegionTiles.COLLISION_LAYER)
+					var box := (foot.get_child(0) as CollisionShape2D).shape as RectangleShape2D
+					assert_eq(box.size, StreetProps.LAMP_FOOT.size)
+	assert_gt(float(feet), 0.0)
+	view.free()
 
 
 func test_lamps_repeat_at_a_regular_interval_along_a_street() -> void:
 	var map := _map()
 	var lit: Array[int] = []
 	for x in map.size.x:
-		if StreetProps.kind_at(map, Vector2i(x, 6)) == "lamp":
+		if StreetProps.kind_at(map, Vector2i(x, 7)) == "lamp":
 			lit.append(x)
 	assert_gt(float(lit.size()), 2.0, "one street, several lamps")
 	for i in range(1, lit.size()):

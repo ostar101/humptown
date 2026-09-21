@@ -188,8 +188,11 @@ func _populate(chunk: Vector2i) -> void:
 		var sprite := _prop_sprite(prop)
 		if prop["kind"] == "lamp":
 			var light := _lamp_light()
+			if bool(prop["flip"]):
+				light.position.x = -light.position.x
 			sprite.add_child(light)
 			lights.append(light)
+			sprite.add_child(_lamp_foot(prop["cell"], sprite.position))
 		root.add_child(sprite)
 
 	add_child(root)
@@ -214,9 +217,29 @@ func _prop_sprite(prop: Dictionary) -> Sprite2D:
 	var feet := DistrictMap.cell_to_world(cell)
 	var size := sprite.texture.get_size()
 	var top_left := Vector2(cell) * float(TILE) - Vector2(0.0, size.y - TILE)
+	if bool(prop.get("flip", false)):
+		# Mirrored, the pole is in the image's right column: the image starts a cell earlier.
+		sprite.flip_h = true
+		top_left.x -= size.x - TILE
 	sprite.position = feet
 	sprite.offset = top_left - feet
 	return sprite
+
+
+## The lamp pole's foot, as a body the player cannot walk through (D-066). A
+## child of the lamp's sprite, so it streams and goes with its chunk.
+func _lamp_foot(cell: Vector2i, feet: Vector2) -> StaticBody2D:
+	var body := StaticBody2D.new()
+	body.name = "Foot"
+	body.collision_layer = RegionTiles.COLLISION_LAYER
+	body.collision_mask = 0
+	var shape := CollisionShape2D.new()
+	var box := RectangleShape2D.new()
+	box.size = StreetProps.LAMP_FOOT.size
+	shape.shape = box
+	shape.position = Vector2(cell) * float(TILE) + StreetProps.LAMP_FOOT.get_center() - feet
+	body.add_child(shape)
+	return body
 
 
 ## The pool of light under a street lamp, a child of the lamp's sprite so it

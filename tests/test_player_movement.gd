@@ -265,10 +265,32 @@ func test_body_stops_at_the_roofs_side() -> void:
 	view.free()
 
 
+## D-066: a street lamp's foot stops the body, the way a wall does.
+func test_body_cannot_walk_through_a_lamp_post() -> void:
+	if not StreetProps.available():
+		return
+	var lamp := Vector2i(-1, -1)
+	for prop: Dictionary in StreetProps.props_in(_map(), Rect2i(Vector2i.ZERO, _map().size)):
+		var cell: Vector2i = prop["cell"]
+		if prop["kind"] == "lamp" and cell.x == 41 and not _map().is_blocked(cell + Vector2i.LEFT):
+			lamp = cell
+			break
+	assert_ne(lamp, Vector2i(-1, -1), "a lamp on the west kerb of the north road")
+	var view := _spawn_world()
+	var body := view.player_body()
+	body.place_at(DistrictMap.cell_to_world(lamp + Vector2i.LEFT))
+	body.scripted_direction = Vector2.RIGHT
+	await _step(1.0)
+	body.scripted_direction = Vector2.ZERO
+	var foot_left := float(lamp.x) * DistrictMap.CELL_PIXELS + StreetProps.LAMP_FOOT.position.x
+	assert_lt(body.position.x, foot_left, "stopped against the pole's foot")
+	view.free()
+
+
 func test_camera_lead_and_chunks_follow_the_player() -> void:
 	var view := _spawn_world()
 	var body := view.player_body()
-	body.place_at(DistrictMap.cell_to_world(Vector2i(2, 30)))
+	body.place_at(DistrictMap.cell_to_world(Vector2i(2, 29)))   # the back row of the pavement: lamps stand at the kerb row
 	body.scripted_direction = Vector2.RIGHT
 	body.scripted_running = true
 	# Far enough that the start chunk is beyond the load radius plus margin.

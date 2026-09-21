@@ -2359,3 +2359,33 @@ row with the same one-cell gaps (`[31, 1, 8, 11]`, door `[33, 11]`), and so gets
 the art and the collision. `test_roof_collision` checks that every building with
 art has a body and every building without has none; the "wrong size keeps its
 tiles" test now uses a made-up size instead of Tuomas's flat.
+
+## D-066 — Street lamps at the kerb, head to the road, foot that collides
+
+**Asked for.** Lamps on the pavement cell nearest the road, turned so the lamp
+head is always on the road's side, with a collision at the foot of the pole.
+This replaces D-029's placement (the back of the pavement, and only where a
+lamp's height would not reach over the road).
+
+**Decision.**
+- **Where.** `StreetProps.kind_at`: a lamp goes on any pavement cell that touches
+  the road, every `LAMP_SPACING` cells, except within `CORNER_CLEARANCE` of a
+  crossing (two roads meeting) and within a cell either side of the walk from a
+  door. Hydrants and bins are unchanged (back of the pavement, beside doors).
+- **Which way.** The art has the pole in the left column and the head on an arm
+  to the right, so beside a road running down the screen a lamp with the road on
+  its left is mirrored (`flip`, `lamp_faces_left`); its light is mirrored with it.
+  The kerb cell of the pavement below a road now gets lamps too: the pole rises
+  over the road, as a real one seen from this angle does.
+- **The foot.** Each lamp has a `Foot` `StaticBody2D`, a child of its sprite so it
+  streams with its chunk: 16 x 14 px in the middle of the cell (`LAMP_FOOT`),
+  raised from where the art draws the base to where the body's own feet are, or
+  a walker on the cell's centre line would pass it. The rest of the lamp is still
+  drawn over the walker. Only the player collides; NPC bodies do not collide with
+  anything (known issue 6).
+
+**Limit.** Beside a road that runs across the screen the arm cannot point at the
+road (it would point at the viewer, and the art has no such view), so a lamp on
+the pavement *above* a road has its head along the street, not over the road.
+On the pavement below a road the pole rises over the carriageway, so its head
+is over the road anyway. Drawing an arm toward the viewer needs new art.
