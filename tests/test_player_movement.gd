@@ -212,23 +212,56 @@ func test_body_cannot_walk_through_a_house() -> void:
 	view.free()
 
 
-func test_body_cannot_walk_onto_a_roof_from_behind_or_the_side() -> void:
-	var view := _spawn_world()
-	var body := view.player_body()
+## Walks the body from `from` in `direction` for a while and returns where it ends up.
+func _walk(body: PlayerBody, from: Vector2i, direction: Vector2, seconds: float) -> Vector2i:
+	body.place_at(DistrictMap.cell_to_world(from))
+	body.scripted_direction = direction
+	await _step(seconds)
+	body.scripted_direction = Vector2.ZERO
+	return body.current_cell()
+
+
+## D-065: a house collides where its roof is drawn, not where its grid
+## rectangle ends. Needs the art installed, like the drawing does.
+func _house() -> Rect2i:
 	var rect: Rect2i = _map().buildings["loc_ida_flat"]["rect"]
-	# From the grass behind the house, straight down into the roof.
-	body.place_at(DistrictMap.cell_to_world(Vector2i(rect.position.x + 3, rect.position.y - 1)))
-	body.scripted_direction = Vector2.DOWN
-	await _step(1.5)
-	body.scripted_direction = Vector2.ZERO
-	assert_false(_map().is_blocked(DistrictMap.world_to_cell(body.position)), "never inside the roof")
-	assert_lt(float(body.current_cell().y), float(rect.position.y), "stopped at the roof's back edge")
-	# From the gap beside it, sideways into the roof's side.
-	body.place_at(DistrictMap.cell_to_world(Vector2i(rect.position.x - 1, rect.position.y + 3)))
-	body.scripted_direction = Vector2.RIGHT
-	await _step(1.5)
-	body.scripted_direction = Vector2.ZERO
-	assert_lt(float(body.current_cell().x), float(rect.position.x), "stopped at the roof's side")
+	return rect if BuildingArt.sprite_for(_map().kind_of("loc_ida_flat"), "loc_ida_flat", rect.size) != "" else Rect2i()
+
+
+func test_body_stops_at_the_ridge_from_behind() -> void:
+	var rect := _house()
+	if rect.size == Vector2i.ZERO:
+		return   # no art installed: the footprint is a plain rectangle, tested above
+	var view := _spawn_world()
+	var end := await _walk(view.player_body(), Vector2i(rect.position.x + rect.size.x / 2, rect.position.y - 1), Vector2.DOWN, 1.5)
+	assert_lt(float(end.y), float(rect.position.y + 1), "stopped at the ridge, the roof's highest edge")
+	assert_true(_map().allows_body(end))
+	assert_eq(_rejections.size(), 0)
+	view.free()
+
+
+func test_body_walks_into_the_bare_corner_and_stops_at_the_slope() -> void:
+	var rect := _house()
+	if rect.size == Vector2i.ZERO:
+		return
+	var view := _spawn_world()
+	var end := await _walk(view.player_body(), Vector2i(rect.position.x, rect.position.y - 1), Vector2.DOWN, 1.5)
+	assert_gt(float(end.y), float(rect.position.y - 1), "the corner the roof leaves clear is open ground")
+	assert_lt(float(end.y), float(rect.end.y - 3), "but not the roof below it")
+	assert_true(_map().allows_body(end), "the rule accepts a cell the art leaves partly clear")
+	assert_eq(_map().location_at(end), "", "it is not inside the house")
+	assert_eq(_rejections.size(), 0, "physics and the rule agree")
+	view.free()
+
+
+func test_body_stops_at_the_roofs_side() -> void:
+	var rect := _house()
+	if rect.size == Vector2i.ZERO:
+		return
+	var view := _spawn_world()
+	var end := await _walk(view.player_body(), Vector2i(rect.position.x - 2, rect.position.y + 4), Vector2.RIGHT, 1.5)
+	assert_lt(float(end.x), float(rect.position.x + 1), "stopped at the roof's side")
+	assert_eq(_rejections.size(), 0)
 	view.free()
 
 

@@ -62,6 +62,13 @@ var region: String = ""
 var size: Vector2i = Vector2i.ZERO
 var spawn: Vector2i = Vector2i.ZERO
 
+## Cells of a building's footprint its art leaves partly clear (a roof's bare
+## corners): the body may stand in them where its collider allows, they belong
+## to no location, and routes still avoid them (D-065). Set from the art by
+## whoever draws it; empty without art, so the footprint is then a plain
+## rectangle.
+var open_cells: Dictionary = {}
+
 ## location_id -> {"rect": Rect2i, "door": Vector2i} for buildings,
 ## {"rects": Array[Rect2i]} for open-air places.
 var buildings: Dictionary = {}
@@ -218,6 +225,12 @@ func structure_at(cell: Vector2i) -> Terrain:
 	return (_structure[_index(cell)] - 1) as Terrain
 
 
+## Whether the player's body may be in this cell: not blocked, or blocked only
+## by a building's rectangle where its art leaves the cell partly clear.
+func allows_body(cell: Vector2i) -> bool:
+	return not is_blocked(cell) or (in_bounds(cell) and ground_at(cell) != Terrain.WATER and open_cells.has(cell))
+
+
 ## Out of bounds counts as blocked, so a walker can never leave the map except
 ## through an exit handled by rules.
 func is_blocked(cell: Vector2i) -> bool:
@@ -231,7 +244,7 @@ func is_blocked(cell: Vector2i) -> bool:
 func location_at(cell: Vector2i) -> String:
 	for loc_id in buildings:
 		var rect: Rect2i = buildings[loc_id]["rect"]
-		if rect.has_point(cell):
+		if rect.has_point(cell) and not open_cells.has(cell):
 			return loc_id
 	for loc_id in places:
 		for rect: Rect2i in places[loc_id]["rects"]:

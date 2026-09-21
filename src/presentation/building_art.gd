@@ -50,6 +50,11 @@ const BY_LOCATION := {"loc_police_post": "police"}
 ## that often would be silly for nine files that never change during a run.
 static var _installed_cache: Dictionary = {}
 
+## A pixel at least this opaque is part of the building for collision.
+const OPAQUE := 0.5
+## How closely the outline follows the pixels, in pixels.
+const OUTLINE_EPSILON := 1.5
+
 
 ## The whole image's size in cells, porch included. Vector2i.ZERO for a kind
 ## with no art.
@@ -107,6 +112,59 @@ static func covers(map: DistrictMap, cell: Vector2i) -> bool:
 		if rect.has_point(cell):
 			return sprite_for(map.kind_of(loc_id), loc_id, rect.size) != ""
 	return false
+
+
+## What the art's opaque pixels outline, for collision (D-065): polygons in
+## pixels from the building's top-left, covering only the solid part (the
+## porch rows below are walkable). A pitched roof's bare top corners are not in
+## it, so the body walks up to the roof's outer edge, not to the edge of the
+## grid rectangle behind it. Empty when the art is not installed.
+static func outline(kind: String, loc_id: String, rect_size: Vector2i) -> Array[PackedVector2Array]:
+	var solid := _silhouette(kind, loc_id, rect_size)
+	return solid["polygons"] if not solid.is_empty() else ([] as Array[PackedVector2Array])
+
+
+## Cells (relative to the building's rect) the art does not fill completely:
+## the body may stand in them where the outline lets it, so the movement rule
+## must not refuse them (D-065). Empty when the art is not installed.
+static func open_cells(kind: String, loc_id: String, rect_size: Vector2i) -> Array[Vector2i]:
+	var solid := _silhouette(kind, loc_id, rect_size)
+	return solid["open"] if not solid.is_empty() else ([] as Array[Vector2i])
+
+
+static var _silhouettes: Dictionary = {}
+
+
+static func _silhouette(kind: String, loc_id: String, rect_size: Vector2i) -> Dictionary:
+	var file := sprite_for(kind, loc_id, rect_size)
+	if file == "":
+		return {}
+	var key := "%s@%s" % [file, rect_size]
+	if _silhouettes.has(key):
+		return _silhouettes[key]
+	var image := (load(file) as Texture2D).get_image()
+	var pixels := rect_size * DistrictMap.CELL_PIXELS
+	var bitmap := BitMap.new()
+	bitmap.create_from_image_alpha(image, OPAQUE)
+	var polygons: Array[PackedVector2Array] = []
+	for polygon in bitmap.opaque_to_polygons(Rect2i(Vector2i.ZERO, pixels), OUTLINE_EPSILON):
+		polygons.append(polygon)
+	var open: Array[Vector2i] = []
+	for y in rect_size.y:
+		for x in rect_size.x:
+			if not _cell_full(bitmap, Vector2i(x, y) * DistrictMap.CELL_PIXELS):
+				open.append(Vector2i(x, y))
+	var made := {"polygons": polygons, "open": open}
+	_silhouettes[key] = made
+	return made
+
+
+static func _cell_full(bitmap: BitMap, origin: Vector2i) -> bool:
+	for y in DistrictMap.CELL_PIXELS:
+		for x in DistrictMap.CELL_PIXELS:
+			if not bitmap.get_bitv(origin + Vector2i(x, y)):
+				return false
+	return true
 
 
 static func _installed(path: String) -> bool:

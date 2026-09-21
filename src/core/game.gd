@@ -289,7 +289,7 @@ func move_player(world_position: Vector2) -> Result:
 	if map == null:
 		return _reject(proposal, "region_unmapped")
 	var cell := DistrictMap.world_to_cell(world_position)
-	if map.is_blocked(cell):
+	if not map.allows_body(cell):
 		return _reject(proposal, "cell_blocked")
 
 	var destination := map.exit_at(cell)

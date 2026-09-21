@@ -2320,3 +2320,32 @@ the body into a roof from behind and from the side.
 top corners is blocked though it looks open. Letting people walk there would
 need cells that are neither building nor street (`location_at` would put the
 player "inside" the house), so it waits for a reason.
+
+## D-065 — A house collides where its roof is drawn
+
+**Asked for.** After D-064 the bare corners of a roof were grass but still
+blocked, so the body stopped at an invisible wall: "the collision should be at
+the roof's outer edge".
+
+**Decision.** The art decides, because the art is what the player sees.
+- **Physics.** `RegionView` gives each whole-art building one `StaticBody2D`
+  whose polygons are the outline of the sprite's opaque pixels
+  (`BuildingArt.outline`, from `BitMap.opaque_to_polygons`, 1.5 px tolerance),
+  clipped to the footprint (the porch stays walkable). The generic hidden tile
+  under such a building no longer collides as a square (`RegionTiles`).
+- **The rule.** Footprint cells the art fills only partly are `map.open_cells`
+  (`BuildingArt.open_cells`, set by `RegionView`, cleared with it). `Game.move_player`
+  asks `map.allows_body(cell)`, so the body may stand in the clear part of them
+  and is not snapped back ("rules win"). They belong to no location
+  (`location_at`), so standing in a roof corner is not being inside the house.
+- **Not changed.** `is_blocked` still treats the whole footprint as blocked:
+  routes, NPC bodies and interaction are as before.
+
+**Only with the art installed,** like the drawing itself; without it there are no
+open cells and the footprint is a plain rectangle (the movement tests for the
+roof skip themselves then). Benchmark: no change beyond noise.
+
+**Limits.** A route planned to a player standing in an open cell finds no path
+(`find_path` refuses a blocked goal), so a follower may not come to someone in a
+roof corner until they step out. Saved positions in an open cell fall back to the
+anchor on load.

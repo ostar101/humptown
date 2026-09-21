@@ -90,6 +90,8 @@ func clear() -> void:
 		remove_child(sprite)
 		sprite.queue_free()
 	_overlays.clear()
+	if map != null:
+		map.open_cells.clear()
 	map = null
 
 
@@ -281,6 +283,27 @@ func _build_building_art() -> void:
 		sprite.offset = Vector2(0, top_left.y - sort_y)
 		add_child(sprite)
 		_overlays.append(sprite)
+		_build_building_body(loc_id, rect, kind)
+
+
+## The building collides as the art is drawn (D-065): the outline of its opaque
+## pixels, so the body meets the roof's outer edge rather than the grid
+## rectangle behind it. Cells the art fills only partly are told to the map, so
+## the movement rule lets the body stand in the clear part of them.
+func _build_building_body(loc_id: String, rect: Rect2i, kind: String) -> void:
+	var body := StaticBody2D.new()
+	body.name = "Body_%s" % loc_id
+	body.collision_layer = RegionTiles.COLLISION_LAYER
+	body.collision_mask = 0
+	body.position = Vector2(rect.position) * float(TILE)
+	for outline in BuildingArt.outline(kind, loc_id, rect.size):
+		var shape := CollisionPolygon2D.new()
+		shape.polygon = outline
+		body.add_child(shape)
+	add_child(body)
+	_overlays.append(body)
+	for cell in BuildingArt.open_cells(kind, loc_id, rect.size):
+		map.open_cells[rect.position + cell] = true
 
 
 ## The park's trees, the court's surface, the worksite's frame (PlaceArt,

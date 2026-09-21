@@ -172,8 +172,9 @@ static func _total_rows() -> int:
 	return DistrictMap.Terrain.size() - 1 + THEMED_ROWS.size()
 
 
-## One extra row after every terrain and themed row: fully transparent, but
-## solid exactly like the wall it stands in for. A building drawn as one whole
+## One extra row after every terrain and themed row: fully transparent, and
+## not solid either: the building's art collides through an outline of its own
+## pixels instead (`RegionView`, D-065), not through a square per cell. A building drawn as one whole
 ## sprite (`BuildingArt`) uses it for its own roof/wall/door cells, because the
 ## art's silhouette is not a rectangle — a pitched roof leaves its top corners
 ## clear — and the generic tiles underneath showed through as stray brickwork
@@ -366,7 +367,7 @@ static func _build() -> TileSet:
 		for v in VARIANTS:
 			var coords := Vector2i(v, row)
 			source.create_tile(coords)
-			if row == _hidden_row() or is_solid(_terrain_for_row(row)):
+			if row != _hidden_row() and is_solid(_terrain_for_row(row)):
 				var data := source.get_tile_data(coords, 0)
 				data.add_collision_polygon(0)
 				data.set_collision_polygon_points(0, 0, square)
