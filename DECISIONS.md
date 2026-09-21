@@ -2628,3 +2628,16 @@ any means but walking; the map on the phone does not draw the new districts
 (only places you have been to appear, so it fills as you go); people do not
 travel between districts on their own (a routine stays in one); the cannery is
 locked with nothing behind it yet.
+
+## D-073 — Trees on grass, and no lamp at the mouth of a side street
+
+**Found in play** (Old Town): trees standing on paving, and a lamp at the top of
+the side street looking lost.
+- A tree now stands on **grass only**: the map lays a patch of grass under each
+  tree in a paved square or market (`old_town` areas), and `test_place_art`
+  checks every cell of every tree in every district, so a tree cannot be put
+  on paving again.
+- **Lamps** skip a pavement cell whose only road is one that ends at that strip
+  (`StreetFurniture._only_lights_a_road_end`): the strip is already lit from the
+  main road. Harbourside's lamps are unchanged (its side road merges into the
+  main road, with no pavement between).

@@ -63,6 +63,27 @@ func test_no_decoration_hangs_outside_its_own_place() -> void:
 		assert_true(true, "art not installed on this machine; nothing to check")
 
 
+## D-073: a tree stands on grass, never on paving. Where a tree is wanted on a
+## paved square the map lays a patch of grass under it.
+func test_trees_stand_on_grass_not_paving() -> void:
+	var checked := 0
+	for map in _maps():
+		for location_id in PlaceArt.decorated_places(map):
+			for piece: Dictionary in PlaceArt.decorations_for(map, location_id):
+				if not str(piece["file"]).get_file().begins_with("tree_"):
+					continue
+				var texture: Texture2D = load(piece["file"])
+				var cells := Vector2i(texture.get_size()) / RegionTiles.TILE
+				for y in range(cells.y):
+					for x in range(cells.x):
+						var cell: Vector2i = (piece["cell"] as Vector2i) + Vector2i(x, y)
+						assert_eq(map.ground_at(cell), DistrictMap.Terrain.GRASS,
+							"%s: a tree at %s stands on %s" % [location_id, piece["cell"], cell])
+						checked += 1
+	if checked == 0:
+		assert_true(true, "art not installed on this machine; nothing to check")
+
+
 func test_the_court_is_flat_ground_and_a_tree_is_not() -> void:
 	var map := _map()
 	var court := PlaceArt.decorations_for(map, "loc_court")

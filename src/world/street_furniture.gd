@@ -5,7 +5,7 @@ extends RefCounted
 ## simulation can know what is on a street — a bin can be searched, a hydrant
 ## is in the way — whatever is drawn. `StreetProps` draws it.
 ##
-## - **lamp**: the pavement cell next to the road, at a regular interval,
+## - **lamp**: the pavement cell next to the road (not at the mouth of a side street, D-073), at a regular interval,
 ##   turned so the lamp head is on the road's side (the art has the pole in its
 ##   left column and the head on an arm to the right, so a lamp with the road on
 ##   its left is mirrored). Beside a road that runs across the screen the arm
@@ -112,7 +112,26 @@ static func lamp_at(map: DistrictMap, cell: Vector2i) -> bool:
 		return false
 	if map.furniture.has(cell) or not touches_road(map, cell):
 		return false
+	if _only_lights_a_road_end(map, cell):
+		return false
 	return _lamp_fits(map, cell)
+
+
+## A pavement cell whose only road is one that ends at the strip behind a
+## carriageway (the mouth of a side street): the row is already lit from the
+## main road, and a second lamp on the far side of it just stands at the end of
+## the side street looking lost. Recognised by its opposite neighbour being
+## pavement that itself touches a road (D-073).
+static func _only_lights_a_road_end(map: DistrictMap, cell: Vector2i) -> bool:
+	var lights_something_else := false
+	for dir in DIRECTIONS:
+		if not _is_road(map, cell + dir):
+			continue
+		var behind := cell - dir
+		var squeezed := map.ground_at(behind) == DistrictMap.Terrain.PAVEMENT and touches_road(map, behind)
+		if not squeezed:
+			lights_something_else = true
+	return not lights_something_else
 
 
 ## A lamp is not put where it would be in someone's way or double up: not on a
