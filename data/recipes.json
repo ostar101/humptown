@@ -1,0 +1,19 @@
+[
+  {"id": "rcp_joint_from_bud", "name_key": "recipe.joint_from_bud", "inputs": {"item_cannabis_bud": 1, "item_rolling_papers": 1}, "outputs": {"item_joint": 1}, "minutes": 3},
+  {"id": "rcp_joint_from_ground", "name_key": "recipe.joint_from_ground", "inputs": {"item_cannabis_ground": 1, "item_rolling_papers": 1}, "outputs": {"item_joint": 1}, "minutes": 2},
+  {"id": "rcp_grind_bud", "name_key": "recipe.grind_bud", "inputs": {"item_cannabis_bud": 1, "item_grinder": 1}, "keeps": ["item_grinder"], "outputs": {"item_cannabis_ground": 1}, "minutes": 1},
+  {"id": "rcp_load_pipe", "name_key": "recipe.load_pipe", "inputs": {"item_cannabis_bud": 1, "item_pipe": 1}, "outputs": {"item_pipe_loaded": 1}, "minutes": 1},
+  {"id": "rcp_loose_cigarettes", "name_key": "recipe.loose_cigarettes", "inputs": {"item_cigarettes": 1}, "outputs": {"item_cigarette": 10}, "minutes": 1},
+
+  {"id": "rcp_spoon_powder", "name_key": "recipe.spoon_powder", "inputs": {"item_heroin_bag": 1, "item_spoon": 1}, "outputs": {"item_spoon_powder": 1, "item_baggie": 1}, "minutes": 1},
+  {"id": "rcp_spoon_liquid", "name_key": "recipe.spoon_liquid", "inputs": {"item_spoon_powder": 1, "item_water": 1}, "keeps": ["item_water"], "outputs": {"item_spoon_liquid": 1}, "minutes": 1},
+  {"id": "rcp_spoon_cooked", "name_key": "recipe.spoon_cooked", "inputs": {"item_spoon_liquid": 1, "item_lighter": 1}, "keeps": ["item_lighter"], "outputs": {"item_spoon_cooked": 1}, "minutes": 3},
+  {"id": "rcp_spoon_cooked_matches", "name_key": "recipe.spoon_cooked_matches", "inputs": {"item_spoon_liquid": 1, "item_matches": 1}, "keeps": ["item_matches"], "outputs": {"item_spoon_cooked": 1}, "minutes": 3},
+  {"id": "rcp_syringe_loaded", "name_key": "recipe.syringe_loaded", "inputs": {"item_spoon_cooked": 1, "item_syringe": 1}, "outputs": {"item_syringe_loaded": 1, "item_spoon": 1}, "minutes": 2},
+
+  {"id": "rcp_smash_bottle", "name_key": "recipe.smash_bottle", "inputs": {"item_empty_bottle": 1}, "outputs": {"item_broken_bottle": 1}, "minutes": 1},
+  {"id": "rcp_nail_bat", "name_key": "recipe.nail_bat", "inputs": {"item_bat": 1, "item_nails": 3}, "outputs": {"item_nail_bat": 1}, "minutes": 10},
+
+  {"id": "rcp_bandages", "name_key": "recipe.bandages", "inputs": {"item_cloth": 2, "item_antiseptic": 1}, "outputs": {"item_bandage": 2}, "minutes": 5},
+  {"id": "rcp_first_aid_kit", "name_key": "recipe.first_aid_kit", "inputs": {"item_bandage": 2, "item_plasters": 1, "item_antiseptic": 1}, "outputs": {"item_first_aid_kit": 1}, "minutes": 5}
+]

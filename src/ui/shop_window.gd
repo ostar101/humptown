@@ -174,6 +174,7 @@ func _render() -> void:
 func _row(entry: Dictionary) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)
+	row.add_child(ItemIcons.tile(str(entry["item"]), 40))
 	var item_name := Label.new()
 	item_name.text = Localization.t(str(entry["name_key"]))
 	item_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL

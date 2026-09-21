@@ -44,6 +44,8 @@ var quest_flags: Dictionary = {}
 var home_location: String = ""
 ## location id -> "visited" | "told": the places the player knows of (D-049).
 var known_places: Dictionary = {}
+## Crafting recipes the player has found (D-070): made once, or had the makings of.
+var known_recipes: Array[String] = []
 
 
 func setup(data: DataRegistry) -> void:
@@ -153,6 +155,7 @@ func to_dict() -> Dictionary:
 		"quest_flags": quest_flags,
 		"home_location": home_location,
 		"known_places": known_places,
+		"known_recipes": known_recipes,
 	}
 
 
@@ -183,6 +186,9 @@ func from_dict(d: Dictionary) -> void:
 	known_places = {}
 	for place_id in d.get("known_places", {}):
 		known_places[str(place_id)] = str(d["known_places"][place_id])
+	known_recipes = []
+	for recipe_id in d.get("known_recipes", []):
+		known_recipes.append(str(recipe_id))
 	if known_places.is_empty() and home_location != "":
 		known_places[home_location] = "visited"   # a save from before the map: you know where you live
 	_apply_carry_capacity()

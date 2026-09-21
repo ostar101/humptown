@@ -117,9 +117,11 @@ func _row(item_id: String, count: int) -> HBoxContainer:
 	how_many.custom_minimum_size = Vector2(60, 0)
 	var weight := Label.new()
 	weight.theme_type_variation = &"MutedLabel"
-	weight.text = "%.1f kg" % (float(item.get("weight", 0.0)) * count)
+	var total := float(item.get("weight", 0.0)) * count
+	weight.text = ("%.2f kg" if total < 0.1 else "%.1f kg") % total   # a paper weighs grams, and says so
 	weight.custom_minimum_size = Vector2(80, 0)
 	weight.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	row.add_child(ItemIcons.tile(item_id, 40))
 	for child: Control in [item_name, how_many, weight]:
 		row.add_child(child)
 	if not ItemRules.effects_of(item).is_empty() and ItemRules.USABLE_KINDS.has(str(item.get("kind", ""))):

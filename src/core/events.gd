@@ -44,6 +44,10 @@ signal money_moved(amount: int, kind: String, reason: String)
 ## Something in the player's bag: `delta` more (or fewer) of an item.
 signal item_moved(item_id: String, delta: int)
 signal inventory_changed()
+## The player made something (D-070), and found a recipe: by making it or by
+## holding everything it needs.
+signal item_crafted(recipe_id: String)
+signal recipe_learned(recipe_id: String)
 signal skill_xp_gained(skill_id: String, amount: float)
 signal skill_level_up(skill_id: String, level: int)
 signal condition_changed(meter: String, value: float)

@@ -11,7 +11,23 @@
       {"item": "item_cinnamon_bun", "weight": 2, "max": 1},
       {"item": "item_sandwich", "weight": 1, "max": 1},
       {"item": "item_notebook", "weight": 1, "max": 1},
-      {"item": "item_bandage", "weight": 1, "max": 1}
+      {"item": "item_bandage", "weight": 1, "max": 1},
+      {"item": "item_empty_bottle", "weight": 3, "max": 2},
+      {"item": "item_cigarette", "weight": 2, "max": 3},
+      {"item": "item_lighter", "weight": 1.5, "max": 1},
+      {"item": "item_matches", "weight": 1, "max": 1},
+      {"item": "item_cloth", "weight": 1, "max": 1},
+      {"item": "item_baggie", "weight": 1, "max": 2},
+      {"item": "item_syringe", "weight": 0.8, "max": 1},
+      {"item": "item_syringe_used", "weight": 0.8, "max": 1},
+      {"item": "item_spoon", "weight": 0.7, "max": 1},
+      {"item": "item_painkillers", "weight": 0.7, "max": 1},
+      {"item": "item_rolling_papers", "weight": 0.7, "max": 1},
+      {"item": "item_joint", "weight": 0.6, "max": 1},
+      {"item": "item_cannabis_bud", "weight": 0.5, "max": 1},
+      {"item": "item_ecstasy_pill", "weight": 0.4, "max": 1},
+      {"item": "item_heroin_bag", "weight": 0.3, "max": 1},
+      {"item": "item_broken_bottle", "weight": 0.6, "max": 1}
     ]
   }
 ]

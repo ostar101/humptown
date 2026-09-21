@@ -1,0 +1,315 @@
+class_name CraftWindow
+extends CanvasLayer
+## Putting things together (D-070), the way a workbench does it in a block game:
+## a grid to lay things on, an arrow, and what they would make. Pick a thing in
+## your bag to lay it on the grid, click one on the grid to take it off, press
+## Make. The recipe book lists what you have found; click one to lay it out.
+##
+## It shows and proposes. `CraftRules` says what a grid makes and `Game.craft()`
+## does it — uses things up, hands things over, takes the minutes — and a
+## refusal is shown in plain words. Time stands still while it is open.
+
+signal closed()
+
+const SLOTS := 9
+const GRID_SLOT := 60.0
+const OUTPUT_SLOT := 84.0
+const BAG_SLOT := 56.0
+
+var _time_was_paused := false
+## What lies on each grid slot, "" for nothing.
+var _placed: Array[String] = []
+var _grid_slots: Array[ItemSlot] = []
+var _output: ItemSlot = null
+
+@onready var _root: Control = $Root
+@onready var _grid: GridContainer = %Grid
+@onready var _output_holder: VBoxContainer = %OutputHolder
+@onready var _result: Label = %Result
+@onready var _make: Button = %Make
+@onready var _clear: Button = %Clear
+@onready var _bag_grid: GridContainer = %BagGrid
+@onready var _book_rows: VBoxContainer = %BookRows
+@onready var _message: Label = %Message
+@onready var _carrying: Label = %Carrying
+@onready var _close: Button = %Close
+
+
+func _ready() -> void:
+	_root.visible = false
+	_close.pressed.connect(close)
+	_make.pressed.connect(make)
+	_clear.pressed.connect(clear)
+	for i in SLOTS:
+		_placed.append("")
+		var slot := ItemSlot.new(GRID_SLOT)
+		slot.pressed.connect(func() -> void: take_off(i))
+		_grid.add_child(slot)
+		_grid_slots.append(slot)
+	_output = ItemSlot.new(OUTPUT_SLOT)
+	_output.pressed.connect(make)
+	_output_holder.add_child(_output)
+
+
+func open() -> void:
+	if _root.visible or not Game.is_running():
+		return
+	_time_was_paused = Game.clock.paused
+	Game.pause_time(true)
+	Game.refresh_recipes()
+	_placed.fill("")
+	_message.text = ""
+	_render()
+	_root.visible = true
+	_focus_first()
+
+
+func close() -> void:
+	if not _root.visible:
+		return
+	_root.visible = false
+	Game.pause_time(_time_was_paused)
+	closed.emit()
+
+
+func is_open() -> bool:
+	return _root.visible
+
+
+## Lays one of a thing from the bag on the first empty slot. Refused
+## `not_owned` (all of it is already on the grid) and `grid_full`.
+func place(item_id: String) -> Result:
+	var owned := Game.player.inventory.count_of(item_id)
+	if owned - _placed.count(item_id) < 1:
+		return _refuse("not_owned")
+	var free := _placed.find("")
+	if free < 0:
+		return _refuse("grid_full")
+	_placed[free] = item_id
+	_message.text = ""
+	_render()
+	return Result.success(free)
+
+
+func take_off(slot: int) -> void:
+	if slot < 0 or slot >= SLOTS or _placed[slot] == "":
+		return
+	_placed[slot] = ""
+	_message.text = ""
+	_render()
+
+
+func clear() -> void:
+	_placed.fill("")
+	_message.text = ""
+	_render()
+
+
+## Clears the grid and lays out a known recipe from what the bag holds. Refused
+## `unknown_recipe`, and `missing` when the bag lacks something for it — the part
+## it has is still laid out, so the gap can be seen.
+func fill_recipe(recipe_id: String) -> Result:
+	var recipe := Game.data.get_entry("recipes", recipe_id)
+	if recipe.is_empty() or not Game.player.known_recipes.has(recipe_id):
+		return _refuse("unknown_recipe")
+	_placed.fill("")
+	var short := false
+	var inputs := CraftRules.inputs_of(recipe)
+	for item_id: String in inputs:
+		for n in int(inputs[item_id]):
+			var free := _placed.find("")
+			if free < 0 or Game.player.inventory.count_of(item_id) - _placed.count(item_id) < 1:
+				short = true
+				break
+			_placed[free] = item_id
+	_message.text = Localization.t("ui.craft.refused.missing") if short else ""
+	_render()
+	return Result.failure("missing") if short else Result.success()
+
+
+## Makes what the grid makes. Refused as `Game.craft()` refuses (`no_recipe`,
+## `not_owned`, `too_heavy`, `busy`).
+func make() -> Result:
+	var made := Game.craft(_placed)
+	if made.is_err():
+		return _refuse(made.code)
+	var info: Dictionary = made.value
+	_message.text = Localization.t("ui.craft.made", {
+		"what": _things(info["outputs"]), "minutes": info["minutes"]})
+	if bool(info["learned"]):
+		_message.text += " " + Localization.t("ui.craft.learned")
+	_trim_to_bag()
+	_render()
+	return made
+
+
+# --- what tests and reading ask ------------------------------------------------
+
+## What lies on the grid, slot by slot; "" for an empty one.
+func grid_ids() -> Array[String]:
+	return _placed.duplicate()
+
+
+## The first thing the grid would make, or "".
+func output_id() -> String:
+	return _output.item_id if _output != null else ""
+
+
+func can_make() -> bool:
+	return not _make.disabled
+
+
+func result_text() -> String:
+	return _result.text
+
+
+func message() -> String:
+	return _message.text
+
+
+## The bag's slots as "item_id|left": how many of each are not yet on the grid.
+func bag_texts() -> Array[String]:
+	var out: Array[String] = []
+	for slot in _bag_grid.get_children():
+		if slot is ItemSlot:
+			var item_slot := slot as ItemSlot
+			out.append("%s|%d" % [item_slot.item_id, item_slot.count])
+	return out
+
+
+## The recipe book's names, in order.
+func book_texts() -> Array[String]:
+	var out: Array[String] = []
+	for row in _book_rows.get_children():
+		for child in row.get_children():
+			if child is Button:
+				out.append((child as Button).text)
+	return out
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _root.visible and (event.is_action_pressed("ui_cancel") or event.is_action_pressed("craft")):
+		get_viewport().set_input_as_handled()
+		close()
+
+
+# --- internals ---------------------------------------------------------------------
+
+func _refuse(code: String) -> Result:
+	var key := "ui.craft.refused." + code
+	_message.text = Localization.t(key) if Localization.t(key) != key else Localization.t("ui.craft.refused.other")
+	_render()
+	return Result.failure(code)
+
+
+## After a make, takes off the grid whatever the bag no longer has, so the same
+## thing can be made again while the ingredients last.
+func _trim_to_bag() -> void:
+	var used := {}
+	for i in SLOTS:
+		var item_id := _placed[i]
+		if item_id == "":
+			continue
+		used[item_id] = int(used.get(item_id, 0)) + 1
+		if int(used[item_id]) > Game.player.inventory.count_of(item_id):
+			_placed[i] = ""
+
+
+func _things(counts: Dictionary) -> String:
+	var parts: Array[String] = []
+	for item_id: String in counts:
+		var n := int(counts[item_id])
+		parts.append(ItemIcons.name_of(item_id) + (" ×%d" % n if n > 1 else ""))
+	return ", ".join(parts)
+
+
+func _render() -> void:
+	for i in SLOTS:
+		_grid_slots[i].show_item(_placed[i], 1)
+	_render_bag()
+	_render_output()
+	_render_book()
+	var inventory := Game.player.inventory
+	_carrying.text = Localization.t("ui.bag.carrying", {
+		"weight": "%.1f" % inventory.total_weight(), "capacity": "%.0f" % inventory.capacity(),
+		"cash": Game.player.wallet.cash,
+	})
+
+
+func _render_bag() -> void:
+	for child in _bag_grid.get_children():
+		_bag_grid.remove_child(child)
+		child.queue_free()
+	var inventory := Game.player.inventory
+	for item_id in inventory.item_ids():
+		var left := inventory.count_of(item_id) - _placed.count(item_id)
+		var slot := ItemSlot.new(BAG_SLOT)
+		slot.show_item(item_id, left)
+		slot.disabled = left < 1
+		slot.modulate = Color(1, 1, 1, 0.4) if left < 1 else Color.WHITE
+		slot.pressed.connect(func() -> void: place(item_id))
+		_bag_grid.add_child(slot)
+
+
+func _render_output() -> void:
+	var recipe := CraftRules.find(Game.data.table("recipes"), _placed)
+	if recipe.is_empty():
+		_output.show_item("")
+		_make.disabled = true
+		_result.text = Localization.t("ui.craft.nothing") if _placed.any(func(id: String) -> bool: return id != "") \
+			else Localization.t("ui.craft.empty")
+		return
+	var outputs := CraftRules.outputs_of(recipe)
+	var first: String = str(outputs.keys()[0])
+	_output.show_item(first, int(outputs[first]))
+	var judged := CraftRules.judge(recipe, _bag_counts())
+	_make.disabled = judged.is_err()
+	_result.text = Localization.t("ui.craft.makes", {
+		"what": _things(outputs), "minutes": int(recipe.get("minutes", 1))})
+
+
+func _bag_counts() -> Dictionary:
+	var out := {}
+	for item_id in Game.player.inventory.item_ids():
+		out[item_id] = Game.player.inventory.count_of(item_id)
+	return out
+
+
+func _render_book() -> void:
+	for child in _book_rows.get_children():
+		_book_rows.remove_child(child)
+		child.queue_free()
+	var recipes := Game.data.table("recipes")
+	for recipe_id: String in recipes:
+		if not Game.player.known_recipes.has(recipe_id):
+			continue
+		var recipe: Dictionary = recipes[recipe_id]
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		var outputs := CraftRules.outputs_of(recipe)
+		row.add_child(ItemIcons.tile(str(outputs.keys()[0]), 36))
+		var pick := Button.new()
+		pick.theme_type_variation = &"SmallButton"
+		pick.text = Localization.t(str(recipe.get("name_key", recipe_id)))
+		pick.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		pick.clip_text = true
+		pick.pressed.connect(func() -> void: fill_recipe(recipe_id))
+		row.add_child(pick)
+		for item_id: String in CraftRules.inputs_of(recipe):
+			row.add_child(ItemIcons.tile(item_id, 24))
+		_book_rows.add_child(row)
+	if _book_rows.get_child_count() == 0:
+		var none := Label.new()
+		none.theme_type_variation = &"MutedLabel"
+		none.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		none.text = Localization.t("ui.craft.book_empty")
+		_book_rows.add_child(none)
+
+
+func _focus_first() -> void:
+	for slot in _bag_grid.get_children():
+		if slot is ItemSlot and not (slot as ItemSlot).disabled:
+			(slot as ItemSlot).grab_focus()
+			return
+	_close.grab_focus()

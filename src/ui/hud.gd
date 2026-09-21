@@ -44,6 +44,7 @@ func _ready() -> void:
 	Events.money_moved.connect(_on_money_moved)
 	Events.item_moved.connect(_on_item_moved)
 	Events.skill_level_up.connect(_on_skill_up)
+	Events.recipe_learned.connect(_on_recipe_learned)
 	Events.follow_changed.connect(_on_follow_changed)
 	set_process(false)
 	for changed: Signal in [Events.minute_passed, Events.time_skipped, Events.money_changed,
@@ -110,6 +111,11 @@ func _on_money_moved(amount: int, kind: String, reason: String) -> void:
 func _on_item_moved(item_id: String, delta: int) -> void:
 	if Game.is_running():
 		log_event(FeedText.item(item_id, delta))
+
+
+func _on_recipe_learned(recipe_id: String) -> void:
+	if Game.is_running():
+		log_event(FeedText.recipe(recipe_id))
 
 
 func _on_skill_up(skill_id: String, level: int) -> void:

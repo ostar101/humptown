@@ -22,6 +22,7 @@ extends Node2D
 @onready var _stash: StashWindow = $Stash
 @onready var _bin: StashWindow = $Bin
 @onready var _quests: QuestWindow = $Quests
+@onready var _craft: CraftWindow = $Craft
 @onready var _phone: PhoneWindow = $Phone
 @onready var _atm: AtmWindow = $Atm
 @onready var _combat: CombatWindow = $Combat
@@ -55,6 +56,7 @@ func _ready() -> void:
 	_bin.use_as_bin()
 	_bin.closed.connect(_on_shop_closed)
 	_quests.closed.connect(_on_shop_closed)
+	_craft.closed.connect(_on_shop_closed)
 	_phone.closed.connect(_on_shop_closed)
 	_phone.call_requested.connect(_on_call_requested)
 	_atm.closed.connect(_on_shop_closed)
@@ -157,6 +159,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("inventory") and _player.input_enabled:
 		get_viewport().set_input_as_handled()
 		open_inventory()
+	elif event.is_action_pressed("craft") and _player.input_enabled:
+		get_viewport().set_input_as_handled()
+		open_crafting()
 	elif event.is_action_pressed("quests") and _player.input_enabled:
 		get_viewport().set_input_as_handled()
 		open_quests()
@@ -211,6 +216,19 @@ func open_inventory() -> void:
 	if _bag.is_open():
 		_player.input_enabled = false
 		_hud.set_prompt("")
+
+
+## Opens the bench where things are put together (D-070); walking waits until
+## it closes.
+func open_crafting() -> void:
+	_craft.open()
+	if _craft.is_open():
+		_player.input_enabled = false
+		_hud.set_prompt("")
+
+
+func craft_window() -> CraftWindow:
+	return _craft
 
 
 func inventory_window() -> InventoryWindow:
@@ -328,7 +346,7 @@ func hud() -> Hud:
 ## Works out the prompt only when the faced cell, or who is standing on it,
 ## changes — not every frame.
 func _refresh_prompt() -> void:
-	if _dialogue.is_open() or _shop.is_open() or _bag.is_open() or _stash.is_open() or _bin.is_open() or _quests.is_open() or _phone.is_open() or _atm.is_open() or _combat.is_open():
+	if _dialogue.is_open() or _shop.is_open() or _bag.is_open() or _stash.is_open() or _bin.is_open() or _quests.is_open() or _craft.is_open() or _phone.is_open() or _atm.is_open() or _combat.is_open():
 		return
 	var front := _player.current_cell() + _player.facing
 	var body := _npcs.body_at(front)
@@ -357,6 +375,8 @@ func _on_player_collapsed(woke_at: String, bill: int) -> void:
 		_bin.close()
 	if _quests.is_open():
 		_quests.close()
+	if _craft.is_open():
+		_craft.close()
 	if _phone.is_open():
 		_phone.close()
 	if _atm.is_open():
@@ -404,7 +424,7 @@ func _on_ask_resolved(ask_id: String, grade: String) -> void:
 
 ## A night in the cells, or a fine for not coming in (D-052).
 func _on_player_arrested(officer_id: String, _released_at: int) -> void:
-	for window: Node in [_dialogue, _shop, _bag, _stash, _bin, _quests, _phone, _atm]:
+	for window: Node in [_dialogue, _shop, _bag, _stash, _bin, _quests, _craft, _phone, _atm]:
 		if window.has_method("is_open") and window.is_open():
 			window.close()
 	show_current_area()

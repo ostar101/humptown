@@ -7,7 +7,7 @@ extends Node
 ## `--screen` is `title`, `creation`, `opening`, `settings` or `world`
 ## (`--overlay=1` shows the developer overlay; `--shop=location_id
 ## [--selling=1]` stands the player at that shop's counter; `--quests=1`
-## opens the quest log; `--atm=1` the cash machine; `--fight=npc_id` a fight; `--phone=threads|thread|contacts|calendar|bank|map` the phone). For
+## opens the quest log; `--bag=1` the bag with things in it; `--craft=empty|joint|spoon` the bench; `--atm=1` the cash machine; `--fight=npc_id` a fight; `--phone=threads|thread|contacts|calendar|bank|map` the phone). For
 ## settings, `--provider=id` chooses a provider — in memory only, since a
 ## preview never writes the player's settings — and `--locale=fi` the language. For creation, `--step` is
 ## 1-3 and the screen is driven through its own public methods, exactly as its
@@ -75,6 +75,10 @@ func _ready() -> void:
 		_drive_feed()
 	if which == "world" and args.has("bin"):
 		_drive_bin(screen as WorldView)
+	if which == "world" and args.has("bag"):
+		_drive_bag(screen as WorldView)
+	if which == "world" and args.has("craft"):
+		_drive_craft(screen as WorldView, str(args["craft"]))
 	if which == "world" and args.has("overlay"):
 		var overlay := screen.get_node_or_null("DevOverlay") as DevOverlay
 		if overlay != null:
@@ -171,6 +175,36 @@ func _drive_fight(view: WorldView, npc_id: String) -> void:
 		return
 	for action in ["attack", "defend", "attack"]:
 		window.press(action)
+
+
+## What a person who has been around might carry, for looking at the bag and
+## the bench: a little of everything the crafting chains use.
+func _stock_bag() -> void:
+	Game.player.inventory.clear()
+	for entry: Array in [["item_cannabis_bud", 2], ["item_rolling_papers", 2], ["item_grinder", 1], ["item_lighter", 1],
+			["item_heroin_bag", 1], ["item_spoon", 1], ["item_water", 1], ["item_syringe", 1], ["item_puukko", 1],
+			["item_bat", 1], ["item_nails", 3], ["item_painkillers", 1], ["item_cigarettes", 1], ["item_vodka", 1],
+			["item_sandwich", 2], ["item_bandage", 1], ["item_pipe", 1], ["item_first_aid_kit", 1]]:
+		Game.player.inventory.add(str(entry[0]), int(entry[1]))
+
+
+## `--bag=1`: the bag open with that in it.
+func _drive_bag(view: WorldView) -> void:
+	_stock_bag()
+	view.open_inventory()
+
+
+## `--craft=empty|joint|spoon`: the bench open — empty, with a joint laid out, or with the
+## heroin spoon chain's first step laid out (and the recipes the bag holds known).
+func _drive_craft(view: WorldView, mode: String) -> void:
+	_stock_bag()
+	view.open_crafting()
+	var window := view.craft_window()
+	match mode:
+		"joint":
+			window.fill_recipe("rcp_joint_from_bud")
+		"spoon":
+			window.fill_recipe("rcp_spoon_powder")
 
 
 ## `--atm=1`: inside the corner shop, at the cash machine, with some money.

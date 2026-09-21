@@ -62,6 +62,7 @@ func _ready() -> void:
 
 	# Tear the world down and let one frame pass before quitting, so objects
 	# created during the run are released rather than reported as leaked.
+	ItemIcons.reset()   # its painted textures are static, so they outlive every scene
 	Game.unload()
 	Game.saves.delete_slot(TEST_SAVE_SLOT)
 	Game.llm.secrets.clear_all()

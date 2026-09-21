@@ -31,6 +31,7 @@ const REQUIRED_KEYS := {
 	"errands": ["id", "name_key", "giver", "item", "count", "reward"],
 	"asks": ["id", "npc", "skill", "grades"],
 	"bins": ["id", "loot"],
+	"recipes": ["id", "name_key", "inputs", "outputs"],
 }
 
 var tables: Dictionary = {}          # table -> { id -> entry }
@@ -126,6 +127,7 @@ func validate_references() -> Array[String]:
 				problems.append("bin table '%s' holds unknown item '%s'" % [id, entry.get("item")])
 			if float(entry.get("weight", 0)) <= 0.0:
 				problems.append("bin table '%s' gives '%s' no weight" % [id, entry.get("item")])
+	problems.append_array(_recipe_problems())
 	for id in table("errands"):
 		var errand: Dictionary = table("errands")[id]
 		if not has_entry("npcs", str(errand.get("giver", ""))):
@@ -234,6 +236,33 @@ func _shop_reference_problems(id: String, shop: Dictionary) -> Array[String]:
 	for kind in shop.get("buys", []):
 		if not kinds.has(str(kind)):
 			problems.append("shop '%s' buys unknown kind '%s'" % [id, kind])
+	return problems
+
+
+## Recipes (D-070): every item exists, what is kept was put in, and no two
+## recipes take the same things, because the grid could not tell them apart.
+func _recipe_problems() -> Array[String]:
+	var problems: Array[String] = []
+	var seen := {}
+	for id in table("recipes"):
+		var recipe: Dictionary = table("recipes")[id]
+		for side in ["inputs", "outputs"]:
+			var things: Variant = recipe.get(side, {})
+			if typeof(things) != TYPE_DICTIONARY or (things as Dictionary).is_empty():
+				problems.append("recipe '%s' has no %s" % [id, side])
+				continue
+			for item_id in things:
+				if not has_entry("items", str(item_id)):
+					problems.append("recipe '%s' %s unknown item '%s'" % [id, "uses" if side == "inputs" else "makes", item_id])
+				elif int(things[item_id]) < 1:
+					problems.append("recipe '%s' has a count below one for '%s'" % [id, item_id])
+		for kept in recipe.get("keeps", []):
+			if not (recipe.get("inputs", {}) as Dictionary).has(str(kept)):
+				problems.append("recipe '%s' keeps '%s', which it does not use" % [id, kept])
+		var key := JSON.stringify(CraftRules.inputs_of(recipe), "", true)
+		if seen.has(key):
+			problems.append("recipes '%s' and '%s' take the same things" % [seen[key], id])
+		seen[key] = id
 	return problems
 
 

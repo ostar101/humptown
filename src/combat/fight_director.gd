@@ -13,8 +13,6 @@ extends RefCounted
 const JOIN_AFFECTION := 0.5
 const MAX_JOINERS := 2
 const KNOCKED_OUT_MINUTES := 45
-const WEAPON_ITEM := "item_crowbar"
-const WEAPON_BONUS := 0.06
 const HEAL_ITEM := "item_bandage"
 const ASSAULT_SEVERITY_BASE := 0.5
 const ASSAULT_SEVERITY_PER_DAMAGE := 0.6
@@ -174,15 +172,30 @@ func _would_step_in(other_id: String, target_id: String) -> bool:
 
 func _player_combatant() -> Dictionary:
 	var stats := _player.stats
+	var wielded := wielded_weapon()
 	return {
 		"id": PlayerState.ID, "name": "You", "side": "player",
 		"health": stats.health, "stamina": stats.stamina,
 		"strength": stats.attribute("strength"), "agility": stats.attribute("agility"),
 		"resolve": stats.attribute("resolve"), "skill": _player.skills.level_of("brawling"),
 		"intimidation": _player.skills.level_of("intimidation"),
-		"weapon": WEAPON_BONUS if _player.inventory.count_of(WEAPON_ITEM) > 0 else 0.0,
+		"weapon": ItemRules.damage_of(_data.get_entry("items", wielded)), "weapon_item": wielded,
 		"effectiveness": stats.effectiveness(), "defending": false, "state": "up", "traits": [],
 	}
+
+
+## The best thing the player has on them to hit with (D-070): the carried item
+## with the largest `damage`, or "" with bare hands. The crowbar in a bag is one;
+## so is a puukko. Nothing has to be equipped, and nothing is used up.
+func wielded_weapon() -> String:
+	var best := ""
+	var best_damage := 0.0
+	for item_id in _player.inventory.item_ids():
+		var damage := ItemRules.damage_of(_data.get_entry("items", item_id))
+		if damage > best_damage:
+			best = item_id
+			best_damage = damage
+	return best
 
 
 ## Someone real, as a fighter: their build from who they are and what they do

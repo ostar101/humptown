@@ -1323,8 +1323,9 @@ func _count_missed_shifts(day: int) -> void:
 
 ## Eats, drinks or uses something the player carries (D-041). `ItemRules`
 ## judges; the item is used up, its effects applied, and the minutes it
-## took pass. Refuses `busy` while talking or shopping, and `not_owned`,
-## `not_usable`, `not_hungry`, `not_hurt`.
+## took pass; what it leaves behind (an empty bottle) goes in the bag. Refuses
+## `busy` while talking or shopping, and `not_owned`, `not_usable`,
+## `needs_fire`, `not_hungry`, `not_hurt`.
 func use_item(item_id: String) -> Result:
 	var proposal := {"kind": "use", "item": item_id}
 	if not is_running():
@@ -1334,16 +1335,87 @@ func use_item(item_id: String) -> Result:
 	var meters := {}
 	for meter in ItemRules.METERS:
 		meters[meter] = player.stats.get_meter(meter)
-	var judged := ItemRules.judge_use(data.get_entry("items", item_id), player.inventory.count_of(item_id), meters)
+	var judged := ItemRules.judge_use(data.get_entry("items", item_id), player.inventory.count_of(item_id), meters,
+		player.inventory.item_ids())
 	if judged.is_err():
 		return _reject(proposal, judged.code)
 	var use: Dictionary = judged.value
 	player.inventory.remove(item_id, 1)
+	var leaves := str(use.get("leaves", ""))
+	if leaves != "":
+		player.inventory.add(leaves, 1)   # an empty bottle weighs less than the full one: it always fits
 	var effects: Dictionary = use["effects"]
 	for meter in effects:
 		player.stats.modify(str(meter), float(effects[meter]))
 	advance_time(int(use["minutes"]))
 	return Result.success({"kind": "used", "item": item_id, "effects": effects, "minutes": use["minutes"]})
+
+
+# --- putting things together ------------------------------------------------------
+
+## What the player carries as {item_id: count}.
+func _bag_counts() -> Dictionary:
+	var out := {}
+	for item_id in player.inventory.item_ids():
+		out[item_id] = player.inventory.count_of(item_id)
+	return out
+
+
+## Recipes the player now knows and has not been told of: those whose every
+## ingredient is in the bag. Called when the workbench opens and after a make.
+## Returns the ones just found.
+func refresh_recipes() -> Array[String]:
+	if not is_running():
+		return []
+	var found := CraftRules.unlockable(data.table("recipes"), _bag_counts(), player.known_recipes)
+	for recipe_id in found:
+		player.known_recipes.append(recipe_id)
+		Events.recipe_learned.emit(recipe_id)
+	return found
+
+
+## Puts what is on the grid together (D-070). `placed` is the item ids laid out,
+## one per slot. `CraftRules` says what they make; what is used up leaves the
+## bag, what comes out goes in, and the minutes it takes pass. Refuses
+## `busy` while talking or shopping, `no_recipe` (these make nothing),
+## `not_owned` and `too_heavy` (the result would not fit in the bag).
+func craft(placed: Array) -> Result:
+	var proposal := {"kind": "craft", "items": placed}
+	if not is_running():
+		return _reject(proposal, "no_world")
+	if dialogue.is_talking() or is_shopping():
+		return _reject(proposal, "busy")
+	var recipe := CraftRules.find(data.table("recipes"), placed)
+	if recipe.is_empty():
+		return _reject(proposal, "no_recipe")
+	var judged := CraftRules.judge(recipe, _bag_counts())
+	if judged.is_err():
+		return _reject(proposal, judged.code)
+	var made: Dictionary = judged.value
+	var consumed: Dictionary = made["consumed"]
+	var outputs: Dictionary = made["outputs"]
+	var freed := 0.0
+	for item_id: String in consumed:
+		freed += player.inventory.item_weight(item_id) * float(int(consumed[item_id]))
+	var added := 0.0
+	for item_id: String in outputs:
+		added += player.inventory.item_weight(item_id) * float(int(outputs[item_id]))
+	if added - freed > player.inventory.free_weight() + 0.0001:
+		return _reject(proposal, "too_heavy")
+	for item_id: String in consumed:
+		player.inventory.remove(item_id, int(consumed[item_id]))
+	for item_id: String in outputs:
+		player.inventory.add(item_id, int(outputs[item_id]))
+	var recipe_id := str(made["recipe"])
+	var learned := not player.known_recipes.has(recipe_id)
+	if learned:
+		player.known_recipes.append(recipe_id)
+		Events.recipe_learned.emit(recipe_id)
+	Events.item_crafted.emit(recipe_id)
+	advance_time(int(made["minutes"]))
+	refresh_recipes()
+	return Result.success({"kind": "crafted", "recipe": recipe_id, "outputs": outputs,
+		"minutes": made["minutes"], "learned": learned})
 
 
 func _resolve_collapse() -> void:

@@ -32,6 +32,12 @@ static func item(item_id: String, delta: int) -> String:
 	return Localization.t(key, {"what": _item_name(item_id), "count": absi(delta)})
 
 
+## "New recipe: Joint." — a recipe reached the book (D-070).
+static func recipe(recipe_id: String) -> String:
+	var entry: Dictionary = Game.data.get_entry("recipes", recipe_id) if Game.is_running() else {}
+	return Localization.t("ui.feed.recipe", {"what": Localization.t(str(entry.get("name_key", recipe_id)))})
+
+
 static func skill_up(skill_id: String, level: int) -> String:
 	var entry: Dictionary = Game.data.get_entry("skills", skill_id) if Game.is_running() else {}
 	return Localization.t("ui.feed.skill_up", {"skill": Localization.t(str(entry.get("name_key", skill_id))), "level": level})

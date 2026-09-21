@@ -16,6 +16,9 @@ const TRACK_COLOUR := Color(0.62, 0.62, 0.68)
 
 var _target := ""
 var _buttons: Dictionary = {}
+## What the player hits with, beside their bars (D-070): its picture and name.
+var _weapon_box: HBoxContainer = null
+var _weapon_name: Label = null
 
 @onready var _root: Control = $Root
 @onready var _foes: VBoxContainer = %Foes
@@ -32,6 +35,12 @@ func _ready() -> void:
 	_paint(_health, HEALTH_COLOUR)
 	_paint(_stamina, STAMINA_COLOUR)
 	_continue.pressed.connect(close)
+	_weapon_box = HBoxContainer.new()
+	_weapon_box.add_theme_constant_override("separation", 8)
+	$Root/Frame/Layout/YouRow.add_child(_weapon_box)
+	_weapon_name = Label.new()
+	_weapon_name.theme_type_variation = &"MutedLabel"
+	_weapon_box.add_child(_weapon_name)
 	for action in COMMANDS:
 		var button := Button.new()
 		button.custom_minimum_size = Vector2(120, 0)
@@ -117,6 +126,11 @@ func outcome_text() -> String:
 	return _outcome.text
 
 
+## "Puukko" or "Bare hands": what the player is hitting with, as shown.
+func weapon_text() -> String:
+	return _weapon_name.text
+
+
 func command_enabled(action: String) -> bool:
 	return _buttons.has(action) and not (_buttons[action] as Button).disabled
 
@@ -142,6 +156,7 @@ func _render() -> void:
 	var me := fight.player()
 	_health.value = float(me["health"]) * 100.0
 	_stamina.value = float(me["stamina"]) * 100.0
+	_show_weapon(str(me.get("weapon_item", "")))
 	for child in _foes.get_children():
 		_foes.remove_child(child)
 		child.queue_free()
@@ -166,6 +181,20 @@ func _render() -> void:
 		_continue.grab_focus()
 	else:
 		(_buttons["attack"] as Button).grab_focus()
+
+
+func _show_weapon(item_id: String) -> void:
+	for child in _weapon_box.get_children():
+		if child != _weapon_name:
+			_weapon_box.remove_child(child)
+			child.queue_free()
+	if item_id == "":
+		_weapon_name.text = Localization.t("ui.combat.bare_hands")
+		return
+	var picture := ItemIcons.tile(item_id, 32)
+	_weapon_box.add_child(picture)
+	_weapon_box.move_child(picture, 0)
+	_weapon_name.text = ItemIcons.name_of(item_id)
 
 
 func _foe_row(foe: Dictionary) -> HBoxContainer:

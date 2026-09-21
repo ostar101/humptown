@@ -2459,3 +2459,79 @@ corner.
 belongings, so nothing of theirs is thrown away in one; nothing you find is
 dirty or risky to eat; a search takes no time. The loot table is small and
 cheap on purpose: it is a pocket-money find, not an economy.
+
+## D-070 — Pictures for every item, things put together, and things to hit with
+
+**Asked for.** Icons for a great many items (each drug and medicine, and the
+tools that go with them); a Minecraft-style window for combining things — a spoon
+and a bag of heroin make a spoon of brown powder, that and water make a spoon of
+dark liquid; a cannabis bud and a rolling paper make a joint; and more weapons:
+a puukko, a pesäpallo bat and so on.
+
+**Decision.**
+- **Icons are ours, not LimeZu's.** 16x16 pixel art written as text in
+  `data/item_icons.json` (a palette of one-letter colours, named pieces of art,
+  and per item the pieces stacked, each with optional colour overrides), painted
+  into textures by `ItemIcons` and shown at 3x with no smoothing. Being our own,
+  it is committed and needs no importer, unlike the LimeZu art. Stacking is how a
+  spoon with powder, liquid or bubbles, a syringe with something in it, and three
+  bags of different powders are each drawn once. `ItemIcons.problems()` is what the
+  tests use: every item must have an icon, every row 16 wide, every letter in the
+  palette. An item without one shows a question mark. `ItemSlot` (a button, for the
+  bench) and `ItemIcons.tile()` (a picture, for lists) are the two ways to show it;
+  the bag, cupboard, bins, shop, bench and fight window use them.
+- **52 new items** (66 in all). New kinds `drug` (used like food: it moves the
+  condition meters) and `weapon`. Three new item fields, all data: `needs_any`
+  (a cigarette or joint wants a lighter or matches in the bag; refused `needs_fire`),
+  `leaves` (what is left when it is used: an empty bottle, a used syringe, an empty
+  baggie) and `damage` (a weapon's bonus to every blow). A raw bag of heroin, a
+  bud, ground cannabis do nothing when used — they are for the bench.
+  - drugs and drink: heroin, cocaine and amphetamine bags, cannabis (bud, ground,
+    joint, loaded pipe), cigarettes (loose), ecstasy, LSD, mushrooms, vodka, wine
+  - medicine: painkillers, strong painkillers, sleeping pills, antidepressants,
+    antiseptic, plasters, naloxone, a first aid kit
+  - gear: lighter, matches, papers, grinder, pipe, spoon (and three states of it),
+    syringe (loaded, used), scale, water, cloth, tape, nails, bottles, baggies
+  - weapons: puukko, kitchen knife, pesäpallo bat, hockey stick, hammer, iron pipe,
+    screwdriver, brass knuckles, baton, axe, broken bottle, nail bat (the crowbar
+    keeps its 0.06, now from data)
+- **Putting things together.** `data/recipes.json` (14 to begin with), judged by
+  `CraftRules` (pure) and done by `Game.craft()`: the window proposes the things
+  on its grid, the rules say what they make, Godot uses things up, hands things
+  over and takes the minutes. **Shapeless and exact**: what is on the grid must be
+  what a recipe takes, in any place; a stray extra thing spoils it. `keeps` names
+  tools that are needed but not used up (a lighter, a grinder, the water). Two
+  recipes may not take the same things (`DataRegistry` checks it). Refused
+  `no_recipe`, `not_owned`, `too_heavy` (the result must fit, whole), `busy`.
+- **The bench** opens on **C**, anywhere, like the bag (`CraftWindow`): a 3x3 grid,
+  an arrow, the result and a Make button; your bag as a grid of slots; a book of
+  recipes you have found, each of which lays itself out when clicked. Laying
+  things out never moves them: the bag is only touched by Make.
+- **Recipes find you, as in Minecraft:** one is in the book once you have held
+  everything it needs, or once you have made it. Saved in `PlayerState.known_recipes`
+  (schema v12, migration `_v11_to_v12`: none known; the bench finds what the bag
+  already allows when next opened). The feed says "New recipe: ...".
+- **Weapons** — `FightDirector.wielded_weapon()` is the carried item with the
+  most `damage`; nothing is equipped and nothing wears out. The fight window shows
+  it beside your bars. (Before this, only the crowbar counted, by a constant.)
+- **Where things come from.** The corner shop sells lighters, matches, papers,
+  water, wine, painkillers, plasters, antiseptic and spoons; the bar vodka; the pawn
+  shop the blunt things, tape, nails, a pipe, a grinder and scales, and now buys
+  weapons; the street bins hold cheap paraphernalia and, rarely, a joint, a bud,
+  a pill or a bag of something (a dropped wrap).
+
+**Not built, on purpose.**
+- **No way to buy drugs.** A dealer or black market is a system of its own (who
+  sells, to whom, at what risk, what the police make of it) and changes what the
+  game is about; it is the user's call. Until then they only turn up in bins.
+- **No addiction, tolerance or overdose;** a drug only moves the meters (heroin
+  costs health, stimulants cost sleep back later through the meters' own drift).
+- **No crime in carrying or using anything,** and nobody reacts to a weapon in your
+  bag or a needle in your hand. Assault with a weapon is the same offence as
+  without.
+- **No firearms.** A gun changes what a fight is (nobody dies today, D-054); ask
+  before adding one. No pepper spray or thrown things either: they are actions,
+  not damage bonuses, and would need a place in the fight window.
+- No durability, no equip slot, no crafting skill, no stations (the bench is
+  everywhere), and every recipe is hand-authored: there is no unlocking by
+  teachers or books.

@@ -134,6 +134,7 @@ func _fill(rows: VBoxContainer, inventory: Inventory, action_key: String, action
 		button.custom_minimum_size = Vector2(110, 0)
 		button.text = Localization.t(action_key)
 		button.pressed.connect(func() -> void: action.call(item_id))
+		row.add_child(ItemIcons.tile(item_id, 36))
 		for child: Control in [item_name, count, button]:
 			row.add_child(child)
 		rows.add_child(row)
