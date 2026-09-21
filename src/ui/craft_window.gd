@@ -115,6 +115,10 @@ func fill_recipe(recipe_id: String) -> Result:
 	_placed.fill("")
 	var short := false
 	var inputs := CraftRules.inputs_of(recipe)
+	if bool(recipe.get("fire", false)):
+		# whichever light the bag has, the lighter first
+		var light := CraftRules.FIRE[0] if Game.player.inventory.has(CraftRules.FIRE[0]) else CraftRules.FIRE[1]
+		inputs[light] = 1
 	for item_id: String in inputs:
 		for n in int(inputs[item_id]):
 			var free := _placed.find("")
@@ -262,7 +266,7 @@ func _render_output() -> void:
 	var outputs := CraftRules.outputs_of(recipe)
 	var first: String = str(outputs.keys()[0])
 	_output.show_item(first, int(outputs[first]))
-	var judged := CraftRules.judge(recipe, _bag_counts())
+	var judged := CraftRules.judge(recipe, _bag_counts(), _placed)
 	_make.disabled = judged.is_err()
 	_result.text = Localization.t("ui.craft.makes", {
 		"what": _things(outputs), "minutes": int(recipe.get("minutes", 1))})
@@ -296,7 +300,7 @@ func _render_book() -> void:
 		pick.clip_text = true
 		pick.pressed.connect(func() -> void: fill_recipe(recipe_id))
 		row.add_child(pick)
-		for item_id: String in CraftRules.inputs_of(recipe):
+		for item_id: String in CraftRules.ingredients_of(recipe):
 			row.add_child(ItemIcons.tile(item_id, 24))
 		_book_rows.add_child(row)
 	if _book_rows.get_child_count() == 0:

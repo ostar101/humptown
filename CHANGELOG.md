@@ -6,6 +6,7 @@ versions are milestones rather than releases until there is something to release
 ## [Unreleased]
 
 ### Added
+- 48 more recipes (61 in all) and 49 more items: a kitchen (sandwiches, hot dogs, omelettes, pancakes, buns, fish, tea, drinks), cannabis and pill paraphernalia (spliff, bong, tea, butter, brownies), first aid, and weapons made by hand (club, nail club, spear, shiv, taped pipe, brick in a sock). Recipes that need heat take a lighter or matches (D-071).
 - Every item has a picture (16x16 pixel art in `data/item_icons.json`, layered and recoloured), shown in the bag, the cupboard, bins, shops, the bench and the fight window (D-070).
 - 52 new items: drugs, medicines and the paraphernalia that goes with them, and weapons (puukko, pesäpallo bat, hockey stick, hammer, iron pipe, axe, knives, brass knuckles, baton and more). Cigarettes and joints need a lighter or matches; a bottle, a syringe or a baggie is left behind when used (D-070).
 - A bench for putting things together, on C: a 3x3 grid, a result, your bag and a book of the recipes you have found. Spoon + bag of heroin -> spoon with brown powder -> + water -> dark liquid -> heated -> syringe; cannabis bud + rolling paper -> joint; bat + nails -> nail bat; and 11 more (D-070).

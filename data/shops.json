@@ -3,7 +3,10 @@
    "buys": ["food", "drink", "misc"], "buyback": 0.4,
    "stock": {"item_sandwich": 12, "item_coffee": 20, "item_beer": 24, "item_cigarettes": 10, "item_notebook": 6, "item_bandage": 6,
              "item_lighter": 12, "item_matches": 12, "item_rolling_papers": 10, "item_water": 20, "item_wine": 6,
-             "item_painkillers": 6, "item_plasters": 8, "item_antiseptic": 4, "item_spoon": 6}},
+             "item_painkillers": 6, "item_plasters": 8, "item_antiseptic": 4, "item_spoon": 6,
+             "item_bread": 12, "item_cheese": 8, "item_sausage": 10, "item_ham": 6, "item_tomato": 8, "item_eggs": 12,
+             "item_milk": 10, "item_sugar": 8, "item_flour": 8, "item_butter": 8, "item_potato": 15, "item_juice": 10,
+             "item_tea_bag": 20, "item_tobacco": 10, "item_fish": 6, "item_sock": 6}},
   {"id": "shop_kaisla", "location": "loc_cafe_kaisla", "markup": 1.2, "till": 200,
    "buys": [], "buyback": 0.0,
    "stock": {"item_coffee": 40, "item_cinnamon_bun": 24, "item_sandwich": 10}},
@@ -15,5 +18,6 @@
    "stock": {"item_crowbar": 2, "item_toolbox": 1, "item_work_boots": 2, "item_backpack": 2, "item_phone": 1,
              "item_puukko": 2, "item_kitchen_knife": 2, "item_bat": 2, "item_hockey_stick": 1, "item_hammer": 3,
              "item_iron_pipe": 2, "item_screwdriver": 3, "item_axe": 1, "item_knuckles": 1,
-             "item_tape": 4, "item_nails": 20, "item_pipe": 2, "item_grinder": 1, "item_scale": 1}}
+             "item_tape": 4, "item_nails": 20, "item_pipe": 2, "item_grinder": 1, "item_scale": 1,
+             "item_frying_pan": 3, "item_rope": 3, "item_brick": 4}}
 ]

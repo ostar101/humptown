@@ -10,6 +10,12 @@ extends RefCounted
 ## used up (a lighter, a grinder); `outputs` is what comes out; `minutes` is
 ## how long it takes. Two recipes may not share the same inputs, so the grid
 ## always means one thing (`DataRegistry` checks it).
+##
+## `"fire": true` means the recipe also wants a light: one lighter or one box of
+## matches laid on the grid beside its inputs, needed but not used up. It saves
+## writing every cooking recipe twice.
+
+const FIRE: Array[String] = ["item_lighter", "item_matches"]
 
 ## Refusals, as `Game.craft()` reports them: `no_recipe` (these do not make
 ## anything), `not_owned` (the grid holds more than the bag), `too_heavy` (the
@@ -44,14 +50,39 @@ static func _counts(raw: Variant) -> Dictionary:
 	return out
 
 
+## The light on the grid — the lighter if both are there — or "".
+static func fire_in(laid: Dictionary) -> String:
+	for source in FIRE:
+		if int(laid.get(source, 0)) > 0:
+			return source
+	return ""
+
+
+## Everything a recipe needs laid out, its light included (as a lighter).
+static func ingredients_of(recipe: Dictionary) -> Dictionary:
+	var out := inputs_of(recipe)
+	if bool(recipe.get("fire", false)):
+		out[FIRE[0]] = 1
+	return out
+
+
 ## The recipe whose inputs are exactly what is on the grid, or {} when none is.
 static func find(recipes: Dictionary, placed: Array) -> Dictionary:
 	var laid := tally(placed)
 	if laid.is_empty():
 		return {}
+	var fire := fire_in(laid)
+	var without_fire := laid.duplicate()
+	if fire != "":
+		without_fire[fire] = int(without_fire[fire]) - 1
+		if int(without_fire[fire]) == 0:
+			without_fire.erase(fire)
 	for recipe_id: Variant in recipes:
 		var recipe: Dictionary = recipes[recipe_id]
-		if _same(inputs_of(recipe), laid):
+		if bool(recipe.get("fire", false)):
+			if fire != "" and _same(inputs_of(recipe), without_fire):
+				return recipe
+		elif _same(inputs_of(recipe), laid):
 			return recipe
 	return {}
 
@@ -66,11 +97,18 @@ static func _same(a: Dictionary, b: Dictionary) -> bool:
 
 
 ## Ok: {"recipe": id, "consumed": {item: n}, "outputs": {item: n}, "minutes": int}.
-## Refused: `not_owned` when the bag has less than the recipe asks for.
-static func judge(recipe: Dictionary, owned: Dictionary) -> Result:
+## Refused: `not_owned` when the bag has less than the recipe asks for. `placed`
+## is the grid, which says which light a `fire` recipe uses.
+static func judge(recipe: Dictionary, owned: Dictionary, placed: Array = []) -> Result:
 	var inputs := inputs_of(recipe)
 	var consumed := {}
 	var kept: Array = recipe.get("keeps", [])
+	if bool(recipe.get("fire", false)):
+		var fire := fire_in(tally(placed))
+		if fire == "":
+			fire = FIRE[0]
+		if int(owned.get(fire, 0)) < 1:
+			return Result.failure("not_owned", fire)
 	for item_id: String in inputs:
 		if int(owned.get(item_id, 0)) < int(inputs[item_id]):
 			return Result.failure("not_owned", item_id)
@@ -93,6 +131,8 @@ static func unlockable(recipes: Dictionary, owned: Dictionary, known: Array) -> 
 			continue
 		var inputs := inputs_of(recipes[recipe_id])
 		var has_all := true
+		if bool((recipes[recipe_id] as Dictionary).get("fire", false)) and fire_in(owned) == "":
+			continue
 		for item_id: String in inputs:
 			if int(owned.get(item_id, 0)) < int(inputs[item_id]):
 				has_all = false

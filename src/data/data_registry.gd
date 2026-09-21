@@ -259,10 +259,19 @@ func _recipe_problems() -> Array[String]:
 		for kept in recipe.get("keeps", []):
 			if not (recipe.get("inputs", {}) as Dictionary).has(str(kept)):
 				problems.append("recipe '%s' keeps '%s', which it does not use" % [id, kept])
-		var key := JSON.stringify(CraftRules.inputs_of(recipe), "", true)
-		if seen.has(key):
-			problems.append("recipes '%s' and '%s' take the same things" % [seen[key], id])
-		seen[key] = id
+		var lays: Array[Dictionary] = []   # every way of laying the grid that would make it
+		if bool(recipe.get("fire", false)):
+			for source in CraftRules.FIRE:
+				var with_light := CraftRules.inputs_of(recipe)
+				with_light[source] = int(with_light.get(source, 0)) + 1
+				lays.append(with_light)
+		else:
+			lays.append(CraftRules.inputs_of(recipe))
+		for lay in lays:
+			var key := JSON.stringify(lay, "", true)
+			if seen.has(key) and seen[key] != id:
+				problems.append("recipes '%s' and '%s' take the same things" % [seen[key], id])
+			seen[key] = id
 	return problems
 
 

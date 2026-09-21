@@ -2535,3 +2535,36 @@ a puukko, a pesäpallo bat and so on.
 - No durability, no equip slot, no crafting skill, no stations (the bench is
   everywhere), and every recipe is hand-authored: there is no unlocking by
   teachers or books.
+
+## D-071 — Many more recipes
+
+**Asked for.** "Far more recipes to unlock."
+
+**Decision.** 48 more recipes (61 in all) and 49 more items, each with an icon,
+an English and a Finnish name, and somewhere to be found (`test_crafting` checks
+that every ingredient can be bought, found in a bin, or made).
+- **A light is a rule, not a recipe input.** `"fire": true` on a recipe means one
+  lighter *or* one box of matches must be laid on the grid, and is not used up
+  (`CraftRules.fire_in`, `ingredients_of`). Every cooking recipe would otherwise
+  have been written twice; the spoon's heating step now works either way, and
+  `rcp_spoon_cooked_matches` is gone. The data check counts a fire recipe as two
+  possible grids, so it cannot clash with a plain one. Recipes need not have it:
+  `keeps` still names tools (pan, water, hammer) that must be on the grid too.
+- **Kitchen:** bread, cheese, ham, sausage, tomato, eggs, milk, flour, sugar, butter,
+  potato, fish, juice, tea; sandwiches, a hot dog, fried eggs, an omelette,
+  pancakes, baked potato, cinnamon buns, fish, coffee with milk, tea, a mixed
+  drink, mulled wine. Sold at the corner shop; a frying pan, rope and bricks at
+  the pawn shop.
+- **Cannabis and the rest, as things to prepare, not to make from chemicals:** a
+  spliff, hand-rolled cigarettes, a bong from a bottle and a pipe, cannabis tea,
+  butter and brownies, mushroom tea, and wiping the spoon clean at any step.
+- **First aid:** a splint, a cold compress, plasters from cloth, bandages or
+  antiseptic from vodka and cloth. **Materials:** rope, sticks (from bins or a broken
+  hockey stick), an emptied toolbox, nails pried out of a nail bat.
+- **Things to hit with, made by hand:** a club, a nail club, a spear, a shiv, a
+  sharpened stick, a taped pipe, a brick in a sock (a frying pan, a stick and a
+  brick count too). The best of what you carry is in your hand.
+
+**Not built, on purpose.** No recipe makes a drug from raw ingredients or
+chemicals: the drugs you can find are only prepared and used. That line is
+deliberate, not a gap.

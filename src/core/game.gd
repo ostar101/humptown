@@ -1388,7 +1388,7 @@ func craft(placed: Array) -> Result:
 	var recipe := CraftRules.find(data.table("recipes"), placed)
 	if recipe.is_empty():
 		return _reject(proposal, "no_recipe")
-	var judged := CraftRules.judge(recipe, _bag_counts())
+	var judged := CraftRules.judge(recipe, _bag_counts(), placed)
 	if judged.is_err():
 		return _reject(proposal, judged.code)
 	var made: Dictionary = judged.value

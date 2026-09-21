@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-21
 **Milestone:** M6 — Consequences — **complete in code (0.6.0)**. M5 complete (0.5.0). M5 complete in code (0.5.0).
-**Build:** green. 974 tests, 11952 assertions with the LimeZu art installed,
+**Build:** green. 984 tests, 12582 assertions with the LimeZu art installed,
 ~28 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
@@ -10,7 +10,7 @@
 
 ## Next task
 
-**Newest (D-070):** every item has a 16x16 icon (`data/item_icons.json`, `ItemIcons`, `ItemSlot`), 52 new items (drugs, medicines, paraphernalia, weapons), a bench on **C** for putting things together (`data/recipes.json`, `CraftRules`, `Game.craft`, `CraftWindow`, save schema v12) and the best carried weapon used in fights. Worth trying in play: press C with a bud and papers in the bag; search bins for a syringe and a spoon and follow the chain. **Open questions for the user:** a way to buy drugs (dealer/black market), whether carrying or using them should be a crime, and firearms — all deliberately not built (D-070). **Before that (D-069):** bins can be searched and used to keep things (`Bins`, `data/bins.json`, save schema v11, the cupboard's window reused). **Before that (D-068):** bins at building corners, hydrants clear of doors; street furniture is now the world's (`StreetFurniture`, `DistrictMap.furniture`). **Before that (D-067):** hydrants, bins, trees, benches and the worksite collide by their art's outline. **Before that (D-066):** street lamps at the kerb, mirrored to face the road, foot collides. **Before that (D-065, all twelve art buildings plus Tuomas's flat, now a villa):** house collision follows the drawn roof's outline (physics polygons from the art plus `map.open_cells` for the rule); with art installed only. **Before that (D-064):** buildings keep the ground they stand on, so roof corners show grass, not paving (roof collision verified and tested). **Before that (D-063):** the event feed moved to the bottom right as plain text, no panel; bag lines say "added to your bag".
+**Newest (D-071):** 48 more recipes (61) and 49 more items, and `fire` recipes that take a lighter or matches. Ideas for more, not done: more clothing and bags, drinks and cocktails, a repair or upgrade line for weapons, recipes taught by people or books. **Before that (D-070):** every item has a 16x16 icon (`data/item_icons.json`, `ItemIcons`, `ItemSlot`), 52 new items (drugs, medicines, paraphernalia, weapons), a bench on **C** for putting things together (`data/recipes.json`, `CraftRules`, `Game.craft`, `CraftWindow`, save schema v12) and the best carried weapon used in fights. Worth trying in play: press C with a bud and papers in the bag; search bins for a syringe and a spoon and follow the chain. **Open questions for the user:** a way to buy drugs (dealer/black market), whether carrying or using them should be a crime, and firearms — all deliberately not built (D-070). **Before that (D-069):** bins can be searched and used to keep things (`Bins`, `data/bins.json`, save schema v11, the cupboard's window reused). **Before that (D-068):** bins at building corners, hydrants clear of doors; street furniture is now the world's (`StreetFurniture`, `DistrictMap.furniture`). **Before that (D-067):** hydrants, bins, trees, benches and the worksite collide by their art's outline. **Before that (D-066):** street lamps at the kerb, mirrored to face the road, foot collides. **Before that (D-065, all twelve art buildings plus Tuomas's flat, now a villa):** house collision follows the drawn roof's outline (physics polygons from the art plus `map.open_cells` for the rule); with art installed only. **Before that (D-064):** buildings keep the ground they stand on, so roof corners show grass, not paving (roof collision verified and tested). **Before that (D-063):** the event feed moved to the bottom right as plain text, no panel; bag lines say "added to your bag".
 
 **Before that (D-062):** giving an item works (`give_item`, light: it leaves the bag, warms by value, is remembered; people still own nothing, so it goes nowhere). Asking people to give/take/fetch/bring stays `cannot_do` until they have belongings. Left in D-057's line: bring/take-to only after that; more animations.
 
@@ -244,7 +244,7 @@ store (its own file) — D-036. A test that needs a model sets
 | `Reputation` — derived per scope, group-specific readings | done |
 | `PlayerState`, `Wallet`, `Inventory` (weight-based) | done |
 | Item icons: `ItemIcons`, `ItemSlot`, `data/item_icons.json` — 16x16, layered, recoloured | done |
-| Crafting: `CraftRules`, `Game.craft`, `CraftWindow` (C), `data/recipes.json`, recipes found by holding the makings | done (14 recipes) |
+| Crafting: `CraftRules`, `Game.craft`, `CraftWindow` (C), `data/recipes.json`, recipes found by holding the makings | done (61 recipes) |
 | `Stats` (attributes, condition, injuries), `Skills` (use-based, 1–99) | done |
 | LLM: router, budget, circuit breaker, 4 providers + offline, secret store | done; called by `say()` once the player configures it |
 | Dialogue: `DialogueDirector`, `OfflineTopics`, `DialogueLines`, `DialoguePrompt`, `DialogueModel`, `DialogueBox`, `IntentPrompt`, `ConversationRules` | done |
@@ -279,7 +279,7 @@ criminal-contacts view (D-050); everything in M7. See `ROADMAP.md`.
 
 - 127 source files in `src/`
 - 56 test suites
-- 10 authored NPCs, 22 locations, 3 regions (1 mapped), 6 interiors, 8 schedules, 4 backgrounds, 4 shops, 66 items, 14 recipes, 4 jobs, 4 quests, 3 errands
+- 10 authored NPCs, 22 locations, 3 regions (1 mapped), 6 interiors, 8 schedules, 4 backgrounds, 4 shops, 115 items, 61 recipes, 4 jobs, 4 quests, 3 errands
 
 ---
 

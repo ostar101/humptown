@@ -184,7 +184,9 @@ func _stock_bag() -> void:
 	for entry: Array in [["item_cannabis_bud", 2], ["item_rolling_papers", 2], ["item_grinder", 1], ["item_lighter", 1],
 			["item_heroin_bag", 1], ["item_spoon", 1], ["item_water", 1], ["item_syringe", 1], ["item_puukko", 1],
 			["item_bat", 1], ["item_nails", 3], ["item_painkillers", 1], ["item_cigarettes", 1], ["item_vodka", 1],
-			["item_sandwich", 2], ["item_bandage", 1], ["item_pipe", 1], ["item_first_aid_kit", 1]]:
+			["item_sandwich", 2], ["item_bandage", 1], ["item_pipe", 1], ["item_first_aid_kit", 1],
+			["item_flour", 1], ["item_eggs", 1], ["item_milk", 1], ["item_sugar", 1], ["item_butter", 1], ["item_frying_pan", 1],
+			["item_potato", 1], ["item_bread", 1], ["item_sausage", 1], ["item_stick", 2], ["item_tape", 1], ["item_cloth", 3]]:
 		Game.player.inventory.add(str(entry[0]), int(entry[1]))
 
 

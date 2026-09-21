@@ -313,3 +313,122 @@ func test_the_shops_and_bins_stock_the_new_things() -> void:
 	for entry: Dictionary in Game.data.get_entry("bins", Bins.DEFINITION)["loot"]:
 		found[str(entry["item"])] = true
 	assert_true(found.has("item_syringe") and found.has("item_empty_bottle"))
+
+
+# --- a light on the grid (D-070) --------------------------------------------------------------------
+
+func test_a_recipe_that_wants_fire_takes_either_light_and_keeps_it() -> void:
+	_bag("item_potato", 2)
+	_bag("item_lighter")
+	_bag("item_matches")
+	var recipes := Game.data.table("recipes")
+	assert_eq(CraftRules.find(recipes, ["item_potato", "item_lighter"])["id"], "rcp_baked_potato")
+	assert_eq(CraftRules.find(recipes, ["item_matches", "item_potato"])["id"], "rcp_baked_potato")
+	assert_ok(Game.craft(["item_potato", "item_lighter"]))
+	assert_ok(Game.craft(["item_potato", "item_matches"]))
+	assert_eq(_has("item_baked_potato"), 2)
+	assert_eq(_has("item_lighter"), 1, "a light is not used up")
+	assert_eq(_has("item_matches"), 1)
+
+
+func test_without_a_light_there_is_no_fire_recipe() -> void:
+	var recipes := Game.data.table("recipes")
+	assert_true(CraftRules.find(recipes, ["item_potato"]).is_empty())
+	assert_true(CraftRules.find(recipes, ["item_potato", "item_lighter", "item_matches"]).is_empty(), "one light, not two")
+	_bag("item_potato")
+	assert_err(Game.craft(["item_potato", "item_lighter"]), "not_owned", "the grid says lighter but the bag has none")
+	assert_eq(_has("item_potato"), 1)
+
+
+func test_a_fire_recipe_is_only_found_when_you_hold_a_light() -> void:
+	var recipes := Game.data.table("recipes")
+	assert_false(CraftRules.unlockable(recipes, {"item_potato": 1}, []).has("rcp_baked_potato"))
+	assert_has(CraftRules.unlockable(recipes, {"item_potato": 1, "item_matches": 1}, []), "rcp_baked_potato")
+
+
+func test_the_kitchen_from_shopping_to_plate() -> void:
+	for item_id: String in ["item_flour", "item_sugar", "item_butter", "item_eggs", "item_milk", "item_frying_pan", "item_lighter"]:
+		_bag(item_id)
+	assert_ok(Game.craft(["item_flour", "item_eggs", "item_milk", "item_frying_pan", "item_lighter"]))
+	assert_eq(_has("item_pancakes"), 3)
+	assert_eq(_has("item_frying_pan"), 1, "the pan stays")
+	Game.player.stats.hunger = 0.9
+	assert_ok(Game.use_item("item_pancakes"))
+	assert_lt(Game.player.stats.get_meter("hunger"), 0.9)
+
+
+func test_cannabis_butter_and_brownies_are_a_chain_through_a_pan() -> void:
+	for item_id: String in ["item_butter", "item_cannabis_ground", "item_frying_pan", "item_matches", "item_flour", "item_sugar", "item_eggs"]:
+		_bag(item_id)
+	assert_ok(Game.craft(["item_butter", "item_cannabis_ground", "item_frying_pan", "item_matches"]))
+	assert_eq(_has("item_cannabis_butter"), 1)
+	assert_ok(Game.craft(["item_cannabis_butter", "item_flour", "item_sugar", "item_eggs", "item_frying_pan", "item_matches"]))
+	assert_eq(_has("item_cannabis_brownie"), 3)
+	assert_ok(Game.use_item("item_cannabis_brownie"))
+	assert_gt(Game.player.stats.get_meter("intoxication"), 0.0)
+
+
+func test_the_bong_and_the_spliff() -> void:
+	for item_id: String in ["item_empty_bottle", "item_pipe", "item_cannabis_bud", "item_lighter", "item_cigarette", "item_cannabis_ground"]:
+		_bag(item_id)
+	assert_ok(Game.craft(["item_empty_bottle", "item_pipe"]))
+	assert_ok(Game.craft(["item_bong", "item_cannabis_bud"]))
+	assert_ok(Game.use_item("item_bong_loaded"))
+	assert_eq(_has("item_bong"), 1, "the bong stays")
+	assert_ok(Game.craft(["item_cigarette", "item_cannabis_ground"]))
+	assert_ok(Game.use_item("item_spliff"))
+
+
+func test_a_spoon_can_be_wiped_clean_at_any_step() -> void:
+	for step: String in ["item_spoon_powder", "item_spoon_liquid", "item_spoon_cooked"]:
+		Game.player.inventory.clear()
+		_bag(step)
+		_bag("item_cloth")
+		assert_ok(Game.craft([step, "item_cloth"]))
+		assert_eq(_has("item_spoon"), 1, step)
+		assert_eq(_has("item_cloth"), 0)
+
+
+func test_weapons_you_make_are_weapons() -> void:
+	for item_id: String in ["item_stick", "item_tape", "item_nails", "item_nails", "item_nails", "item_kitchen_knife", "item_screwdriver", "item_iron_pipe", "item_sock", "item_brick"]:
+		_bag(item_id)
+	assert_ok(Game.craft(["item_stick", "item_nails", "item_nails", "item_nails"]))
+	assert_ok(Game.craft(["item_screwdriver", "item_tape"]))
+	assert_ok(Game.craft(["item_sock", "item_brick"]))
+	for made: String in ["item_nail_club", "item_shiv", "item_sock_brick"]:
+		assert_eq(_has(made), 1, made)
+		assert_gt(ItemRules.damage_of(Game.data.get_entry("items", made)), 0.05, made)
+	assert_eq(Game.fights.wielded_weapon(), "item_nail_club", "the best of them is in your hand")
+
+
+func test_every_ingredient_can_be_found_somewhere() -> void:
+	var obtainable := {}
+	for shop_id: String in Game.data.ids("shops"):
+		for item_id: String in Game.data.get_entry("shops", shop_id)["stock"]:
+			obtainable[item_id] = true
+	for entry: Dictionary in Game.data.get_entry("bins", Bins.DEFINITION)["loot"]:
+		obtainable[str(entry["item"])] = true
+	for background_id: String in Game.data.ids("backgrounds"):
+		for entry: Dictionary in Game.data.get_entry("backgrounds", background_id).get("items", []):
+			obtainable[str(entry["id"])] = true
+	for recipe_id: String in Game.data.ids("recipes"):
+		for item_id: String in CraftRules.outputs_of(Game.data.get_entry("recipes", recipe_id)):
+			obtainable[item_id] = true
+	for recipe_id: String in Game.data.ids("recipes"):
+		var recipe := Game.data.get_entry("recipes", recipe_id)
+		for item_id: String in CraftRules.ingredients_of(recipe):
+			assert_true(obtainable.has(item_id), "%s needs %s, which nothing gives" % [recipe_id, item_id])
+		for item_id: String in CraftRules.outputs_of(recipe):
+			assert_true(Game.data.has_entry("items", item_id))
+
+
+func test_no_two_recipes_make_the_grid_ambiguous() -> void:
+	# every recipe, laid out as its own ingredients, finds itself
+	var recipes := Game.data.table("recipes")
+	for recipe_id: String in recipes:
+		var laid: Array = []
+		var ingredients := CraftRules.ingredients_of(recipes[recipe_id])
+		for item_id: String in ingredients:
+			for n in int(ingredients[item_id]):
+				laid.append(item_id)
+		assert_eq(CraftRules.find(recipes, laid).get("id", ""), recipe_id, "%s does not find itself" % recipe_id)
