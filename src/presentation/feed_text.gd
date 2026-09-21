@@ -24,12 +24,12 @@ static func money(amount: int, kind: String, reason: String) -> String:
 	return Localization.t("ui.feed.%s.%s" % [group, head if head in known else "generic"], args)
 
 
-## One line for items gained or lost, or "".
+## One line for items gained or lost, or "": "Syringe added to your bag."
 static func item(item_id: String, delta: int) -> String:
 	if delta == 0:
 		return ""
-	return Localization.t("ui.feed.item.gain" if delta > 0 else "ui.feed.item.loss",
-		{"what": _item_name(item_id), "count": absi(delta)})
+	var key := "ui.feed.item." + ("gain" if delta > 0 else "loss") + ("" if absi(delta) == 1 else "_many")
+	return Localization.t(key, {"what": _item_name(item_id), "count": absi(delta)})
 
 
 static func skill_up(skill_id: String, level: int) -> String:

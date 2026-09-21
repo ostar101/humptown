@@ -26,8 +26,10 @@ func test_money_lines_say_what_for() -> void:
 
 
 func test_item_lines() -> void:
-	assert_eq(FeedText.item("item_sandwich", 2), "You got Sandwich ×2.")
-	assert_eq(FeedText.item("item_sandwich", -1), "Sandwich ×1 gone from your bag.")
+	assert_eq(FeedText.item("item_sandwich", 1), "Sandwich added to your bag.")
+	assert_eq(FeedText.item("item_sandwich", 2), "Sandwich ×2 added to your bag.")
+	assert_eq(FeedText.item("item_sandwich", -1), "Sandwich removed from your bag.")
+	assert_eq(FeedText.item("item_sandwich", -3), "Sandwich ×3 removed from your bag.")
 
 
 func test_the_feed_shows_money_and_items_as_they_move() -> void:
@@ -37,7 +39,7 @@ func test_the_feed_shows_money_and_items_as_they_move() -> void:
 	var lines := hud.feed_lines()
 	assert_eq(lines.size(), 2, str(lines))
 	assert_eq(lines[-2], "Errand reward: 20 €.")
-	assert_eq(lines[-1], "You got Sandwich ×1.")
+	assert_eq(lines[-1], "Sandwich added to your bag.")
 	hud.free()
 
 
@@ -77,4 +79,17 @@ func test_the_speech_window_leaves_the_status_corner_clear() -> void:
 	var status := hud.get_node("Status") as Control
 	assert_true(speech.offset_top >= status.offset_bottom + 24.0, "the time and place stay visible while someone talks")
 	box.free()
+	hud.free()
+
+
+func test_the_feed_is_plain_text_in_the_bottom_right_corner() -> void:
+	var hud := _hud()
+	hud.log_event("one")
+	hud.log_event("two")
+	var box := hud.get_node("Feed") as Control
+	assert_eq(box.anchor_left, 1.0)
+	assert_eq(box.anchor_top, 1.0, "anchored to the bottom right")
+	assert_eq(box.grow_vertical, Control.GROW_DIRECTION_BEGIN, "lines stack upwards, newest at the bottom")
+	for child in box.get_children():
+		assert_true(child is Label, "no panel behind the text: %s" % child.get_class())
 	hud.free()

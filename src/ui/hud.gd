@@ -5,9 +5,10 @@ extends CanvasLayer
 ## nothing and knows no rules — the status words come from `StatusText`.
 
 const MESSAGE_SECONDS := 4.0
-## The event feed (D-059): the last few things that happened to the player,
-## kept on screen a while, newest at the bottom.
-const FEED_MAX := 6
+## The event feed (D-059, D-063): the last few things that happened to the player,
+## kept on screen a while, in the bottom right corner as plain text with no
+## panel behind it, newest at the bottom.
+const FEED_MAX := 8
 const FEED_SECONDS := 14.0
 const FEED_FADE := 2.0
 
@@ -30,12 +31,15 @@ func _ready() -> void:
 	_feed_box = VBoxContainer.new()
 	_feed_box.name = "Feed"
 	_feed_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_feed_box.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-	_feed_box.offset_left = -440.0
+	_feed_box.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	_feed_box.offset_left = -420.0
 	_feed_box.offset_right = -16.0
-	_feed_box.offset_top = 16.0
+	_feed_box.offset_top = -16.0
+	_feed_box.offset_bottom = -16.0
 	_feed_box.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	_feed_box.add_theme_constant_override("separation", 4)
+	_feed_box.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_feed_box.alignment = BoxContainer.ALIGNMENT_END
+	_feed_box.add_theme_constant_override("separation", 2)
 	add_child(_feed_box)
 	Events.money_moved.connect(_on_money_moved)
 	Events.item_moved.connect(_on_item_moved)
@@ -123,15 +127,17 @@ func _rebuild_feed() -> void:
 		_feed_box.remove_child(child)
 		child.queue_free()
 	for entry in _feed:
-		var panel := PanelContainer.new()
-		panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		panel.size_flags_horizontal = Control.SIZE_SHRINK_END
+		# Plain text, right-aligned, with an outline so it reads over any ground.
 		var label := Label.new()
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		label.text = str(entry["text"])
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		label.add_theme_font_size_override("font_size", 16)
-		panel.add_child(label)
-		_feed_box.add_child(panel)
+		label.add_theme_font_size_override("font_size", 17)
+		label.add_theme_color_override("font_color", Color(1, 1, 1))
+		label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+		label.add_theme_constant_override("outline_size", 5)
+		_feed_box.add_child(label)
 
 
 ## Shows a line for a few seconds. Empty is ignored.

@@ -2286,3 +2286,18 @@ is not fed by it. That is the honest limit of the light version and the reason
 fetch, bring and take remain unbuilt: they need real belongings for people.
 
 **Saved.** Nothing new; the bag is already saved.
+
+## D-063 — The event feed sits in the bottom right, as plain text
+
+**Asked for.** An event log in the bottom right corner, without a background,
+saying what happens: "you got 50 €", "syringe added to your bag".
+
+**Decision.** D-059's feed already existed (top right, one panel per line); it
+is moved to the bottom right and drawn as outlined text with no panel, newest at
+the bottom, up to eight lines for 14 seconds each. The bag lines now read "X
+added to your bag" / "X removed from your bag" (with ×N when more than one), in
+both languages. What it reports is unchanged: money in and out with the reason,
+things in and out of the bag (not the cupboard), skill levels, someone joining
+or leaving you, and every `Hud.notify` message (texts, meetings, quest steps,
+new places, arrests). Anything else that should be said goes through
+`Hud.log_event`. `ui_preview.tscn -- --screen=world --feed=1` shows it.

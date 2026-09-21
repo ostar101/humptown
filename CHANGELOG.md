@@ -17,6 +17,7 @@ versions are milestones rather than releases until there is something to release
   (texts, meetings, quest steps, new places, arrests).
 
 ### Changed
+- The event feed is in the bottom right corner as plain text with no panel, and bag lines read "X added to your bag" (D-063).
 - People remember what was actually said, in person, on calls and in texts, and
   the texts they wrote themselves (D-059); they greet you as someone they have
   met, spoken to today, or texted, instead of always as a stranger.

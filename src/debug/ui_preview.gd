@@ -71,11 +71,22 @@ func _ready() -> void:
 		_drive_atm(screen as WorldView)
 	if which == "world" and args.has("phone"):
 		_drive_phone(screen as WorldView, str(args["phone"]))
+	if which == "world" and args.has("feed"):
+		_drive_feed()
 	if which == "world" and args.has("overlay"):
 		var overlay := screen.get_node_or_null("DevOverlay") as DevOverlay
 		if overlay != null:
 			overlay.toggle()
 	DevCapture.maybe_capture(self)
+
+
+## `--feed=1`: a few things happen to the player, for the event feed.
+func _drive_feed() -> void:
+	Game.player.wallet.add_cash(50, "wage:job_dockhand")
+	Game.player.inventory.add("item_bandage", 1)
+	Game.player.inventory.add("item_sandwich", 2)
+	Game.player.wallet.spend(4, "buy:item_coffee")
+	Events.skill_level_up.emit("persuasion", 3)
 
 
 ## `--talk=npc_id [--say=text]`: puts that person on the quay with the
