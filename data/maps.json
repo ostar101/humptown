@@ -25,7 +25,7 @@
       {"location": "loc_player_flat", "rect": [4, 1, 8, 11], "door": [6, 11]},
       {"location": "loc_ida_flat", "rect": [13, 1, 8, 11], "door": [15, 11]},
       {"location": "loc_veikko_flat", "rect": [22, 1, 8, 11], "door": [24, 11]},
-      {"location": "loc_tuomas_flat", "rect": [31, 5, 5, 9], "door": [33, 13]},
+      {"location": "loc_tuomas_flat", "rect": [31, 1, 8, 11], "door": [33, 11]},
       {"location": "loc_marika_flat", "rect": [52, 1, 8, 11], "door": [54, 11]},
       {"location": "loc_sanna_house", "rect": [61, 1, 8, 11], "door": [63, 11]},
       {"location": "loc_rauno_room", "rect": [70, 1, 8, 11], "door": [72, 11]},

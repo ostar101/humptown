@@ -2349,3 +2349,13 @@ roof skip themselves then). Benchmark: no change beyond noise.
 (`find_path` refuses a blocked goal), so a follower may not come to someone in a
 roof corner until they step out. Saved positions in an open cell fall back to the
 anchor on load.
+
+**D-065, addendum: every house.** The outline collision applies to every building
+drawn as whole art, so it already covered all twelve (homes, shops, the bar, the
+clinic, the police post, the warehouse). The one building left out was Tuomas's
+flat, the only one authored at a size the art does not fit (5x9), so it was drawn
+from plain tiles. It is now the same 8x11 villa as the other flats, on the same
+row with the same one-cell gaps (`[31, 1, 8, 11]`, door `[33, 11]`), and so gets
+the art and the collision. `test_roof_collision` checks that every building with
+art has a body and every building without has none; the "wrong size keeps its
+tiles" test now uses a made-up size instead of Tuomas's flat.

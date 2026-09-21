@@ -17,6 +17,7 @@ versions are milestones rather than releases until there is something to release
   (texts, meetings, quest steps, new places, arrests).
 
 ### Changed
+- Tuomas's flat is the same villa as the other flats, so every house has the drawn roof and its collision (D-065).
 - Houses collide along the drawn roof's outer edge instead of the grid rectangle: you can walk into the bare corners and stop at the ridge and the slope (D-065).
 - Grass, not paving, shows in the bare corners of house roofs (D-064).
 - The event feed is in the bottom right corner as plain text with no panel, and bag lines read "X added to your bag" (D-063).

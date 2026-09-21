@@ -163,6 +163,7 @@ func test_region_view_gives_correctly_sized_buildings_a_sprite_and_others_none()
 		by_name[sprite.name] = sprite
 	if BuildingArt.sprite_for("home", "loc_player_flat", BuildingArt.footprint("home")) != "":
 		assert_true(by_name.has("Building_loc_player_flat"), "a villa-sized home gets a sprite")
+		assert_true(by_name.has("Building_loc_tuomas_flat"), "every flat on the row is the same villa")
 		assert_true(by_name.has("Building_loc_corner_shop"), "an 8x13 shop gets a sprite")
 		assert_true(by_name.has("Building_loc_anchor_bar"), "an 8x13 bar gets a sprite")
 		assert_true(by_name.has("Building_loc_clinic"), "an 8x13 civic building gets a sprite")
@@ -170,7 +171,7 @@ func test_region_view_gives_correctly_sized_buildings_a_sprite_and_others_none()
 		assert_true(by_name.has("Building_loc_warehouse_9"), "an 8x13 work building gets a sprite")
 	else:
 		assert_true(by_name.is_empty(), "art not installed on this machine; nothing gets a sprite")
-	assert_false(by_name.has("Building_loc_tuomas_flat"),
+	assert_eq(BuildingArt.sprite_for("home", "loc_anywhere", Vector2i(5, 9)), "",
 		"a home the wrong size for the art keeps its per-cell tiles")
 
 	view.clear()
