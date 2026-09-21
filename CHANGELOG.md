@@ -6,6 +6,7 @@ versions are milestones rather than releases until there is something to release
 ## [Unreleased]
 
 ### Added
+- The street's bins can be searched: look in one from the pavement beside it (E), take what is there and put things of your own in. Contents are rolled once, kept, and saved; an emptied bin gets something new after three days (D-069).
 - Handing someone something from your bag ("here, take this sandwich") takes it from the bag, warms them by what it is worth and is remembered; the phone and keys cannot be given away, and you cannot give what you do not have (D-062).
 - Asking someone to go to a place ("go to Ropewalk Park", "mene satamaan") sends
   them there for up to two hours, or until their shift or night; refused for a

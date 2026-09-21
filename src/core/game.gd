@@ -33,6 +33,9 @@ var calendar := Calendar.new()
 var meetings := MeetingDirector.new()
 var crime := CrimeDirector.new()
 var asks := AskDirector.new()
+var bins := Bins.new()
+## The bin the player is searching (D-069), or "".
+var open_bin := ""
 var fights := FightDirector.new()
 var consequences := ConsequenceDirector.new()
 var reputation := Reputation.new()
@@ -141,6 +144,8 @@ func new_game(background_id: String = "", world_seed: int = 0) -> Result:
 	player.setup(data)
 	player.wallet.stamp = func() -> int: return clock.total_minutes if clock != null else -1
 	shops.setup(data)
+	bins.setup(data, rng)
+	open_bin = ""
 	quests.setup(data)
 
 	_seed_relationships()
@@ -238,6 +243,8 @@ func unload() -> void:
 	meetings = MeetingDirector.new()
 	crime = CrimeDirector.new()
 	asks = AskDirector.new()
+	bins = Bins.new()
+	open_bin = ""
 	fights = FightDirector.new()
 	consequences = ConsequenceDirector.new()
 	_shopping = ""
@@ -424,6 +431,9 @@ func interaction_at(cell: Vector2i) -> Dictionary:
 	var thing := map.object_at(cell)
 	if not thing.is_empty():
 		return {"kind": str(thing["kind"]), "target": str(thing["id"]), "text_key": str(thing["text_key"])}
+	var furniture: Dictionary = map.furniture.get(cell, {})
+	if str(furniture.get("kind", "")) == "trash":
+		return {"kind": "bin", "target": str(furniture["id"])}
 	# Nothing on the cell, but a shift that could start right here (D-042).
 	var job := job_here()
 	if not job.is_empty() and judge_shift_here().is_ok():
@@ -465,6 +475,9 @@ func interact_at(cell: Vector2i) -> Result:
 			return Result.success({"kind": "stash", "location": map.interior_of})
 		"atm":
 			return Result.success({"kind": "atm", "location": map.interior_of})
+		"bin":
+			open_bin = str(what["target"])
+			return Result.success({"kind": "bin", "bin": open_bin})
 	return _reject(proposal, "nothing_there")
 
 
@@ -1100,6 +1113,65 @@ func _move_between(from: Inventory, to: Inventory, item_id: String, quantity: in
 	return Result.success({"kind": str(proposal["kind"]), "item": item_id, "quantity": quantity})
 
 
+# --- bins ------------------------------------------------------------------------
+
+## What is in the bin the player is searching, or null when none is open
+## (D-069). Rolled the first time; kept.
+func bin_contents() -> Inventory:
+	if not is_running() or open_bin.is_empty():
+		return null
+	return bins.contents(open_bin, clock.day_index())
+
+
+## The player has finished with the bin.
+func close_bin() -> void:
+	open_bin = ""
+
+
+## Puts something from the bag into the bin. Refuses `not_at_bin`,
+## `bad_quantity`, `not_owned`, `bin_full`.
+func bin_put(item_id: String, quantity: int = 1) -> Result:
+	return _bin_move(false, item_id, quantity, {"kind": "bin_put", "item": item_id, "quantity": quantity}, "bin_full")
+
+
+## Takes something from the bin into the bag. Refuses `not_at_bin`,
+## `bad_quantity`, `not_owned`, `too_heavy`.
+func bin_take(item_id: String, quantity: int = 1) -> Result:
+	return _bin_move(true, item_id, quantity, {"kind": "bin_take", "item": item_id, "quantity": quantity}, "too_heavy")
+
+
+func _bin_move(from_bin: bool, item_id: String, quantity: int, proposal: Dictionary, no_room: String) -> Result:
+	if not _bin_within_reach():
+		return _reject(proposal, "not_at_bin")
+	if quantity < 1:
+		return _reject(proposal, "bad_quantity")
+	var contents := bin_contents()
+	var from := contents if from_bin else player.inventory
+	var to := player.inventory if from_bin else contents
+	if from.count_of(item_id) < quantity:
+		return _reject(proposal, "not_owned")
+	if to.item_weight(item_id) * quantity > to.free_weight() + 0.0001:
+		return _reject(proposal, no_room)
+	var moved := from.transfer_to(to, item_id, quantity)
+	if moved.is_err():
+		return _reject(proposal, moved.code)
+	return Result.success({"kind": str(proposal["kind"]), "item": item_id, "quantity": quantity})
+
+
+## Whether the open bin stands right beside the player.
+func _bin_within_reach() -> bool:
+	if not is_running() or open_bin.is_empty():
+		return false
+	var map := current_map()
+	if map == null:
+		return false
+	var here := DistrictMap.world_to_cell(player.position)
+	for cell: Vector2i in map.furniture:
+		if str(map.furniture[cell]["id"]) == open_bin:
+			return absi(cell.x - here.x) + absi(cell.y - here.y) == 1
+	return false
+
+
 # --- work ------------------------------------------------------------------------
 
 ## The job the player could work where they stand: their own, if this is its
@@ -1429,6 +1501,7 @@ func save_game(slot: String) -> Result:
 		"crime": crime.to_dict(),
 		"asks": asks.to_dict(),
 		"consequences": consequences.to_dict(),
+		"bins": bins.to_dict(),
 		"reputation": reputation.to_dict(),
 		"events": events_queue.to_dict(),
 		"player": player.to_dict(),
@@ -1471,6 +1544,7 @@ func load_game(slot: String) -> Result:
 	crime.from_dict(sections.get("crime", {}))
 	asks.from_dict(sections.get("asks", {}))
 	consequences.from_dict(sections.get("consequences", {}))
+	bins.from_dict(sections.get("bins", {}))
 	reputation.from_dict(sections.get("reputation", {}))
 	events_queue.from_dict(sections.get("events", {}))
 	player.from_dict(sections.get("player", {}))

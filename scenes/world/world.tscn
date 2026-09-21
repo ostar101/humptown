@@ -43,6 +43,8 @@ script = ExtResource("4")
 
 [node name="Inventory" parent="." instance=ExtResource("10")]
 
+[node name="Bin" parent="." instance=ExtResource("11")]
+
 [node name="Stash" parent="." instance=ExtResource("11")]
 
 [node name="Quests" parent="." instance=ExtResource("12")]

@@ -4,10 +4,15 @@ extends CanvasLayer
 ## on the other, and a button to move a thing across. `Game.store()` and
 ## `Game.take()` decide; a refusal is shown in plain words. Time stands still
 ## while it is open.
+##
+## The same window is a street bin's (D-069) when `use_as_bin()` has been called:
+## the other side is what is in the bin, and `Game.bin_put()` / `bin_take()` decide.
 
 signal closed()
 
 var _time_was_paused := false
+## "stash" or "bin": which words to use and which of Game's rules decide.
+var kind := "stash"
 
 @onready var _root: Control = $Root
 @onready var _carried: VBoxContainer = %CarriedRows
@@ -22,8 +27,15 @@ func _ready() -> void:
 	_close.pressed.connect(close)
 
 
+## Makes this window the one for bins.
+func use_as_bin() -> void:
+	kind = "bin"
+
+
 func open() -> void:
 	if _root.visible or not Game.is_running():
+		return
+	if kind == "bin" and Game.bin_contents() == null:
 		return
 	_time_was_paused = Game.clock.paused
 	Game.pause_time(true)
@@ -37,6 +49,8 @@ func close() -> void:
 	if not _root.visible:
 		return
 	_root.visible = false
+	if kind == "bin":
+		Game.close_bin()
 	Game.pause_time(_time_was_paused)
 	closed.emit()
 
@@ -46,13 +60,13 @@ func is_open() -> bool:
 
 
 func store(item_id: String) -> Result:
-	var stored := Game.store(item_id, 1)
+	var stored := Game.bin_put(item_id, 1) if kind == "bin" else Game.store(item_id, 1)
 	_report(stored)
 	return stored
 
 
 func take(item_id: String) -> Result:
-	var taken := Game.take(item_id, 1)
+	var taken := Game.bin_take(item_id, 1) if kind == "bin" else Game.take(item_id, 1)
 	_report(taken)
 	return taken
 
@@ -80,19 +94,24 @@ func _report(result: Result) -> void:
 	if result.is_ok():
 		_message.text = ""
 	else:
-		var key := "ui.stash.refused." + result.code
+		var key := "ui.%s.refused.%s" % [kind, result.code]
 		_message.text = Localization.t(key) if Localization.t(key) != key else Localization.t("ui.bag.refused.other")
 	_render()
 
 
 func _render() -> void:
-	_fill(_carried, Game.player.inventory, "ui.stash.put", store, "ui.bag.empty")
-	_fill(_stored, Game.player.stash, "ui.stash.take", take, "ui.stash.empty")
-	_weights.text = Localization.t("ui.stash.weights", {
+	var other: Inventory = Game.bin_contents() if kind == "bin" else Game.player.stash
+	if other == null:
+		return
+	($Root/Frame/Layout/Title as Label).text = Localization.t("ui.%s.title" % kind)
+	($Root/Frame/Layout/Columns/Stored/StoredTitle as Label).text = Localization.t("ui.%s.stored" % kind)
+	_fill(_carried, Game.player.inventory, "ui.%s.put" % kind, store, "ui.bag.empty")
+	_fill(_stored, other, "ui.%s.take" % kind, take, "ui.%s.empty" % kind)
+	_weights.text = Localization.t("ui.%s.weights" % kind, {
 		"carried": "%.1f" % Game.player.inventory.total_weight(),
 		"capacity": "%.0f" % Game.player.inventory.capacity(),
-		"stored": "%.1f" % Game.player.stash.total_weight(),
-		"room": "%.0f" % Game.player.stash.capacity(),
+		"stored": "%.1f" % other.total_weight(),
+		"room": "%.0f" % other.capacity(),
 	})
 
 

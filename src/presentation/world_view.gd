@@ -20,6 +20,7 @@ extends Node2D
 @onready var _shop: ShopWindow = $Shop
 @onready var _bag: InventoryWindow = $Inventory
 @onready var _stash: StashWindow = $Stash
+@onready var _bin: StashWindow = $Bin
 @onready var _quests: QuestWindow = $Quests
 @onready var _phone: PhoneWindow = $Phone
 @onready var _atm: AtmWindow = $Atm
@@ -51,6 +52,8 @@ func _ready() -> void:
 	_shop.closed.connect(_on_shop_closed)
 	_bag.closed.connect(_on_shop_closed)
 	_stash.closed.connect(_on_shop_closed)
+	_bin.use_as_bin()
+	_bin.closed.connect(_on_shop_closed)
 	_quests.closed.connect(_on_shop_closed)
 	_phone.closed.connect(_on_shop_closed)
 	_phone.call_requested.connect(_on_call_requested)
@@ -222,6 +225,11 @@ func stash_window() -> StashWindow:
 	return _stash
 
 
+## The window a street bin opens (D-069).
+func bin_window() -> StashWindow:
+	return _bin
+
+
 ## Uses whatever the player is facing — a person first, then whatever is on
 ## the cell. Public so tests and scripted scenes can press the button.
 func interact() -> Result:
@@ -239,6 +247,13 @@ func interact() -> Result:
 	if result.is_ok() and result.value.get("kind") == "atm":
 		# The cash machine (D-048).
 		_atm.open()
+		_player.input_enabled = false
+		_hud.set_prompt("")
+		_front = NO_CELL
+		return result
+	if result.is_ok() and result.value.get("kind") == "bin":
+		# A street bin: look through it (D-069).
+		_bin.open()
 		_player.input_enabled = false
 		_hud.set_prompt("")
 		_front = NO_CELL
@@ -313,7 +328,7 @@ func hud() -> Hud:
 ## Works out the prompt only when the faced cell, or who is standing on it,
 ## changes — not every frame.
 func _refresh_prompt() -> void:
-	if _dialogue.is_open() or _shop.is_open() or _bag.is_open() or _stash.is_open() or _quests.is_open() or _phone.is_open() or _atm.is_open() or _combat.is_open():
+	if _dialogue.is_open() or _shop.is_open() or _bag.is_open() or _stash.is_open() or _bin.is_open() or _quests.is_open() or _phone.is_open() or _atm.is_open() or _combat.is_open():
 		return
 	var front := _player.current_cell() + _player.facing
 	var body := _npcs.body_at(front)
@@ -338,6 +353,8 @@ func _on_player_collapsed(woke_at: String, bill: int) -> void:
 		_bag.close()
 	if _stash.is_open():
 		_stash.close()
+	if _bin.is_open():
+		_bin.close()
 	if _quests.is_open():
 		_quests.close()
 	if _phone.is_open():
@@ -387,7 +404,7 @@ func _on_ask_resolved(ask_id: String, grade: String) -> void:
 
 ## A night in the cells, or a fine for not coming in (D-052).
 func _on_player_arrested(officer_id: String, _released_at: int) -> void:
-	for window: Node in [_dialogue, _shop, _bag, _stash, _quests, _phone, _atm]:
+	for window: Node in [_dialogue, _shop, _bag, _stash, _bin, _quests, _phone, _atm]:
 		if window.has_method("is_open") and window.is_open():
 			window.close()
 	show_current_area()

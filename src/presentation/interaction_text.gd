@@ -31,6 +31,8 @@ static func prompt_for(interaction: Dictionary) -> String:
 			return Localization.t("ui.prompt.read")
 		"stash":
 			return Localization.t("ui.prompt.stash")
+		"bin":
+			return Localization.t("ui.prompt.bin")
 		"atm":
 			return Localization.t("ui.prompt.atm")
 		"work":

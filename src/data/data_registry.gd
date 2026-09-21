@@ -30,6 +30,7 @@ const REQUIRED_KEYS := {
 	"quests": ["id", "name_key", "stages"],
 	"errands": ["id", "name_key", "giver", "item", "count", "reward"],
 	"asks": ["id", "npc", "skill", "grades"],
+	"bins": ["id", "loot"],
 }
 
 var tables: Dictionary = {}          # table -> { id -> entry }
@@ -115,6 +116,16 @@ func validate_references() -> Array[String]:
 		problems.append_array(_quest_reference_problems(id, table("quests")[id]))
 	for id in table("asks"):
 		problems.append_array(_ask_reference_problems(id, table("asks")[id]))
+	for id in table("bins"):
+		var loot: Variant = table("bins")[id].get("loot", [])
+		if typeof(loot) != TYPE_ARRAY:
+			problems.append("bin table '%s' loot must be a list" % id)
+			continue
+		for entry: Dictionary in loot:
+			if not has_entry("items", str(entry.get("item", ""))):
+				problems.append("bin table '%s' holds unknown item '%s'" % [id, entry.get("item")])
+			if float(entry.get("weight", 0)) <= 0.0:
+				problems.append("bin table '%s' gives '%s' no weight" % [id, entry.get("item")])
 	for id in table("errands"):
 		var errand: Dictionary = table("errands")[id]
 		if not has_entry("npcs", str(errand.get("giver", ""))):

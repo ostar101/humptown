@@ -73,11 +73,31 @@ func _ready() -> void:
 		_drive_phone(screen as WorldView, str(args["phone"]))
 	if which == "world" and args.has("feed"):
 		_drive_feed()
+	if which == "world" and args.has("bin"):
+		_drive_bin(screen as WorldView)
 	if which == "world" and args.has("overlay"):
 		var overlay := screen.get_node_or_null("DevOverlay") as DevOverlay
 		if overlay != null:
 			overlay.toggle()
 	DevCapture.maybe_capture(self)
+
+
+## `--bin=1`: the player stands by the first street bin, with a few things in the
+## bag, and looks in it.
+func _drive_bin(view: WorldView) -> void:
+	Game.player.interior = ""
+	var map := Game.current_map()
+	for cell: Vector2i in map.furniture:
+		if str(map.furniture[cell]["kind"]) != "trash":
+			continue
+		var beside := cell + Vector2i.LEFT
+		Game.player.position = DistrictMap.cell_to_world(beside)
+		Game.player.inventory.add("item_bandage", 2)
+		Game.player.inventory.add("item_beer", 1)
+		view.show_current_area()
+		view.player_body().face(Vector2i.RIGHT)
+		view.interact()
+		return
 
 
 ## `--feed=1`: a few things happen to the player, for the event feed.

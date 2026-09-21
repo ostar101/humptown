@@ -2432,3 +2432,30 @@ corner.
   wrappers, so the drawing code and the tests read as before.
 - The check that runs for every cell is the cheap one first (the spacing sum),
   which took map building from ~50 ms back to noise.
+
+## D-069 — The street's bins can be searched, and things left in them
+
+**Asked for.** Bins you can look into, and put things in.
+
+**Decision.**
+- **What is in a bin** is rolled the first time the player searches it, once,
+  from `data/bins.json` (`bin_street`: a weighted table of cheap things, zero to
+  three rolls, capacity 30) and the seeded `bins` stream, then kept. Everything
+  the player puts in stays, so a bin is also a hiding place. An *empty* bin is
+  left alone for `refill_days` (3), then somebody has thrown something in; a bin
+  holding anything is never topped up. `Bins` (`src/economy/`) holds the state.
+- **Rules.** Press the button facing a bin on the pavement: `Game.interact_at`
+  sets `open_bin` and answers `bin`. `Game.bin_put` / `bin_take` refuse
+  `not_at_bin` (not standing right beside it), `bad_quantity`, `not_owned`,
+  `bin_full`, `too_heavy`, each through `action_rejected`. Moves show in the
+  event feed like any other bag change.
+- **The window** is the cupboard's (`StashWindow`, now with a `kind`: "stash" or
+  "bin"), a second instance in the world scene with the bin's own words; closing
+  it ends the search. A hydrant has no interaction.
+- **Saved** as the new `bins` section (schema v11, migration `_v10_to_v11`: no
+  bin has been searched).
+
+**Not built.** Nobody sees you at it and it is never a crime; people have no
+belongings, so nothing of theirs is thrown away in one; nothing you find is
+dirty or risky to eat; a search takes no time. The loot table is small and
+cheap on purpose: it is a pocket-money find, not an economy.

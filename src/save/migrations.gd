@@ -14,7 +14,7 @@ extends RefCounted
 ##   4. Add a test with a fixture of the old shape.
 ## Never renumber or edit an existing step: someone's save depends on it.
 
-const CURRENT_VERSION := 10
+const CURRENT_VERSION := 11
 
 ## version -> name of the static function upgrading it to version + 1.
 const STEPS := {
@@ -27,6 +27,7 @@ const STEPS := {
 	7: "_v7_to_v8",
 	8: "_v8_to_v9",
 	9: "_v9_to_v10",
+	10: "_v10_to_v11",
 }
 
 
@@ -95,6 +96,8 @@ static func _apply_step(version: int, data: Dictionary) -> Dictionary:
 			return _v8_to_v9(data)
 		9:
 			return _v9_to_v10(data)
+		10:
+			return _v10_to_v11(data)
 		_:
 			return {}
 
@@ -190,4 +193,12 @@ static func _v8_to_v9(data: Dictionary) -> Dictionary:
 static func _v9_to_v10(data: Dictionary) -> Dictionary:
 	if not data.has("consequences"):
 		data["consequences"] = {"grudges": {}, "dismissed": []}
+	return data
+
+
+## v11 keeps what is in the street's bins (D-069). A v10 save has looked in
+## none: each is rolled when the player first searches it.
+static func _v10_to_v11(data: Dictionary) -> Dictionary:
+	if not data.has("bins"):
+		data["bins"] = {"bins": {}}
 	return data
