@@ -208,7 +208,7 @@ func test_a_version_1_save_gains_an_empty_book() -> void:
 func test_the_next_meeting_starts_from_the_last_one() -> void:
 	_talk_to_ida()
 	var first: String = Game.dialogue.conversation.lines[0]["text"]
-	assert_eq(first, Localization.t(DialogueLines.pick("npc_ida", "greet", Game.clock.total_minutes)),
+	assert_eq(first, Localization.t(DialogueLines.pick("npc_ida", "greet_work", Game.clock.total_minutes)),
 		"strangers greet like strangers")
 	assert_ok(await Game.say_to_npc("Who are you?"))
 	assert_ok(Game.end_conversation())

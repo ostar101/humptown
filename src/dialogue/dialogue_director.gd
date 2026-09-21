@@ -143,6 +143,11 @@ func _opening_topic(npc_id: String, now_minute: int) -> String:
 	var edge := _relationships.peek(npc_id, PlayerState.ID) if _relationships != null else null
 	if edge != null and edge.familiarity >= KNOWN_FAMILIARITY:
 		return "greet_known"
+	# Someone whose own greeting is about their job ("Mind the ropes", "Are you
+	# hurt?") says it at work; anywhere else they greet you as anyone off duty does.
+	var npc := _npcs.get_npc(npc_id)
+	if npc != null and npc.workplace != "" and npc.location == npc.workplace and DialogueLines.has_own(npc_id, "greet_work"):
+		return "greet_work"
 	return "greet"
 
 

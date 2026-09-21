@@ -9,6 +9,7 @@ versions are milestones rather than releases until there is something to release
 - Street lamps shine a soft cone of light from the lamp's head down to the street in the evenings, as well as their pool of light (D-074).
 
 ### Fixed
+- People no longer greet you with their job's line wherever they stand (Veikko in the bar talking about ropes): job greetings are said at work, with different ones off duty (D-075).
 - Trees in Old Town no longer stand on paving: the square and the market have none, and all of Old Town's trees are in the garden; and there is no lamp at the mouth of the side street (D-073).
 
 ### Added

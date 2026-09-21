@@ -6,6 +6,9 @@ extends RefCounted
 ## with no gaps, so adding a line is a locale edit and nothing else. Someone
 ## with no line of their own for a topic falls back to `dialogue.generic`,
 ## which is also everything a background person says.
+##
+## A person's greeting may be about their job, and then it is authored twice: as
+## `greet_work`, said where they work, and as `greet`, said anywhere else.
 
 const GENERIC := "generic"
 const MAX_LINES := 8

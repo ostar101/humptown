@@ -137,8 +137,8 @@ func test_someone_in_the_same_room_can_be_talked_to() -> void:
 	_enter_shop_with_ida_working()
 	var started := Game.start_conversation("npc_ida")
 	assert_ok(started)
-	assert_true(DialogueLines.keys_for("npc_ida", "greet").has(str((started.value as Dictionary)["key"])),
-		"Ida opens with one of her own lines")
+	assert_true(DialogueLines.keys_for("npc_ida", "greet_work").has(str((started.value as Dictionary)["key"])),
+		"Ida, at her counter, opens with one of her own working lines")
 
 
 func test_a_sleeping_person_is_left_asleep() -> void:
@@ -302,3 +302,51 @@ func test_a_refusal_in_the_world_shows_why_and_opens_nothing() -> void:
 	assert_eq(view.hud().message_text(), Localization.t("ui.msg.refused.asleep"))
 	assert_true(view.player_body().input_enabled)
 	view.free()
+
+
+# --- a greeting about the job is said at the job (D-075) ---------------------------------------------
+
+func test_a_workmans_own_greeting_is_said_at_work_and_not_off_duty() -> void:
+	Game.new_game("bg_returning", 7)
+	Game.pause_time(true)
+	Localization.set_locale("en")
+	var model := ScriptedDialogueModel.new()
+	model.available = false
+	Game.dialogue.model = model
+	for npc_id: String in Game.npcs.living_ids():
+		var npc := Game.npcs.get_npc(npc_id)
+		npc.location = npc.home
+		npc.activity = "idle"
+	var veikko := Game.npcs.get_npc("npc_veikko")
+	veikko.location = "loc_dock_street"   # off duty, out in the street
+	var greeted := Game.dialogue.start("npc_veikko", Game.clock.total_minutes)
+	assert_ok(greeted)
+	assert_false(str(greeted.value["text"]).contains("ropes"), "no ropes off duty: " + str(greeted.value["text"]))
+	assert_false(str(greeted.value["text"]).contains("Shift's long"), str(greeted.value["text"]))
+	Game.end_conversation()
+
+
+func test_a_workmans_own_greeting_is_said_at_work() -> void:
+	Game.new_game("bg_returning", 7)
+	Game.pause_time(true)
+	Localization.set_locale("en")
+	var model := ScriptedDialogueModel.new()
+	model.available = false
+	Game.dialogue.model = model
+	for npc_id: String in Game.npcs.living_ids():
+		var npc := Game.npcs.get_npc(npc_id)
+		npc.location = npc.home
+		npc.activity = "idle"
+	var veikko := Game.npcs.get_npc("npc_veikko")
+	veikko.location = veikko.workplace
+	veikko.activity = "work"
+	var at_work := Game.dialogue.start("npc_veikko", Game.clock.total_minutes)
+	assert_ok(at_work)
+	assert_true(str(at_work.value["key"]).contains("greet_work"), str(at_work.value["key"]))
+	Game.end_conversation()
+
+
+func test_every_job_greeting_has_an_off_duty_twin() -> void:
+	for npc_id: String in ["npc_ida", "npc_veikko", "npc_tuomas", "npc_sanna", "npc_marika", "npc_leena"]:
+		assert_true(DialogueLines.has_own(npc_id, "greet_work"), npc_id + " at work")
+		assert_true(DialogueLines.has_own(npc_id, "greet"), npc_id + " off duty")

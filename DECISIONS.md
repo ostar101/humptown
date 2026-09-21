@@ -2658,3 +2658,20 @@ in `lamp_lights()`; the beam is found as its child `Beam`.
 
 **Not built.** Lamps still light through walls (no light occluders on
 buildings); no flicker; the lamps' look by day is unchanged.
+
+## D-075 — A greeting about the job is said at the job
+
+**Found in play:** Veikko, in the Anchor, opened with "Mind the ropes."
+Six people had a personal greeting written for their workplace (Ida's shop,
+Veikko's harbour, Tuomas's bar, Sanna's clinic, Marika's post, Leena's cafe)
+and used it wherever they stood.
+- Those lines are now `greet_work`, chosen by `DialogueDirector._opening_topic`
+  when the person is at their own workplace; they each got two new off-duty
+  `greet` lines for everywhere else (English and Finnish).
+- Anyone whose greeting is not about the job (Elias, Rauno, Pirjo, Joonas) is
+  unchanged. Later greetings (met before, texted, known) were never
+  place-bound.
+- `test_every_job_greeting_has_an_off_duty_twin` keeps both halves together.
+
+**Not checked / possible:** other authored lines that name a place or task
+(farewells, "about work") were not audited one by one; say if any more turn up.
