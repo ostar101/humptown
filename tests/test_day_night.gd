@@ -100,6 +100,39 @@ func test_lamps_are_disabled_by_day_and_lit_by_night() -> void:
 	view.free()
 
 
+func test_every_lit_lamp_shines_a_beam_as_well_as_a_pool() -> void:
+	var view := _view_at(Vector2i(20, 30))
+	if view.lamp_lights().is_empty():
+		assert_true(true, "art not installed on this machine; nothing to light")
+		view.free()
+		return
+	view.set_lamp_energy(1.0)
+	for light in view.lamp_lights():
+		var beam := light.get_node_or_null("Beam") as PointLight2D
+		assert_not_null(beam, "a lamp has a beam")
+		assert_true(beam.enabled)
+		assert_almost(beam.energy, RegionView.LAMP_BEAM_ENERGY, 0.001)
+		assert_lt(beam.position.y, 0.0, "the beam's middle is above the ground, its tip at the lamp head")
+	view.set_lamp_energy(0.0)
+	for light in view.lamp_lights():
+		assert_false((light.get_node("Beam") as PointLight2D).enabled, "off by day")
+	view.free()
+
+
+func test_the_beam_is_a_cone_narrow_at_the_lamp_and_wide_below_it() -> void:
+	var image := RegionView._lamp_beam_texture().get_image()
+	var width := func(y: int) -> int:
+		var lit := 0
+		for x in image.get_width():
+			if image.get_pixel(x, y).a > 0.08:
+				lit += 1
+		return lit
+	assert_lt(width.call(8), width.call(60), "wider halfway down")
+	assert_lt(width.call(60), width.call(image.get_height() - 30), "wider still near the ground")
+	assert_gt(image.get_pixel(image.get_width() / 2, 4).a, 0.3, "bright on the axis near the head")
+	assert_eq(image.get_pixel(0, 60).a, 0.0, "nothing far off to the side")
+
+
 func test_a_chunk_streamed_in_after_dark_is_lit_as_it_appears() -> void:
 	var view := _view_at(Vector2i(4, 4))
 	view.set_lamp_energy(1.0)

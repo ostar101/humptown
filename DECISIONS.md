@@ -2642,3 +2642,19 @@ the side street looking lost.
   (`StreetFurniture._only_lights_a_road_end`): the strip is already lit from the
   main road. Harbourside's lamps are unchanged (its side road merges into the
   main road, with no pavement between).
+
+## D-074 — Light beams under the street lamps
+
+**Asked for.** Beams of light from the street lamps in the evenings.
+
+**Decision.** Each lamp's pool of light (D-032) now has a **beam**: a second
+`PointLight2D`, a child of the lamp's light, drawn with one shared soft cone
+(176x132, narrow at the lamp's head and wide and faint at the ground, feathered
+along both edges, built once as an `ImageTexture`). It follows the lamp's
+mirroring, and is switched on, off and dimmed by the same `lamp_energy` as the
+pool (`DayNight.lamp_energy_for`), so it comes up at dusk and is gone by day;
+a beam costs nothing when the lamp is off. Both lights are still one per lamp
+in `lamp_lights()`; the beam is found as its child `Beam`.
+
+**Not built.** Lamps still light through walls (no light occluders on
+buildings); no flicker; the lamps' look by day is unchanged.

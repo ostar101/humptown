@@ -27,6 +27,12 @@ const LAMP_LIGHT_COLOR := Color(1.0, 0.85, 0.56)
 const LAMP_LIGHT_ENERGY := 0.85
 const LAMP_LIGHT_RADIUS_CELLS := 3.5
 const LAMP_LIGHT_OFFSET := Vector2(36.0, 0.0)
+## The beam (D-074): a soft cone from the lamp's head down to the ground, so a
+## lit lamp is seen to shine rather than only to leave a pool. Its apex is at the
+## head, `LAMP_BEAM_APEX` above the pool's centre, and it widens as it falls.
+const LAMP_BEAM_SIZE := Vector2i(176, 132)
+const LAMP_BEAM_APEX := 96.0
+const LAMP_BEAM_ENERGY := 0.55
 
 ## Chunks kept resident in each direction around the focus chunk. Two covers
 ## a 1280x720 view at any sensible zoom with a chunk of margin for movement.
@@ -38,6 +44,7 @@ const LAMP_LIGHT_OFFSET := Vector2(36.0, 0.0)
 var lamp_energy: float = 0.0
 
 static var _lamp_texture: GradientTexture2D = null
+static var _beam_texture: ImageTexture = null
 
 var map: DistrictMap = null
 
@@ -256,6 +263,13 @@ func _lamp_light() -> PointLight2D:
 	light.texture_scale = LAMP_LIGHT_RADIUS_CELLS * 2.0 * TILE / float(light.texture.get_width())
 	light.color = LAMP_LIGHT_COLOR
 	light.position = LAMP_LIGHT_OFFSET
+	var beam := PointLight2D.new()
+	beam.name = "Beam"
+	beam.texture = _lamp_beam_texture()
+	beam.color = LAMP_LIGHT_COLOR
+	# centred so the cone's tip is at the lamp's head and its foot on the ground
+	beam.position = Vector2(0.0, float(LAMP_BEAM_SIZE.y) * 0.5 - LAMP_BEAM_APEX)
+	light.add_child(beam)
 	_apply_lamp_energy(light)
 	return light
 
@@ -263,6 +277,28 @@ func _lamp_light() -> PointLight2D:
 func _apply_lamp_energy(light: PointLight2D) -> void:
 	light.energy = lamp_energy * LAMP_LIGHT_ENERGY
 	light.enabled = lamp_energy > 0.001
+	var beam := light.get_node_or_null("Beam") as PointLight2D
+	if beam != null:
+		beam.energy = lamp_energy * LAMP_BEAM_ENERGY
+		beam.enabled = light.enabled
+
+
+## One soft cone shared by every lamp, built once: narrow at the top, wide and
+## faint at the bottom, feathered along both edges.
+static func _lamp_beam_texture() -> ImageTexture:
+	if _beam_texture == null:
+		var size := LAMP_BEAM_SIZE
+		var image := Image.create(size.x, size.y, false, Image.FORMAT_RGBA8)
+		for y in size.y:
+			var t := float(y) / float(size.y - 1)
+			var half := lerpf(5.0, float(size.x) * 0.5 - 2.0, t)
+			var along := (0.85 - 0.5 * t) * (1.0 - smoothstep(0.78, 1.0, t))
+			for x in size.x:
+				var d := absf(float(x) + 0.5 - float(size.x) * 0.5)
+				var edge := 1.0 - smoothstep(half * 0.35, half, d)
+				image.set_pixel(x, y, Color(1, 1, 1, clampf(edge * along, 0.0, 1.0)))
+		_beam_texture = ImageTexture.create_from_image(image)
+	return _beam_texture
 
 
 ## One soft radial falloff shared by every lamp, built once.
