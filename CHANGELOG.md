@@ -6,6 +6,7 @@ versions are milestones rather than releases until there is something to release
 ## [Unreleased]
 
 ### Added
+- Two new districts, Old Town and Eastfield, with ten inhabitants, five new shops, a bakery job and a yard job, and interiors for every building. Walk to the ends of the roads: north from Dock Road (after reading the bus timetable) and east along Dock Street (with a contact and money). The walk takes as long as the road does (D-072).
 - 48 more recipes (61 in all) and 49 more items: a kitchen (sandwiches, hot dogs, omelettes, pancakes, buns, fish, tea, drinks), cannabis and pill paraphernalia (spliff, bong, tea, butter, brownies), first aid, and weapons made by hand (club, nail club, spear, shiv, taped pipe, brick in a sock). Recipes that need heat take a lighter or matches (D-071).
 - Every item has a picture (16x16 pixel art in `data/item_icons.json`, layered and recoloured), shown in the bag, the cupboard, bins, shops, the bench and the fight window (D-070).
 - 52 new items: drugs, medicines and the paraphernalia that goes with them, and weapons (puukko, pesäpallo bat, hockey stick, hammer, iron pipe, axe, knives, brass knuckles, baton and more). Cigarettes and joints need a lighter or matches; a bottle, a syringe or a baggie is left behind when used (D-070).

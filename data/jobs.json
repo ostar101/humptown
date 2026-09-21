@@ -13,5 +13,7 @@
   {"id": "job_clinic_aide", "occupation": "occ_care_assistant", "workplace": "loc_clinic", "employer": "npc_sanna",
    "days": "weekday", "shift_start": 480, "shift_end": 1020, "wage": 120, "pay_to": "bank",
    "skills": ["first_aid", "observation"], "difficulty": 15, "strain": {"stamina": -0.25, "stress": 0.15},
-   "requires": {"flag": "medically_trained", "or_skill": {"first_aid": 6}}}
+   "requires": {"flag": "medically_trained", "or_skill": {"first_aid": 6}}},
+  {"id": "job_eastfield_yard", "occupation": "occ_labourer", "workplace": "loc_eastfield_yard", "employer": "npc_reijo", "casual": true, "days": "weekday", "shift_start": 420, "shift_end": 960, "wage": 95, "pay_to": "cash", "skills": ["labour"], "difficulty": 8, "strain": {"stamina": -0.4, "stress": 0.04}},
+  {"id": "job_bakery", "occupation": "occ_counter_hand", "workplace": "loc_bakery", "employer": "npc_helmi", "days": [2, 3, 4, 5, 6], "shift_start": 330, "shift_end": 840, "wage": 80, "pay_to": "bank", "skills": ["persuasion", "haggling"], "difficulty": 8, "strain": {"stamina": -0.2, "stress": 0.06}, "requires": {"familiarity": 0.1}}
 ]

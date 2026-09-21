@@ -104,14 +104,27 @@ func _grow_population_to(target: int, spread: bool) -> void:
 	if homes.is_empty():
 		homes = Game.world.locations.keys()
 
+	# A clone lives in the same district as the person it copies, so its routine
+	# stays in one district as a real resident's does (once there were three
+	# districts, homes dealt out across all of them sent Harbourside's people
+	# commuting between maps and the numbers stopped meaning what they did).
+	var by_region := {}
+	for template_id: String in templates:
+		var home_region := Game.world.region_of(Game.npcs.get_npc(template_id).home)
+		if not by_region.has(home_region):
+			by_region[home_region] = []
+		by_region[home_region].append(template_id)
 	var index := 0
 	while Game.npcs.count() < target:
-		var template: Npc = Game.npcs.get_npc(templates[index % templates.size()])
+		var home: String = homes[index % homes.size()]
+		var home_region := Game.world.region_of(home)
+		var choices: Array = by_region.get(home_region, templates)
+		var template: Npc = Game.npcs.get_npc(choices[index % choices.size()])
 		var clone := Npc.new()
 		clone.id = "bench_%d" % index
 		clone.name = "Resident %d" % index
 		clone.age = 25 + (index % 40)
-		clone.home = homes[index % homes.size()]
+		clone.home = home
 		clone.workplace = template.workplace
 		clone.schedule_id = template.schedule_id
 		clone.location = clone.home

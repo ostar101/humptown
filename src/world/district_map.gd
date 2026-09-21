@@ -373,6 +373,31 @@ func is_building(location_id: String) -> bool:
 	return buildings.has(location_id)
 
 
+## Where someone arriving from `from_region` appears: a few cells in from the
+## exit that leads back there, so they do not land on the exit and walk straight
+## out again (D-072). The spawn when this map has no such exit.
+func arrival_from(from_region: String) -> Vector2i:
+	for e in exits:
+		if str(e["to"]) != from_region:
+			continue
+		var rect: Rect2i = e["rect"]
+		var inward := Vector2i.ZERO
+		if rect.position.x == 0:
+			inward = Vector2i.RIGHT
+		elif rect.end.x == size.x:
+			inward = Vector2i.LEFT
+		elif rect.position.y == 0:
+			inward = Vector2i.DOWN
+		elif rect.end.y == size.y:
+			inward = Vector2i.UP
+		var middle := rect.position + rect.size / 2
+		for step in range(3, 10):
+			var cell := middle + inward * step
+			if in_bounds(cell) and not is_blocked(cell) and exit_at(cell).is_empty():
+				return cell
+	return spawn
+
+
 ## A walkable cell inside the first exit, where someone arriving from or
 ## leaving for another region appears. The spawn when the map has no exits.
 ## Inside a building, the cell by the door.
@@ -490,7 +515,8 @@ func _add_object(raw: Variant, problems: Array[String]) -> void:
 	if not reachable:
 		problems.append("object '%s' cannot be reached from any side" % object_id)
 		return
-	objects[cell] = {"id": object_id, "kind": kind, "text_key": str(entry.get("text_key", ""))}
+	objects[cell] = {"id": object_id, "kind": kind, "text_key": str(entry.get("text_key", "")),
+		"sets_flag": str(entry.get("sets_flag", ""))}
 
 
 func _stamp_building(rect: Rect2i, door: Vector2i) -> void:

@@ -114,5 +114,102 @@
       {"start": 900,  "days": "weekend", "location": "loc_anchor_bar",   "activity": "socialise"},
       {"start": 1380, "days": "all",     "location": "@home",            "activity": "sleep"}
     ]
+  },
+  {
+    "id": "sched_oldtown_day",
+    "default_activity": "idle",
+    "blocks": [
+      {"start": 0, "days": "all", "location": "@home", "activity": "sleep"},
+      {"start": 390, "days": "all", "location": "@home", "activity": "eat"},
+      {"start": 540, "days": "weekday", "location": "@work", "activity": "work"},
+      {"start": 750, "days": "weekday", "location": "loc_bakery", "activity": "lunch"},
+      {"start": 810, "days": "weekday", "location": "@work", "activity": "work"},
+      {"start": 1140, "days": "weekday", "location": "loc_old_square", "activity": "walk"},
+      {"start": 1200, "days": "weekday", "location": "loc_lantern_bar", "activity": "socialise"},
+      {"start": 1290, "days": "weekday", "location": "@home", "activity": "idle"},
+      {"start": 600, "days": "weekend", "location": "loc_market", "activity": "walk"},
+      {"start": 720, "days": "weekend", "location": "loc_old_garden", "activity": "socialise"},
+      {"start": 900, "days": "weekend", "location": "@home", "activity": "idle"},
+      {"start": 1350, "days": "all", "location": "@home", "activity": "sleep"}
+    ]
+  },
+  {
+    "id": "sched_baker_early",
+    "default_activity": "idle",
+    "blocks": [
+      {"start": 0, "days": "all", "location": "@home", "activity": "sleep"},
+      {"start": 210, "days": "all", "location": "@home", "activity": "eat"},
+      {"start": 240, "days": "all", "location": "@work", "activity": "work"},
+      {"start": 900, "days": "all", "location": "@home", "activity": "eat"},
+      {"start": 1020, "days": "weekday", "location": "loc_old_garden", "activity": "walk"},
+      {"start": 1080, "days": "weekday", "location": "@home", "activity": "idle"},
+      {"start": 1020, "days": "weekend", "location": "loc_church", "activity": "socialise"},
+      {"start": 1140, "days": "weekend", "location": "@home", "activity": "idle"},
+      {"start": 1290, "days": "all", "location": "@home", "activity": "sleep"}
+    ]
+  },
+  {
+    "id": "sched_night_bar_old",
+    "default_activity": "idle",
+    "blocks": [
+      {"start": 0, "days": "all", "location": "@work", "activity": "work"},
+      {"start": 180, "days": "all", "location": "@home", "activity": "sleep"},
+      {"start": 720, "days": "all", "location": "@home", "activity": "eat"},
+      {"start": 780, "days": "all", "location": "loc_market", "activity": "shop"},
+      {"start": 840, "days": "all", "location": "@home", "activity": "idle"},
+      {"start": 960, "days": "all", "location": "@work", "activity": "work"}
+    ]
+  },
+  {
+    "id": "sched_eastfield_day",
+    "default_activity": "idle",
+    "blocks": [
+      {"start": 0, "days": "all", "location": "@home", "activity": "sleep"},
+      {"start": 330, "days": "weekday", "location": "@home", "activity": "eat"},
+      {"start": 360, "days": "weekday", "location": "@work", "activity": "work"},
+      {"start": 720, "days": "weekday", "location": "loc_fuel_station", "activity": "lunch"},
+      {"start": 780, "days": "weekday", "location": "@work", "activity": "work"},
+      {"start": 990, "days": "weekday", "location": "loc_furnace_bar", "activity": "socialise"},
+      {"start": 1260, "days": "weekday", "location": "@home", "activity": "sleep"},
+      {"start": 600, "days": "weekend", "location": "loc_football_pitch", "activity": "walk"},
+      {"start": 720, "days": "weekend", "location": "loc_furnace_bar", "activity": "socialise"},
+      {"start": 1320, "days": "weekend", "location": "@home", "activity": "sleep"}
+    ]
+  },
+  {
+    "id": "sched_eastfield_shop",
+    "default_activity": "idle",
+    "blocks": [
+      {"start": 0, "days": "all", "location": "@home", "activity": "sleep"},
+      {"start": 330, "days": "all", "location": "@home", "activity": "eat"},
+      {"start": 360, "days": "all", "location": "@work", "activity": "work"},
+      {"start": 1080, "days": "all", "location": "loc_furnace_bar", "activity": "socialise"},
+      {"start": 1260, "days": "all", "location": "@home", "activity": "idle"},
+      {"start": 1350, "days": "all", "location": "@home", "activity": "sleep"}
+    ]
+  },
+  {
+    "id": "sched_night_bar_east",
+    "default_activity": "idle",
+    "blocks": [
+      {"start": 0, "days": "all", "location": "@work", "activity": "work"},
+      {"start": 180, "days": "all", "location": "@home", "activity": "sleep"},
+      {"start": 720, "days": "all", "location": "@home", "activity": "eat"},
+      {"start": 780, "days": "all", "location": "loc_fuel_station", "activity": "shop"},
+      {"start": 840, "days": "all", "location": "@home", "activity": "idle"},
+      {"start": 900, "days": "all", "location": "@work", "activity": "work"}
+    ]
+  },
+  {
+    "id": "sched_scrap_late",
+    "default_activity": "idle",
+    "blocks": [
+      {"start": 0, "days": "all", "location": "@home", "activity": "sleep"},
+      {"start": 540, "days": "all", "location": "@home", "activity": "eat"},
+      {"start": 600, "days": "all", "location": "@work", "activity": "work"},
+      {"start": 1080, "days": "all", "location": "loc_furnace_bar", "activity": "socialise"},
+      {"start": 1290, "days": "all", "location": "@home", "activity": "idle"},
+      {"start": 1380, "days": "all", "location": "@home", "activity": "sleep"}
+    ]
   }
 ]

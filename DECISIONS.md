@@ -2568,3 +2568,63 @@ that every ingredient can be bought, found in a bin, or made).
 **Not built, on purpose.** No recipe makes a drug from raw ingredients or
 chemicals: the drugs you can find are only prepared and used. That line is
 deliberate, not a gap.
+
+## D-072 — Old Town and Eastfield, and the roads between the districts
+
+**Asked for.** "The town is getting small: add the next areas from the plan."
+That is the first part of M7. Asked for directly, so the shape below was my
+call; the rest of M7 (factions, the story, audio, revelation of the map) is
+untouched.
+
+**Decision.**
+- **Two districts, 96x72 like Harbourside, on the same tools.** `data/maps.json`
+  (rectangles), the same LimeZu buildings (8x13 storefronts and civic buildings,
+  8x11 villas, so each gets its drawn art and collision) and street furniture, and
+  `PlaceArt` for gardens, benches, a pitch and the yard's digger. **Old Town**
+  (a straight main street, a square, a garden and a market, with the pawn shop
+  that was already on the books): bakery, pharmacy, a bar (the Lantern), town
+  hall, library, savings bank with a cash machine, church, five homes.
+  **Eastfield** (roads, sand yards, open ground): fuel station, garage, a bar (the
+  Furnace), a locked old cannery, the yard, a scrapyard, a pitch, five homes.
+  Both are on the same layout as Harbourside, so they read as a place at once
+  but look like it. Different building art for Old Town's "older money" would
+  mean a new LimeZu importer, not more data.
+- **Ten people, five to a district**, and a routine of their own each so nobody
+  commutes across maps (a test walks every one through a week: a person who
+  ever leaves their district fails it). Old Town: Aarne (pawn), Helmi (baker),
+  Tapio (pharmacist), Ilona (librarian), Oskar (the Lantern). Eastfield: Reijo
+  (yard foreman), Pauliina (fuel station), Jari (garage), Marko (the Furnace),
+  Kimmo (scrap). Six new occupations, eight schedules, five shops (bakery,
+  pharmacy, the Lantern, the fuel station, the Furnace; the pawn shop's stock
+  was already there), two jobs (a casual one at the yard for Reijo, a counter
+  job at the bakery for Helmi), and every building an interior. Bios are
+  Harbourside's in tone and touch it lightly (Aarne and Kimmo know Rauno).
+- **The road is a rule now.** Nobody ever called `try_unlock`, so nothing but a
+  test could open a district. Walking onto an exit now asks `WorldState.
+  try_unlock` with the player's own means; if the way is closed
+  `Events.region_refused(region, reason)` says why in a sentence (`ui.msg.locked.*`,
+  never the list) and the body is put back. **Old Town** wants `heard_about_old_town`,
+  which reading the bus timetable at the stop gives (an object may carry
+  `sets_flag`); **Eastfield** wants €120 and Veikko's number — the two kinds of
+  gate the data already asked for.
+- **The walk costs what the road does.** Crossing takes `Region.travel_times`
+  minutes (18 to Old Town, 25 between the two, 35 to Eastfield), passed in one
+  batched step, then `world.enter_region` and a re-tiering of who is simulated
+  (`Events.player_travelled`). You arrive on the road you came in by, a few
+  cells in from the exit, not on the exit or at a fixed spawn
+  (`DistrictMap.arrival_from`); someone walking with you stays behind, as before.
+- **The benchmark had to change.** It dealt clones' homes across every district
+  while keeping their workplaces, so once there were homes in three districts
+  Harbourside's clones commuted between maps. Clones now live in the district of
+  the person they copy. Concentrated in one district: back to the earlier numbers
+  (about 1.0 / 1.9-2.1 / 4.4-4.8 ms per simulated minute at 200 / 1000 / 3000
+  people). Spread across all three: about 1.7x that at 3000, because everyone in
+  a neighbouring district is ticked at the background tier and all three are
+  each other's neighbours; at the real population (about 20) this is noise.
+
+**Not built.** No police or clinic outside Harbourside (Marika answers only
+there); no factions, main story or district-specific quests; no travel by bus or
+any means but walking; the map on the phone does not draw the new districts
+(only places you have been to appear, so it fills as you go); people do not
+travel between districts on their own (a routine stays in one); the cannery is
+locked with nothing behind it yet.

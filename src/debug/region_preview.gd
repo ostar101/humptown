@@ -10,7 +10,8 @@ extends Node2D
 ## map's look is checked without anyone sitting at the window. `--at=x,y`
 ## centres the shot on a cell and `--zoom=0.3` pulls back far enough to judge
 ## a whole district's layout in one frame, which is the only way to see that
-## e.g. street furniture has ended up somewhere silly.
+## e.g. street furniture has ended up somewhere silly. `--region=old_town` (or
+## `eastfield`) shows that district instead of the first.
 
 const PAN_SPEED := 600.0
 
@@ -24,6 +25,12 @@ func _ready() -> void:
 			Log.error("preview", "Could not start a world", {"reason": started.message})
 			return
 	Game.pause_time(true)
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--region="):
+			var region_id := arg.trim_prefix("--region=")
+			if Game.world.regions.has(region_id):
+				Game.world.regions[region_id].unlocked = true   # a look, not a journey
+				Game.world.enter_region(region_id)
 	var map := Game.world.map_for(Game.world.current_region)
 	if map == null:
 		Log.error("preview", "Region has no map", {"region": Game.world.current_region})

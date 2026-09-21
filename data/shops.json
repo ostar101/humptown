@@ -19,5 +19,10 @@
              "item_puukko": 2, "item_kitchen_knife": 2, "item_bat": 2, "item_hockey_stick": 1, "item_hammer": 3,
              "item_iron_pipe": 2, "item_screwdriver": 3, "item_axe": 1, "item_knuckles": 1,
              "item_tape": 4, "item_nails": 20, "item_pipe": 2, "item_grinder": 1, "item_scale": 1,
-             "item_frying_pan": 3, "item_rope": 3, "item_brick": 4}}
+             "item_frying_pan": 3, "item_rope": 3, "item_brick": 4}},
+  {"id": "shop_bakery", "location": "loc_bakery", "markup": 1.1, "till": 250, "buys": [], "buyback": 0.0, "stock": {"item_bread": 20, "item_cinnamon_bun": 24, "item_sandwich": 12, "item_coffee": 30, "item_flour": 10, "item_sugar": 10, "item_butter": 8, "item_eggs": 12, "item_milk": 10, "item_cheese": 6}},
+  {"id": "shop_pharmacy", "location": "loc_pharmacy", "markup": 1.3, "till": 500, "buys": [], "buyback": 0.0, "stock": {"item_painkillers": 10, "item_plasters": 12, "item_antiseptic": 8, "item_bandage": 10, "item_cold_compress": 6, "item_first_aid_kit": 4, "item_naloxone": 4, "item_splint": 3, "item_water": 10}},
+  {"id": "shop_lantern", "location": "loc_lantern_bar", "markup": 1.6, "till": 400, "buys": [], "buyback": 0.0, "stock": {"item_wine": 12, "item_vodka": 12, "item_beer": 30, "item_cigarettes": 10, "item_lighter": 6, "item_juice": 8}},
+  {"id": "shop_fuel", "location": "loc_fuel_station", "markup": 1.15, "till": 350, "buys": ["misc"], "buyback": 0.3, "stock": {"item_cigarettes": 20, "item_lighter": 10, "item_matches": 10, "item_tobacco": 6, "item_coffee": 30, "item_beer": 20, "item_grilled_sausage": 10, "item_hot_dog": 10, "item_sandwich": 8, "item_water": 20, "item_juice": 10, "item_milk": 6, "item_tape": 6, "item_rope": 3, "item_nails": 10}},
+  {"id": "shop_furnace", "location": "loc_furnace_bar", "markup": 1.2, "till": 300, "buys": [], "buyback": 0.0, "stock": {"item_beer": 60, "item_vodka": 10, "item_cigarettes": 10, "item_wine": 4}}
 ]

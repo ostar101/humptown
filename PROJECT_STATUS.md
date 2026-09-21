@@ -2,15 +2,15 @@
 
 **Updated:** 2026-09-21
 **Milestone:** M6 — Consequences — **complete in code (0.6.0)**. M5 complete (0.5.0). M5 complete in code (0.5.0).
-**Build:** green. 984 tests, 12582 assertions with the LimeZu art installed,
-~28 s. No leak warnings at exit.
+**Build:** green. 999 tests, 19273 assertions with the LimeZu art installed,
+~42 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
 
 ## Next task
 
-**Newest (D-071):** 48 more recipes (61) and 49 more items, and `fire` recipes that take a lighter or matches. Ideas for more, not done: more clothing and bags, drinks and cocktails, a repair or upgrade line for weapons, recipes taught by people or books. **Before that (D-070):** every item has a 16x16 icon (`data/item_icons.json`, `ItemIcons`, `ItemSlot`), 52 new items (drugs, medicines, paraphernalia, weapons), a bench on **C** for putting things together (`data/recipes.json`, `CraftRules`, `Game.craft`, `CraftWindow`, save schema v12) and the best carried weapon used in fights. Worth trying in play: press C with a bud and papers in the bag; search bins for a syringe and a spoon and follow the chain. **Open questions for the user:** a way to buy drugs (dealer/black market), whether carrying or using them should be a crime, and firearms — all deliberately not built (D-070). **Before that (D-069):** bins can be searched and used to keep things (`Bins`, `data/bins.json`, save schema v11, the cupboard's window reused). **Before that (D-068):** bins at building corners, hydrants clear of doors; street furniture is now the world's (`StreetFurniture`, `DistrictMap.furniture`). **Before that (D-067):** hydrants, bins, trees, benches and the worksite collide by their art's outline. **Before that (D-066):** street lamps at the kerb, mirrored to face the road, foot collides. **Before that (D-065, all twelve art buildings plus Tuomas's flat, now a villa):** house collision follows the drawn roof's outline (physics polygons from the art plus `map.open_cells` for the rule); with art installed only. **Before that (D-064):** buildings keep the ground they stand on, so roof corners show grass, not paving (roof collision verified and tested). **Before that (D-063):** the event feed moved to the bottom right as plain text, no panel; bag lines say "added to your bag".
+**Newest (D-072):** Old Town and Eastfield exist — two 96x72 maps, ten people, five shops, two jobs, interiors for every building. Roads between districts are a rule (`Game._travel_to_region`): the way opens when the player has what it asks (Old Town: read the bus timetable; Eastfield: EUR 120 and Veikko's number), the walk costs `Region.travel_times`, you arrive on the road you came by. **Worth trying in play:** read the timetable at the bus stop, walk up the north road to Old Town, buy medicine at the pharmacy and a pan from Aarne, work a yard shift for Reijo. **Rest of M7 not started:** factions, the story, audio, phone-map revelation, more inhabitants, other building art for Old Town (needs an importer). **Before that (D-071):** 48 more recipes (61) and 49 more items, and `fire` recipes that take a lighter or matches. Ideas for more, not done: more clothing and bags, drinks and cocktails, a repair or upgrade line for weapons, recipes taught by people or books. **Before that (D-070):** every item has a 16x16 icon (`data/item_icons.json`, `ItemIcons`, `ItemSlot`), 52 new items (drugs, medicines, paraphernalia, weapons), a bench on **C** for putting things together (`data/recipes.json`, `CraftRules`, `Game.craft`, `CraftWindow`, save schema v12) and the best carried weapon used in fights. Worth trying in play: press C with a bud and papers in the bag; search bins for a syringe and a spoon and follow the chain. **Open questions for the user:** a way to buy drugs (dealer/black market), whether carrying or using them should be a crime, and firearms — all deliberately not built (D-070). **Before that (D-069):** bins can be searched and used to keep things (`Bins`, `data/bins.json`, save schema v11, the cupboard's window reused). **Before that (D-068):** bins at building corners, hydrants clear of doors; street furniture is now the world's (`StreetFurniture`, `DistrictMap.furniture`). **Before that (D-067):** hydrants, bins, trees, benches and the worksite collide by their art's outline. **Before that (D-066):** street lamps at the kerb, mirrored to face the road, foot collides. **Before that (D-065, all twelve art buildings plus Tuomas's flat, now a villa):** house collision follows the drawn roof's outline (physics polygons from the art plus `map.open_cells` for the rule); with art installed only. **Before that (D-064):** buildings keep the ground they stand on, so roof corners show grass, not paving (roof collision verified and tested). **Before that (D-063):** the event feed moved to the bottom right as plain text, no panel; bag lines say "added to your bag".
 
 **Before that (D-062):** giving an item works (`give_item`, light: it leaves the bag, warms by value, is remembered; people still own nothing, so it goes nowhere). Asking people to give/take/fetch/bring stays `cannot_do` until they have belongings. Left in D-057's line: bring/take-to only after that; more animations.
 
@@ -183,8 +183,9 @@ it (D-017).
 **Running it.** `godot --path .` boots to the title screen. In the world:
 WASD/arrows, Shift runs, E (or Space) interacts, I opens the bag, C the bench for putting things together, J the quest log, P the phone (the cash machine is in the corner shop), F3 the
 developer overlay; your bed saves. Harbourside's
-two edge exits (top, x=42-45; right, y=31-34) refuse today since Old Town and
-Eastfield have no map yet (M7). `developer_mode: true` in
+two edge exits (top, x=42-45, to Old Town; right, y=31-34, to Eastfield) open
+when you have what they ask (D-072); `--region=old_town|eastfield` on
+`region_preview.tscn` looks at a district without walking there. `developer_mode: true` in
 `user://settings.json` boots into `SimViewer` instead.
 
 **Looking at things without a person at the window.**
@@ -279,7 +280,7 @@ criminal-contacts view (D-050); everything in M7. See `ROADMAP.md`.
 
 - 127 source files in `src/`
 - 56 test suites
-- 10 authored NPCs, 22 locations, 3 regions (1 mapped), 6 interiors, 8 schedules, 4 backgrounds, 4 shops, 115 items, 61 recipes, 4 jobs, 4 quests, 3 errands
+- 20 authored NPCs, 49 locations, 3 regions (all mapped), 17 interiors, 15 schedules, 4 backgrounds, 9 shops, 115 items, 61 recipes, 6 jobs, 4 quests, 3 errands
 
 ---
 

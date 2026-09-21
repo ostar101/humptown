@@ -78,7 +78,7 @@ crime, M6).
 
 ## M7 — Opening out
 
-Old Town and Eastfield. Travel. Progressive map revelation. Factions with their
+Old Town and Eastfield (done, D-072). Travel (walking, done; D-072). Progressive map revelation. Factions with their
 own goals. The main story threads. More inhabitants. Audio.
 
 ## Explicitly out of scope for v1

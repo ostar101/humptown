@@ -199,5 +199,185 @@
       {"to": "npc_marika", "kind": "family", "trust": 0.8, "affection": 0.7, "familiarity": 1.0},
       {"to": "npc_pirjo", "kind": "acquaintance", "trust": 0.4, "familiarity": 0.5}
     ]
+  },
+  {
+    "id": "npc_aarne",
+    "name": "Aarne Kuusela",
+    "age": 61,
+    "occupation": "occ_shopkeeper",
+    "home": "loc_aarne_flat",
+    "workplace": "loc_pawn_shop",
+    "schedule": "sched_oldtown_day",
+    "importance": "named",
+    "traits": ["shrewd", "patient", "remembers_faces"],
+    "bio": "Has kept the pawn shop on Old Square for thirty years and has seen everyone's grandmother's ring come through it. Pays fairly, sells dear, and buys anything he can sell twice. Knows Rauno Virta from the harbour and prefers to keep it that way.",
+    "voice": "Dry, unhurried, courteous. Answers a question with a price and a compliment with a longer price.",
+    "groups": ["old_town_traders"],
+    "look": {"skin": "#e0b898", "hair": "#b8b8b8", "shirt": "#4a5a6a", "trousers": "#2a2a30", "shoes": "#2a2420"},
+    "relationships": [
+      {"to": "npc_rauno", "kind": "acquaintance", "trust": -0.1, "familiarity": 0.5}
+    ]
+  },
+  {
+    "id": "npc_helmi",
+    "name": "Helmi Saarinen",
+    "age": 52,
+    "occupation": "occ_baker",
+    "home": "loc_helmi_flat",
+    "workplace": "loc_bakery",
+    "schedule": "sched_baker_early",
+    "importance": "background",
+    "traits": ["early_riser", "talks_over_the_counter", "generous_with_day_olds"],
+    "bio": "Bakes from four every morning and feeds half of Old Town. Everything said across her counter reaches the square by noon; she calls it not gossiping but keeping up.",
+    "voice": "Warm, quick, a little bossy. Calls everyone 'love' and always has a bun in a paper bag ready.",
+    "groups": ["old_town_traders"],
+    "look": {"skin": "#f0d0b8", "hair": "#8a5a3a", "shirt": "#d8c8a8", "trousers": "#5a4a3a", "shoes": "#2a2420"},
+    "relationships": [
+      {"to": "npc_aarne", "kind": "acquaintance", "trust": 0.4, "familiarity": 0.8}
+    ]
+  },
+  {
+    "id": "npc_tapio",
+    "name": "Tapio Nyberg",
+    "age": 47,
+    "occupation": "occ_pharmacist",
+    "home": "loc_tapio_flat",
+    "workplace": "loc_pharmacy",
+    "schedule": "sched_oldtown_day",
+    "importance": "background",
+    "traits": ["careful", "formal", "notices_who_buys_what"],
+    "bio": "Runs the pharmacy with the patience of a man who has been asked for things he cannot sell and learned to say no politely. Notices who buys what, and says nothing, mostly.",
+    "voice": "Careful, formal, slightly stiff. Explains things twice and never raises his voice.",
+    "groups": ["old_town_traders"],
+    "look": {"skin": "#e8c4a0", "hair": "#3a2e28", "shirt": "#e8e8f0", "trousers": "#3a3a44", "shoes": "#2a2420"},
+    "relationships": [
+      {"to": "npc_sanna", "kind": "colleague", "trust": 0.4, "familiarity": 0.4}
+    ]
+  },
+  {
+    "id": "npc_ilona",
+    "name": "Ilona Wahlström",
+    "age": 66,
+    "occupation": "occ_librarian",
+    "home": "loc_ilona_flat",
+    "workplace": "loc_library",
+    "schedule": "sched_oldtown_day",
+    "importance": "named",
+    "traits": ["remembers_everything", "dry_wit", "keeps_the_town's_records"],
+    "bio": "Taught school for thirty years and now keeps the library and, unofficially, the town's memory: who built what, who left, who never quite explained. Old Town has long memories and hers is the longest.",
+    "voice": "Precise, wry, patient. Speaks in full sentences and lets silences do some of the work.",
+    "groups": ["old_town_traders"],
+    "look": {"skin": "#f0d8c0", "hair": "#d0d0d0", "shirt": "#6a4a6a", "trousers": "#3a3a4a", "shoes": "#2a2420"},
+    "relationships": [
+      {"to": "npc_pirjo", "kind": "friend", "trust": 0.6, "affection": 0.5, "familiarity": 0.7}
+    ]
+  },
+  {
+    "id": "npc_oskar",
+    "name": "Oskar Lindqvist",
+    "age": 34,
+    "occupation": "occ_barkeep",
+    "home": "loc_oskar_flat",
+    "workplace": "loc_lantern_bar",
+    "schedule": "sched_night_bar_old",
+    "importance": "named",
+    "traits": ["polished", "discreet", "hears_everything"],
+    "bio": "Tends the Lantern, where older money drinks quietly and says more than it means to. Discreet to a fault: he knows a great deal and has never once repeated it, which is why people keep telling him.",
+    "voice": "Smooth, courteous, unhurried. Never asks the second question.",
+    "groups": ["old_town_traders"],
+    "look": {"skin": "#e8c4a0", "hair": "#2a2018", "shirt": "#1a1a22", "trousers": "#1a1a22", "shoes": "#111111"},
+    "relationships": [
+      {"to": "npc_tuomas", "kind": "acquaintance", "trust": 0.3, "familiarity": 0.4}
+    ]
+  },
+  {
+    "id": "npc_reijo",
+    "name": "Reijo Mäkelä",
+    "age": 55,
+    "occupation": "occ_foreman",
+    "home": "loc_reijo_flat",
+    "workplace": "loc_eastfield_yard",
+    "schedule": "sched_eastfield_day",
+    "importance": "named",
+    "traits": ["gruff", "fair_with_wages", "strong", "tired"],
+    "bio": "Foreman at Eastfield Yard for twenty years. Hires whoever turns up, pays on Friday to the euro and has never once asked for a reference. Distrusts anyone who asks how the yard is doing.",
+    "voice": "Gruff, flat, economical. Tells you what to do and does not say it twice.",
+    "groups": ["eastfield_yard"],
+    "look": {"skin": "#d4a880", "hair": "#6a6a6a", "shirt": "#c86a2a", "trousers": "#3a4a5a", "shoes": "#3a2e24"},
+    "relationships": [
+      {"to": "npc_veikko", "kind": "colleague", "trust": 0.4, "respect": 0.5, "familiarity": 0.6}
+    ]
+  },
+  {
+    "id": "npc_pauliina",
+    "name": "Pauliina Hakala",
+    "age": 28,
+    "occupation": "occ_counter_hand",
+    "home": "loc_pauliina_flat",
+    "workplace": "loc_fuel_station",
+    "schedule": "sched_eastfield_shop",
+    "importance": "background",
+    "traits": ["quick", "restless", "saving_for_something"],
+    "bio": "Works the till at the Eastfield fuel station and sells the same coffee to the same drivers every morning. Saving for something she does not talk about, and quicker with a joke than anyone out here.",
+    "voice": "Quick, teasing, a little tired. Talks while doing three other things.",
+    "groups": ["eastfield_yard"],
+    "look": {"skin": "#f0d0b0", "hair": "#5a2a2a", "shirt": "#2a6a6a", "trousers": "#3a3a44", "shoes": "#2a2420"},
+    "relationships": [
+      {"to": "npc_reijo", "kind": "acquaintance", "trust": 0.3, "familiarity": 0.7}
+    ]
+  },
+  {
+    "id": "npc_jari",
+    "name": "Jari Torvinen",
+    "age": 42,
+    "occupation": "occ_mechanic",
+    "home": "loc_jari_flat",
+    "workplace": "loc_garage",
+    "schedule": "sched_eastfield_day",
+    "importance": "background",
+    "traits": ["good_with_his_hands", "asks_no_questions", "always_has_oil_on_his_hands"],
+    "bio": "Runs the garage on Eastfield Road and can fix nearly anything with a motor. Asks no questions about where a car has been, which is why some of the cars come to him.",
+    "voice": "Laconic, easy, oily. Answers with a shrug and a wrench.",
+    "groups": ["eastfield_yard"],
+    "look": {"skin": "#d0a880", "hair": "#3a3028", "shirt": "#3a5a8a", "trousers": "#2a3a4a", "shoes": "#2a2018"},
+    "relationships": [
+      {"to": "npc_kimmo", "kind": "friend", "trust": 0.5, "familiarity": 0.8}
+    ]
+  },
+  {
+    "id": "npc_marko",
+    "name": "Marko Heino",
+    "age": 49,
+    "occupation": "occ_barkeep",
+    "home": "loc_marko_flat",
+    "workplace": "loc_furnace_bar",
+    "schedule": "sched_night_bar_east",
+    "importance": "background",
+    "traits": ["stubborn", "keeps_a_bat_under_the_bar", "listens_more_than_he_talks"],
+    "bio": "Owns the Furnace, where the yard shift drinks after work, and keeps a bat under the bar he has never had to use twice. Listens more than he talks and remembers what people drink.",
+    "voice": "Slow, dry, unbothered. Doesn't hurry and doesn't repeat himself.",
+    "groups": ["eastfield_yard"],
+    "look": {"skin": "#d8b088", "hair": "#5a4a3a", "shirt": "#7a2a2a", "trousers": "#2a2a2a", "shoes": "#2a2420"},
+    "relationships": [
+      {"to": "npc_tuomas", "kind": "acquaintance", "trust": 0.4, "familiarity": 0.5}
+    ]
+  },
+  {
+    "id": "npc_kimmo",
+    "name": "Kimmo Rautio",
+    "age": 37,
+    "occupation": "occ_scrap_dealer",
+    "home": "loc_kimmo_flat",
+    "workplace": "loc_scrapyard",
+    "schedule": "sched_scrap_late",
+    "importance": "background",
+    "traits": ["sharp_eyed", "friendly_and_evasive", "knows_what_things_are_worth"],
+    "bio": "Buys scrap by the kilo and sells it on by the tonne, and is very good at knowing what things are worth and where they came from. Friendly, evasive, and always about to tell you something he does not.",
+    "voice": "Friendly, quick, evasive. Laughs at the right moments and changes the subject at the wrong ones.",
+    "groups": ["eastfield_yard"],
+    "look": {"skin": "#e0b890", "hair": "#2a2018", "shirt": "#5a6a3a", "trousers": "#3a3a3a", "shoes": "#2a2420"},
+    "relationships": [
+      {"to": "npc_rauno", "kind": "acquaintance", "trust": 0.2, "familiarity": 0.4}
+    ]
   }
 ]

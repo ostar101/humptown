@@ -18,6 +18,11 @@ signal time_skipped(from_minutes: int, to_minutes: int)
 
 # --- World ------------------------------------------------------------------
 signal region_entered(region_id: String)
+## The player walked to the edge of a region that is not open to them yet
+## (D-072): `reason` is the first unmet requirement's code (needs_story, needs_money...).
+signal region_refused(region_id: String, reason: String)
+## The player crossed into another region, and how many minutes it took.
+signal player_travelled(region_id: String, minutes: int)
 signal region_exited(region_id: String)
 signal location_entered(actor_id: String, location_id: String)
 signal location_exited(actor_id: String, location_id: String)

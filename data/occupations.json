@@ -8,5 +8,11 @@
   {"id": "occ_unemployed", "name_key": "occ.unemployed", "daily_wage": 0, "workplace_kind": "", "skills": []},
   {"id": "occ_labourer", "name_key": "occ.labourer", "daily_wage": 90, "workplace_kind": "work", "skills": ["labour", "endurance_training"]},
   {"id": "occ_counter_hand", "name_key": "occ.counter_hand", "daily_wage": 75, "workplace_kind": "shop", "skills": ["persuasion", "haggling"]},
-  {"id": "occ_care_assistant", "name_key": "occ.care_assistant", "daily_wage": 120, "workplace_kind": "civic", "skills": ["first_aid", "observation"]}
+  {"id": "occ_care_assistant", "name_key": "occ.care_assistant", "daily_wage": 120, "workplace_kind": "civic", "skills": ["first_aid", "observation"]},
+  {"id": "occ_baker", "name_key": "occ.baker", "daily_wage": 90, "workplace_kind": "shop", "skills": ["endurance_training", "haggling"]},
+  {"id": "occ_pharmacist", "name_key": "occ.pharmacist", "daily_wage": 150, "workplace_kind": "shop", "skills": ["first_aid", "observation"]},
+  {"id": "occ_librarian", "name_key": "occ.librarian", "daily_wage": 110, "workplace_kind": "civic", "skills": ["observation", "persuasion"]},
+  {"id": "occ_foreman", "name_key": "occ.foreman", "daily_wage": 130, "workplace_kind": "work", "skills": ["labour", "intimidation"]},
+  {"id": "occ_mechanic", "name_key": "occ.mechanic", "daily_wage": 115, "workplace_kind": "work", "skills": ["repair", "observation"]},
+  {"id": "occ_scrap_dealer", "name_key": "occ.scrap_dealer", "daily_wage": 100, "workplace_kind": "work", "skills": ["haggling", "streetwise"]}
 ]

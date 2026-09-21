@@ -317,17 +317,31 @@ func _travel_to_region(proposal: Dictionary, destination: String) -> Result:
 	if region == null:
 		return _reject(proposal, "region_unknown")
 	if not region.unlocked:
-		return _reject(proposal, "region_locked")
+		# The way opens the first time the player meets what it asks for (D-072).
+		var opened := world.try_unlock(destination, player.unlock_context(reputation, knowledge))
+		if opened.is_err():
+			Events.region_refused.emit(destination, opened.code)
+			return _reject(proposal, "region_locked")
 	var dest_map := world.map_for(destination)
 	if dest_map == null:
 		return _reject(proposal, "region_unmapped")
 	# Whoever was walking with the player stays behind: following into another
 	# region is not built (D-057).
 	director.stop_all_following("left_region")
+	var from := player.region
+	var minutes := int(world.regions[from].travel_minutes_to(destination)) if world.regions.has(from) else 0
 	player.region = destination
-	player.position = DistrictMap.cell_to_world(dest_map.spawn)
-	_set_player_location(dest_map.location_at(dest_map.spawn))
-	return Result.success({"kind": "travelled", "region": destination})
+	world.enter_region(destination)
+	var arrival := dest_map.arrival_from(from)
+	player.position = DistrictMap.cell_to_world(arrival)
+	_set_player_location(dest_map.location_at(arrival))
+	# The walk takes as long as the road is (Region.travel_times); the world
+	# goes on meanwhile, in one batched step, and people are re-sorted by where
+	# the player now is.
+	advance_time(minutes)
+	director.assign_tiers()
+	Events.player_travelled.emit(destination, minutes)
+	return Result.success({"kind": "travelled", "region": destination, "minutes": minutes})
 
 
 ## The map the player stands on: the inside of a building, or the region.
@@ -430,7 +444,8 @@ func interaction_at(cell: Vector2i) -> Dictionary:
 		return {"kind": "door", "target": building}
 	var thing := map.object_at(cell)
 	if not thing.is_empty():
-		return {"kind": str(thing["kind"]), "target": str(thing["id"]), "text_key": str(thing["text_key"])}
+		return {"kind": str(thing["kind"]), "target": str(thing["id"]), "text_key": str(thing["text_key"]),
+			"sets_flag": str(thing.get("sets_flag", ""))}
 	var furniture: Dictionary = map.furniture.get(cell, {})
 	if str(furniture.get("kind", "")) == "trash":
 		return {"kind": "bin", "target": str(furniture["id"])}
@@ -466,6 +481,8 @@ func interact_at(cell: Vector2i) -> Result:
 		"bed":
 			return _sleep_in_bed(proposal, map.interior_of)
 		"sign":
+			if str(what.get("sets_flag", "")) != "":
+				world.set_flag(str(what["sets_flag"]))   # reading a notice can teach you the way (D-072)
 			return Result.success({"kind": "read", "text_key": what["text_key"]})
 		"work":
 			return work_shift()

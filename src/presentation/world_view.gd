@@ -73,6 +73,8 @@ func _ready() -> void:
 	Events.player_collapsed.connect(_on_player_collapsed)
 	Events.job_lost.connect(_on_job_lost)
 	Events.player_deed.connect(_on_player_deed)
+	Events.region_refused.connect(_on_region_refused)
+	Events.player_travelled.connect(_on_player_travelled)
 	show_current_area()
 	DevCapture.maybe_capture(self)
 
@@ -95,6 +97,20 @@ func _exit_tree() -> void:
 		Events.ambush.disconnect(_on_ambush)
 		Events.police_action.disconnect(_on_police_action)
 		Events.player_deed.disconnect(_on_player_deed)
+		Events.region_refused.disconnect(_on_region_refused)
+		Events.player_travelled.disconnect(_on_player_travelled)
+
+
+## The road out of a district is closed to you for now (D-072): what stops you,
+## in a sentence, never the list of requirements.
+func _on_region_refused(region_id: String, reason: String) -> void:
+	var key := "ui.msg.locked." + reason
+	var place := Localization.t("region." + region_id)
+	_hud.show_message(Localization.t(key if Localization.t(key) != key else "ui.msg.locked.other", {"place": place}))
+
+
+func _on_player_travelled(region_id: String, minutes: int) -> void:
+	_hud.notify(Localization.t("ui.msg.travelled", {"place": Localization.t("region." + region_id), "minutes": minutes}))
 
 
 ## (Re)builds the view for wherever the player is: the region, or the inside
