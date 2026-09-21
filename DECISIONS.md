@@ -2301,3 +2301,22 @@ things in and out of the bag (not the cupboard), skill levels, someone joining
 or leaving you, and every `Hud.notify` message (texts, meetings, quest steps,
 new places, arrests). Anything else that should be said goes through
 `Hud.log_event`. `ui_preview.tscn -- --screen=world --feed=1` shows it.
+
+## D-064 — A building stands on the ground it was built on
+
+**Found in play.** Paving showed in the bare top corners of every house roof,
+behind the houses, with grass beyond it. `DistrictMap._stamp_building` set the
+ground under every building to pavement ("a building stands on a floor"), and a
+pitched roof's art is not a rectangle, so the corners the sprite leaves clear
+(D-028) showed that paving.
+
+**Decision.** The stamp no longer touches the ground: houses on grass have grass
+in their corners, buildings on paved land (the warehouse) still have paving.
+Nothing else reads the ground under a building. **Collision is unchanged** — the
+whole footprint blocks, drawn or not — and is now covered by a test that walks
+the body into a roof from behind and from the side.
+
+**Known, not done.** The footprint is a rectangle, so the bare grass in a roof's
+top corners is blocked though it looks open. Letting people walk there would
+need cells that are neither building nor street (`location_at` would put the
+player "inside" the house), so it waits for a reason.

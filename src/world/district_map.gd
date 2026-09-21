@@ -481,8 +481,8 @@ func _stamp_building(rect: Rect2i, door: Vector2i) -> void:
 		for x in range(rect.position.x, rect.end.x):
 			var part := Terrain.ROOF if y < facade_top else Terrain.WALL
 			_structure[y * size.x + x] = part + 1
-			# Whatever the ground was, a building stands on a floor.
-			_ground[y * size.x + x] = Terrain.PAVEMENT
+			# The ground stays what it was (D-064): a house's art is not a
+			# rectangle, and its bare corners must show grass, not paving.
 	_structure[_index(door)] = Terrain.DOOR + 1
 
 

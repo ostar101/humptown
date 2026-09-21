@@ -212,6 +212,26 @@ func test_body_cannot_walk_through_a_house() -> void:
 	view.free()
 
 
+func test_body_cannot_walk_onto_a_roof_from_behind_or_the_side() -> void:
+	var view := _spawn_world()
+	var body := view.player_body()
+	var rect: Rect2i = _map().buildings["loc_ida_flat"]["rect"]
+	# From the grass behind the house, straight down into the roof.
+	body.place_at(DistrictMap.cell_to_world(Vector2i(rect.position.x + 3, rect.position.y - 1)))
+	body.scripted_direction = Vector2.DOWN
+	await _step(1.5)
+	body.scripted_direction = Vector2.ZERO
+	assert_false(_map().is_blocked(DistrictMap.world_to_cell(body.position)), "never inside the roof")
+	assert_lt(float(body.current_cell().y), float(rect.position.y), "stopped at the roof's back edge")
+	# From the gap beside it, sideways into the roof's side.
+	body.place_at(DistrictMap.cell_to_world(Vector2i(rect.position.x - 1, rect.position.y + 3)))
+	body.scripted_direction = Vector2.RIGHT
+	await _step(1.5)
+	body.scripted_direction = Vector2.ZERO
+	assert_lt(float(body.current_cell().x), float(rect.position.x), "stopped at the roof's side")
+	view.free()
+
+
 func test_camera_lead_and_chunks_follow_the_player() -> void:
 	var view := _spawn_world()
 	var body := view.player_body()
