@@ -23,12 +23,16 @@ extends Node2D
 @onready var _bin: StashWindow = $Bin
 @onready var _quests: QuestWindow = $Quests
 @onready var _craft: CraftWindow = $Craft
+@onready var _skip: TimeSkipOverlay = $TimeSkip
 @onready var _phone: PhoneWindow = $Phone
 @onready var _atm: AtmWindow = $Atm
 @onready var _combat: CombatWindow = $Combat
 
 const NO_CELL := Vector2i(-99999, -99999)
 
+var _pending_message := ""
+var _input_before_skip := true
+var _clock_was_paused := false
 var _last_accepted := Vector2.ZERO
 ## The cell the player faced when the prompt was last worked out, and who
 ## was standing on it — people move, so the prompt must notice them arrive.
@@ -57,6 +61,7 @@ func _ready() -> void:
 	_bin.closed.connect(_on_shop_closed)
 	_quests.closed.connect(_on_shop_closed)
 	_craft.closed.connect(_on_shop_closed)
+	_skip.finished.connect(_on_time_skip_finished)
 	_phone.closed.connect(_on_shop_closed)
 	_phone.call_requested.connect(_on_call_requested)
 	_atm.closed.connect(_on_shop_closed)
@@ -113,7 +118,45 @@ func _on_region_refused(region_id: String, reason: String) -> void:
 
 
 func _on_player_travelled(region_id: String, minutes: int) -> void:
-	_hud.notify(Localization.t("ui.msg.travelled", {"place": Localization.t("region." + region_id), "minutes": minutes}))
+	var place := Localization.t("region." + region_id)
+	_hud.notify(Localization.t("ui.msg.travelled", {"place": place, "minutes": minutes}))
+	var now := Game.clock.total_minutes
+	_play_time_skip("ui.skip.travel", {"place": place}, now - minutes, now, null)
+
+
+# --- time passing (D-076) -----------------------------------------------------------------
+
+## What the world looks like right now, as a texture; null where nothing is drawn.
+func _snapshot() -> Texture2D:
+	if DisplayServer.get_name() == "headless":
+		return null
+	var image := get_viewport().get_texture().get_image()
+	return ImageTexture.create_from_image(image) if image != null and not image.is_empty() else null
+
+
+## Covers a jump in time with a short scene: walking waits, the clock holds, any
+## key skips it, and a message that was waiting is shown once it is over.
+func _play_time_skip(title_key: String, args: Dictionary, from_minute: int, to_minute: int, picture: Texture2D) -> void:
+	if not _skip.is_playing():
+		_input_before_skip = _player.input_enabled
+		_clock_was_paused = Game.clock.paused
+	_player.input_enabled = false
+	Game.pause_time(true)
+	_hud.set_prompt("")
+	_skip.play(Localization.t(title_key, args), from_minute, to_minute, picture)
+
+
+func time_skip() -> TimeSkipOverlay:
+	return _skip
+
+
+func _on_time_skip_finished() -> void:
+	_player.input_enabled = _input_before_skip
+	Game.pause_time(_clock_was_paused)
+	_front = NO_CELL
+	if _pending_message != "":
+		_hud.show_message(_pending_message)
+		_pending_message = ""
 
 
 ## (Re)builds the view for wherever the player is: the region, or the inside
@@ -275,6 +318,8 @@ func interact() -> Result:
 	if person != null:
 		return talk_to(person)
 	var what := Game.interaction_at(cell)
+	# The frame from before a night or a shift goes by (D-076), to fade from.
+	var before := _snapshot() if str(what.get("kind", "")) in ["bed", "work"] else null
 	var result := Game.interact_at(cell)
 	if result.is_ok() and result.value.get("kind") == "served" and Game.shops.shop_at(Game.player.interior) != "":
 		# A counter with a shop behind it opens the shop (D-039).
@@ -302,11 +347,18 @@ func interact() -> Result:
 		_hud.set_prompt("")
 		_front = NO_CELL
 		return result
-	_hud.show_message(InteractionText.outcome_text(what, result))
+	var text := InteractionText.outcome_text(what, result)
 	if result.is_ok():
 		var outcome: Dictionary = result.value
 		if outcome.get("kind") in ["entered", "exited"]:
 			show_current_area()
+		if outcome.get("kind") in ["slept", "worked"]:
+			var minutes := int(outcome.get("minutes", 0))
+			var now := Game.clock.total_minutes
+			_pending_message = text
+			text = ""
+			_play_time_skip("ui.skip.sleep" if outcome["kind"] == "slept" else "ui.skip.work", {}, now - minutes, now, before)
+	_hud.show_message(text)
 	_front = NO_CELL
 	return result
 
@@ -404,6 +456,7 @@ func _on_player_collapsed(woke_at: String, bill: int) -> void:
 		_combat.close()
 	show_current_area()
 	_hud.notify(Localization.t("ui.msg.collapsed", {"place": InteractionText.place_name(woke_at), "bill": bill}))
+	_play_time_skip("ui.skip.collapse", {}, 0, 0, null)
 
 
 ## Someone said they would fight (D-054). The conversation is finished with
@@ -448,6 +501,7 @@ func _on_player_arrested(officer_id: String, _released_at: int) -> void:
 			window.close()
 	show_current_area()
 	_hud.notify(Localization.t("ui.msg.arrested", {"name": Game.dialogue.display_name(officer_id, Game.data)}))
+	_play_time_skip("ui.skip.arrested", {}, 0, 0, null)
 
 
 func _on_police_action(outcome: String, officer_id: String, fine: int, forced: bool) -> void:

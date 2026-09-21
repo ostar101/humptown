@@ -7,7 +7,7 @@ extends Node
 ## `--screen` is `title`, `creation`, `opening`, `settings` or `world`
 ## (`--overlay=1` shows the developer overlay; `--shop=location_id
 ## [--selling=1]` stands the player at that shop's counter; `--quests=1`
-## opens the quest log; `--bag=1` the bag with things in it; `--craft=empty|joint|spoon` the bench; `--atm=1` the cash machine; `--fight=npc_id` a fight; `--phone=threads|thread|contacts|calendar|bank|map` the phone). For
+## opens the quest log; `--timeskip=1` the night's-sleep scene; `--bag=1` the bag with things in it; `--craft=empty|joint|spoon` the bench; `--atm=1` the cash machine; `--fight=npc_id` a fight; `--phone=threads|thread|contacts|calendar|bank|map` the phone). For
 ## settings, `--provider=id` chooses a provider — in memory only, since a
 ## preview never writes the player's settings — and `--locale=fi` the language. For creation, `--step` is
 ## 1-3 and the screen is driven through its own public methods, exactly as its
@@ -75,6 +75,8 @@ func _ready() -> void:
 		_drive_feed()
 	if which == "world" and args.has("bin"):
 		_drive_bin(screen as WorldView)
+	if which == "world" and args.has("timeskip"):
+		(screen as WorldView).time_skip().play("Sleeping…", 23 * 60, 31 * 60, null)
 	if which == "world" and args.has("bag"):
 		_drive_bag(screen as WorldView)
 	if which == "world" and args.has("craft"):

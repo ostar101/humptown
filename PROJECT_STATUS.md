@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-21
 **Milestone:** M6 — Consequences — **complete in code (0.6.0)**. M5 complete (0.5.0). M5 complete in code (0.5.0).
-**Build:** green. 1005 tests, 19701 assertions with the LimeZu art installed,
+**Build:** green. 1013 tests, 19732 assertions with the LimeZu art installed,
 ~42 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 

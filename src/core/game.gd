@@ -1266,7 +1266,7 @@ func work_shift() -> Result:
 	Events.player_deed.emit("worked_shift", {"job": str(job["id"])})
 	return Result.success({
 		"kind": "worked", "job": str(job["id"]), "pay": wage, "pay_to": str(job.get("pay_to", "cash")),
-		"late": shift["late"], "until": clock.format_time(),
+		"late": shift["late"], "until": clock.format_time(), "minutes": int(shift["minutes"]),
 	})
 
 

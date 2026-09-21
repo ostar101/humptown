@@ -2675,3 +2675,30 @@ and used it wherever they stood.
 
 **Not checked / possible:** other authored lines that name a place or task
 (farewells, "about work") were not audited one by one; say if any more turn up.
+
+## D-076 — Time passing on screen
+
+**Asked for.** A small animation when you go to sleep, so time does not just
+jump; the same for a working day.
+
+**Decision.** `TimeSkipOverlay` (`scenes/ui/time_skip_overlay.tscn`, a layer
+above every window). The world has already moved on when it plays (the rules
+apply a night or a shift in one step, D-042), so the picture from *before*
+(`WorldView._snapshot()`, taken just before the bed or the workplace is used) is
+faded to black rather than the world, a line says what is going on ("Sleeping…",
+"Working your shift…") while the clock runs from when it began to when it ended
+(the result now carries the shift's `minutes`), and then the real, new picture
+is uncovered. About two seconds for a night, a little more for a long shift; any
+key or click skips it. While it plays walking waits and the game clock is held;
+a message that was waiting ("You sleep, and wake at 07:00. The day is saved.")
+is shown once it is over, not lost during it.
+- The same scene, without a snapshot and for its own words, covers a **walk
+  between districts** ("Walking to Old Town…", D-072), **a collapse** ("Everything
+  goes dark…") and **a night in the cells**; the last two show no clock.
+- It only shows: nothing in `Game` changed except the shift's result gaining
+  `minutes`, and `test_time_skip` checks the scene, the input hold, the wrapped
+  clock and that a refused bed plays nothing. Headless runs take no snapshot.
+
+**Not built.** No sounds; no bed-side or sunrise picture; a shift is not
+animated as work (no worker sprite), only the clock; a short nap or a `use_item`
+that takes minutes plays nothing.

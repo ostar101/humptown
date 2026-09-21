@@ -909,5 +909,10 @@
   "ui.msg.travelled": "Kävelet kohteeseen {place}. Matka kestää {minutes} minuuttia.",
   "ui.msg.locked.needs_story.old_town": "Et vielä tiedä tietä kohteeseen {place}. Bussipysäkin aikataulu tien varrella voisi kertoa.",
   "ui.msg.locked.needs_contact.eastfield": "Et tunne ketään, joka näyttäisi tien kohteeseen {place}. Veikko satamassa ehkä tuntee.",
-  "ui.msg.locked.needs_money.eastfield": "Kohteeseen {place} on pitkä matka, ja sinulla pitäisi olla ensin vähintään 120 euroa mukana."
+  "ui.msg.locked.needs_money.eastfield": "Kohteeseen {place} on pitkä matka, ja sinulla pitäisi olla ensin vähintään 120 euroa mukana.",
+  "ui.skip.sleep": "Nukut…",
+  "ui.skip.work": "Teet työvuoroasi…",
+  "ui.skip.travel": "Kävelet kohteeseen {place}…",
+  "ui.skip.collapse": "Kaikki pimenee…",
+  "ui.skip.arrested": "Yö putkassa…"
 }
