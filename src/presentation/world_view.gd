@@ -104,9 +104,12 @@ func _exit_tree() -> void:
 ## The road out of a district is closed to you for now (D-072): what stops you,
 ## in a sentence, never the list of requirements.
 func _on_region_refused(region_id: String, reason: String) -> void:
-	var key := "ui.msg.locked." + reason
 	var place := Localization.t("region." + region_id)
-	_hud.show_message(Localization.t(key if Localization.t(key) != key else "ui.msg.locked.other", {"place": place}))
+	# a hint for this very road first ("the timetable at the bus stop might say"), then the general one
+	for key in ["ui.msg.locked.%s.%s" % [reason, region_id], "ui.msg.locked." + reason, "ui.msg.locked.other"]:
+		if Localization.t(key) != key:
+			_hud.show_message(Localization.t(key, {"place": place}))
+			return
 
 
 func _on_player_travelled(region_id: String, minutes: int) -> void:

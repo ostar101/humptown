@@ -949,5 +949,8 @@
   "ui.msg.locked.needs_knowledge": "You don't know enough about {place} to find it.",
   "ui.msg.locked.needs_skill": "You're not up to the road to {place} yet.",
   "ui.msg.locked.other": "You can't go to {place} yet.",
-  "ui.msg.travelled": "You walk to {place}. It takes {minutes} minutes."
+  "ui.msg.travelled": "You walk to {place}. It takes {minutes} minutes.",
+  "ui.msg.locked.needs_story.old_town": "You don't know the way to {place} yet. The timetable at the bus stop, up the road, might say.",
+  "ui.msg.locked.needs_contact.eastfield": "You don't know anyone who could show you the way to {place}. Veikko at the harbour might.",
+  "ui.msg.locked.needs_money.eastfield": "It's a long way to {place}, and you'd want at least 120 euros on you first."
 }

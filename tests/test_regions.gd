@@ -91,6 +91,7 @@ func test_a_refusal_is_said_in_words() -> void:
 	(Engine.get_main_loop() as SceneTree).root.add_child(view)
 	_walk_to_exit("harbourside", "old_town")
 	assert_true(view.hud().message_text().contains("don't know the way to Old Town"), view.hud().message_text())
+	assert_true(view.hud().message_text().contains("timetable"), "it says where to learn the way")
 	view.free()
 
 
