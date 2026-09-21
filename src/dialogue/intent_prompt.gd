@@ -28,6 +28,7 @@ const KIND_HELP := {
 	"insult": "insulting or mocking them",
 	"threaten": "threatening them",
 	"give_money": "actually handing them money now (put the number in amount)",
+	"give_item": "actually handing them a thing from the player's bag now, not money (put its name in item)",
 	"ask_for_work": "asking them for a job",
 	"quit_job": "telling them they quit the job they do for them",
 	"offer_help": "offering to help them or do something for them",
@@ -49,13 +50,13 @@ static func build(line: String, npc_name: String) -> LlmRequest:
 	var system := """You read one thing a player said to %s, a character in a life-simulation game, and report what the player is trying to do. You do not answer them.
 
 Reply with one JSON object and nothing else:
-{"intent": "...", "person": "", "place": "", "amount": 0, "name": ""}
+{"intent": "...", "person": "", "place": "", "item": "", "amount": 0, "name": ""}
 
 intent — the best fit from this list:
 %s
 If none fits, use a short snake_case word of your own, such as persuade, negotiate, ask_favor, offer_help or lie. Use small_talk for anything else.
 
-person, place — a person's or place's name exactly as the player wrote it, if the line is about one; else "".
+person, place, item — a person's, place's or thing's name exactly as the player wrote it, if the line is about one; else "".
 amount — a whole number of money the player is handing over right now; else 0. Offering, refusing, joking or asking about money is not handing it over.
 name — the name the player gives for themselves, if they do; else "".
 The player may write in any language.""" % [npc_name, "\n".join(kinds)]
@@ -67,7 +68,7 @@ The player may write in any language.""" % [npc_name, "\n".join(kinds)]
 
 
 ## The model's answer as an intent: {"kind", "person", "place", "amount",
-## "name"} with names still as said; {} when the answer is not usable, and
+## "item", "name"} with names still as said; {} when the answer is not usable, and
 ## the caller falls back to the offline reading.
 static func parse(response: LlmResponse) -> Dictionary:
 	if response == null or not response.ok:
@@ -92,6 +93,7 @@ static func parse(response: LlmResponse) -> Dictionary:
 		"kind": kind,
 		"person": _text(answer.get("person", "")),
 		"place": _text(answer.get("place", "")),
+		"item": _text(answer.get("item", "")),
 		"amount": amount,
 		"name": _text(answer.get("name", "")),
 	}

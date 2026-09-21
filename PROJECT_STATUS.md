@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-21
 **Milestone:** M6 — Consequences — **complete in code (0.6.0)**. M5 complete (0.5.0). M5 complete in code (0.5.0).
-**Build:** green. 878 tests, 10212 assertions with the LimeZu art installed,
+**Build:** green. 890 tests, 10259 assertions with the LimeZu art installed,
 ~17 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
@@ -10,7 +10,9 @@
 
 ## Next task
 
-**Newest (D-061):** "go to <place>" works (`ask_go`): the person is sent there as a schedule override for up to two hours, or refused for a phone line, a grudge, a shut/private/far place or a busy day. Left in D-057's line, in order: give/take (check first whether people have an inventory), bring/take-to (a two-step errand/meeting shape), then more animations. Worth trying in play: "go to Ropewalk Park" with someone free, then check they are there.
+**Newest (D-062):** giving an item works (`give_item`, light: it leaves the bag, warms by value, is remembered; people still own nothing, so it goes nowhere). Asking people to give/take/fetch/bring stays `cannot_do` until they have belongings. Left in D-057's line: bring/take-to only after that; more animations.
+
+**Before that (D-061):** "go to <place>" works (`ask_go`): the person is sent there as a schedule override for up to two hours, or refused for a phone line, a grudge, a shut/private/far place or a busy day. Left in D-057's line, in order: give/take (check first whether people have an inventory), bring/take-to (a two-step errand/meeting shape), then more animations. Worth trying in play: "go to Ropewalk Park" with someone free, then check they are there.
 
 **Before that (D-060):** the police post is drawn with LimeZu's police station (7×13, own `police_1.png`; re-run `tools/import_limezu_buildings.py` and `--import`). Other swap candidates are listed in D-060. Tests green (864).
 

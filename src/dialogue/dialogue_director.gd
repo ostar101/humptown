@@ -56,6 +56,8 @@ var asks: AskDirector = AskDirector.new()
 ## did, and where the answer came from.
 var turn_log: Array[Dictionary] = []
 const TURN_LOG_LIMIT := 8
+## Things the player cannot hand over: the game does not work without them (D-062).
+const GIFT_KEEP: Array[String] = ["item_phone", "item_keys"]
 
 var _npcs: NpcRegistry = null
 var _world: WorldState = null
@@ -66,6 +68,7 @@ var _clock: GameClock = null
 var _data: DataRegistry = null
 var _people_words: Dictionary = {}
 var _place_words: Dictionary = {}
+var _item_words: Dictionary = {}
 
 
 func setup(npcs: NpcRegistry, world: WorldState, player: PlayerState, relationships: RelationshipGraph,
@@ -220,7 +223,7 @@ func _respond(convo: Conversation, line: String, channel: String, words: Diction
 
 	# 1. What the player meant.
 	var intent: Dictionary = await _interpret(line, npc_id,
-		words.get("people", _people_words), words.get("places", _place_words))
+		words.get("people", _people_words), words.get("places", _place_words), words.get("items", _item_words))
 	if live and convo != conversation:
 		return Result.failure("not_talking")   # they walked away while it was thinking
 
@@ -296,11 +299,11 @@ func _respond(convo: Conversation, line: String, channel: String, words: Diction
 ## decide what deterministic logic can. Whatever the model says, names are
 ## resolved to people and places here, or to nothing.
 func interpret(line: String, npc_id: String) -> Dictionary:
-	return await _interpret(line, npc_id, _people_words, _place_words)
+	return await _interpret(line, npc_id, _people_words, _place_words, _item_words)
 
 
-func _interpret(line: String, npc_id: String, people_words: Dictionary, place_words: Dictionary) -> Dictionary:
-	var found := OfflineTopics.topic_of(line, npc_id, people_words, place_words)
+func _interpret(line: String, npc_id: String, people_words: Dictionary, place_words: Dictionary, item_words: Dictionary) -> Dictionary:
+	var found := OfflineTopics.topic_of(line, npc_id, people_words, place_words, item_words)
 	var offline := {
 		"kind": found["topic"], "subject": found["subject"], "amount": found["amount"],
 		"name": found["name"], "person_said": "", "source": "offline", "fallback_reason": "",
@@ -323,9 +326,11 @@ func _interpret(line: String, npc_id: String, people_words: Dictionary, place_wo
 			subject = OfflineTopics.resolve(str(read["person"]), people_words, npc_id)
 		"about_place", "ask_go":
 			subject = OfflineTopics.resolve(str(read["place"]), place_words, "")
+		"give_item":
+			subject = OfflineTopics.resolve(str(read["item"]), item_words, "")
 	return {
 		"kind": read["kind"], "subject": subject, "amount": read["amount"], "name": read["name"],
-		"person_said": read["person"] if str(read["kind"]) == "about_person" else read["place"],
+		"person_said": read["person"] if str(read["kind"]) == "about_person" else (read["item"] if str(read["kind"]) == "give_item" else read["place"]),
 		"source": "model", "fallback_reason": "",
 	}
 
@@ -513,6 +518,8 @@ func _authored_reply(npc_id: String, topic: String, intent: Dictionary, extra: D
 		"name": name if name != "" else _player.display_name,
 		"amount": str(intent.get("amount", 0)),
 	}
+	if subject.begins_with("item_") and _data != null and _data.has_entry("items", subject):
+		args["item"] = _item_name(subject)
 	args.merge(extra, true)
 	return Localization.t(DialogueLines.pick(npc_id, topic, turn), args)
 
@@ -568,6 +575,8 @@ func _subject_name(intent: Dictionary) -> String:
 		return _npcs.get_npc(subject).name
 	if subject.begins_with("loc_") and _world.get_location(subject) != null:
 		return _place_name(subject)
+	if subject.begins_with("item_") and _data != null and _data.has_entry("items", subject):
+		return _item_name(subject)
 	return str(intent.get("person_said", ""))
 
 
@@ -604,6 +613,7 @@ func _rules_state(npc_id: String, convo: Conversation, channel: String, intent: 
 		"errand": _errand_offer(npc_id),
 		"errand_running": quests.errand_running_for(npc_id) != "",
 		"follow": _follow_state(npc_id),
+		"gift": _gift_state(str(intent.get("subject", ""))) if str(intent.get("kind", "")) == "give_item" else {},
 		"go": _go_state(npc_id, str(intent.get("subject", ""))) if str(intent.get("kind", "")) == "ask_go" else {},
 		"works_for_them": work.has_job() and _data != null \
 			and str(_data.get_entry("jobs", work.job_id).get("employer", "")) == npc_id,
@@ -620,6 +630,26 @@ func _follow_state(npc_id: String) -> Dictionary:
 		"following": npc.state.has("following"),
 		"free_minutes": FollowRules.free_minutes(_npcs.schedule_for(npc), _clock.total_minutes, _clock.weekday()),
 	}
+
+
+## What the rules need to judge handing over an item from the bag: {} when
+## there is no such item, else how many the player has, what it is worth, its
+## name for the sentence, and whether it is something they cannot do without
+## (the phone, the keys) (D-062).
+func _gift_state(item_id: String) -> Dictionary:
+	if _data == null or not item_id.begins_with("item_") or not _data.has_entry("items", item_id):
+		return {}
+	var entry := _data.get_entry("items", item_id)
+	return {
+		"count": _player.inventory.count_of(item_id), "value": int(entry.get("value", 0)),
+		"name": _item_name(item_id), "keep": item_id in GIFT_KEEP,
+	}
+
+
+## An item's name as it reads in a sentence: "a sandwich".
+func _item_name(item_id: String) -> String:
+	var name := DialoguePrompt.english(str(_data.get_entry("items", item_id).get("name_key", item_id))).to_lower()
+	return ("an " if name.left(1) in ["a", "e", "i", "o", "u"] else "a ") + name
 
 
 ## What the rules need to judge sending this person to `place_id`: `problem`
@@ -698,6 +728,12 @@ func _apply(npc_id: String, effects: Array[Dictionary]) -> Dictionary:
 				Events.follow_requested.emit(npc_id, int(effect["minutes"]))
 			"stop_following":
 				Events.follow_stop_requested.emit(npc_id)
+			"give_item":
+				var handed := _player.inventory.remove(str(effect["item"]), int(effect["count"]))
+				if handed.is_err():
+					Log.warn("dialogue", "A judged gift failed", {"code": handed.code})
+				else:
+					Events.player_deed.emit("gave_item", {"npc": npc_id, "item": str(effect["item"])})
 			"go":
 				var walker := _npcs.get_npc(npc_id)
 				if walker != null:
@@ -813,6 +849,7 @@ func _build_word_maps(npc_id: String) -> void:
 	var words := _word_maps(npc_id)
 	_people_words = words["people"]
 	_place_words = words["places"]
+	_item_words = words["items"]
 
 
 func _word_maps(npc_id: String) -> Dictionary:
@@ -830,7 +867,12 @@ func _word_maps(npc_id: String) -> Dictionary:
 		var loc := _world.get_location(str(location_id))
 		if loc != null:
 			places[loc.id] = _names_in_every_locale(loc.name_key)
-	return {"people": OfflineTopics.name_words(people, true), "places": OfflineTopics.name_words(places, false, first_names)}
+	var items := {}
+	if _data != null:
+		for item_id in _data.ids("items"):
+			items[item_id] = _names_in_every_locale(str(_data.get_entry("items", item_id).get("name_key", "")))
+	return {"people": OfflineTopics.name_words(people, true), "places": OfflineTopics.name_words(places, false, first_names),
+		"items": OfflineTopics.name_words(items, false)}
 
 
 static func _names_in_every_locale(key: String) -> Array[String]:

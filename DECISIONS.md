@@ -2258,3 +2258,31 @@ model); the person coming back to tell the player (that is what bring/errands
 will need).
 
 **Saved.** The override is already in each person's `override` field.
+
+## D-062 — Handing someone an item: a gift, and nothing more
+
+**Found.** D-057 listed give/take as the next verb after going. Checking first,
+as noted there: people have no inventory and no money of their own (nothing in
+`src/npc/` holds either; cash gifts already "go nowhere", D-037). Real
+belongings would be a new system, so the user was asked and chose the light
+version.
+
+**Decision.** A new intent kind `give_item`: the player hands over something
+from the bag ("here, take this sandwich", "annan sinulle voileivän"). Offline
+it needs a giving phrase (the ones `give_money` uses) and an item named in
+either language; money is read first, so "here's 20 euros for a sandwich" is
+still cash. The cheap model puts the item in a new `item` field, resolved to an
+id by Godot like people and places. `ConversationRules` refuses `not_here` (by
+phone or text), `no_item` (none in the bag), `keep_it` (the phone and keys,
+`DialogueDirector.GIFT_KEEP`: the game does not work without them) and
+`invalid_item`. Agreed: `{"do": "give_item", "item", "count": 1}` takes one
+from the bag, warms them by value (`value / GIFT_CASH_PER_POINT`, at least
+`GIFT_MIN_ITEM_WARMTH`, at most `GIFT_WARMTH_MAX`), and is remembered.
+"Give me" / "take" (asking *them* for something) stays `cannot_do`.
+
+**The item goes nowhere.** Like cash, it does not become theirs: nothing
+records that Ida has a sandwich, she cannot hand it back, and a hungry person
+is not fed by it. That is the honest limit of the light version and the reason
+fetch, bring and take remain unbuilt: they need real belongings for people.
+
+**Saved.** Nothing new; the bag is already saved.

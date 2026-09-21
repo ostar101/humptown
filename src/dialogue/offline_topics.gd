@@ -70,7 +70,7 @@ const PHRASES := {
 }
 
 const ORDER: Array[String] = [
-	"attack", "threaten", "insult", "ask_follow", "ask_wait", "ask_go", "ask_action", "negotiate", "farewell", "give_money", "introduce_self", "apologize",
+	"attack", "threaten", "insult", "ask_follow", "ask_wait", "ask_go", "ask_action", "negotiate", "farewell", "give_money", "give_item", "introduce_self", "apologize",
 	"quit_job", "ask_for_work", "offer_help",
 	"about_person", "about_place", "about_self", "about_work", "compliment", "thanks", "greet",
 ]
@@ -101,7 +101,7 @@ static var _amount := RegEx.create_from_string("(\\d+)\\s*(€)?")
 ## cash offered, for give_money; `name` the name the player gave, for
 ## introduce_self. `npc_id` is who is being spoken to — their own name is not
 ## a question about somebody else.
-static func topic_of(text: String, npc_id: String, people: Dictionary, places: Dictionary) -> Dictionary:
+static func topic_of(text: String, npc_id: String, people: Dictionary, places: Dictionary, items: Dictionary = {}) -> Dictionary:
 	var tokens := tokens_of(text)
 	var padded := " " + " ".join(tokens) + " "
 	for topic in ORDER:
@@ -110,6 +110,13 @@ static func topic_of(text: String, npc_id: String, people: Dictionary, places: D
 				var amount := _money_offered(text, tokens, padded)
 				if amount > 0:
 					return {"topic": topic, "subject": "", "amount": amount, "name": ""}
+			"give_item":
+				# Handing something over needs a giving phrase and a thing named.
+				var thing := _mentioned(tokens, items, "")
+				if thing != "":
+					for phrase in GIVE_PHRASES:
+						if padded.contains(" " + phrase + " "):
+							return {"topic": topic, "subject": thing, "amount": 0, "name": ""}
 			"introduce_self":
 				for phrase: String in PHRASES[topic]:
 					var at := padded.find(" " + phrase + " ")

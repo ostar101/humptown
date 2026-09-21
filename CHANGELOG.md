@@ -6,6 +6,7 @@ versions are milestones rather than releases until there is something to release
 ## [Unreleased]
 
 ### Added
+- Handing someone something from your bag ("here, take this sandwich") takes it from the bag, warms them by what it is worth and is remembered; the phone and keys cannot be given away, and you cannot give what you do not have (D-062).
 - Asking someone to go to a place ("go to Ropewalk Park", "mene satamaan") sends
   them there for up to two hours, or until their shift or night; refused for a
   phone line, a grudge, a shut, private or distant place, or a day that is

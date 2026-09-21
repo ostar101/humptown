@@ -29,6 +29,9 @@ extends RefCounted
 ##   player today, D-044), errand_running (they are already waiting on one),
 ##   follow ({"following", "free_minutes"} — are they walking with the player,
 ##   and how long their own day leaves them free to, D-057),
+##   gift ({"count", "value", "name", "keep"} — about the item the intent's
+##   subject names: how many the player has, what it is worth, its name, and
+##   whether it is something they will not part with, D-062),
 ##   go ({"problem", "free_minutes", "busy", "here"} — about the place the
 ##   intent's subject names: `problem` is "" or why they could not go there
 ##   (`unknown`, `far`, `closed`), `busy` an errand or meeting already has
@@ -42,7 +45,7 @@ extends RefCounted
 ## Kinds that have rules. Offered to the model as the vocabulary to prefer.
 const KINDS: Array[String] = [
 	"greet", "farewell", "thanks", "about_self", "about_work", "about_person", "about_place",
-	"introduce_self", "compliment", "flirt", "apologize", "insult", "threaten", "give_money",
+	"introduce_self", "compliment", "flirt", "apologize", "insult", "threaten", "give_money", "give_item",
 	"ask_for_work", "quit_job", "offer_help", "negotiate", "attack",
 	"ask_follow", "ask_wait", "ask_go", "ask_action",
 ]
@@ -75,6 +78,8 @@ const THREAT := {"fear": 0.15, "affection": -0.12, "trust": -0.1}
 ## A gift warms by its size, up to this, at this many units of cash per point.
 const GIFT_WARMTH_MAX := 0.08
 const GIFT_CASH_PER_POINT := 250.0
+## Even a cheap thing handed over is a kindness.
+const GIFT_MIN_ITEM_WARMTH := 0.01
 
 
 ## Ok: {"kind", "topic", "effects": Array[Dictionary], "happened": String,
@@ -88,7 +93,7 @@ const GIFT_CASH_PER_POINT := 250.0
 ## "amount"} (from the account, by text) · {"do": "tell_place", "place"} · {"do": "fight"} · {"do": "ask", "ask"} (put an ask: what
 ## comes of it is rolled and applied by `AskDirector`) · {"do": "follow",
 ## "minutes"} and {"do": "stop_following"} (D-057) · {"do": "go", "place",
-## "minutes"} (D-061).
+## "minutes"} (D-061) · {"do": "give_item", "item", "count"} (D-062).
 static func judge(intent: Dictionary, state: Dictionary) -> Result:
 	var kind := str(intent.get("kind", "unknown"))
 	var feeling: Dictionary = state.get("relationship", {})
@@ -159,6 +164,25 @@ static func judge(intent: Dictionary, state: Dictionary) -> Result:
 			_warm(effects, "affection", minf(amount / GIFT_CASH_PER_POINT, GIFT_WARMTH_MAX), warmth_left)
 			effects.append({"do": "remember", "predicate": "gave_money_to", "visibility": "private", "severity": 0.2})
 			topic = "gift_accepted"
+		"give_item":
+			# The player hands over something from the bag (D-062). People have no
+			# belongings of their own yet, so it is theirs and goes no further.
+			var item := str(intent.get("subject", ""))
+			var gift: Dictionary = state.get("gift", {})
+			var item_name := str(gift.get("name", "something"))
+			if not item.begins_with("item_") or gift.is_empty():
+				return Result.failure("invalid_item", "They talked about giving you something, but offered nothing you could take.")
+			if str(state.get("channel", "in_person")) != "in_person":
+				return Result.failure("not_here", "They offered you something over the phone. There are no hands to take it.")
+			if int(gift.get("count", 0)) < 1:
+				return Result.failure("no_item", "They offered you %s, but they do not have one on them. Nothing changed hands." % item_name)
+			if bool(gift.get("keep", false)):
+				return Result.failure("keep_it", "They offered you %s, but it is something they need. You told them to keep it." % item_name)
+			effects.append({"do": "give_item", "item": item, "count": 1})
+			_warm(effects, "affection", clampf(float(gift.get("value", 0)) / GIFT_CASH_PER_POINT, GIFT_MIN_ITEM_WARMTH, GIFT_WARMTH_MAX), warmth_left)
+			effects.append({"do": "remember", "predicate": "gave_item_to", "visibility": "private", "severity": 0.2})
+			happened = "They handed you %s, and you took it." % item_name
+			topic = "gift_item_accepted"
 		"ask_for_work":
 			var hiring: Dictionary = state.get("hiring", {})
 			if hiring.is_empty():
@@ -312,6 +336,8 @@ static func memory_of(intent: Dictionary, judged: Result, subject_name: String =
 			return {"text": "quit working for you", "weight": 0.5} if verdict["topic"] == "quit" else {}
 		"offer_help":
 			return {"text": "offered to help you", "weight": 0.2}
+		"give_item":
+			return {"text": "gave you %s" % subject_name, "weight": 0.4} if subject_name != "" else {}
 		"ask_go":
 			if verdict["topic"] == "go_yes" and subject_name != "":
 				return {"text": "asked you to go to %s, and you went" % subject_name, "weight": 0.3}
@@ -335,6 +361,10 @@ static func topic_for_refusal(code: String) -> String:
 			return "follow_no"
 		"go_busy":
 			return "follow_busy"
+		"no_item":
+			return "gift_no_item"
+		"keep_it":
+			return "gift_keep_it"
 		"go_closed", "go_remote":
 			return code
 	return "unknown"
