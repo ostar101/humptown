@@ -193,6 +193,11 @@ func _populate(chunk: Vector2i) -> void:
 			sprite.add_child(light)
 			lights.append(light)
 			sprite.add_child(_lamp_foot(prop["cell"], sprite.position))
+		else:
+			var foot: Rect2i = StreetProps.KINDS[prop["kind"]].get("foot", Rect2i())
+			var body := ArtShape.body(str(prop["file"]), foot, sprite.offset, RegionTiles.COLLISION_LAYER)
+			if body != null:
+				sprite.add_child(body)
 		root.add_child(sprite)
 
 	add_child(root)
@@ -331,7 +336,7 @@ func _build_building_body(loc_id: String, rect: Rect2i, kind: String) -> void:
 
 ## The park's trees, the court's surface, the worksite's frame (PlaceArt,
 ## D-030). Like the building sprites these are few and never stream; unlike
-## them they block nothing and hide nothing, so they are simply drawn where
+## them they hide nothing, and only their feet block (D-067), so they are simply drawn where
 ## the place says. A `flat` piece is painted ground and sorts from its top
 ## edge, so walking onto the court puts you on it rather than under it.
 func _build_place_art() -> void:
@@ -349,6 +354,14 @@ func _build_place_art() -> void:
 			sprite.offset = Vector2(0.0, top_left.y - sort_y)
 			add_child(sprite)
 			_overlays.append(sprite)
+			if int(piece["foot"]) > 0:
+				# What stands on the ground stops the body: the bottom of the art, by its outline.
+				var size := Vector2i(sprite.texture.get_size())
+				var foot := int(piece["foot"])
+				var body := ArtShape.body(str(piece["file"]), Rect2i(0, size.y - foot, size.x, foot),
+					sprite.offset, RegionTiles.COLLISION_LAYER)
+				if body != null:
+					sprite.add_child(body)
 
 
 func _release(chunk: Vector2i) -> void:

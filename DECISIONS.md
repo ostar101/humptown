@@ -2389,3 +2389,23 @@ road (it would point at the viewer, and the art has no such view), so a lamp on
 the pavement *above* a road has its head along the street, not over the road.
 On the pavement below a road the pole rises over the carriageway, so its head
 is over the road anyway. Drawing an arm toward the viewer needs new art.
+
+## D-067 — Everything on the ground stops the body where it is drawn
+
+**Asked for.** Collisions on all objects: hydrants, bins, and the rest.
+
+**Decision.** `ArtShape` (new, presentation) turns an art file's opaque pixels
+into collision polygons, the technique D-065 used for houses, now shared:
+`BuildingArt` uses it too. Each piece says how much of its art collides, in
+pixels from the bottom (`foot`), and only that part does, so a walker still
+passes behind a tree's canopy or a bin's lid.
+- **Street props.** Hydrants and bins: the bottom cell of the art, by outline
+  (`StreetProps.KINDS[..]["foot"]`, a body under the sprite, streamed with its
+  chunk). Lamps keep the rectangle foot of D-066.
+- **Places.** `PlaceArt.DECORATIONS[..]["foot"]`: trees 32 px, benches and cones
+  24, the worksite frame and the digger 64. The court's surface is ground and has none.
+
+Physics only: no map cell is blocked for these, so routes and NPC bodies are as
+before (NPC bodies collide with nothing, known issue 6). With the art installed,
+like the drawing. The outline's points count from the corner of the clipped
+part, so `ArtShape.body` offsets by `clip.position`.

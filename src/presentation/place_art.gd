@@ -15,6 +15,10 @@ extends RefCounted
 ## a y-sort key at the piece's base, so someone walks in front of a tree they
 ## are below and behind one they are above.
 ##
+## `foot` is how many pixel rows at the bottom of the art collide, by its own
+## outline (D-067): a tree's base, a bench, the frame of the worksite. Zero
+## (the default) is ground, or nothing worth bumping into.
+##
 ## `flat` marks a piece that is ground rather than an object — the court's
 ## painted surface. It sorts from its top edge instead of its base, so a
 ## player standing anywhere on it is drawn on top of it rather than under it.
@@ -26,26 +30,26 @@ const DECORATIONS := {
 		{"file": "court.png", "at": Vector2i(0, 0), "flat": true},
 	],
 	"loc_harbour_park": [
-		{"file": "tree_2.png", "at": Vector2i(1, 0)},
-		{"file": "tree_1.png", "at": Vector2i(6, 1)},
-		{"file": "tree_3.png", "at": Vector2i(12, 0)},
-		{"file": "bench.png", "at": Vector2i(6, 6)},
-		{"file": "bench.png", "at": Vector2i(11, 6)},
-		{"file": "tree_4.png", "at": Vector2i(0, 8)},
-		{"file": "tree_1.png", "at": Vector2i(8, 9)},
-		{"file": "tree_2.png", "at": Vector2i(13, 8)},
+		{"file": "tree_2.png", "at": Vector2i(1, 0), "foot": 32},
+		{"file": "tree_1.png", "at": Vector2i(6, 1), "foot": 32},
+		{"file": "tree_3.png", "at": Vector2i(12, 0), "foot": 32},
+		{"file": "bench.png", "at": Vector2i(6, 6), "foot": 24},
+		{"file": "bench.png", "at": Vector2i(11, 6), "foot": 24},
+		{"file": "tree_4.png", "at": Vector2i(0, 8), "foot": 32},
+		{"file": "tree_1.png", "at": Vector2i(8, 9), "foot": 32},
+		{"file": "tree_2.png", "at": Vector2i(13, 8), "foot": 32},
 	],
 	"loc_worksite": [
-		{"file": "skeleton.png", "at": Vector2i(1, 1)},
-		{"file": "excavator.png", "at": Vector2i(10, 2)},
-		{"file": "cone.png", "at": Vector2i(9, 10)},
-		{"file": "cone.png", "at": Vector2i(13, 9)},
+		{"file": "skeleton.png", "at": Vector2i(1, 1), "foot": 64},
+		{"file": "excavator.png", "at": Vector2i(10, 2), "foot": 64},
+		{"file": "cone.png", "at": Vector2i(9, 10), "foot": 24},
+		{"file": "cone.png", "at": Vector2i(13, 9), "foot": 24},
 	],
 }
 
 
 ## Every piece to draw on a location, as {"file": path, "cell": top-left cell
-## on the map, "flat": bool}. Empty for a location with nothing authored, and
+## on the map, "flat": bool, "foot": int}. Empty for a location with nothing authored, and
 ## for every location when the art is not installed.
 static func decorations_for(map: DistrictMap, location_id: String) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
@@ -61,6 +65,7 @@ static func decorations_for(map: DistrictMap, location_id: String) -> Array[Dict
 			"file": path,
 			"cell": rect.position + (piece["at"] as Vector2i),
 			"flat": bool(piece.get("flat", false)),
+			"foot": int(piece.get("foot", 0)),
 		})
 	return out
 

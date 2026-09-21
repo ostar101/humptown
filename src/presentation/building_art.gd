@@ -50,10 +50,6 @@ const BY_LOCATION := {"loc_police_post": "police"}
 ## that often would be silly for nine files that never change during a run.
 static var _installed_cache: Dictionary = {}
 
-## A pixel at least this opaque is part of the building for collision.
-const OPAQUE := 0.5
-## How closely the outline follows the pixels, in pixels.
-const OUTLINE_EPSILON := 1.5
 
 
 ## The whole image's size in cells, porch included. Vector2i.ZERO for a kind
@@ -142,13 +138,9 @@ static func _silhouette(kind: String, loc_id: String, rect_size: Vector2i) -> Di
 	var key := "%s@%s" % [file, rect_size]
 	if _silhouettes.has(key):
 		return _silhouettes[key]
-	var image := (load(file) as Texture2D).get_image()
 	var pixels := rect_size * DistrictMap.CELL_PIXELS
-	var bitmap := BitMap.new()
-	bitmap.create_from_image_alpha(image, OPAQUE)
-	var polygons: Array[PackedVector2Array] = []
-	for polygon in bitmap.opaque_to_polygons(Rect2i(Vector2i.ZERO, pixels), OUTLINE_EPSILON):
-		polygons.append(polygon)
+	var bitmap := ArtShape.bitmap(file)
+	var polygons := ArtShape.outline(file, Rect2i(Vector2i.ZERO, pixels))
 	var open: Array[Vector2i] = []
 	for y in rect_size.y:
 		for x in rect_size.x:

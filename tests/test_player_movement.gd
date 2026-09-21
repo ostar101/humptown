@@ -287,10 +287,48 @@ func test_body_cannot_walk_through_a_lamp_post() -> void:
 	view.free()
 
 
+## D-067: the park's bench and a hydrant stop the body like a wall does.
+func test_body_cannot_walk_through_a_bench() -> void:
+	if not ResourceLoader.exists(PlaceArt.REAL_DIR + "bench.png"):
+		return
+	var map := _map()
+	var park: Rect2i = map.places["loc_harbour_park"]["rects"][0]
+	var bench := park.position + Vector2i(6, 6)
+	var view := _spawn_world()
+	var body := view.player_body()
+	body.place_at(DistrictMap.cell_to_world(bench + Vector2i.LEFT))
+	body.scripted_direction = Vector2.RIGHT
+	await _step(1.0)
+	body.scripted_direction = Vector2.ZERO
+	assert_lt(body.position.x, float(bench.x * DistrictMap.CELL_PIXELS), "stopped at the bench's end")
+	view.free()
+
+
+func test_body_cannot_walk_through_a_hydrant() -> void:
+	if not StreetProps.available():
+		return
+	var map := _map()
+	var hydrant := Vector2i(-1, -1)
+	for prop: Dictionary in StreetProps.props_in(map, Rect2i(Vector2i.ZERO, map.size)):
+		var cell: Vector2i = prop["cell"]
+		if prop["kind"] == "hydrant" and not map.is_blocked(cell + Vector2i.LEFT):
+			hydrant = cell
+			break
+	assert_ne(hydrant, Vector2i(-1, -1), "a hydrant on open pavement")
+	var view := _spawn_world()
+	var body := view.player_body()
+	body.place_at(DistrictMap.cell_to_world(hydrant + Vector2i.LEFT))
+	body.scripted_direction = Vector2.RIGHT
+	await _step(1.0)
+	body.scripted_direction = Vector2.ZERO
+	assert_lt(body.position.x, float((hydrant.x + 1) * DistrictMap.CELL_PIXELS - 8), "stopped against the hydrant")
+	view.free()
+
+
 func test_camera_lead_and_chunks_follow_the_player() -> void:
 	var view := _spawn_world()
 	var body := view.player_body()
-	body.place_at(DistrictMap.cell_to_world(Vector2i(2, 29)))   # the back row of the pavement: lamps stand at the kerb row
+	body.place_at(DistrictMap.cell_to_world(Vector2i(2, 33)))   # along the carriageway: the pavements have lamps and hydrants
 	body.scripted_direction = Vector2.RIGHT
 	body.scripted_running = true
 	# Far enough that the start chunk is beyond the load radius plus margin.

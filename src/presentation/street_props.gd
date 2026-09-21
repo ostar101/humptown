@@ -16,7 +16,7 @@ extends RefCounted
 ## - **trash**: beside a building's entrance, where a bin is actually wanted,
 ##   rather than anywhere a road happens to be near.
 ##
-## Visual only, except a lamp's foot: no interaction, nothing saved. There is no
+## Visual, except that each one's foot collides (D-066, D-067): nothing saved. There is no
 ## code-painted fallback either, unlike the tiles in RegionTiles — a missing
 ## sprite here just means no decoration, which is a legitimate look, not a
 ## broken one, so `props_in()` returns nothing until the art is installed.
@@ -27,10 +27,13 @@ const REAL_DIR := "res://art/vendor/limezu/props/"
 ## reaching *up* the screen, so this is how far above itself it covers. The
 ## placement rules use it to keep a prop from leaning over a carriageway,
 ## which no amount of choosing the right pavement cell can fix on its own.
+## `foot` is the part of the art, in pixels from its top-left, that collides:
+## the bottom cell of a bin or hydrant, by its own outline (D-067). The lamp
+## collides through `LAMP_FOOT` instead.
 const KINDS := {
 	"lamp": {"file": "lamp.png", "cells_tall": 4},
-	"trash": {"file": "trash.png", "cells_tall": 2},
-	"hydrant": {"file": "hydrant.png", "cells_tall": 2},
+	"trash": {"file": "trash.png", "cells_tall": 2, "foot": Rect2i(0, 32, 32, 32)},
+	"hydrant": {"file": "hydrant.png", "cells_tall": 2, "foot": Rect2i(0, 32, 32, 32)},
 }
 
 ## Cells between one lamp and the next along a street. Regular rather than
