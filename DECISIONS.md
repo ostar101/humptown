@@ -2633,10 +2633,11 @@ locked with nothing behind it yet.
 
 **Found in play** (Old Town): trees standing on paving, and a lamp at the top of
 the side street looking lost.
-- A tree now stands on **grass only**: the map lays a patch of grass under each
-  tree in a paved square or market (`old_town` areas), and `test_place_art`
-  checks every cell of every tree in every district, so a tree cannot be put
-  on paving again.
+- A tree now stands on **grass only**, and `test_place_art` checks every cell of
+  every tree in every district. A first try laid grass patches under trees in the
+  paved square and market; in play they looked like planters in the middle of
+  paving, so those trees were moved to the garden instead: the square and the
+  market are paving and benches only, and the garden holds all of Old Town's trees.
 - **Lamps** skip a pavement cell whose only road is one that ends at that strip
   (`StreetFurniture._only_lights_a_road_end`): the strip is already lit from the
   main road. Harbourside's lamps are unchanged (its side road merges into the

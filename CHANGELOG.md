@@ -6,7 +6,7 @@ versions are milestones rather than releases until there is something to release
 ## [Unreleased]
 
 ### Fixed
-- Trees in Old Town no longer stand on paving (each has a patch of grass), and there is no lamp at the mouth of the side street (D-073).
+- Trees in Old Town no longer stand on paving: the square and the market have none, and all of Old Town's trees are in the garden; and there is no lamp at the mouth of the side street (D-073).
 
 ### Added
 - Two new districts, Old Town and Eastfield, with ten inhabitants, five new shops, a bakery job and a yard job, and interiors for every building. Walk to the ends of the roads: north from Dock Road (after reading the bus timetable) and east along Dock Street (with a contact and money). The walk takes as long as the road does (D-072).

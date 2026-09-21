@@ -39,7 +39,8 @@ const DECORATIONS := {
 		{"file": "tree_1.png", "at": Vector2i(8, 9), "foot": 32},
 		{"file": "tree_2.png", "at": Vector2i(13, 8), "foot": 32},
 	],
-	# Old Town (D-072): a garden with room to sit, a square with a bench on each side.
+	# Old Town (D-072, D-073): a garden with all the trees, a square and a market that are
+	# paving and benches only — a tree does not stand in the middle of paving.
 	"loc_old_garden": [
 		{"file": "tree_2.png", "at": Vector2i(1, 0), "foot": 32},
 		{"file": "tree_1.png", "at": Vector2i(7, 1), "foot": 32},
@@ -52,22 +53,20 @@ const DECORATIONS := {
 		{"file": "tree_3.png", "at": Vector2i(11, 10), "foot": 32},
 		{"file": "tree_4.png", "at": Vector2i(17, 9), "foot": 32},
 		{"file": "tree_1.png", "at": Vector2i(26, 10), "foot": 32},
+		{"file": "tree_3.png", "at": Vector2i(15, 5), "foot": 32},
+		{"file": "tree_1.png", "at": Vector2i(25, 4), "foot": 32},
+		{"file": "tree_4.png", "at": Vector2i(1, 5), "foot": 32},
+		{"file": "tree_3.png", "at": Vector2i(22, 10), "foot": 32},
 	],
 	"loc_old_square": [
-		{"file": "tree_1.png", "at": Vector2i(1, 1), "foot": 32},
-		{"file": "tree_2.png", "at": Vector2i(21, 1), "foot": 32},
 		{"file": "bench.png", "at": Vector2i(6, 5), "foot": 24},
 		{"file": "bench.png", "at": Vector2i(16, 5), "foot": 24},
 		{"file": "bench.png", "at": Vector2i(6, 11), "foot": 24},
 		{"file": "bench.png", "at": Vector2i(16, 11), "foot": 24},
-		{"file": "tree_3.png", "at": Vector2i(1, 12), "foot": 32},
-		{"file": "tree_4.png", "at": Vector2i(20, 12), "foot": 32},
 	],
 	"loc_market": [
 		{"file": "bench.png", "at": Vector2i(4, 3), "foot": 24},
 		{"file": "bench.png", "at": Vector2i(24, 3), "foot": 24},
-		{"file": "tree_2.png", "at": Vector2i(1, 6), "foot": 32},
-		{"file": "tree_1.png", "at": Vector2i(25, 8), "foot": 32},
 	],
 	# Eastfield: a pitch, a yard with a digger, a scrapyard with the same.
 	"loc_football_pitch": [

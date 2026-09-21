@@ -71,13 +71,7 @@
       {"terrain": "pavement", "rect": [50, 56, 30, 12]},
       {"terrain": "pavement", "rect": [40, 37, 2, 35]},
       {"terrain": "road", "rect": [42, 37, 4, 35]},
-      {"terrain": "pavement", "rect": [46, 37, 2, 35]},
-      {"terrain": "grass", "rect": [15, 38, 4, 4]},
-      {"terrain": "grass", "rect": [35, 38, 4, 5]},
-      {"terrain": "grass", "rect": [15, 49, 4, 3]},
-      {"terrain": "grass", "rect": [34, 49, 5, 3]},
-      {"terrain": "grass", "rect": [51, 62, 4, 5]},
-      {"terrain": "grass", "rect": [75, 64, 4, 4]}
+      {"terrain": "pavement", "rect": [46, 37, 2, 35]}
     ],
     "buildings": [
       {"location": "loc_aarne_flat", "rect": [4, 1, 8, 11], "door": [6, 11]},
