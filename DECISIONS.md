@@ -2230,3 +2230,31 @@ building, as the art draws it. `import_limezu_buildings.py` writes `police_1.png
 `Market_Big` (7×12) or `Market_Medium` (7×9), the warehouse for something from the
 worksite or generic-building sheets, the clinic for the hotel/hospital sheet (its
 buildings are much larger). Each needs a rect and door change like this one.
+
+## D-061 — Going somewhere alone: a one-off change to someone's day
+
+**Found.** D-057 left "go somewhere" as `cannot_do`. It is the first of the
+listed verbs that needs no new system: a person can already be sent to a place
+for a while by `NpcSchedule.Override`, which meetings use.
+
+**Decision.** A new intent kind `ask_go` ("go to the park", "mene satamaan"),
+judged by `ConversationRules`. Offline it needs a place named in the line
+(`OfflineTopics`, English and Finnish; "go to hell" is not an errand, and
+"follow me to X" is still a follow); the cheap model puts the place in `place`,
+resolved to an id by Godot as for `about_place`. Refusals, all deterministic:
+`go_remote` (not by phone or text), `go_distrust` (same thresholds as follow),
+`go_closed` (private, locked, another region, or shut before the trip is over —
+`DialogueDirector._go_state`), `go_busy` (a meeting or summons already has them,
+or under 30 minutes free), `cannot_do` (no place known). Already there is
+`go_here`, no effect. Agreed: `{"do": "go", "place", "minutes"}`, applied as a
+`schedule_override` (reason `go:<minute>`, activity `socialise`) for the shorter
+of two hours (`FollowRules.GO_MINUTES`) and the time before their next shift or
+night; afterwards they are back to the routine with nothing to clear. Someone
+already following is released first. The person remembers it (`memory_of`).
+
+**Not yet.** Fetch/bring/carry/give/take are still `cannot_do`; going to another
+region; a reluctant person who could be talked into it (D-053's asks are the
+model); the person coming back to tell the player (that is what bring/errands
+will need).
+
+**Saved.** The override is already in each person's `override` field.

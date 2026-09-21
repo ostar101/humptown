@@ -28,7 +28,11 @@ extends RefCounted
 ##   errand ({"id", "what", "reward"} — something they could ask of the
 ##   player today, D-044), errand_running (they are already waiting on one),
 ##   follow ({"following", "free_minutes"} — are they walking with the player,
-##   and how long their own day leaves them free to, D-057)
+##   and how long their own day leaves them free to, D-057),
+##   go ({"problem", "free_minutes", "busy", "here"} — about the place the
+##   intent's subject names: `problem` is "" or why they could not go there
+##   (`unknown`, `far`, `closed`), `busy` an errand or meeting already has
+##   them, `here` they are there already, D-061)
 ##
 ## A kind with no rule here — a model may say "persuade", "negotiate", "lie"
 ## — is talk: accepted, and it changes nothing until a system exists that it
@@ -40,7 +44,7 @@ const KINDS: Array[String] = [
 	"greet", "farewell", "thanks", "about_self", "about_work", "about_person", "about_place",
 	"introduce_self", "compliment", "flirt", "apologize", "insult", "threaten", "give_money",
 	"ask_for_work", "quit_job", "offer_help", "negotiate", "attack",
-	"ask_follow", "ask_wait", "ask_action",
+	"ask_follow", "ask_wait", "ask_go", "ask_action",
 ]
 ## Kinds that put an ask, when there is something to ask (D-053).
 const ASK_KINDS: Array[String] = ["negotiate", "persuade", "ask_favor"]
@@ -83,7 +87,8 @@ const GIFT_CASH_PER_POINT := 250.0
 ## {"do": "introduce_them"} · {"do": "introduce_player"} · {"do": "transfer",
 ## "amount"} (from the account, by text) · {"do": "tell_place", "place"} · {"do": "fight"} · {"do": "ask", "ask"} (put an ask: what
 ## comes of it is rolled and applied by `AskDirector`) · {"do": "follow",
-## "minutes"} and {"do": "stop_following"} (D-057).
+## "minutes"} and {"do": "stop_following"} (D-057) · {"do": "go", "place",
+## "minutes"} (D-061).
 static func judge(intent: Dictionary, state: Dictionary) -> Result:
 	var kind := str(intent.get("kind", "unknown"))
 	var feeling: Dictionary = state.get("relationship", {})
@@ -225,10 +230,34 @@ static func judge(intent: Dictionary, state: Dictionary) -> Result:
 			else:
 				happened = "They asked you to wait here, but you were not going anywhere with them."
 				topic = "wait_nothing"
+		"ask_go":
+			# Going somewhere alone is a one-off change to their day (D-061).
+			var place := str(intent.get("subject", ""))
+			var go: Dictionary = state.get("go", {})
+			if not place.begins_with("loc_"):
+				return Result.failure("cannot_do", "They asked you to go somewhere, but not anywhere you know of. You cannot, and you did not promise anything.")
+			if str(state.get("channel", "in_person")) != "in_person":
+				return Result.failure("go_remote", "They asked you to go somewhere, over the phone. You cannot promise that: you would have to be seen going.")
+			if float(feeling.get("trust", 0.0)) < FOLLOW_MIN_TRUST or float(feeling.get("affection", 0.0)) < FOLLOW_MIN_AFFECTION:
+				return Result.failure("go_distrust", "They asked you to go somewhere for them. You do not trust them enough to do their errands, and you said no.")
+			if bool(go.get("here", false)):
+				happened = "They asked you to go somewhere. You are already there."
+				topic = "go_here"
+			elif str(go.get("problem", "")) != "":
+				return Result.failure("go_closed", "They asked you to go somewhere you cannot get to now: it is shut, private or too far. You said so, and did not promise anything.")
+			elif bool(go.get("busy", false)) or int(go.get("free_minutes", 0)) < FollowRules.MIN_MINUTES:
+				return Result.failure("go_busy", "They asked you to go somewhere, but you have to be elsewhere and cannot go now.")
+			else:
+				if bool((state.get("follow", {}) as Dictionary).get("following", false)):
+					effects.append({"do": "stop_following"})
+				effects.append({"do": "go", "place": place,
+					"minutes": mini(int(go["free_minutes"]), FollowRules.GO_MINUTES)})
+				happened = "They asked you to go somewhere. You agreed, and you are on your way there now."
+				topic = "go_yes"
 		"ask_action":
-			# Fetching, carrying and going places for someone are not built yet
-			# (D-057): say so, instead of a promise nothing will keep.
-			return Result.failure("cannot_do", "They asked you to do something for them, like fetch or carry something or go somewhere. You cannot, and you did not promise anything.")
+			# Fetching and carrying for someone are not built yet (D-057): say
+			# so, instead of a promise nothing will keep.
+			return Result.failure("cannot_do", "They asked you to do something for them, like fetch or carry something. You cannot, and you did not promise anything.")
 		"quit_job":
 			if bool(state.get("works_for_them", false)):
 				effects.append({"do": "quit"})
@@ -283,6 +312,9 @@ static func memory_of(intent: Dictionary, judged: Result, subject_name: String =
 			return {"text": "quit working for you", "weight": 0.5} if verdict["topic"] == "quit" else {}
 		"offer_help":
 			return {"text": "offered to help you", "weight": 0.2}
+		"ask_go":
+			if verdict["topic"] == "go_yes" and subject_name != "":
+				return {"text": "asked you to go to %s, and you went" % subject_name, "weight": 0.3}
 	return {}
 
 
@@ -299,8 +331,12 @@ static func topic_for_refusal(code: String) -> String:
 			return "not_here"
 		"follow_remote", "follow_busy", "cannot_do":
 			return code
-		"follow_distrust":
+		"follow_distrust", "go_distrust":
 			return "follow_no"
+		"go_busy":
+			return "follow_busy"
+		"go_closed", "go_remote":
+			return code
 	return "unknown"
 
 

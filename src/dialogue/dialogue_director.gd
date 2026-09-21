@@ -225,7 +225,7 @@ func _respond(convo: Conversation, line: String, channel: String, words: Diction
 		return Result.failure("not_talking")   # they walked away while it was thinking
 
 	# 2. What that is allowed to change — rules, not the model — and doing it.
-	var judged := ConversationRules.judge(intent, _rules_state(npc_id, convo, channel))
+	var judged := ConversationRules.judge(intent, _rules_state(npc_id, convo, channel, intent))
 	var topic := ConversationRules.topic_for_refusal(judged.code)
 	var happened := judged.message
 	var ends := false
@@ -321,7 +321,7 @@ func _interpret(line: String, npc_id: String, people_words: Dictionary, place_wo
 	match str(read["kind"]):
 		"about_person":
 			subject = OfflineTopics.resolve(str(read["person"]), people_words, npc_id)
-		"about_place":
+		"about_place", "ask_go":
 			subject = OfflineTopics.resolve(str(read["place"]), place_words, "")
 	return {
 		"kind": read["kind"], "subject": subject, "amount": read["amount"], "name": read["name"],
@@ -588,7 +588,7 @@ func _feelings(npc_id: String) -> Dictionary:
 
 
 ## What `ConversationRules` needs to know about the world, and nothing more.
-func _rules_state(npc_id: String, convo: Conversation, channel: String) -> Dictionary:
+func _rules_state(npc_id: String, convo: Conversation, channel: String, intent: Dictionary = {}) -> Dictionary:
 	var ask := asks.offer(npc_id)
 	return {
 		"npc_id": npc_id,
@@ -604,6 +604,7 @@ func _rules_state(npc_id: String, convo: Conversation, channel: String) -> Dicti
 		"errand": _errand_offer(npc_id),
 		"errand_running": quests.errand_running_for(npc_id) != "",
 		"follow": _follow_state(npc_id),
+		"go": _go_state(npc_id, str(intent.get("subject", ""))) if str(intent.get("kind", "")) == "ask_go" else {},
 		"works_for_them": work.has_job() and _data != null \
 			and str(_data.get_entry("jobs", work.job_id).get("employer", "")) == npc_id,
 	}
@@ -618,6 +619,30 @@ func _follow_state(npc_id: String) -> Dictionary:
 	return {
 		"following": npc.state.has("following"),
 		"free_minutes": FollowRules.free_minutes(_npcs.schedule_for(npc), _clock.total_minutes, _clock.weekday()),
+	}
+
+
+## What the rules need to judge sending this person to `place_id`: `problem`
+## ("" or `unknown`, `far` — another region, `closed` — private, locked, or shut
+## before the trip would be over), `here` (they are there already), `busy`
+## (a meeting or summons already has them) and how long their day leaves them
+## free (D-061).
+func _go_state(npc_id: String, place_id: String) -> Dictionary:
+	var npc := _npcs.get_npc(npc_id) if _npcs != null else null
+	var place := _world.get_location(place_id) if _world != null and place_id.begins_with("loc_") else null
+	if npc == null or place == null or _clock == null:
+		return {"problem": "unknown", "free_minutes": 0, "busy": false, "here": false}
+	var free := FollowRules.free_minutes(_npcs.schedule_for(npc), _clock.total_minutes, _clock.weekday())
+	var back_at := (_clock.minute_of_day() + mini(free, FollowRules.GO_MINUTES)) % 1440
+	var from := _world.get_location(npc.location)
+	var problem := ""
+	if from != null and from.region != place.region:
+		problem = "far"
+	elif not place.is_public() or place.is_locked() or not place.is_open_at(_clock.minute_of_day()) 			or not place.is_open_at(back_at):
+		problem = "closed"
+	return {
+		"problem": problem, "free_minutes": free, "here": npc.location == place_id,
+		"busy": npc.schedule_override != null and npc.schedule_override.covers(_clock.total_minutes),
 	}
 
 
@@ -673,6 +698,11 @@ func _apply(npc_id: String, effects: Array[Dictionary]) -> Dictionary:
 				Events.follow_requested.emit(npc_id, int(effect["minutes"]))
 			"stop_following":
 				Events.follow_stop_requested.emit(npc_id)
+			"go":
+				var walker := _npcs.get_npc(npc_id)
+				if walker != null:
+					walker.set_override(now, now + int(effect["minutes"]), str(effect["place"]), "socialise", "go:%d" % now)
+					_npcs.invalidate_location_cache(npc_id)
 			"feel":
 				_relationships.adjust(npc_id, PlayerState.ID, str(effect["dimension"]), float(effect["delta"]), now)
 			"pay":

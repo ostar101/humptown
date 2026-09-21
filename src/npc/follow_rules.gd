@@ -9,6 +9,8 @@ extends RefCounted
 ## The longest one invitation lasts. After this they go back to their day and
 ## the player may ask again.
 const MAX_MINUTES := 240
+## The longest a one-off trip somewhere on the player's say lasts (D-061).
+const GO_MINUTES := 120
 ## Less free time than this and there is no point setting out.
 const MIN_MINUTES := 30
 ## Blocks that end an outing when they begin.

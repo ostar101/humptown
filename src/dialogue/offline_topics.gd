@@ -12,8 +12,8 @@ extends RefCounted
 ##
 ## Topics, checked in this order so that "thanks, bye" is a goodbye, "hi,
 ## who are you?" is a question and "bye, idiot" is an insult: threaten,
-## insult, ask_follow, ask_wait, ask_action (asking them to come along, to
-## wait, or to fetch or go — D-057), negotiate, farewell, give_money, introduce_self, apologize, about_person,
+## insult, ask_follow, ask_wait, ask_go (to go to a named place, D-061), ask_action (asking
+## them to come along, to wait, or to fetch — D-057), negotiate, farewell, give_money, introduce_self, apologize, about_person,
 ## about_place, about_self, about_work, compliment, thanks, greet — else
 ## unknown. A topic is also an intent kind (D-037): what the words are
 ## taken to mean, which `ConversationRules` then judges.
@@ -27,6 +27,8 @@ const PHRASES := {
 	"ask_wait": ["wait here", "stay here", "stay put", "stop following", "don't follow", "do not follow",
 		"you can go now", "wait for me", "odota tässä", "odota täällä", "odota minua", "odota mua", "pysy täällä",
 		"pysy tässä", "jää tähän", "jää tänne", "lopeta seuraaminen", "älä seuraa", "voit mennä"],
+	"ask_go": ["go to", "go over to", "head to", "head over to", "walk to", "run to", "go down to", "go up to",
+		"mene", "menisit", "käy", "kävisit", "suuntaa", "lähde sinne"],
 	"ask_action": ["bring me", "bring us", "fetch me", "get me", "go and get", "go fetch", "carry this",
 		"tuo minulle", "tuo mulle", "tuo tänne", "hae minulle", "hae mulle", "vie tämä", "vie tää", "mene hakemaan",
 		"mene sinne", "tule tänne", "come here"],
@@ -68,7 +70,7 @@ const PHRASES := {
 }
 
 const ORDER: Array[String] = [
-	"attack", "threaten", "insult", "ask_follow", "ask_wait", "ask_action", "negotiate", "farewell", "give_money", "introduce_self", "apologize",
+	"attack", "threaten", "insult", "ask_follow", "ask_wait", "ask_go", "ask_action", "negotiate", "farewell", "give_money", "introduce_self", "apologize",
 	"quit_job", "ask_for_work", "offer_help",
 	"about_person", "about_place", "about_self", "about_work", "compliment", "thanks", "greet",
 ]
@@ -123,6 +125,14 @@ static func topic_of(text: String, npc_id: String, people: Dictionary, places: D
 				var where := _mentioned(tokens, places, "")
 				if where != "":
 					return {"topic": topic, "subject": where, "amount": 0, "name": ""}
+			"ask_go":
+				# "go to the harbour" is a request only with a place in it; without one
+				# it falls through ("go to hell" is not an errand).
+				var destination := _mentioned(tokens, places, "")
+				if destination != "":
+					for phrase: String in PHRASES[topic]:
+						if padded.contains(" " + phrase + " "):
+							return {"topic": topic, "subject": destination, "amount": 0, "name": ""}
 			_:
 				for phrase: String in PHRASES[topic]:
 					if padded.contains(" " + phrase + " "):

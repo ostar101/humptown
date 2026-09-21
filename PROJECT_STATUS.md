@@ -1,16 +1,18 @@
 # Project status
 
-**Updated:** 2026-09-19
+**Updated:** 2026-09-21
 **Milestone:** M6 — Consequences — **complete in code (0.6.0)**. M5 complete (0.5.0). M5 complete in code (0.5.0).
-**Build:** green. 863 tests, 10138 assertions with the LimeZu art installed,
-~12 s. No leak warnings at exit.
+**Build:** green. 878 tests, 10212 assertions with the LimeZu art installed,
+~17 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
 
 ## Next task
 
-**Newest (D-060):** the police post is drawn with LimeZu's police station (7×13, own `police_1.png`; re-run `tools/import_limezu_buildings.py` and `--import`). Other swap candidates are listed in D-060. Tests green (864).
+**Newest (D-061):** "go to <place>" works (`ask_go`): the person is sent there as a schedule override for up to two hours, or refused for a phone line, a grudge, a shut/private/far place or a busy day. Left in D-057's line, in order: give/take (check first whether people have an inventory), bring/take-to (a two-step errand/meeting shape), then more animations. Worth trying in play: "go to Ropewalk Park" with someone free, then check they are there.
+
+**Before that (D-060):** the police post is drawn with LimeZu's police station (7×13, own `police_1.png`; re-run `tools/import_limezu_buildings.py` and `--import`). Other swap candidates are listed in D-060. Tests green (864).
 
 **Latest (D-059):** memory now holds the words and everything between two people (talks, calls, texts either way), openers depend on it, and the HUD has an event feed. Worth trying in play: talk, leave, come back; get a text, then talk; hand over money and watch the feed. **Before that (D-056, D-057):** live play showed replies cut off on thinking models
 (fixed: room to think on every provider) and NPCs saying yes to things that
