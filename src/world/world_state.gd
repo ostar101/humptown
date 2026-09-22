@@ -110,8 +110,6 @@ func enter_region(region_id: String) -> Result:
 	var region: Region = regions.get(region_id)
 	if region == null:
 		return Result.failure("no_such_region", region_id)
-	if not region.unlocked:
-		return Result.failure("region_locked", region_id)
 	if current_region == region_id:
 		return Result.success(region_id)
 	var previous := current_region

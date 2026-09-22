@@ -106,15 +106,6 @@ func test_at_least_one_region_is_open_at_the_start() -> void:
 	assert_gt(float(open_count), 0.0, "the player must be able to stand somewhere")
 
 
-func test_locked_regions_use_varied_unlock_mechanisms() -> void:
-	var mechanisms := {}
-	for region_id in data.ids("regions"):
-		for requirement in data.get_entry("regions", region_id).get("unlock", []):
-			mechanisms[str(requirement.get("type", ""))] = true
-	assert_gt(float(mechanisms.size()), 1.0,
-		"every region gates the same way; the world should not be one long corridor")
-
-
 func test_region_neighbours_are_mutual() -> void:
 	for region_id in data.ids("regions"):
 		for neighbour_id in data.get_entry("regions", region_id).get("neighbours", []):

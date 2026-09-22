@@ -2702,3 +2702,46 @@ is shown once it is over, not lost during it.
 **Not built.** No sounds; no bed-side or sunrise picture; a shift is not
 animated as work (no worker sprite), only the clock; a short nap or a `use_item`
 that takes minutes plays nothing.
+
+## D-077 — Regions are freely walkable
+
+**Asked for (M8).** The user played Humptown and found it dull: the town felt
+like a corridor because Old Town and Eastfield sat behind unlock gates (read
+the bus timetable, carry EUR 120 and a contact). Decided when asked: regions
+are open from the start; walking between them still costs time, halved from
+before.
+
+**Decision.** `data/regions.json` no longer carries any `unlock` requirements;
+`Region.from_data` already defaults `unlocked` to `unlock.is_empty()`, so all
+three regions start open. `Game._travel_to_region` no longer calls
+`WorldState.try_unlock` before crossing a border, and `WorldState.enter_region`
+no longer refuses on `not region.unlocked` — both checks are gone, not just
+unreachable, so a save with a stale `unlocked: false` from before this change
+cannot relock a road either. `evaluate_unlock` and `try_unlock` stay in
+`WorldState`, unused today: a road may still be shut later, and `Events.region_refused`
+stays wired for that day. Travel times are halved: harbourside↔old_town 18→9,
+harbourside↔eastfield 35→18, old_town↔eastfield 25→13 minutes.
+
+**Tests.** `test_locked_regions_use_varied_unlock_mechanisms` (test_content.gd)
+is deleted — no region gates any more, so the property it checked cannot hold.
+`test_unlock_requires_every_condition` and `test_unlocks_use_different_mechanisms`
+(test_world_npcs.gd) are deleted for the same reason: they exercised
+`evaluate_unlock` against real content that no longer has requirements to
+evaluate. The rest invert in place: `test_old_town_is_closed_until_you_have_heard_of_it`
+→ `test_old_town_is_open_from_the_start`, `test_eastfield_wants_money_and_a_contact`
+→ `test_eastfield_is_open_with_no_money_and_no_contact`,
+`test_walking_onto_an_exit_to_a_locked_region_is_refused` →
+`test_walking_onto_an_exit_to_an_open_region_works`, `test_entering_a_locked_region_is_refused`
+→ `test_entering_any_known_region_works`. `test_a_refusal_is_said_in_words` is
+deleted: nothing triggers `region_refused` today, so there is no refusal to say
+in words. The bus timetable sign still exists and still sets
+`heard_about_old_town` when read (kept as flavour, `test_the_bus_timetable_can_still_be_read`);
+the `ui.msg.locked.*` locale keys are left in place, unused, for the same
+reason the unlock functions are.
+
+**Benchmark.** Re-run after this change: numbers on this machine run notably
+above the last recorded baseline (~7000 µs/minute at 3000 people, spread,
+against a ~3188 baseline), but a back-to-back run against the prior commit
+(e2234b6) shows the same elevation there too — the baseline in
+`PROJECT_STATUS.md` simply predates D-072's two new regions and was never
+re-measured after it. This change itself causes no regression.

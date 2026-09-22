@@ -4,7 +4,7 @@
     "name_key": "region.harbourside",
     "description_key": "region.harbourside.desc",
     "neighbours": ["old_town", "eastfield"],
-    "travel_times": {"old_town": 18, "eastfield": 35},
+    "travel_times": {"old_town": 9, "eastfield": 18},
     "unlock": [],
     "discovered": true,
     "unlocked": true
@@ -14,20 +14,15 @@
     "name_key": "region.old_town",
     "description_key": "region.old_town.desc",
     "neighbours": ["harbourside", "eastfield"],
-    "travel_times": {"harbourside": 18, "eastfield": 25},
-    "unlock": [
-      {"type": "story_flag", "flag": "heard_about_old_town"}
-    ]
+    "travel_times": {"harbourside": 9, "eastfield": 13},
+    "unlock": []
   },
   {
     "id": "eastfield",
     "name_key": "region.eastfield",
     "description_key": "region.eastfield.desc",
     "neighbours": ["harbourside", "old_town"],
-    "travel_times": {"harbourside": 35, "old_town": 25},
-    "unlock": [
-      {"type": "money", "amount": 120},
-      {"type": "contact", "npc": "npc_veikko"}
-    ]
+    "travel_times": {"harbourside": 18, "old_town": 13},
+    "unlock": []
   }
 ]

@@ -316,12 +316,8 @@ func _travel_to_region(proposal: Dictionary, destination: String) -> Result:
 	var region: Region = world.regions.get(destination)
 	if region == null:
 		return _reject(proposal, "region_unknown")
-	if not region.unlocked:
-		# The way opens the first time the player meets what it asks for (D-072).
-		var opened := world.try_unlock(destination, player.unlock_context(reputation, knowledge))
-		if opened.is_err():
-			Events.region_refused.emit(destination, opened.code)
-			return _reject(proposal, "region_locked")
+	# Regions are freely walkable (D-077); try_unlock and Events.region_refused
+	# stay in place for a road that may be shut later, but nothing calls them today.
 	var dest_map := world.map_for(destination)
 	if dest_map == null:
 		return _reject(proposal, "region_unmapped")

@@ -50,13 +50,15 @@ func _activity(npc_id: String, minute_of_day: int, day: int) -> String:
 
 # --- the way opens by what it asks ----------------------------------------------------------------
 
-func test_old_town_is_closed_until_you_have_heard_of_it() -> void:
-	assert_err(_walk_to_exit("harbourside", "old_town"), "region_locked")
-	assert_eq(_refused, ["needs_story"] as Array[String])
-	assert_eq(Game.player.region, "harbourside")
+func test_old_town_is_open_from_the_start() -> void:
+	assert_ok(_walk_to_exit("harbourside", "old_town"))
+	assert_eq(_refused, [] as Array[String])
+	assert_eq(Game.player.region, "old_town")
 
 
-func test_the_bus_timetable_teaches_the_way() -> void:
+func test_the_bus_timetable_can_still_be_read() -> void:
+	# The sign is flavour now, not a gate (D-077): reading it costs nothing
+	# and the road was always open.
 	var map := Game.world.map_for("harbourside")
 	var timetable := {}
 	for cell: Vector2i in map.objects:
@@ -69,30 +71,14 @@ func test_the_bus_timetable_teaches_the_way() -> void:
 	assert_ok(read)
 	assert_eq(read.value["kind"], "read")
 	assert_true(Game.world.has_flag("heard_about_old_town"))
-	assert_ok(_walk_to_exit("harbourside", "old_town"))
-	assert_true(Game.world.regions["old_town"].unlocked, "it stays open")
 
 
-func test_eastfield_wants_money_and_a_contact() -> void:
+func test_eastfield_is_open_with_no_money_and_no_contact() -> void:
 	Game.player.wallet.cash = 10
 	Game.player.wallet.bank = 0
 	Game.player.known_contacts.erase("npc_veikko")
-	assert_err(_walk_to_exit("harbourside", "eastfield"), "region_locked")
-	Game.player.wallet.cash = 500
-	assert_err(_walk_to_exit("harbourside", "eastfield"), "region_locked")
-	Game.player.add_contact("npc_veikko")
 	assert_ok(_walk_to_exit("harbourside", "eastfield"))
-	assert_eq(_refused, ["needs_money", "needs_contact"] as Array[String])
-
-
-func test_a_refusal_is_said_in_words() -> void:
-	var packed: PackedScene = load("res://scenes/world/world.tscn")
-	var view: WorldView = packed.instantiate()
-	(Engine.get_main_loop() as SceneTree).root.add_child(view)
-	_walk_to_exit("harbourside", "old_town")
-	assert_true(view.hud().message_text().contains("don't know the way to Old Town"), view.hud().message_text())
-	assert_true(view.hud().message_text().contains("timetable"), "it says where to learn the way")
-	view.free()
+	assert_eq(_refused, [] as Array[String])
 
 
 # --- walking between them --------------------------------------------------------------------------
@@ -102,8 +88,8 @@ func test_the_walk_takes_as_long_as_the_road() -> void:
 	var before := Game.clock.total_minutes
 	var made := _walk_to_exit("harbourside", "old_town")
 	assert_ok(made)
-	assert_eq(made.value["minutes"], 18)
-	assert_eq(Game.clock.total_minutes - before, 18)
+	assert_eq(made.value["minutes"], 9)
+	assert_eq(Game.clock.total_minutes - before, 9)
 	assert_eq(_travelled, ["old_town"] as Array[String])
 	assert_eq(Game.world.current_region, "old_town")
 	assert_true(Game.world.regions["old_town"].discovered)

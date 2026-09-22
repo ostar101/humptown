@@ -35,8 +35,9 @@ func test_locations_index_by_region() -> void:
 	assert_eq(world.region_of("loc_corner_shop"), "harbourside")
 
 
-func test_entering_a_locked_region_is_refused() -> void:
-	assert_err(world.enter_region("eastfield"), "region_locked")
+func test_entering_any_known_region_works() -> void:
+	# Regions are freely walkable (D-077): no lock left to test.
+	assert_ok(world.enter_region("eastfield"))
 	assert_err(world.enter_region("no_such_place"), "no_such_region")
 
 
@@ -46,25 +47,10 @@ func test_entering_an_open_region_works_and_marks_it_discovered() -> void:
 	assert_true(world.get_region("harbourside").discovered)
 
 
-func test_unlock_requires_every_condition() -> void:
-	# Eastfield needs both money and a contact.
-	var poor := world.evaluate_unlock("eastfield", {"money": 10, "contacts": ["npc_veikko"]})
-	assert_err(poor, "needs_money")
-	var unknown := world.evaluate_unlock("eastfield", {"money": 500, "contacts": []})
-	assert_err(unknown, "needs_contact")
-	assert_ok(world.evaluate_unlock("eastfield", {"money": 500, "contacts": ["npc_veikko"]}))
-
-
-func test_unlocks_use_different_mechanisms() -> void:
-	# Old Town opens on story knowledge, Eastfield on money and contacts:
-	# regions must not all gate the same way.
-	assert_err(world.evaluate_unlock("old_town", {}), "needs_story")
-	world.set_flag("heard_about_old_town")
-	assert_ok(world.evaluate_unlock("old_town", {}))
-
-
 func test_try_unlock_is_idempotent() -> void:
-	world.set_flag("heard_about_old_town")
+	# No region has requirements left (D-077), but the mechanism stays in
+	# place for a road that may be shut later, and must still be safe to
+	# call twice.
 	assert_ok(world.try_unlock("old_town", {}))
 	assert_true(world.get_region("old_town").unlocked)
 	assert_ok(world.try_unlock("old_town", {}))

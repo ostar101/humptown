@@ -5,6 +5,9 @@ versions are milestones rather than releases until there is something to release
 
 ## [Unreleased]
 
+### Changed
+- Old Town and Eastfield are open from the start: no timetable to read, no cash or contact to carry. Walking between any two districts still costs time, halved from before (9/18/13 minutes) (D-077).
+
 ### Added (lamps)
 - Street lamps shine a soft cone of light from the lamp's head down to the street in the evenings, as well as their pool of light (D-074).
 
