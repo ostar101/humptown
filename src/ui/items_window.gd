@@ -1,13 +1,15 @@
 class_name ItemsWindow
 extends GameWindow
-## Everything the player carries and can put together, in one window (M8
-## step 3, D-079): the bag, the bench, and the recipes you know, as three
-## tabs. `I` opens on the bag, `C` opens on the bench; if the window is
-## already open the key switches tab instead of closing it.
+## Everything the player carries, wears and can put together, in one window
+## (M8 steps 3-5, D-079 to D-081): the bag, the bench, and the recipes you
+## know, as three tabs, with what is worn on the left and what is examined on
+## the right, on every tab. `I` opens on the bag, `C` opens on the bench; if
+## the window is already open the key switches tab instead of closing it.
 ##
-## It shows and proposes. Using goes through `Game.use_item()` and crafting
-## through `Game.craft()`, both deciding; a refusal is shown in plain words.
-## Time stands still while it is open.
+## It shows and proposes. Using goes through `Game.use_item()`, equipping
+## through `Game.equip()`/`unequip()`, crafting through `Game.craft()`, all
+## deciding; a refusal is shown in plain words. Time stands still while it
+## is open.
 
 enum Tab { BAG, BENCH, RECIPES }
 
@@ -15,12 +17,19 @@ const SLOTS := 9
 const GRID_SLOT := 60.0
 const OUTPUT_SLOT := 84.0
 const BAG_SLOT := 56.0
+const WORN_SLOT := 40.0
+const EXAMINE_ICON := 64.0
 
 var _tab: Tab = Tab.BAG
 ## What lies on each bench slot, "" for nothing.
 var _placed: Array[String] = []
 var _grid_slots: Array[ItemSlot] = []
 var _output: ItemSlot = null
+## The item examine is showing, "" for nothing selected.
+var _selected_item_id: String = ""
+var _worn_slots: Dictionary = {}    # slot -> ItemSlot
+var _worn_labels: Dictionary = {}   # slot -> Label
+var _examine_icon: ItemSlot = null
 
 @onready var _condition: Label = %Condition
 @onready var _job: Label = %Job
@@ -40,6 +49,16 @@ var _output: ItemSlot = null
 @onready var _clear: Button = %Clear
 @onready var _bag_grid: GridContainer = %BagGrid
 @onready var _book_rows: VBoxContainer = %BookRows
+@onready var _worn_rows: VBoxContainer = %WornRows
+@onready var _examine_icon_holder: VBoxContainer = %ExamineIconHolder
+@onready var _examine_name: Label = %ExamineName
+@onready var _examine_summary: Label = %ExamineSummary
+@onready var _examine_desc: Label = %ExamineDesc
+@onready var _examine_facts: VBoxContainer = %ExamineFacts
+@onready var _use_button: Button = %UseButton
+@onready var _wear_button: Button = %WearButton
+@onready var _take_off_button: Button = %TakeOffButton
+@onready var _lay_on_bench_button: Button = %LayOnBenchButton
 
 
 func _ready() -> void:
@@ -58,6 +77,30 @@ func _ready() -> void:
 	_output = ItemSlot.new(OUTPUT_SLOT)
 	_output.pressed.connect(make)
 	_output_holder.add_child(_output)
+	_examine_icon = ItemSlot.new(EXAMINE_ICON)
+	_examine_icon.focus_mode = Control.FOCUS_NONE
+	_examine_icon_holder.add_child(_examine_icon)
+	_use_button.pressed.connect(func() -> void: use(_selected_item_id))
+	_wear_button.pressed.connect(wear_selected)
+	_take_off_button.pressed.connect(take_off_selected)
+	_lay_on_bench_button.pressed.connect(lay_selected_on_bench)
+	for slot: String in EquipRules.SLOTS:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		var icon_slot := ItemSlot.new(WORN_SLOT)
+		icon_slot.pressed.connect(func() -> void:
+			var worn_id := str(Game.player.equipment.get(slot, ""))
+			if worn_id != "":
+				examine(worn_id))
+		var label := Label.new()
+		label.theme_type_variation = &"MutedLabel"
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		row.add_child(icon_slot)
+		row.add_child(label)
+		_worn_rows.add_child(row)
+		_worn_slots[slot] = icon_slot
+		_worn_labels[slot] = label
 
 
 ## Opens on a given tab, or switches to it if already open — it never closes
@@ -90,6 +133,7 @@ func show_tab(tab: Tab) -> void:
 func _before_show() -> void:
 	Game.refresh_recipes()
 	_placed.fill("")
+	_selected_item_id = ""
 	_message.text = ""
 	show_tab(_tab)
 
@@ -122,6 +166,78 @@ func row_texts() -> Array[String]:
 
 func message() -> String:
 	return _message.text
+
+
+# --- worn and examine (M8 step 5, D-081) -------------------------------------------
+
+## Selects a thing to show in the examine panel — from the bag, from the
+## bench's own bag grid, or from what is worn. Stays selected across a tab
+## switch; a fresh open clears it.
+func examine(item_id: String) -> void:
+	_selected_item_id = item_id
+	_message.text = ""
+	_render()
+
+
+func selected_item() -> String:
+	return _selected_item_id
+
+
+## Wears or wields the examined thing. Refused as `Game.equip()` refuses
+## (`not_owned`, `not_equipable`).
+func wear_selected() -> Result:
+	var equipped := Game.equip(_selected_item_id)
+	_message.text = "" if equipped.is_ok() else _refusal_text("ui.items", equipped.code)
+	_render()
+	return equipped
+
+
+## Takes off the examined thing. Refused `not_worn`.
+func take_off_selected() -> Result:
+	var item := Game.data.get_entry("items", _selected_item_id)
+	var taken := Game.unequip(str(item.get("slot", "")))
+	_message.text = "" if taken.is_ok() else _refusal_text("ui.items", taken.code)
+	_render()
+	return taken
+
+
+## Switches to the Bench tab and lays the examined thing on the grid — the
+## same `place()` a click on the bench's own bag grid does.
+func lay_selected_on_bench() -> Result:
+	if _selected_item_id == "":
+		return Result.failure("not_owned")
+	show_tab(Tab.BENCH)
+	return place(_selected_item_id)
+
+
+func examine_name() -> String:
+	return _examine_name.text
+
+
+func examine_summary() -> String:
+	return _examine_summary.text
+
+
+func examine_description() -> String:
+	return _examine_desc.text
+
+
+## The examine panel's generated facts, in order, localised.
+func examine_fact_texts() -> Array[String]:
+	var out: Array[String] = []
+	for child in _examine_facts.get_children():
+		if child is Label:
+			out.append((child as Label).text)
+	return out
+
+
+## The worn panel's rows, "slot|item name" ("slot|" for an empty slot).
+func worn_texts() -> Array[String]:
+	var out: Array[String] = []
+	for slot: String in EquipRules.SLOTS:
+		var worn_id := str(Game.player.equipment.get(slot, ""))
+		out.append("%s|%s" % [slot, ItemIcons.name_of(worn_id) if worn_id != "" else ""])
+	return out
 
 
 # --- the bench --------------------------------------------------------------------
@@ -270,6 +386,8 @@ func _render() -> void:
 	_render_bag_rows()
 	_render_bench()
 	_render_book()
+	_render_worn()
+	_render_examine()
 	_condition.text = StatusText.condition()
 	_job.text = StatusText.job()
 	_job.visible = _job.text != ""
@@ -278,6 +396,58 @@ func _render() -> void:
 		"weight": "%.1f" % inventory.total_weight(), "capacity": "%.0f" % inventory.capacity(),
 		"cash": Game.player.wallet.cash,
 	})
+
+
+func _render_worn() -> void:
+	for slot: String in EquipRules.SLOTS:
+		var worn_id := str(Game.player.equipment.get(slot, ""))
+		var icon_slot: ItemSlot = _worn_slots[slot]
+		var label: Label = _worn_labels[slot]
+		icon_slot.show_item(worn_id, 1)
+		icon_slot.disabled = worn_id == ""
+		label.text = ItemIcons.name_of(worn_id) if worn_id != "" else Localization.t("ui.items.slot." + slot)
+
+
+func _render_examine() -> void:
+	for child in _examine_facts.get_children():
+		_examine_facts.remove_child(child)
+		child.queue_free()
+	if _selected_item_id == "" or not Game.data.has_entry("items", _selected_item_id):
+		_selected_item_id = ""
+		_examine_icon.show_item("")
+		_examine_name.text = ""
+		_examine_summary.text = ""
+		_examine_desc.text = Localization.t("ui.items.nothing_selected")
+		_use_button.visible = false
+		_wear_button.visible = false
+		_take_off_button.visible = false
+		_lay_on_bench_button.visible = false
+		return
+	var item := Game.data.get_entry("items", _selected_item_id)
+	_examine_icon.show_item(_selected_item_id, 1)
+	_examine_name.text = Localization.t(str(item.get("name_key", _selected_item_id)))
+	var facts := ItemFacts.facts_of(item)
+	var summary: Array[String] = []
+	for fact: Dictionary in facts.slice(0, 3):   # kind, weight, value
+		summary.append(Localization.t(str(fact["key"]), fact["args"]))
+	_examine_summary.text = " · ".join(summary)
+	var desc := ItemFacts.description_of(item)
+	_examine_desc.text = desc
+	for fact: Dictionary in facts.slice(3):
+		var label := Label.new()
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.theme_type_variation = &"MutedLabel"
+		label.text = Localization.t(str(fact["key"]), fact["args"])
+		_examine_facts.add_child(label)
+
+	var owned := Game.player.inventory.has(_selected_item_id)
+	var slot := str(item.get("slot", ""))
+	var worn := not slot.is_empty() and str(Game.player.equipment.get(slot, "")) == _selected_item_id
+	var usable := ItemRules.USABLE_KINDS.has(str(item.get("kind", ""))) and not ItemRules.effects_of(item).is_empty()
+	_use_button.visible = owned and usable
+	_wear_button.visible = owned and not slot.is_empty() and not worn
+	_take_off_button.visible = worn
+	_lay_on_bench_button.visible = owned
 
 
 func _render_bag_rows() -> void:
@@ -299,6 +469,10 @@ func _render_bag_rows() -> void:
 func _row(item_id: String, count: int) -> HBoxContainer:
 	var item := Game.data.get_entry("items", item_id)
 	var row := HBoxContainer.new()
+	row.mouse_filter = Control.MOUSE_FILTER_STOP
+	row.gui_input.connect(func(event: InputEvent) -> void:
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			examine(item_id))
 	row.add_theme_constant_override("separation", 16)
 	var item_name := Label.new()
 	item_name.text = Localization.t(str(item.get("name_key", item_id)))

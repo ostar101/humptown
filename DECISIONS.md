@@ -2922,6 +2922,112 @@ the way every other action in this codebase is tested before its window
 exists. The panel that calls them is D-081, alongside examine — a player
 cannot wear anything through the interface until that step lands.
 
+## D-081 — Examine, and the WORN/EXAMINE panels that finish `ItemsWindow`
+
+**Why (M8 step 5, the last of session A).** Nothing told the player what a
+thing in their bag actually *did* — no way to read a joint's effects before
+rolling one, no way to see a weapon's bite before carrying it into a fight,
+and, since D-080 landed with no UI, no way to wear the boots it made
+equipable. This step closes all three: `ItemFacts` generates what to say,
+`ItemsWindow` gains two more panels (WORN on the left, EXAMINE on the right,
+both visible on every tab) to say it and to act on it.
+
+**`ItemFacts`** (`src/presentation/item_facts.gd`, pure, the `ItemRules`
+pattern): `facts_of(item) -> Array[Dictionary]` returns `{key, args}` —
+never a finished string, so the window localises every fact the same way
+everything else on screen is. Generated for all 115 items: kind, weight,
+value (omitted when 0 — a lot of misc items are worthless and saying so
+twice is noise), then whichever of the five condition meters the item
+touches (`hunger`/`sleep`/`health`/`stress`/`intoxication`, sign read off
+each item's own field — no guessing), damage **banded** into light/moderate/
+heavy so a raw `0.13` is never printed, where it is worn (`slot`), whether it
+softens a blow (`armour`), widens the bag (`capacity_bonus`), needs a light
+(`needs_any`), leaves something behind (`leaves`, naming the left-behind item
+by its own `name_of()`), and one line for every `kind: "drug"` item: "You
+would not want to be caught with it." `description_of(item)` reads the
+optional authored sentence at `item.<slug>.desc` (the `skill.<id>.desc`
+precedent, previously authored but never consumed by any code — this is its
+first reader), checked with `Localization.t(key) != key` so a missing one is
+never an error. **30 of 115 items are authored** (a spread across weapons,
+drugs, tools, medical, documents, drink); the other 85 rely on generated
+facts alone, deliberately — `test_content_name_keys_all_have_english_strings`
+(`tests/test_localization.gd`) is **not** extended to require one, with the
+reason written into its own docstring, since checking `name_key` and
+checking an optional `.desc` are different questions.
+
+**`ItemRules.KEEP`**, moved here from `DialogueDirector.GIFT_KEEP` — the
+phone and the keys, the two things the player can never give away. One list
+of "things the game does not work without", where the conventions doc always
+said it should live, now that `ItemRules` is clearly the home for
+cross-cutting item facts rather than just usable-item judging.
+
+**`ItemsWindow` gains two panels, both visible regardless of tab** (`M8
+step 3's` three-tab body sits between them, untouched in shape): **WORN**
+(left, `custom_minimum_size 140`) is six always-present rows, one per
+`EquipRules.SLOTS`, each an `ItemSlot` + a label reading the worn thing's
+name or, empty, the slot's own name ("Head", "Feet", …); clicking an
+occupied one calls `examine()`. **EXAMINE** (right, `custom_minimum_size
+200`) shows the selected item's icon, name, a kind·weight·value summary
+line (the first three `ItemFacts`, joined), the authored sentence if there
+is one, every other generated fact, and up to four buttons — **Use**,
+**Wear**, **Take off**, **Lay on bench** — each `.visible` set from what the
+selected item actually is and whether it is owned or worn, not from which
+tab is open. `_examine_icon` is one persistent `ItemSlot` built once in
+`_ready()`, the `_output`/`_grid_slots` pattern already established.
+
+**Selecting for examine is a `gui_input` handler on each bag row, not a
+new child node** — `row.mouse_filter = STOP` and a left-click check inside
+`gui_input`, so `row.get_child(0)` stays the `PanelContainer` from
+`ItemIcons.tile()` and `item_name` stays a `Label`. Either would have broken
+an existing test (`test_the_bag_and_the_shop_rows_carry_the_picture`'s
+`row.get_child(0) is PanelContainer`, or `row_texts()`'s `child is Label`
+scan) had the row's own children changed shape to make it clickable instead.
+
+**Selection persists across a tab switch, clears on a fresh open**:
+`show_tab()` never touches `_selected_item_id`; `_before_show()` resets it to
+`""`, so examining a joint on the Bag tab and then switching to Bench to
+craft with it keeps the joint in view, but reopening the window later starts
+clean.
+
+**Wear/Take off go through `Game.equip()`/`unequip()`** exactly as D-080
+left them — the window adds no new rules, only a `"ui.items"`-prefixed
+refusal lookup (`not_owned`, `not_equipable`, `not_worn`) alongside the
+existing `"ui.bag"` and `"ui.craft"` ones. **Lay on bench** switches to the
+Bench tab and calls the existing `place()` — no new rule, a shortcut through
+ones that already exist.
+
+**The window widened, then had to be pulled back in.** A first pass at
+1480×640 (`Frame` offset ±740/±320) clipped both new columns off-screen
+against the project's 1280×720 viewport (`project.godot`
+`window/size/viewport_*`) — caught by a screenshot, not a test, since no
+test asserts on-screen bounds. Settled at 1040×600 (±520/±300), `Worn` down
+to 140px minimum, `Examine` to 200px, the bench's own crafting column from
+340px to 240px, column separation from 22px to 14px. Fits with margin at the
+project's default resolution; worth another look if the window is ever
+resized for a different target resolution.
+
+**Tests.** `tests/test_item_facts.gd` (13 tests): every item gets kind +
+weight, value omitted at zero, a food feeds you, damage is banded and never
+prints a raw float, a non-weapon has no damage fact, the slot and armour
+facts, the backpack's capacity fact, needs-fire, leaves-behind naming the
+item, the drug warning (and its absence on food), the authored sentence
+round-trip, and a count check that between 25 and 39 items are authored (the
+plan's "~30", with room for judgement either side but a guard against
+silently doubling every item up by accident). `tests/test_items_window.gd`
+gains ten more: nothing selected on a fresh open, examining shows name/
+summary/description/facts, selection survives a tab switch, a fresh open
+clears it, wearing and taking off through the panel, refusal when examining
+something not owned, laying the examined thing on the bench switches tab and
+places it, and the worn panel's own row texts.
+
+**Not built here.** No clothing beyond the boots exists yet to fill head/
+body/legs — three of six slots have nothing to put in them until M8's later
+content sessions author more. Bench-tab and bag-picker-grid items are not
+individually examinable (only Bag-tab rows and worn slots are); switch to
+the Bag tab first, or use Lay on bench from there. No drag-and-drop; every
+interaction here is a click, matching the rest of the window. This closes
+M8 session A (steps 1-5); the shady spectrum (steps 6-10) is session B.
+
 **A render ghost, checked and not a bug.** A `--bag=1` screenshot showed a
 faint (≈5-10% opacity) ghost of the Bench grid and Recipe book behind the Bag
 rows. `test_hidden_tabs_are_actually_hidden` confirms both `visible` and

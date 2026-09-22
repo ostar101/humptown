@@ -225,3 +225,92 @@ func test_hidden_tabs_are_actually_hidden() -> void:
 	assert_true(bag_body.is_visible_in_tree())
 	assert_false(bench_body.is_visible_in_tree())
 	assert_false(recipes_body.is_visible_in_tree())
+
+
+# --- worn and examine (M8 step 5, D-081) -------------------------------------------
+
+func test_nothing_is_selected_on_a_fresh_open() -> void:
+	_view.open_bag()
+	var window := _view.items_window()
+	assert_eq(window.selected_item(), "")
+	assert_eq(window.examine_description(), "Pick something to look at it more closely.")
+
+
+func test_examining_a_bag_item_shows_its_name_and_facts() -> void:
+	_bag("item_puukko", 1)
+	_view.open_bag()
+	var window := _view.items_window()
+	window.examine("item_puukko")
+	assert_eq(window.selected_item(), "item_puukko")
+	assert_eq(window.examine_name(), "Puukko")
+	assert_true(window.examine_summary().contains("Weapon"), window.examine_summary())
+	assert_eq(window.examine_description(), "A Finn's everyday knife, worn on the belt more often than it is used.")
+	assert_true(window.examine_fact_texts().has("Hits harder than a fist."), str(window.examine_fact_texts()))
+
+
+func test_examine_stays_selected_across_a_tab_switch() -> void:
+	_bag("item_puukko", 1)
+	_view.open_bag()
+	var window := _view.items_window()
+	window.examine("item_puukko")
+	_view.open_bench()
+	assert_eq(window.selected_item(), "item_puukko")
+
+
+func test_a_fresh_open_clears_the_selection() -> void:
+	_bag("item_puukko", 1)
+	_view.open_bag()
+	var window := _view.items_window()
+	window.examine("item_puukko")
+	window.close()
+	_view.open_bag()
+	assert_eq(window.selected_item(), "")
+
+
+func test_wearing_the_examined_thing_puts_it_on() -> void:
+	_bag("item_work_boots", 1)
+	_view.open_bag()
+	var window := _view.items_window()
+	window.examine("item_work_boots")
+	assert_ok(window.wear_selected())
+	assert_eq(Game.player.equipment["feet"], "item_work_boots")
+	assert_has(window.worn_texts(), "feet|Work Boots")
+
+
+func test_taking_off_the_examined_thing_clears_the_slot() -> void:
+	Game.player.inventory.add("item_work_boots", 1)
+	Game.equip("item_work_boots")
+	_view.open_bag()
+	var window := _view.items_window()
+	window.examine("item_work_boots")
+	assert_ok(window.take_off_selected())
+	assert_false(Game.player.equipment.has("feet"))
+	assert_has(window.worn_texts(), "feet|")
+
+
+func test_examining_something_you_do_not_own_is_refused() -> void:
+	_view.open_bag()
+	var window := _view.items_window()
+	window.examine("item_puukko")
+	assert_err(window.wear_selected(), "not_owned")
+	assert_eq(window.message(), "You don't have that.")
+
+
+func test_laying_the_examined_thing_on_the_bench_switches_tab_and_places_it() -> void:
+	_bag("item_cannabis_bud", 1)
+	_view.open_bag()
+	var window := _view.items_window()
+	window.examine("item_cannabis_bud")
+	assert_ok(window.lay_selected_on_bench())
+	assert_eq(window.current_tab(), ItemsWindow.Tab.BENCH)
+	assert_eq(window.grid_ids()[0], "item_cannabis_bud")
+
+
+func test_clicking_a_worn_slot_examines_what_is_there() -> void:
+	Game.player.inventory.add("item_work_boots", 1)
+	Game.equip("item_work_boots")
+	_view.open_bag()
+	var window := _view.items_window()
+	assert_eq(window.worn_texts(), [
+		"head|", "body|", "legs|", "feet|Work Boots", "hand|", "back|",
+	] as Array[String])

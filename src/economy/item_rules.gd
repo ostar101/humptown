@@ -21,6 +21,10 @@ const MINUTES_BY_KIND := {"food": 10, "drink": 5, "medical": 5, "drug": 10}
 const NOT_HUNGRY := 0.15
 ## At or above this, medicine that only heals is refused: you are not hurt.
 const NOT_HURT := 0.99
+## Things the player cannot give away, drop or otherwise part with: the game
+## does not work without them (D-062, moved here from DialogueDirector.
+## GIFT_KEEP at D-081 so there is one list of them).
+const KEEP: Array[String] = ["item_phone", "item_keys"]
 
 
 ## What using one does: {meter: delta}, from the item's data.

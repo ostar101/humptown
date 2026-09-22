@@ -56,8 +56,6 @@ var asks: AskDirector = AskDirector.new()
 ## did, and where the answer came from.
 var turn_log: Array[Dictionary] = []
 const TURN_LOG_LIMIT := 8
-## Things the player cannot hand over: the game does not work without them (D-062).
-const GIFT_KEEP: Array[String] = ["item_phone", "item_keys"]
 
 var _npcs: NpcRegistry = null
 var _world: WorldState = null
@@ -647,7 +645,7 @@ func _gift_state(item_id: String) -> Dictionary:
 	var entry := _data.get_entry("items", item_id)
 	return {
 		"count": _player.inventory.count_of(item_id), "value": int(entry.get("value", 0)),
-		"name": _item_name(item_id), "keep": item_id in GIFT_KEEP,
+		"name": _item_name(item_id), "keep": item_id in ItemRules.KEEP,
 	}
 
 

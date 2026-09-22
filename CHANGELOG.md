@@ -6,6 +6,7 @@ versions are milestones rather than releases until there is something to release
 ## [Unreleased]
 
 ### Added
+- Examine (D-081): pick anything in your bag, or whatever you're wearing, to see its picture, what it is, what it does, and — for about a third of the 115 things in the game — a sentence about it. Wear and take off boots and weapons from there, or lay a thing straight onto the bench to work with. What is worn shows on the left of the window on every tab.
 - Equipment (D-080): six slots — head, body, legs, feet, hand, back — for weapons, boots and a backpack. Wearing something else in the same slot just swaps it, no need to take the old thing off first; a worn backpack widens what you can carry, a worn weapon is what a fight uses. Boots take the edge off a blow. No window to wear things from yet — that comes with examine.
 
 ### Changed

@@ -60,6 +60,10 @@ func test_translation_gaps_are_reported_not_fatal() -> void:
 	Localization.set_locale("en")
 
 
+## Checks every content table's `name_key`, never an item's `.desc` (M8 step
+## 5, D-081): that sentence is deliberately optional, authored for ~30 of
+## 115 items where the generated facts cannot speak for it, and its absence
+## is not a content bug — `ItemFacts.description_of` treats "" as normal.
 func test_content_name_keys_all_have_english_strings() -> void:
 	Localization.set_locale("en")
 	var data := DataRegistry.new()

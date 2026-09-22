@@ -33,9 +33,9 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -580.0
+offset_left = -520.0
 offset_top = -300.0
-offset_right = 580.0
+offset_right = 520.0
 offset_bottom = 300.0
 grow_horizontal = 2
 grow_vertical = 2
@@ -59,11 +59,37 @@ layout_mode = 2
 theme_type_variation = &"MutedLabel"
 auto_translate_mode = 2
 
-[node name="Tabs" type="HBoxContainer" parent="Root/Frame/Layout"]
+[node name="Columns" type="HBoxContainer" parent="Root/Frame/Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 14
+
+[node name="Worn" type="VBoxContainer" parent="Root/Frame/Layout/Columns"]
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="WornTitle" type="Label" parent="Root/Frame/Layout/Columns/Worn"]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "ui.items.worn"
+
+[node name="WornRows" type="VBoxContainer" parent="Root/Frame/Layout/Columns/Worn"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TabArea" type="VBoxContainer" parent="Root/Frame/Layout/Columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="Tabs" type="HBoxContainer" parent="Root/Frame/Layout/Columns/TabArea"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="BagTab" type="Button" parent="Root/Frame/Layout/Tabs"]
+[node name="BagTab" type="Button" parent="Root/Frame/Layout/Columns/TabArea/Tabs"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(120, 0)
 layout_mode = 2
@@ -72,7 +98,7 @@ button_pressed = true
 button_group = SubResource("tabs")
 text = "ui.items.bag_tab"
 
-[node name="BenchTab" type="Button" parent="Root/Frame/Layout/Tabs"]
+[node name="BenchTab" type="Button" parent="Root/Frame/Layout/Columns/TabArea/Tabs"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(120, 0)
 layout_mode = 2
@@ -80,7 +106,7 @@ toggle_mode = true
 button_group = SubResource("tabs")
 text = "ui.items.bench_tab"
 
-[node name="RecipesTab" type="Button" parent="Root/Frame/Layout/Tabs"]
+[node name="RecipesTab" type="Button" parent="Root/Frame/Layout/Columns/TabArea/Tabs"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(120, 0)
 layout_mode = 2
@@ -88,90 +114,90 @@ toggle_mode = true
 button_group = SubResource("tabs")
 text = "ui.items.recipes_tab"
 
-[node name="BagBody" type="ScrollContainer" parent="Root/Frame/Layout"]
+[node name="BagBody" type="ScrollContainer" parent="Root/Frame/Layout/Columns/TabArea"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="Rows" type="VBoxContainer" parent="Root/Frame/Layout/BagBody"]
+[node name="Rows" type="VBoxContainer" parent="Root/Frame/Layout/Columns/TabArea/BagBody"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 8
 
-[node name="BenchBody" type="HBoxContainer" parent="Root/Frame/Layout"]
+[node name="BenchBody" type="HBoxContainer" parent="Root/Frame/Layout/Columns/TabArea"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 28
+theme_override_constants/separation = 18
 
-[node name="Bench" type="VBoxContainer" parent="Root/Frame/Layout/BenchBody"]
-custom_minimum_size = Vector2(340, 0)
+[node name="Bench" type="VBoxContainer" parent="Root/Frame/Layout/Columns/TabArea/BenchBody"]
+custom_minimum_size = Vector2(240, 0)
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="MakeRow" type="HBoxContainer" parent="Root/Frame/Layout/BenchBody/Bench"]
+[node name="MakeRow" type="HBoxContainer" parent="Root/Frame/Layout/Columns/TabArea/BenchBody/Bench"]
 layout_mode = 2
 theme_override_constants/separation = 14
 
-[node name="Grid" type="GridContainer" parent="Root/Frame/Layout/BenchBody/Bench/MakeRow"]
+[node name="Grid" type="GridContainer" parent="Root/Frame/Layout/Columns/TabArea/BenchBody/Bench/MakeRow"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/h_separation = 6
 theme_override_constants/v_separation = 6
 columns = 3
 
-[node name="Arrow" type="Label" parent="Root/Frame/Layout/BenchBody/Bench/MakeRow"]
+[node name="Arrow" type="Label" parent="Root/Frame/Layout/Columns/TabArea/BenchBody/Bench/MakeRow"]
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_font_sizes/font_size = 40
 text = "→"
 
-[node name="OutputHolder" type="VBoxContainer" parent="Root/Frame/Layout/BenchBody/Bench/MakeRow"]
+[node name="OutputHolder" type="VBoxContainer" parent="Root/Frame/Layout/Columns/TabArea/BenchBody/Bench/MakeRow"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 4
 
-[node name="Result" type="Label" parent="Root/Frame/Layout/BenchBody/Bench"]
+[node name="Result" type="Label" parent="Root/Frame/Layout/Columns/TabArea/BenchBody/Bench"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
 auto_translate_mode = 2
 autowrap_mode = 3
 
-[node name="Buttons" type="HBoxContainer" parent="Root/Frame/Layout/BenchBody/Bench"]
+[node name="Buttons" type="HBoxContainer" parent="Root/Frame/Layout/Columns/TabArea/BenchBody/Bench"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="Make" type="Button" parent="Root/Frame/Layout/BenchBody/Bench/Buttons"]
+[node name="Make" type="Button" parent="Root/Frame/Layout/Columns/TabArea/BenchBody/Bench/Buttons"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(140, 0)
 layout_mode = 2
 text = "ui.craft.make"
 
-[node name="Clear" type="Button" parent="Root/Frame/Layout/BenchBody/Bench/Buttons"]
+[node name="Clear" type="Button" parent="Root/Frame/Layout/Columns/TabArea/BenchBody/Bench/Buttons"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(110, 0)
 layout_mode = 2
 text = "ui.craft.clear"
 
-[node name="Bag" type="VBoxContainer" parent="Root/Frame/Layout/BenchBody"]
+[node name="Bag" type="VBoxContainer" parent="Root/Frame/Layout/Columns/TabArea/BenchBody"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="BagTitle" type="Label" parent="Root/Frame/Layout/BenchBody/Bag"]
+[node name="BagTitle" type="Label" parent="Root/Frame/Layout/Columns/TabArea/BenchBody/Bag"]
 layout_mode = 2
 theme_type_variation = &"MutedLabel"
 text = "ui.craft.bag"
 
-[node name="BagScroll" type="ScrollContainer" parent="Root/Frame/Layout/BenchBody/Bag"]
+[node name="BagScroll" type="ScrollContainer" parent="Root/Frame/Layout/Columns/TabArea/BenchBody/Bag"]
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="BagGrid" type="GridContainer" parent="Root/Frame/Layout/BenchBody/Bag/BagScroll"]
+[node name="BagGrid" type="GridContainer" parent="Root/Frame/Layout/Columns/TabArea/BenchBody/Bag/BagScroll"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -179,18 +205,87 @@ theme_override_constants/h_separation = 6
 theme_override_constants/v_separation = 6
 columns = 5
 
-[node name="RecipesBody" type="ScrollContainer" parent="Root/Frame/Layout"]
+[node name="RecipesBody" type="ScrollContainer" parent="Root/Frame/Layout/Columns/TabArea"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="BookRows" type="VBoxContainer" parent="Root/Frame/Layout/RecipesBody"]
+[node name="BookRows" type="VBoxContainer" parent="Root/Frame/Layout/Columns/TabArea/RecipesBody"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 6
+
+[node name="Examine" type="VBoxContainer" parent="Root/Frame/Layout/Columns"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ExamineTitle" type="Label" parent="Root/Frame/Layout/Columns/Examine"]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "ui.items.examine"
+
+[node name="ExamineIconHolder" type="VBoxContainer" parent="Root/Frame/Layout/Columns/Examine"]
+unique_name_in_owner = true
+layout_mode = 2
+alignment = 1
+
+[node name="ExamineName" type="Label" parent="Root/Frame/Layout/Columns/Examine"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+auto_translate_mode = 2
+autowrap_mode = 3
+
+[node name="ExamineSummary" type="Label" parent="Root/Frame/Layout/Columns/Examine"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+auto_translate_mode = 2
+autowrap_mode = 3
+
+[node name="ExamineDesc" type="Label" parent="Root/Frame/Layout/Columns/Examine"]
+unique_name_in_owner = true
+layout_mode = 2
+auto_translate_mode = 2
+autowrap_mode = 3
+
+[node name="ExamineFacts" type="VBoxContainer" parent="Root/Frame/Layout/Columns/Examine"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+
+[node name="ExamineButtons" type="VBoxContainer" parent="Root/Frame/Layout/Columns/Examine"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="UseButton" type="Button" parent="Root/Frame/Layout/Columns/Examine/ExamineButtons"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "ui.bag.use"
+
+[node name="WearButton" type="Button" parent="Root/Frame/Layout/Columns/Examine/ExamineButtons"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "ui.items.wear"
+
+[node name="TakeOffButton" type="Button" parent="Root/Frame/Layout/Columns/Examine/ExamineButtons"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "ui.items.take_off"
+
+[node name="LayOnBenchButton" type="Button" parent="Root/Frame/Layout/Columns/Examine/ExamineButtons"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "ui.items.lay_on_bench"
 
 [node name="Job" type="Label" parent="Root/Frame/Layout"]
 unique_name_in_owner = true
