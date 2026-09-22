@@ -49,6 +49,10 @@ signal money_moved(amount: int, kind: String, reason: String)
 ## Something in the player's bag: `delta` more (or fewer) of an item.
 signal item_moved(item_id: String, delta: int)
 signal inventory_changed()
+## Worn or wielded (M8 step 4, D-080): `slot` now holds `item_id`, or "" when
+## the slot was emptied — by an unequip, or by `PlayerState.reconcile_equipment()`
+## noticing the thing left the bag some other way (sold, given, crafted away).
+signal equipment_changed(slot: String, item_id: String)
 ## The player made something (D-070), and found a recipe: by making it or by
 ## holding everything it needs.
 signal item_crafted(recipe_id: String)

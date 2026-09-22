@@ -5,6 +5,9 @@ versions are milestones rather than releases until there is something to release
 
 ## [Unreleased]
 
+### Added
+- Equipment (D-080): six slots — head, body, legs, feet, hand, back — for weapons, boots and a backpack. Wearing something else in the same slot just swaps it, no need to take the old thing off first; a worn backpack widens what you can carry, a worn weapon is what a fight uses. Boots take the edge off a blow. No window to wear things from yet — that comes with examine.
+
 ### Changed
 - The bag and the bench are one window now, "Things", with a Bag/Bench/Recipes tab each. `I` opens on the bag, `C` on the bench; pressing the other key switches tab instead of closing the window, so you no longer lose your place to check what something does (D-079).
 - Internal: the bag and bench windows now share one base class for opening, closing and refusal messages (`GameWindow`), no player-visible change (D-078).

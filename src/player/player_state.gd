@@ -46,9 +46,16 @@ var home_location: String = ""
 var known_places: Dictionary = {}
 ## Crafting recipes the player has found (D-070): made once, or had the makings of.
 var known_recipes: Array[String] = []
+## Worn or wielded (M8 step 4, D-080): slot -> item id, six slots (head, body,
+## legs, feet, hand, back), no more. A pointer, not a move — the thing stays
+## in `inventory` and still weighs what it always did.
+var equipment: Dictionary = {}
+
+var _data: DataRegistry = null
 
 
 func setup(data: DataRegistry) -> void:
+	_data = data
 	skills.setup(data)
 	inventory.setup(data)
 	inventory.announces = true   # what goes in and out of the bag is told to the feed (D-059)
@@ -128,12 +135,38 @@ func unlock_context(reputation: Reputation, knowledge: KnowledgeNetwork) -> Dict
 
 
 ## Carry capacity rises with strength and with whatever bag is equipped.
+## Applies to `inventory` only, never `stash`: a backpack sitting in the
+## cupboard at home does nothing for what the cupboard holds.
 func _apply_carry_capacity() -> void:
 	inventory.base_capacity = 12.0 + float(stats.attribute("strength")) * 1.6
+	inventory.bonus_capacity = _equipped_capacity_bonus()
 
 
 func on_strength_changed() -> void:
 	_apply_carry_capacity()
+
+
+## Clears any slot whose thing left the bag some other way — sold, given,
+## crafted away — then reapplies the capacity a worn backpack gives. The one
+## place that closes that leak (D-080); call after any change to `equipment`
+## and whenever `inventory` changes.
+func reconcile_equipment() -> void:
+	for slot: String in equipment.keys().duplicate():
+		var item_id: String = str(equipment[slot])
+		if not inventory.has(item_id):
+			equipment.erase(slot)
+			Events.equipment_changed.emit(slot, "")
+	_apply_carry_capacity()
+
+
+func _equipped_capacity_bonus() -> float:
+	if _data == null:
+		return 0.0
+	var bonus := 0.0
+	for slot in equipment:
+		var item := _data.get_entry("items", str(equipment[slot]))
+		bonus += float(item.get("capacity_bonus", 0.0))
+	return bonus
 
 
 func to_dict() -> Dictionary:
@@ -156,6 +189,7 @@ func to_dict() -> Dictionary:
 		"home_location": home_location,
 		"known_places": known_places,
 		"known_recipes": known_recipes,
+		"equipment": equipment,
 	}
 
 
@@ -191,4 +225,7 @@ func from_dict(d: Dictionary) -> void:
 		known_recipes.append(str(recipe_id))
 	if known_places.is_empty() and home_location != "":
 		known_places[home_location] = "visited"   # a save from before the map: you know where you live
+	equipment = {}
+	for slot in d.get("equipment", {}):
+		equipment[str(slot)] = str(d["equipment"][slot])
 	_apply_carry_capacity()

@@ -180,14 +180,29 @@ func _player_combatant() -> Dictionary:
 		"resolve": stats.attribute("resolve"), "skill": _player.skills.level_of("brawling"),
 		"intimidation": _player.skills.level_of("intimidation"),
 		"weapon": ItemRules.damage_of(_data.get_entry("items", wielded)), "weapon_item": wielded,
+		"armour": _worn_armour(),
 		"effectiveness": stats.effectiveness(), "defending": false, "state": "up", "traits": [],
 	}
 
 
-## The best thing the player has on them to hit with (D-070): the carried item
-## with the largest `damage`, or "" with bare hands. The crowbar in a bag is one;
-## so is a puukko. Nothing has to be equipped, and nothing is used up.
+## The player's total armour (M8 step 4, D-080): whatever is worn, summed —
+## today that means boots at most, but the slots carry more later.
+func _worn_armour() -> float:
+	var total := 0.0
+	for slot in _player.equipment:
+		total += ItemRules.armour_of(_data.get_entry("items", str(_player.equipment[slot])))
+	return total
+
+
+## The best thing the player has to hit with (D-070, D-080): whatever is in
+## the hand slot, or — with nothing equipped there — the carried item with the
+## largest `damage`, or "" with bare hands. The crowbar in a bag is one; so is
+## a puukko. This fallback is kept on purpose: removing it would make an
+## existing save's fights weaker with no migration that could fix it.
 func wielded_weapon() -> String:
+	var worn := str(_player.equipment.get("hand", ""))
+	if worn != "" and _player.inventory.has(worn):
+		return worn
 	var best := ""
 	var best_damage := 0.0
 	for item_id in _player.inventory.item_ids():

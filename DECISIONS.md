@@ -2842,6 +2842,86 @@ are D-080 and D-081. The recipe book's move to its own tab is the only
 visible change a player would notice; everything else is the same words in a
 new container.
 
+## D-080 — Equipment: six slots, a pointer not a move
+
+**Why (M8 step 4).** `wielded_weapon()` scanned the whole bag for the biggest
+`damage` — never wrong, but never a choice either, and `item_backpack.
+capacity_bonus` sat in `data/items.json` read by nothing. Six slots close
+both gaps: `head, body, legs, feet, hand, back`, no more — four for armour,
+one so a fight's weapon can be a decision, one so the backpack finally does
+something.
+
+**Data.** `"slot": "hand"` on the 19 `kind: "weapon"` items (a sed pass over
+`data/items.json`, verified by count before and after — the tools/frying-pan/
+stick/brick items that can also land a blow keep no slot, since they are
+found weapons, not equipment). `item_work_boots` gets `"slot": "feet",
+"armour": 0.05`; `item_backpack` gets `"slot": "back"` alongside its existing
+`capacity_bonus: 10.0`.
+
+**`EquipRules`** (`src/economy/equip_rules.gd`, pure, the `ShopRules`
+pattern): `judge_equip({owned, slot})` refuses `not_owned` / `not_equipable`;
+`judge_unequip({worn})` refuses `not_worn`. Wearing something else in an
+occupied slot is not a refusal — it just moves the pointer; no unequip step
+first, the way changing boots does not need you to stand barefoot in between.
+
+**`PlayerState.equipment: Dictionary`** (slot → item id), *not* `Stack.state`
+— `state` forces a non-merging stack (three bandages would silently split
+into three stacks) and `Inventory` has no stack identity, so "which of my two
+knives" has no answer a pointer-by-item-id can't already give more simply.
+A worn thing is still in `inventory` and still weighs what it always did;
+equipping never moves it.
+
+**`reconcile_equipment()`** (on `PlayerState`) does two things every time it
+runs: clears any slot whose item is no longer owned (closes the leak where a
+worn thing was sold, given or crafted away while still pointed to as
+equipped), then reapplies the capacity bonus from whatever backpack is
+currently worn. `Game._on_inventory_changed()` calls it on every
+`Events.inventory_changed` — which fires for the stash and for bins too, not
+only the bag, since all three are the same `Inventory` class; the guard is
+cheap enough (six slots, one data lookup each) that this is not worth
+narrowing. `Game.equip()`/`unequip()` also call it directly, so the capacity
+bonus is current the instant a backpack goes on or comes off, not just when
+the bag's contents next change.
+
+**The stash guard, kept where the plan said it would be needed.**
+`_apply_carry_capacity()` sets `inventory.bonus_capacity` — never
+`stash.bonus_capacity` — because `equipment` only ever points at things a
+*worn* slot can hold, and nothing wears a slot into the cupboard.
+`test_home.gd:78-79` already asserted stash capacity with an unequipped
+backpack sitting in the stash; `tests/test_equipment.gd`'s
+`test_a_backpack_in_the_stash_does_not_widen_the_stash` asserts the same
+thing from the equipment side, now that there is something that *could*
+wire it up wrong.
+
+**`wielded_weapon()` prefers the hand slot, unconditionally — not the
+highest-damage option between it and the bag** (one-way door #4, kept):
+equipping a weapon is now a real choice, so a deliberately-worn hammer is used
+over a puukko sitting unequipped in the bag. Empty hand slot, or the worn
+thing has left the bag: the fallback scan runs exactly as it always has, so
+every existing fight test and every existing save's fights stay exactly as
+strong as before.
+
+**Armour**: one multiplicative, capped term at the very end of
+`CombatRules.damage()` — `dealt *= 1.0 - clampf(defender.get("armour", 0.0),
+0.0, ARMOUR_CAP)`, `ARMOUR_CAP := 0.6` so nothing is ever untouchable.
+Defaults to `0.0`, so no existing combatant dict had to change; only
+`FightDirector._player_combatant()` sums it now, from
+`ItemRules.armour_of()` over whatever the player has on. NPCs do not wear
+armour yet — nothing authors it for them, so their combatant dicts stay as
+they were.
+
+**Migration v13** (one-way door #2, closed now): `player.equipment` defaults
+to `{}` for a save that predates it (`_v12_to_v13`, mirroring `_v11_to_v12`'s
+shape exactly). Fixture test alongside the feature, `tests/test_equipment.gd
+:test_an_older_save_has_nothing_equipped`, the same pattern as
+`test_crafting.gd:test_an_older_save_knows_no_recipes`.
+
+**Not built here.** No UI: no WORN column, no Wear/Take off buttons.
+`Game.equip()`/`unequip()` are complete and tested through `Game` directly,
+the way every other action in this codebase is tested before its window
+exists. The panel that calls them is D-081, alongside examine — a player
+cannot wear anything through the interface until that step lands.
+
 **A render ghost, checked and not a bug.** A `--bag=1` screenshot showed a
 faint (≈5-10% opacity) ghost of the Bench grid and Recipe book behind the Bag
 rows. `test_hidden_tabs_are_actually_hidden` confirms both `visible` and

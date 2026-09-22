@@ -103,6 +103,7 @@ func _ready() -> void:
 	Events.follow_stop_requested.connect(_on_follow_stop_requested)
 	Events.fight_started.connect(_on_fight_started_follow)
 	Events.crime_committed.connect(_on_crime_committed_follow)
+	Events.inventory_changed.connect(_on_inventory_changed)
 	Log.min_level = int(Settings.get_value("log_level", Log.Level.INFO)) as Log.Level
 	Log.info("game", "Game root ready")
 
@@ -772,6 +773,14 @@ func _start_background_quests(background_id: String) -> void:
 				Events.quest_updated.emit(str(quest_id), "started")
 
 
+## Something left the bag, or its capacity changed underneath it (M8 step 4,
+## D-080): closes the leak where a worn thing was sold, given or crafted away
+## while still pointed to as equipped, and keeps the backpack's bonus current.
+func _on_inventory_changed() -> void:
+	if is_running():
+		player.reconcile_equipment()
+
+
 ## A deed, counted towards every active quest (D-044).
 func _on_player_deed(kind: String, deed: Dictionary) -> void:
 	if not is_running():
@@ -1362,6 +1371,44 @@ func use_item(item_id: String) -> Result:
 		player.stats.modify(str(meter), float(effects[meter]))
 	advance_time(int(use["minutes"]))
 	return Result.success({"kind": "used", "item": item_id, "effects": effects, "minutes": use["minutes"]})
+
+
+# --- worn and wielded (M8 step 4, D-080) -------------------------------------------
+
+## Wears or wields something the player carries, in whatever slot its own
+## data names — a pointer, not a move: the thing stays in the bag and still
+## weighs what it did. Wearing something else in an occupied slot just moves
+## the pointer. Refuses `no_world`, `not_owned`, `not_equipable`.
+func equip(item_id: String) -> Result:
+	var proposal := {"kind": "equip", "item": item_id}
+	if not is_running():
+		return _reject(proposal, "no_world")
+	var judged := EquipRules.judge_equip({
+		"owned": player.inventory.has(item_id),
+		"slot": str(data.get_entry("items", item_id).get("slot", "")),
+	})
+	if judged.is_err():
+		return _reject(proposal, judged.code)
+	var slot: String = judged.value["slot"]
+	player.equipment[slot] = item_id
+	player.reconcile_equipment()
+	Events.equipment_changed.emit(slot, item_id)
+	return Result.success({"kind": "equipped", "slot": slot, "item": item_id})
+
+
+## Takes off whatever is worn in a slot. Refuses `no_world`, `not_worn`.
+func unequip(slot: String) -> Result:
+	var proposal := {"kind": "unequip", "slot": slot}
+	if not is_running():
+		return _reject(proposal, "no_world")
+	var judged := EquipRules.judge_unequip({"worn": str(player.equipment.get(slot, "")) != ""})
+	if judged.is_err():
+		return _reject(proposal, judged.code)
+	var item_id: String = player.equipment[slot]
+	player.equipment.erase(slot)
+	player.reconcile_equipment()
+	Events.equipment_changed.emit(slot, "")
+	return Result.success({"kind": "unequipped", "slot": slot, "item": item_id})
 
 
 # --- putting things together ------------------------------------------------------

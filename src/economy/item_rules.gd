@@ -61,3 +61,8 @@ static func judge_use(item: Dictionary, owned: int, meters: Dictionary, carried:
 ## anything that is not a weapon.
 static func damage_of(item: Dictionary) -> float:
 	return maxf(float(item.get("damage", 0.0)), 0.0)
+
+
+## How much a worn thing softens a blow: 0 for anything that is not armour.
+static func armour_of(item: Dictionary) -> float:
+	return maxf(float(item.get("armour", 0.0)), 0.0)

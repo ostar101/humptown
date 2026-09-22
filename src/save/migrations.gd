@@ -14,7 +14,7 @@ extends RefCounted
 ##   4. Add a test with a fixture of the old shape.
 ## Never renumber or edit an existing step: someone's save depends on it.
 
-const CURRENT_VERSION := 12
+const CURRENT_VERSION := 13
 
 ## version -> name of the static function upgrading it to version + 1.
 const STEPS := {
@@ -29,6 +29,7 @@ const STEPS := {
 	9: "_v9_to_v10",
 	10: "_v10_to_v11",
 	11: "_v11_to_v12",
+	12: "_v12_to_v13",
 }
 
 
@@ -101,6 +102,8 @@ static func _apply_step(version: int, data: Dictionary) -> Dictionary:
 			return _v10_to_v11(data)
 		11:
 			return _v11_to_v12(data)
+		12:
+			return _v12_to_v13(data)
 		_:
 			return {}
 
@@ -214,5 +217,17 @@ static func _v11_to_v12(data: Dictionary) -> Dictionary:
 	var player: Dictionary = data.get("player", {})
 	if not player.has("known_recipes"):
 		player["known_recipes"] = []
+	data["player"] = player
+	return data
+
+
+## v13 keeps what the player is wearing or wielding (M8 step 4, D-080). A v12
+## save has nothing equipped: the six slots start empty, and `wielded_weapon()`
+## still falls back to the best-carried scan, so a fight's weapon does not
+## get weaker for it.
+static func _v12_to_v13(data: Dictionary) -> Dictionary:
+	var player: Dictionary = data.get("player", {})
+	if not player.has("equipment"):
+		player["equipment"] = {}
 	data["player"] = player
 	return data

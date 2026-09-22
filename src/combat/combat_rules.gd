@@ -10,8 +10,10 @@ extends RefCounted
 ##
 ## A combatant is a Dictionary: id, name, side ("player" | "foe"), health and
 ## stamina (0..1), strength, agility, resolve, skill (brawling),
-## intimidation, weapon (a damage bonus), effectiveness (condition, 0.2..1.15),
-## defending (bool), state ("up" | "down" | "fled" | "yielded"), traits.
+## intimidation, weapon (a damage bonus), armour (a damage reduction, 0.0 by
+## default so no existing combatant dict has to change), effectiveness
+## (condition, 0.2..1.15), defending (bool),
+## state ("up" | "down" | "fled" | "yielded"), traits.
 
 const ACTIONS: Array[String] = ["attack", "heavy", "defend", "intimidate", "item", "flee", "yield"]
 
@@ -30,6 +32,8 @@ const DEFENDING_FACTOR := 0.6
 const CRIT_ROLL := 0.94
 const CRIT_FACTOR := 1.5
 const SPREAD_LOW := 0.6
+## Armour softens a blow but never stops it outright.
+const ARMOUR_CAP := 0.6
 
 const STAMINA_ATTACK := 0.05
 const STAMINA_HEAVY := 0.2
@@ -59,7 +63,8 @@ static func hit_chance(attacker: Dictionary, defender: Dictionary, heavy: bool =
 
 
 ## How much a landed blow takes off, from strength, any weapon, a roll for the
-## spread (0..1), and a bracing defender. A roll past CRIT_ROLL is a crit.
+## spread (0..1), a bracing defender, and worn armour (M8 step 4, D-080). A
+## roll past CRIT_ROLL is a crit.
 static func damage(attacker: Dictionary, defender: Dictionary, heavy: bool, roll: float) -> float:
 	var base := BASE_DAMAGE + float(int(attacker["strength"]) - 5) * STRENGTH_DAMAGE + float(attacker.get("weapon", 0.0))
 	var dealt := base * lerpf(SPREAD_LOW, 1.0, clampf(roll, 0.0, 1.0))
@@ -69,6 +74,7 @@ static func damage(attacker: Dictionary, defender: Dictionary, heavy: bool, roll
 		dealt *= CRIT_FACTOR
 	if bool(defender.get("defending", false)):
 		dealt *= DEFENDING_FACTOR
+	dealt *= 1.0 - clampf(float(defender.get("armour", 0.0)), 0.0, ARMOUR_CAP)
 	return maxf(dealt, 0.01)
 
 
