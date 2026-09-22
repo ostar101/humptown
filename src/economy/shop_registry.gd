@@ -41,6 +41,23 @@ func definition(shop_id: String) -> Dictionary:
 	return _data.get_entry("shops", shop_id) if _data != null else {}
 
 
+## The shop this person keeps (M8 D-084), or "" — a shop reached by dealing
+## with them wherever they are, not by walking up to a counter.
+func shop_of(npc_id: String) -> String:
+	if _data == null:
+		return ""
+	for shop_id in _data.ids("shops"):
+		if str(_data.get_entry("shops", shop_id).get("keeper", "")) == npc_id:
+			return str(shop_id)
+	return ""
+
+
+## "legal" (default), "grey" or "illicit" — `DealRules`' business, not this
+## class's; kept here only as a plain read of the shop's own data.
+func legality(shop_id: String) -> String:
+	return str(definition(shop_id).get("legality", "legal"))
+
+
 ## What the shop sells, in the order its data lists it.
 func items_for_sale(shop_id: String) -> Array[String]:
 	var out: Array[String] = []

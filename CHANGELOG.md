@@ -6,6 +6,7 @@ versions are milestones rather than releases until there is something to release
 ## [Unreleased]
 
 ### Added
+- Internal: two illicit shops exist in the data now — Rauno's harder drugs out of Warehouse 9, Kimmo's cannabis and mushrooms out of the Eastfield scrapyard — but there is still no way to reach either one in play; that is next (D-084, M8 session B step 8).
 - Internal: the rules for whether someone will make a grey or illicit deal with the player, and on what terms — not wired to anything yet, so still no player-visible change (D-083, M8 session B step 7).
 - Internal: every person now has a `nature` — how lawful, greedy, risk-taking and discreet they are — backfilled by hand for all 20 from their existing traits and bio, and a `deals` list (currently empty on everyone) naming which shops they deal from. Nothing reads either yet; no player-visible change (D-082, M8 session B step 6).
 - Examine (D-081): pick anything in your bag, or whatever you're wearing, to see its picture, what it is, what it does, and — for about a third of the 115 things in the game — a sentence about it. Wear and take off boots and weapons from there, or lay a thing straight onto the bench to work with. What is worn shows on the left of the window on every tab.

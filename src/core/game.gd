@@ -85,6 +85,11 @@ const RELEASE_MINUTE := 8 * 60
 const CLINIC_BILL := 60
 var _shop_deals := 0
 var _time_paused_before_shopping := false
+## shop id -> today's negotiated price multiplier, from a successful
+## ask_deal (M8 step 9); missing means 1.0, no change. Session-only, not
+## saved — a deal is struck fresh in conversation each time it is wanted,
+## never persisted (M8 D-084), so it never drags a save migration behind it.
+var _deal_factor: Dictionary = {}
 
 
 func _ready() -> void:
@@ -250,6 +255,7 @@ func unload() -> void:
 	consequences = ConsequenceDirector.new()
 	_shopping = ""
 	_shop_deals = 0
+	_deal_factor = {}
 	reputation = Reputation.new()
 	player = PlayerState.new()
 	world = WorldState.new()
@@ -594,6 +600,20 @@ func is_shopping() -> bool:
 	return not _shopping.is_empty()
 
 
+## Sets today's negotiated price at a gated shop, from a successful
+## ask_deal (M8 step 9). Not called by anything yet.
+func set_deal_factor(shop_id: String, factor: float) -> void:
+	_deal_factor[shop_id] = factor
+
+
+## The buy price a `DealRules` factor (M8 D-084) has been struck for, or the
+## shop's plain price when none has (every ordinary shop, always, today).
+func _priced_buy(shop_id: String, item_id: String) -> int:
+	var base := shops.buy_price(shop_id, item_id)
+	var factor: float = _deal_factor.get(shop_id, 1.0)
+	return base if is_equal_approx(factor, 1.0) else ShopRegistry.price(base, factor)
+
+
 ## The counter as the player sees it: {"shop", "location", "staff", "cash",
 ## "bank", "for_sale": [{item, name_key, price, stock}], "will_buy": [{item,
 ## name_key, price, owned}]}. Empty when not shopping.
@@ -606,7 +626,7 @@ func shop_view() -> Dictionary:
 		var deal: Dictionary = shops.haggled(shop_id).get(item_id, {})
 		for_sale.append({
 			"item": item_id, "name_key": str(data.get_entry("items", item_id).get("name_key", item_id)),
-			"price": shops.buy_price(shop_id, item_id), "stock": shops.stock_of(shop_id, item_id),
+			"price": _priced_buy(shop_id, item_id), "stock": shops.stock_of(shop_id, item_id),
 			"haggled": not deal.is_empty(), "discount": shops.discount(shop_id, item_id),
 		})
 	var will_buy: Array[Dictionary] = []
@@ -634,7 +654,7 @@ func buy(item_id: String, quantity: int = 1) -> Result:
 		"sells": shops.sells(shop_id, item_id),
 		"stock": shops.stock_of(shop_id, item_id),
 		"quantity": quantity,
-		"price": shops.buy_price(shop_id, item_id),
+		"price": _priced_buy(shop_id, item_id),
 		"money": player.wallet.total(),
 		"free_weight": player.inventory.free_weight(),
 		"weight": player.inventory.item_weight(item_id),

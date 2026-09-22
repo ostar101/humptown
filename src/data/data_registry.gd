@@ -25,7 +25,7 @@ const REQUIRED_KEYS := {
 	"backgrounds": ["id", "name_key"],
 	"maps": ["id", "region", "width", "height", "spawn"],
 	"interiors": ["id", "interior_of", "width", "height", "door"],
-	"shops": ["id", "location", "stock"],
+	"shops": ["id", "stock"],
 	"jobs": ["id", "occupation", "workplace", "shift_start", "shift_end", "wage"],
 	"quests": ["id", "name_key", "stages"],
 	"errands": ["id", "name_key", "giver", "item", "count", "reward"],
@@ -245,12 +245,34 @@ func _npc_nature_problems(id: String, npc: Dictionary) -> Array[String]:
 	return problems
 
 
-## A shop is a place that exists, selling things that exist, buying kinds of
-## thing that exist (D-039).
+## A shop is a place a player can walk up to (`location`) or a person they
+## deal with wherever found (`keeper`, an npc id) — exactly one, never both
+## and never neither. A kept shop's keeper must name it back in their own
+## `deals`, so a shop and a dealer always agree who deals what (M8 D-084).
+## Selling things that exist, buying kinds of thing that exist (D-039).
 func _shop_reference_problems(id: String, shop: Dictionary) -> Array[String]:
 	var problems: Array[String] = []
-	if not has_entry("locations", str(shop.get("location", ""))):
-		problems.append("shop '%s' references unknown location '%s'" % [id, shop.get("location")])
+	var location := str(shop.get("location", ""))
+	var keeper := str(shop.get("keeper", ""))
+	if location.is_empty() == keeper.is_empty():
+		problems.append("shop '%s' must have exactly one of location or keeper" % id)
+	elif not location.is_empty():
+		if not has_entry("locations", location):
+			problems.append("shop '%s' references unknown location '%s'" % [id, location])
+	elif not keeper.is_empty():
+		if not has_entry("npcs", keeper):
+			problems.append("shop '%s' is kept by unknown person '%s'" % [id, keeper])
+		else:
+			var deals: Array = get_entry("npcs", keeper).get("deals", [])
+			if not deals.has(id):
+				problems.append("shop '%s' is kept by '%s', whose deals do not name it" % [id, keeper])
+	var legality := str(shop.get("legality", "legal"))
+	if not ["legal", "grey", "illicit"].has(legality):
+		problems.append("shop '%s' has an unknown legality '%s'" % [id, legality])
+	var requires: Dictionary = shop.get("requires", {})
+	var required_quest := str(requires.get("quest", ""))
+	if not required_quest.is_empty() and not has_entry("quests", required_quest):
+		problems.append("shop '%s' requires unknown quest '%s'" % [id, required_quest])
 	var stock: Variant = shop.get("stock", {})
 	if typeof(stock) != TYPE_DICTIONARY:
 		return problems + ["shop '%s' stock must be an object of item -> count" % id]

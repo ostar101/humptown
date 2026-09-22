@@ -3157,3 +3157,92 @@ path, vouching skipping both feeling floors, a lawful person still dealing
 at a merely-grey shop, check ordering, and the `price_factor`/
 `visibility_for` formulas' monotonicity and range. No benchmark — nothing
 calls this yet, so nothing simulated changed.
+
+---
+
+## D-084 — Gated shops: `keeper` instead of `location`, and why a kept shop has no counter yet
+
+**Why (M8 step 8).** `shops.json` shops were always places: `REQUIRED_KEYS`
+demanded `location`, and `ShopRegistry.shop_at()` is the only door in. An
+illicit dealer does not run a storefront, so a shop now names either a
+`location` (walked up to, exactly as before — every existing shop
+untouched) or a `keeper` (an npc id — dealt with wherever they are,
+step 9's business, not this one's). **Exactly one, never both, never
+neither**: `_shop_reference_problems` (`src/data/data_registry.gd`) checks
+`location.is_empty() == keeper.is_empty()` and reports either violation the
+same way `test_a_shop_with_both_location_and_keeper_is_reported` and
+`..._with_neither_...` both exercise. `location` moved out of
+`REQUIRED_KEYS["shops"]` (now just `["id", "stock"]`) since it is no longer
+unconditional.
+
+**The symmetric link, both ways, kept honest by validation alone.** A
+kept shop's `keeper` must be a real npc, and that npc's own `deals` must
+name the shop back (`_shop_reference_problems`) — the same discipline
+`ask_broken` proved out for `asks.json` in D-053: a dangling reference is a
+loaded-content error, not a runtime surprise. This is also why `deals`
+stayed empty on every NPC in D-082 (step 6) — `shop_warehouse_stash` and
+`shop_scrapyard_stash` are the first shops to exist, so this is the first
+commit where `npc_rauno.deals` and `npc_kimmo.deals` can be filled in
+without failing their own check.
+
+**`ShopRegistry.shop_of(npc_id)`** is the inverse lookup (`keeper == npc_id`
+across the table), for whatever in step 9 needs to turn "the person the
+player is talking to" into "the shop they deal from" — `ask_deal`'s own
+job, not built here. **`legality(shop_id)`** is a plain read of the shop's
+own `"legality"` field (`"legal"` default, `"grey"` or `"illicit"`),
+validated against exactly those three strings; kept on `ShopRegistry`
+rather than `DealRules` because it is data, not judgement.
+
+**Two illicit shops, both kept, both stocked from the plan's sixteen drug
+items** (the nine raw, unprepared forms — bags, buds, pills, tabs — a
+player then works up at the bench, D-070/071; the seven already-prepared
+forms like a rolled joint or a loaded syringe are not something a dealer
+hands over ready-made). `shop_warehouse_stash` (`npc_rauno`, harder and
+party drugs — heroin, cocaine, amphetamine, opioid pills, ecstasy, LSD,
+matching a fixer who "arranges things ... that arrive without paperwork")
+and `shop_scrapyard_stash` (`npc_kimmo`, cannabis and mushrooms — the
+softer half, and Eastfield's own dealer rather than a second Harbourside
+one). Markup 2.2 and 1.8 respectively — an illicit premium above anything
+in `data/shops.json` today (`shop_pawn`'s 1.5 was the previous high) —
+before `DealRules`' own `price_factor` (D-083) has any say. Neither buys
+anything back; that is fencing, `shop_pawn`'s territory already, not this
+step's.
+
+**A kept shop has no counter to step up to yet, on purpose.**
+`shop_at(location_id)` was **not** taught to resolve a keeper by their
+current position — that would let a player walk up to Rauno wherever he
+stands and buy heroin with no gate at all, which is exactly backwards: the
+whole reason `nature`, `DealRules` and `keeper` exist is so a kept shop is
+reached *through* a judgement, not *instead of* one.
+`test_a_kept_shop_has_no_location_and_is_unreachable_by_shop_at` pins this
+down. `ask_deal` (step 9) is the only door once it is built; until then
+these two shops are inert data, reachable only through `ShopRegistry`
+directly (as the tests do) — the same "pure, called by nothing yet" shape
+D-083 left `DealRules` in.
+
+**`Game._deal_factor: Dictionary`** (shop id → today's negotiated price
+multiplier from a successful `ask_deal`) lives on `Game`, not
+`ShopRegistry`, and is **not saved** — cleared in `new_game()` alongside
+`_shopping`/`_shop_deals`, exactly the reasoning the plan gave: threading a
+session-only number through `ShopRegistry.to_dict()` would drag a save
+migration behind a value that is meant to be struck fresh in conversation
+every time, never carried over. `Game._priced_buy(shop_id, item_id)` reads
+it (default `1.0`, no change) and now stands in for every direct
+`shops.buy_price()` call in `shop_view()` and `buy()` — `sell()` is
+untouched, since a deal's price is what a dealer charges you, not yet a
+buyback rate. `set_deal_factor()` is public and unused by any caller this
+step; `test_a_deal_factor_moves_the_price_the_buyer_sees_and_pays` and
+`test_no_deal_factor_leaves_the_price_exactly_as_it_was` prove the plumbing
+against an ordinary shop, since no kept shop can be opened yet to prove it
+against one directly. **When to clear a struck factor** (on leaving the
+counter? at midnight, like haggling?) is left for step 9 to decide once
+there is a real caller to make that call meaningfully.
+
+12 new tests, split across `tests/test_shops.gd` (the gated-shop registry
+reads, the pricing plumbing, and six `DataRegistry` validation cases) and
+two fixed in `tests/test_npc_nature.gd` (D-082's fixtures reassigned
+`npc_rauno`'s `deals` wholesale, which broke the moment `shop_warehouse_
+stash` needed that exact list to stay intact — moved to `npc_ida`, who
+keeps no shop of her own). 1093 tests green (was 1081). No benchmark —
+`src/economy/` and `src/data/` are outside the tiered simulation path this
+project's benchmark rule cares about.

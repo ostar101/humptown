@@ -178,6 +178,109 @@ func test_shelves_and_tills_are_saved() -> void:
 	assert_eq(Game.shops.till("shop_corner"), till)
 
 
+## --- gated shops (M8 D-084) ---------------------------------------------------------
+
+func test_a_kept_shop_is_found_by_its_keeper() -> void:
+	var shops := Game.shops
+	assert_eq(shops.shop_of("npc_rauno"), "shop_warehouse_stash")
+	assert_eq(shops.shop_of("npc_kimmo"), "shop_scrapyard_stash")
+	assert_eq(shops.shop_of("npc_ida"), "", "Ida keeps no shop of her own")
+
+
+func test_legality_defaults_to_legal() -> void:
+	var shops := Game.shops
+	assert_eq(shops.legality("shop_corner"), "legal")
+	assert_eq(shops.legality("shop_warehouse_stash"), "illicit")
+
+
+func test_a_kept_shop_has_no_location_and_is_unreachable_by_shop_at() -> void:
+	var shops := Game.shops
+	assert_true(shops.definition("shop_warehouse_stash").get("location", "").is_empty())
+	assert_eq(shops.shop_at("loc_warehouse_9"), "", "a kept shop is not stepped up to like a counter")
+
+
+func test_a_deal_factor_moves_the_price_the_buyer_sees_and_pays() -> void:
+	_at_idas_counter(50)
+	assert_ok(Game.open_shop())
+	var plain: Array = Game.shop_view()["for_sale"]
+	var plain_price := 0
+	for row in plain:
+		if row["item"] == "item_sandwich":
+			plain_price = int(row["price"])
+	Game.set_deal_factor("shop_corner", 2.0)
+	var doubled: Array = Game.shop_view()["for_sale"]
+	var doubled_price := 0
+	for row in doubled:
+		if row["item"] == "item_sandwich":
+			doubled_price = int(row["price"])
+	assert_eq(doubled_price, plain_price * 2)
+	var bought := Game.buy("item_sandwich")
+	assert_ok(bought)
+	assert_eq(bought.value["total"], doubled_price)
+
+
+func test_no_deal_factor_leaves_the_price_exactly_as_it_was() -> void:
+	_at_idas_counter(50)
+	assert_ok(Game.open_shop())
+	assert_eq(Game.buy("item_sandwich").value["total"], Game.shops.buy_price("shop_corner", "item_sandwich"))
+
+
+# --- DataRegistry validation for keeper/legality/requires -------------------------------
+
+func test_a_shop_with_neither_location_nor_keeper_is_reported() -> void:
+	var data := DataRegistry.new()
+	data.load_all()
+	data.tables["shops"]["shop_broken"] = {"id": "shop_broken", "stock": {}}
+	var text := "\n".join(data.validate_references())
+	assert_true(text.contains("must have exactly one of location or keeper"), text)
+
+
+func test_a_shop_with_both_location_and_keeper_is_reported() -> void:
+	var data := DataRegistry.new()
+	data.load_all()
+	data.tables["shops"]["shop_broken"] = {"id": "shop_broken", "location": "loc_corner_shop", "keeper": "npc_ida", "stock": {}}
+	var text := "\n".join(data.validate_references())
+	assert_true(text.contains("must have exactly one of location or keeper"), text)
+
+
+func test_a_shop_kept_by_an_unknown_person_is_reported() -> void:
+	var data := DataRegistry.new()
+	data.load_all()
+	data.tables["shops"]["shop_broken"] = {"id": "shop_broken", "keeper": "npc_nobody", "stock": {}}
+	var text := "\n".join(data.validate_references())
+	assert_true(text.contains("is kept by unknown person 'npc_nobody'"), text)
+
+
+func test_a_shop_whose_keeper_does_not_name_it_back_is_reported() -> void:
+	var data := DataRegistry.new()
+	data.load_all()
+	data.tables["shops"]["shop_broken"] = {"id": "shop_broken", "keeper": "npc_ida", "stock": {}}
+	var text := "\n".join(data.validate_references())
+	assert_true(text.contains("is kept by 'npc_ida', whose deals do not name it"), text)
+
+
+func test_an_unknown_legality_is_reported() -> void:
+	var data := DataRegistry.new()
+	data.load_all()
+	data.tables["shops"]["shop_corner"]["legality"] = "shady"
+	var text := "\n".join(data.validate_references())
+	assert_true(text.contains("unknown legality 'shady'"), text)
+
+
+func test_a_shop_requiring_an_unknown_quest_is_reported() -> void:
+	var data := DataRegistry.new()
+	data.load_all()
+	data.tables["shops"]["shop_corner"]["requires"] = {"quest": "q_nothing"}
+	var text := "\n".join(data.validate_references())
+	assert_true(text.contains("requires unknown quest 'q_nothing'"), text)
+
+
+func test_the_authored_shops_are_all_consistent() -> void:
+	var data := DataRegistry.new()
+	data.load_all()
+	assert_eq(data.validate_references(), [] as Array[String])
+
+
 func test_a_version_2_save_gains_fresh_shops() -> void:
 	var migrated := SaveMigrations.migrate({"schema_version": 2, "memories": {"books": {}}})
 	assert_ok(migrated)

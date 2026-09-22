@@ -77,12 +77,13 @@ func test_a_non_numeric_nature_axis_is_reported() -> void:
 
 
 func test_a_deal_naming_an_unknown_shop_is_reported() -> void:
-	data.tables["npcs"]["npc_rauno"]["deals"] = ["shop_that_does_not_exist"]
+	data.tables["npcs"]["npc_ida"]["deals"] = ["shop_that_does_not_exist"]
 	var text := "\n".join(data.validate_references())
-	assert_true(text.contains("npc 'npc_rauno' deals from unknown shop 'shop_that_does_not_exist'"), text)
+	assert_true(text.contains("npc 'npc_ida' deals from unknown shop 'shop_that_does_not_exist'"), text)
 
 
 func test_a_deal_naming_a_real_shop_is_accepted() -> void:
-	var some_shop: String = data.ids("shops")[0]
-	data.tables["npcs"]["npc_rauno"]["deals"] = [some_shop]
+	# npc_ida, not npc_rauno: shop_corner is location-based, so it does not
+	# need the deal named back symmetrically the way a kept shop would.
+	data.tables["npcs"]["npc_ida"]["deals"] = ["shop_corner"]
 	assert_eq(data.validate_references(), [] as Array[String])
