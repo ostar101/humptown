@@ -90,6 +90,11 @@ var _time_paused_before_shopping := false
 ## saved — a deal is struck fresh in conversation each time it is wanted,
 ## never persisted (M8 D-084), so it never drags a save migration behind it.
 var _deal_factor: Dictionary = {}
+## True while `_shopping` holds a shop id struck by `ask_deal` rather than a
+## location stepped up to (M8 D-085) — a kept shop has no counter, so it is
+## opened by who, not where. `_deal_keeper` is that person.
+var _dealing := false
+var _deal_keeper := ""
 
 
 func _ready() -> void:
@@ -109,6 +114,7 @@ func _ready() -> void:
 	Events.fight_started.connect(_on_fight_started_follow)
 	Events.crime_committed.connect(_on_crime_committed_follow)
 	Events.inventory_changed.connect(_on_inventory_changed)
+	Events.deal_offered.connect(_on_deal_offered)
 	Log.min_level = int(Settings.get_value("log_level", Log.Level.INFO)) as Log.Level
 	Log.info("game", "Game root ready")
 
@@ -166,7 +172,8 @@ func new_game(background_id: String = "", world_seed: int = 0) -> Result:
 	consequences.setup(npcs, knowledge, relationships, crime, quests, work, phone_director, meetings, data, clock)
 	phone_director.setup(phone, npcs, relationships, quests, player, clock, dialogue, meetings)
 	phone_director.sync_contacts()
-	dialogue.setup(npcs, world, player, relationships, knowledge, clock, data, LlmDialogueModel.new(llm), memories, work, quests, asks)
+	dialogue.setup(npcs, world, player, relationships, knowledge, clock, data, LlmDialogueModel.new(llm), memories, work, quests, asks,
+		reputation, shops, crime)
 	_connect_simulation()
 
 	# Open the starting region and place the player.
@@ -256,6 +263,8 @@ func unload() -> void:
 	_shopping = ""
 	_shop_deals = 0
 	_deal_factor = {}
+	_dealing = false
+	_deal_keeper = ""
 	reputation = Reputation.new()
 	player = PlayerState.new()
 	world = WorldState.new()
@@ -429,6 +438,14 @@ func _on_crime_committed_follow(_fact_id: String, _location_id: String) -> void:
 		director.stop_all_following("trouble")
 
 
+## A deal was struck in conversation (M8 step 9): the price is booked here,
+## against the shop it was struck for; opening the shop itself is
+## WorldView's call, the same way `_on_fight_requested` only starts a fight
+## once the dialogue that asked for it has closed.
+func _on_deal_offered(_npc_id: String, shop_id: String, factor: float) -> void:
+	set_deal_factor(shop_id, factor)
+
+
 # --- interaction ------------------------------------------------------------
 
 ## What the player could do with whatever is on this cell of the current map,
@@ -596,12 +613,46 @@ func open_shop() -> Result:
 	return Result.success(shop_view())
 
 
+## Opens a kept shop struck in conversation (M8 step 9, D-085) — the only
+## door in, since `open_shop()` never resolves a keeper by where they
+## happen to be standing (D-084): that would let a player walk up and buy
+## with no gate at all. Refuses `already_shopping`, `not_a_shop`.
+func open_deal_shop(npc_id: String, shop_id: String) -> Result:
+	var proposal := {"kind": "shop", "npc": npc_id, "shop": shop_id}
+	if not is_running():
+		return _reject(proposal, "no_world")
+	if not _shopping.is_empty():
+		return _reject(proposal, "already_shopping")
+	if shops.definition(shop_id).is_empty():
+		return _reject(proposal, "not_a_shop")
+	_shopping = shop_id
+	_dealing = true
+	_deal_keeper = npc_id
+	_shop_deals = 0
+	_time_paused_before_shopping = clock.paused
+	clock.paused = true
+	return Result.success(shop_view())
+
+
 func is_shopping() -> bool:
 	return not _shopping.is_empty()
 
 
+## The shop the player is at, however they got there.
+func _current_shop_id() -> String:
+	if _shopping.is_empty():
+		return ""
+	return _shopping if _dealing else shops.shop_at(_shopping)
+
+
+## Who is serving, however the player got there: the counter's staff, or the
+## keeper a deal was struck with.
+func _current_staff() -> String:
+	return _deal_keeper if _dealing else staff_serving(_shopping)
+
+
 ## Sets today's negotiated price at a gated shop, from a successful
-## ask_deal (M8 step 9). Not called by anything yet.
+## ask_deal (M8 step 9).
 func set_deal_factor(shop_id: String, factor: float) -> void:
 	_deal_factor[shop_id] = factor
 
@@ -620,7 +671,7 @@ func _priced_buy(shop_id: String, item_id: String) -> int:
 func shop_view() -> Dictionary:
 	if _shopping.is_empty():
 		return {}
-	var shop_id := shops.shop_at(_shopping)
+	var shop_id := _current_shop_id()
 	var for_sale: Array[Dictionary] = []
 	for item_id in shops.items_for_sale(shop_id):
 		var deal: Dictionary = shops.haggled(shop_id).get(item_id, {})
@@ -636,8 +687,10 @@ func shop_view() -> Dictionary:
 				"item": item_id, "name_key": str(data.get_entry("items", item_id).get("name_key", item_id)),
 				"price": shops.sell_price(shop_id, item_id), "owned": player.inventory.count_of(item_id),
 			})
+	var keeper_npc := npcs.get_npc(_deal_keeper) if _dealing else null
+	var location := (keeper_npc.location if keeper_npc != null else "") if _dealing else _shopping
 	return {
-		"shop": shop_id, "location": _shopping, "staff": staff_serving(_shopping),
+		"shop": shop_id, "location": location, "staff": _current_staff(),
 		"cash": player.wallet.cash, "bank": player.wallet.bank,
 		"for_sale": for_sale, "will_buy": will_buy,
 	}
@@ -648,9 +701,9 @@ func buy(item_id: String, quantity: int = 1) -> Result:
 	var proposal := {"kind": "buy", "item": item_id, "quantity": quantity, "location": _shopping}
 	if _shopping.is_empty():
 		return _reject(proposal, "not_shopping")
-	var shop_id := shops.shop_at(_shopping)
+	var shop_id := _current_shop_id()
 	var judged := ShopRules.judge_buy({
-		"serving": not staff_serving(_shopping).is_empty(),
+		"serving": not _current_staff().is_empty(),
 		"sells": shops.sells(shop_id, item_id),
 		"stock": shops.stock_of(shop_id, item_id),
 		"quantity": quantity,
@@ -752,9 +805,9 @@ func sell(item_id: String, quantity: int = 1) -> Result:
 	var proposal := {"kind": "sell", "item": item_id, "quantity": quantity, "location": _shopping}
 	if _shopping.is_empty():
 		return _reject(proposal, "not_shopping")
-	var shop_id := shops.shop_at(_shopping)
+	var shop_id := _current_shop_id()
 	var judged := ShopRules.judge_sell({
-		"serving": not staff_serving(_shopping).is_empty(),
+		"serving": not _current_staff().is_empty(),
 		"buys": shops.buys(shop_id, item_id),
 		"owned": player.inventory.count_of(item_id),
 		"quantity": quantity,
@@ -776,7 +829,12 @@ func close_shop() -> Result:
 	if _shopping.is_empty():
 		return Result.failure("not_shopping")
 	var deals := _shop_deals
+	if _dealing:
+		# Struck fresh each time (M8 D-084): asking again is asking again.
+		_deal_factor.erase(_shopping)
 	_shopping = ""
+	_dealing = false
+	_deal_keeper = ""
 	_shop_deals = 0
 	clock.paused = _time_paused_before_shopping
 	advance_time(maxi(deals, 1))

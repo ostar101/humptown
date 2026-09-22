@@ -3246,3 +3246,110 @@ stash` needed that exact list to stay intact — moved to `npc_ida`, who
 keeps no shop of her own). 1093 tests green (was 1081). No benchmark —
 `src/economy/` and `src/data/` are outside the tiered simulation path this
 project's benchmark rule cares about.
+
+---
+
+## D-085 — `ask_deal`: the door into a kept shop, and why a refusal can still cost something
+
+**Why (M8 step 9).** D-083 built `DealRules` pure and unused; D-084 built two
+illicit shops reachable by nothing. This step is the door: a new intent
+kind, `ask_deal`, that gathers exactly the facts `DealRules` needs, reads
+its verdict, and — on success — opens the shop it names. **The model's
+entire contribution is the word `ask_deal`.** It never names a substance, a
+quantity or a price; `IntentPrompt.KIND_HELP` says so explicitly
+("without naming a thing, an amount or a price"), the strongest reading of
+the architecture rule the plan called for. `OfflineTopics` recognises it
+from `"got anything"` (English) and `"onko sulla mitään"` (Finnish, plus
+four more phrasings each), inserted in `ORDER` right after `ask_action` and
+before `negotiate`, per the plan.
+
+**`_deal_state(npc_id)`** (`DialogueDirector`) is the `gift`/`go` pattern
+once more: built only when `intent.kind == "ask_deal"`, and only it knows
+how to turn the world into the eleven facts `DealRules.judge()` takes —
+`shops.shop_of(npc_id)` for which shop, the keeper's `nature` axes
+untouched, `Relationship.familiarity`/`trust` for feeling, `requires_met`
+against `quests.active` (the exact pattern `AskDirector._requirements_met`
+already uses for the same `{"quest": ...}` shape), and three genuinely new
+readings:
+
+- **`vouched`** — knowledge, not a flag, exactly as the plan specified: does
+  this person know a `"vouched_for"` fact about the player. Nothing writes
+  that fact yet (M8 step 11), so this always reads false today; the check
+  is already correct and needs no further change when it does.
+- **`standing`** — `Reputation.criminal_standing()` (new, `src/social/
+  reputation.gd`): the *worst* standing across every scope `_scope_kind`
+  already calls `"criminal"` (a group id containing crew/gang/criminal),
+  not an average — one bad name among criminals is what a dealer weighs,
+  not a blended score across ones that never heard.
+- **`heat`** — the one number D-083 left explicitly open ("a caller-supplied
+  fact, not computed anywhere yet"). Defined here, finally, as a plain
+  formula over what `CrimeDirector` already tracks: `open_summons_count ×
+  0.6 + settled_record.size() × 0.15`, clamped to `[0, 1]`. A judgement
+  call, not derived from anything deeper — worth revisiting once heat has
+  more than one consumer. **Not the same number** as the per-*item* `heat`
+  D-084 named for step 10; that one feeds a deal's *visibility* as a crime,
+  this one gates whether the deal happens at all.
+- **`watched`** — anyone else standing where the dealer is, a plain scan of
+  `NpcRegistry`, not `CrimeDirector.watchers()`'s dice-and-notice-chance
+  machinery: `DealRules` only wants a yes/no against the dealer's own
+  `risk`, not who specifically would notice or how surely.
+
+**A refused `wont_deal` is not a refused proposal — it is a success with a
+cost**, the one deliberate departure from "every refusal is
+`Result.failure`, the world unchanged." Asking a genuinely lawful person
+(`legality == "illicit"` and `lawfulness > 0.6`) is a real social move that
+can land badly, exactly the shape `"flirt"` already has when unwelcome:
+`ConversationRules.judge()` falls through to `Result.success` with a
+`{"do": "feel", "dimension": "trust", "delta": -0.05 × lawfulness}` effect
+and topic `"wont_deal"`, never returning early. The other seven `DealRules`
+codes (`not_a_dealer`, `requires_unmet`, `dont_know_you`, `dont_trust_you`,
+`bad_standing`, `too_hot`, `not_now`) stay ordinary `Result.failure`s —
+asking a stranger, or asking at a bad moment, is not an offence the way
+propositioning a straight-laced person about drugs is. `topic_for_refusal`
+carries a comment explaining exactly why `"wont_deal"` is missing from its
+match, so the absence reads as a decision, not a gap.
+
+**Opening the shop needed a second door, not a stretched first one.**
+`Game.open_shop()` and everything downstream of it (`buy`, `sell`,
+`shop_view`, `haggle`, `steal`) key off `_shopping` holding a **location**,
+resolved through `shops.shop_at()` — and D-084 deliberately never taught
+`shop_at()` to find a kept shop by where its keeper happens to be standing,
+because that would open a gated shop with no gate. `Game.open_deal_shop
+(npc_id, shop_id)` is the second door: it sets `_shopping` to the **shop
+id** directly and a new `_dealing`/`_deal_keeper` pair remembers it got
+there that way. `_current_shop_id()` and `_current_staff()` are the only
+two places that had to learn the difference — `shop_view()`, `buy()` and
+`sell()` now call them instead of `shop_at(_shopping)`/`staff_serving
+(_shopping)` directly, and behave exactly as before for every ordinary
+shop (`_dealing` false is the whole of the old path). `haggle()` and
+`steal()` were **not** taught the difference — haggling makes no sense
+once `DealRules`' own `factor` has already priced the visit, and stealing
+from someone meeting you face to face for a discreet deal does not fit
+what `TheftRules` models; both simply find no shop and no staff for a
+dealt session and refuse harmlessly through checks that already exist,
+rather than being specially blocked. `close_shop()` erases the struck
+factor and clears `_dealing`/`_deal_keeper`: asking again is asking again,
+never a standing invitation.
+
+**`Events.deal_offered(npc_id, shop_id, factor)`** is the `fight_requested`
+pattern exactly. `Game` listens only to bank the factor
+(`set_deal_factor`) — it does not open anything itself, the same
+separation `_on_follow_requested` keeps from `_on_fight_requested`.
+`WorldView._on_deal_offered` → `call_deferred("_begin_deal", …)` is
+`_on_fight_requested` → `_begin_fight` verbatim: the conversation is let
+finish before anything is torn down under the line that asked for it, then
+`_dialogue.close()` and `_shop.open_deal(npc_id, shop_id)` (a new
+`ShopWindow` entry point beside `open()`, sharing everything after the
+`Game` call through a small `_open_with(Result)` helper).
+
+**Never driven through a live model.** `--talk=npc_rauno "--say=Got
+anything?"` on `ui_preview.tscn` was tried once, by hand, to sanity-check
+the wiring end to end — and killed within a minute, no output, because that
+debug scene is not sandboxed to the offline provider the way `tests/
+test_runner.tscn` is (D-036): it runs against whatever the player's own
+`Settings`/`SecretStore` say, and this machine has a real key configured.
+Every claim above is proven by `tests/test_ask_deal.gd` (11 tests) against
+a `ScriptedDialogueModel` with `available = false`, offline throughout —
+consistent with "no live LLM call has ever been made" (PROJECT_STATUS.md)
+staying true through this step too. 1104 tests green (was 1093). No
+benchmark — nothing touched here runs per simulated minute.

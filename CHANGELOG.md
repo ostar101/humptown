@@ -6,6 +6,7 @@ versions are milestones rather than releases until there is something to release
 ## [Unreleased]
 
 ### Added
+- Asking a dealer for something ("Got anything?", "Onko sulla mitään?") now works: whether they will deal with you at all depends on who they are, whether they know and trust you, your standing and how much heat you're carrying, and whether anyone else is about — a stranger just gets turned away, but pushing a genuinely straight person on it costs their trust. Getting a yes opens their shop, priced by how well you know each other (D-085, M8 session B step 9).
 - Internal: two illicit shops exist in the data now — Rauno's harder drugs out of Warehouse 9, Kimmo's cannabis and mushrooms out of the Eastfield scrapyard — but there is still no way to reach either one in play; that is next (D-084, M8 session B step 8).
 - Internal: the rules for whether someone will make a grey or illicit deal with the player, and on what terms — not wired to anything yet, so still no player-visible change (D-083, M8 session B step 7).
 - Internal: every person now has a `nature` — how lawful, greedy, risk-taking and discreet they are — backfilled by hand for all 20 from their existing traits and bio, and a `deals` list (currently empty on everyone) naming which shops they deal from. Nothing reads either yet; no player-visible change (D-082, M8 session B step 6).

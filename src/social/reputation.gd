@@ -104,6 +104,27 @@ func standing(scope: String, subject: String = RelationshipGraph.PLAYER_ID) -> f
 	return result
 
 
+## Standing across every scope the "criminal" flavour applies to (a group id
+## containing crew/gang/criminal) — the worst of them, not an average, since
+## one bad name among criminals is what a dealer weighs (M8 D-085). 0.0 when
+## the player has no standing anywhere criminal, same as a stranger.
+func criminal_standing(subject: String = RelationshipGraph.PLAYER_ID) -> float:
+	if _registry == null:
+		return 0.0
+	var worst := 0.0
+	var seen := {}
+	for npc_id in _registry.npcs:
+		var npc: Npc = _registry.npcs[npc_id]
+		for group in npc.groups:
+			var scope := "group:" + str(group)
+			if seen.has(scope):
+				continue
+			seen[scope] = true
+			if _scope_kind(scope) == "criminal":
+				worst = minf(worst, standing(scope, subject))
+	return worst
+
+
 ## Fraction of a scope's members who know a given fact.
 func notoriety(scope: String, fact_id: String) -> float:
 	var members := members_of(scope)

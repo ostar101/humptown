@@ -32,6 +32,9 @@ const PHRASES := {
 	"ask_action": ["bring me", "bring us", "fetch me", "get me", "go and get", "go fetch", "carry this",
 		"tuo minulle", "tuo mulle", "tuo tänne", "hae minulle", "hae mulle", "vie tämä", "vie tää", "mene hakemaan",
 		"mene sinne", "tule tänne", "come here"],
+	"ask_deal": ["got anything", "got anything for me", "anything for sale", "anything going", "what have you got",
+		"got something for me", "selling anything", "can i buy something", "got any gear", "anything on you",
+		"onko sulla mitään", "onko sinulla mitään", "myytkö jotain", "onko jotain myytävää", "onko jotain tarjolla"],
 	"about_self": ["who are you", "your name", "what's your name", "whats your name", "about yourself",
 		"introduce yourself", "kuka olet", "kuka sinä olet", "kuka sä oot", "nimesi", "sinun nimesi",
 		"mikä on nimesi", "kerro itsestäsi"],
@@ -70,7 +73,7 @@ const PHRASES := {
 }
 
 const ORDER: Array[String] = [
-	"attack", "threaten", "insult", "ask_follow", "ask_wait", "ask_go", "ask_action", "negotiate", "farewell", "give_money", "give_item", "introduce_self", "apologize",
+	"attack", "threaten", "insult", "ask_follow", "ask_wait", "ask_go", "ask_action", "ask_deal", "negotiate", "farewell", "give_money", "give_item", "introduce_self", "apologize",
 	"quit_job", "ask_for_work", "offer_help",
 	"about_person", "about_place", "about_self", "about_work", "compliment", "thanks", "greet",
 ]

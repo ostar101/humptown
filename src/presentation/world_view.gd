@@ -65,6 +65,7 @@ func _ready() -> void:
 	_atm.closed.connect(_on_shop_closed)
 	_combat.closed.connect(_on_shop_closed)
 	Events.fight_requested.connect(_on_fight_requested)
+	Events.deal_offered.connect(_on_deal_offered)
 	Events.ambush.connect(_on_ambush)
 	Events.phone_message.connect(_on_phone_message)
 	Events.meeting_updated.connect(_on_meeting_updated)
@@ -97,6 +98,7 @@ func _exit_tree() -> void:
 		Events.player_arrested.disconnect(_on_player_arrested)
 		Events.ask_resolved.disconnect(_on_ask_resolved)
 		Events.fight_requested.disconnect(_on_fight_requested)
+		Events.deal_offered.disconnect(_on_deal_offered)
 		Events.ambush.disconnect(_on_ambush)
 		Events.police_action.disconnect(_on_police_action)
 		Events.player_deed.disconnect(_on_player_deed)
@@ -464,6 +466,24 @@ func _on_fight_requested(npc_id: String) -> void:
 ## Someone the player was told to meet has come, and so has the player (D-055).
 func _on_ambush(npc_id: String) -> void:
 	call_deferred("_begin_fight", npc_id, "npc")
+
+
+## An ask_deal went through (M8 step 9): the conversation is finished first,
+## the same frame-later pattern as a fight, then the shop it earned opens —
+## no counter to step up to, just the door the conversation was.
+func _on_deal_offered(npc_id: String, shop_id: String, _factor: float) -> void:
+	call_deferred("_begin_deal", npc_id, shop_id)
+
+
+func _begin_deal(npc_id: String, shop_id: String) -> void:
+	if _dialogue.is_open():
+		_dialogue.close()
+	var opened := _shop.open_deal(npc_id, shop_id)
+	if opened.is_err():
+		_hud.show_message(Localization.t("ui.msg.refused." + opened.code))
+		return
+	_player.input_enabled = false
+	_hud.set_prompt("")
 
 
 func _begin_fight(npc_id: String, aggressor: String = "player") -> void:

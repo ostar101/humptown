@@ -36,6 +36,10 @@ extends RefCounted
 ##   intent's subject names: `problem` is "" or why they could not go there
 ##   (`unknown`, `far`, `closed`), `busy` an errand or meeting already has
 ##   them, `here` they are there already, D-061)
+##   deal ({"has_deal", "shop_id", "legality", "lawfulness", "greed", "risk",
+##   "discretion", "requires_met", "familiarity", "trust", "vouched",
+##   "standing", "heat", "watched"} — everything `DealRules` needs to judge
+##   asking this person for something they are not supposed to sell, M8 D-085)
 ##
 ## A kind with no rule here — a model may say "persuade", "negotiate", "lie"
 ## — is talk: accepted, and it changes nothing until a system exists that it
@@ -47,7 +51,7 @@ const KINDS: Array[String] = [
 	"greet", "farewell", "thanks", "about_self", "about_work", "about_person", "about_place",
 	"introduce_self", "compliment", "flirt", "apologize", "insult", "threaten", "give_money", "give_item",
 	"ask_for_work", "quit_job", "offer_help", "negotiate", "attack",
-	"ask_follow", "ask_wait", "ask_go", "ask_action",
+	"ask_follow", "ask_wait", "ask_go", "ask_action", "ask_deal",
 ]
 ## Kinds that put an ask, when there is something to ask (D-053).
 const ASK_KINDS: Array[String] = ["negotiate", "persuade", "ask_favor"]
@@ -93,7 +97,8 @@ const GIFT_MIN_ITEM_WARMTH := 0.01
 ## "amount"} (from the account, by text) · {"do": "tell_place", "place"} · {"do": "fight"} · {"do": "ask", "ask"} (put an ask: what
 ## comes of it is rolled and applied by `AskDirector`) · {"do": "follow",
 ## "minutes"} and {"do": "stop_following"} (D-057) · {"do": "go", "place",
-## "minutes"} (D-061) · {"do": "give_item", "item", "count"} (D-062).
+## "minutes"} (D-061) · {"do": "give_item", "item", "count"} (D-062) ·
+## {"do": "deal", "shop", "factor", "visibility"} (M8 D-085).
 static func judge(intent: Dictionary, state: Dictionary) -> Result:
 	var kind := str(intent.get("kind", "unknown"))
 	var feeling: Dictionary = state.get("relationship", {})
@@ -282,6 +287,32 @@ static func judge(intent: Dictionary, state: Dictionary) -> Result:
 			# Fetching and carrying for someone are not built yet (D-057): say
 			# so, instead of a promise nothing will keep.
 			return Result.failure("cannot_do", "They asked you to do something for them, like fetch or carry something. You cannot, and you did not promise anything.")
+		"ask_deal":
+			# Whether this person deals at all, with them, tonight, is entirely
+			# DealRules' call (M8 D-085) — nothing here duplicates that
+			# judgement, only translates its verdict into what was said.
+			var deal: Dictionary = state.get("deal", {})
+			var deal_judged := DealRules.judge(deal)
+			if deal_judged.is_err():
+				if deal_judged.code == "wont_deal":
+					# Asking a lawful person is not a neutral no: it costs
+					# something real, the more lawful they are the more it
+					# stings — a social move that can backfire, the way
+					# "flirt" always succeeds even when unwelcome, not an
+					# impossible action the architecture would undo.
+					effects.append({"do": "feel", "dimension": "trust",
+						"delta": -0.05 * float(deal.get("lawfulness", 0.8))})
+					happened = _deal_refusal_message("wont_deal")
+					topic = "wont_deal"
+				else:
+					return Result.failure(deal_judged.code, _deal_refusal_message(deal_judged.code))
+			else:
+				var struck: Dictionary = deal_judged.value
+				effects.append({"do": "deal", "shop": str(deal.get("shop_id", "")),
+					"factor": float(struck["factor"]), "visibility": float(struck["visibility"])})
+				happened = "They asked if you had anything going, and you let them know you did."
+				topic = "deal_offered"
+				ends = true
 		"quit_job":
 			if bool(state.get("works_for_them", false)):
 				effects.append({"do": "quit"})
@@ -341,6 +372,11 @@ static func memory_of(intent: Dictionary, judged: Result, subject_name: String =
 		"ask_go":
 			if verdict["topic"] == "go_yes" and subject_name != "":
 				return {"text": "asked you to go to %s, and you went" % subject_name, "weight": 0.3}
+		"ask_deal":
+			if verdict["topic"] == "deal_offered":
+				return {"text": "asked you for something you are not supposed to sell", "weight": 0.4}
+			if verdict["topic"] == "wont_deal":
+				return {"text": "asked you for something you would never deal in", "weight": 0.3}
 	return {}
 
 
@@ -367,6 +403,11 @@ static func topic_for_refusal(code: String) -> String:
 			return "gift_keep_it"
 		"go_closed", "go_remote":
 			return code
+		# "wont_deal" is not here: it never fails ConversationRules.judge()
+		# directly — asking a lawful person is a social move that backfires
+		# (a "feel" effect, an ordinary success), not a refused proposal.
+		"not_a_dealer", "requires_unmet", "dont_know_you", "dont_trust_you", "bad_standing", "too_hot", "not_now":
+			return code
 	return "unknown"
 
 
@@ -384,6 +425,27 @@ static func _warm(effects: Array[Dictionary], dimension: String, delta: float, w
 	var allowed := minf(delta, warmth_left)
 	if allowed > 0.0:
 		effects.append({"do": "feel", "dimension": dimension, "delta": allowed})
+
+
+## Narration for every `DealRules` refusal, in the shape every other refused
+## intent here already uses: what the player did, then why it went nowhere.
+static func _deal_refusal_message(code: String) -> String:
+	match code:
+		"wont_deal":
+			return "They asked if you had anything going. That is not something you would ever touch, and you told them as much."
+		"requires_unmet":
+			return "They asked if you had anything going, but something has to happen first before you would even consider it."
+		"dont_know_you":
+			return "They asked if you had anything going, but you barely know them. You are not about to let a stranger in on that."
+		"dont_trust_you":
+			return "They asked if you had anything going. You do not trust them enough for that, not yet."
+		"bad_standing":
+			return "They asked if you had anything going. Word about them is bad enough that you want nothing to do with it."
+		"too_hot":
+			return "They asked if you had anything going, but there is too much heat on them right now. Not today."
+		"not_now":
+			return "They asked if you had anything going, with people about. Not here, not now."
+	return "They asked if you had anything going. You do not deal, and you told them so."
 
 
 static func _same_name(said: String, real: String) -> bool:

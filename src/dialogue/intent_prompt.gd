@@ -37,6 +37,7 @@ const KIND_HELP := {
 	"ask_wait": "telling them to wait here, stay put, or stop following",
 	"ask_go": "asking them to go to a place without the player (put the name in place)",
 	"ask_action": "asking them to do something physical for the player other than following or going somewhere: fetch, bring, carry, give something",
+	"ask_deal": "asking them for drugs or something else they are not supposed to sell, without naming a thing, an amount or a price",
 	"attack": "starting a fight: actually hitting or attacking them now, not just threatening",
 }
 

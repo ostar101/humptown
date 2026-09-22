@@ -32,7 +32,17 @@ func _ready() -> void:
 ## Steps up to the counter of the shop the player is in. A refusal
 ## (`nobody_serving`, `not_a_shop`) comes back and nothing opens.
 func open() -> Result:
-	var opened := Game.open_shop()
+	return _open_with(Game.open_shop())
+
+
+## Opens a kept shop struck in conversation (M8 step 9): no counter, the
+## door `ask_deal` earned instead. A refusal (`already_shopping`,
+## `not_a_shop`) comes back and nothing opens.
+func open_deal(npc_id: String, shop_id: String) -> Result:
+	return _open_with(Game.open_deal_shop(npc_id, shop_id))
+
+
+func _open_with(opened: Result) -> Result:
 	if opened.is_err():
 		return opened
 	_selling = false

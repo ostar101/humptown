@@ -67,12 +67,18 @@ var _data: DataRegistry = null
 var _people_words: Dictionary = {}
 var _place_words: Dictionary = {}
 var _item_words: Dictionary = {}
+## For `ask_deal` (M8 step 9): the player's standing with criminals, the
+## kept shops a person deals from, and how hot the player currently runs.
+var _reputation: Reputation = null
+var _shops: ShopRegistry = null
+var _crime: CrimeDirector = null
 
 
 func setup(npcs: NpcRegistry, world: WorldState, player: PlayerState, relationships: RelationshipGraph,
 		knowledge: KnowledgeNetwork = null, clock: GameClock = null, data: DataRegistry = null,
 		p_model: DialogueModel = null, p_memories: MemoryBook = null, p_work: Employment = null,
-		p_quests: QuestLog = null, p_asks: AskDirector = null) -> void:
+		p_quests: QuestLog = null, p_asks: AskDirector = null,
+		p_reputation: Reputation = null, p_shops: ShopRegistry = null, p_crime: CrimeDirector = null) -> void:
 	_npcs = npcs
 	_world = world
 	_player = player
@@ -85,6 +91,9 @@ func setup(npcs: NpcRegistry, world: WorldState, player: PlayerState, relationsh
 	work = p_work if p_work != null else Employment.new()
 	quests = p_quests if p_quests != null else QuestLog.new()
 	asks = p_asks if p_asks != null else AskDirector.new()
+	_reputation = p_reputation
+	_shops = p_shops
+	_crime = p_crime
 	if p_quests == null and data != null:
 		quests.setup(data)
 	conversation = null
@@ -618,6 +627,7 @@ func _rules_state(npc_id: String, convo: Conversation, channel: String, intent: 
 		"follow": _follow_state(npc_id),
 		"gift": _gift_state(str(intent.get("subject", ""))) if str(intent.get("kind", "")) == "give_item" else {},
 		"go": _go_state(npc_id, str(intent.get("subject", ""))) if str(intent.get("kind", "")) == "ask_go" else {},
+		"deal": _deal_state(npc_id) if str(intent.get("kind", "")) == "ask_deal" else {},
 		"works_for_them": work.has_job() and _data != null \
 			and str(_data.get_entry("jobs", work.job_id).get("employer", "")) == npc_id,
 	}
@@ -677,6 +687,84 @@ func _go_state(npc_id: String, place_id: String) -> Dictionary:
 		"problem": problem, "free_minutes": free, "here": npc.location == place_id,
 		"busy": npc.schedule_override != null and npc.schedule_override.covers(_clock.total_minutes),
 	}
+
+
+## What `DealRules` needs to judge asking this person for something they are
+## not supposed to sell (M8 step 9): the shop they deal from, the shop's own
+## legality and requirements, their nature, how well the player is known and
+## trusted, whether the player has been vouched for, criminal standing, how
+## hot the player runs, and whether anyone else is about. `{"has_deal":
+## false}` when this person deals from nothing at all — `DealRules` reads
+## that first and refuses before touching anything else.
+func _deal_state(npc_id: String) -> Dictionary:
+	if _shops == null:
+		return {"has_deal": false}
+	var shop_id := _shops.shop_of(npc_id)
+	if shop_id == "":
+		return {"has_deal": false}
+	var npc := _npcs.get_npc(npc_id)
+	var shop := _shops.definition(shop_id)
+	var feeling := _relationships.peek(npc_id, PlayerState.ID)
+	var requires: Dictionary = shop.get("requires", {})
+	var requires_met := not requires.has("quest") or quests.active.has(str(requires["quest"]))
+	var nature: Dictionary = npc.nature if npc != null else Npc.DEFAULT_NATURE
+	return {
+		"has_deal": true,
+		"shop_id": shop_id,
+		"legality": _shops.legality(shop_id),
+		"lawfulness": float(nature.get("lawfulness", 0.8)),
+		"greed": float(nature.get("greed", 0.3)),
+		"risk": float(nature.get("risk", 0.2)),
+		"discretion": float(nature.get("discretion", 0.5)),
+		"requires_met": requires_met,
+		"familiarity": feeling.familiarity if feeling != null else 0.0,
+		"trust": feeling.trust if feeling != null else 0.0,
+		"vouched": _vouched_for(npc_id),
+		"standing": _reputation.criminal_standing() if _reputation != null else 0.0,
+		"heat": _heat_level(),
+		"watched": _someone_else_about(npc_id),
+	}
+
+
+## Knowledge, not a flag (M8 D-085): this person has been told, or has heard,
+## that the player was vouched for.
+func _vouched_for(npc_id: String) -> bool:
+	if _knowledge == null:
+		return false
+	for fact_id in _knowledge.known_fact_ids(npc_id):
+		var fact := _knowledge.get_fact(fact_id)
+		if fact != null and fact.subject == PlayerState.ID and fact.predicate == "vouched_for":
+			return true
+	return false
+
+
+## How hot the player currently runs with the police, [0, 1]: any open
+## summons is most of it; a settled record adds a little more that never
+## quite fades within a session. A judgement call, not yet built on anything
+## more particular — the plan left this open for whichever step first
+## needed a real number (M8 D-083, D-085).
+func _heat_level() -> float:
+	if _crime == null:
+		return 0.0
+	var open_count := 0
+	for entry: Dictionary in _crime.summons:
+		if str(entry.get("status", "")) == "open":
+			open_count += 1
+	return clampf(open_count * 0.6 + _crime.record.size() * 0.15, 0.0, 1.0)
+
+
+## Whether anyone but this person is standing where they are.
+func _someone_else_about(npc_id: String) -> bool:
+	var npc := _npcs.get_npc(npc_id)
+	if npc == null:
+		return false
+	for other_id in _npcs.living_ids():
+		if other_id == npc_id:
+			continue
+		var other := _npcs.get_npc(other_id)
+		if other != null and other.location == npc.location:
+			return true
+	return false
 
 
 ## An errand this person could ask of the player today, in the prompt's
@@ -742,6 +830,8 @@ func _apply(npc_id: String, effects: Array[Dictionary]) -> Dictionary:
 				if walker != null:
 					walker.set_override(now, now + int(effect["minutes"]), str(effect["place"]), "socialise", "go:%d" % now)
 					_npcs.invalidate_location_cache(npc_id)
+			"deal":
+				Events.deal_offered.emit(npc_id, str(effect["shop"]), float(effect["factor"]))
 			"feel":
 				_relationships.adjust(npc_id, PlayerState.ID, str(effect["dimension"]), float(effect["delta"]), now)
 			"pay":

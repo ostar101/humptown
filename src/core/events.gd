@@ -106,6 +106,9 @@ signal follow_changed(npc_id: String, following: bool, why: String)
 ## Someone the player was told to meet for a fight came to it and so did the
 ## player: they start it (D-055).
 signal ambush(npc_id: String)
+## The player asked a dealer for something and the ask went through: this
+## person's kept shop is open at this price, until it is left (M8 step 9).
+signal deal_offered(npc_id: String, shop_id: String, factor: float)
 
 # --- Dialogue / LLM ---------------------------------------------------------
 signal dialogue_started(npc_id: String)
