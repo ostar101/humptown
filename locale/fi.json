@@ -626,6 +626,8 @@
   "ui.msg.arrested": "Vietät yön sellissä. {name} päästää sinut aamulla.",
   "ask.rauno_time": "Lisäaikaa Raunolta",
   "ask.marika_leniency": "Lempeyttä sinulle",
+  "ask.vouch_rauno": "Raunon luottamuksen ansaitseminen",
+  "ask.vouch_kimmo": "Kimmon luottamuksen ansaitseminen",
   "ui.quests.owed_more": "Hän haluaa {extra} € lisää.",
   "ui.msg.ask.success": "{ask}: onnistui.",
   "ui.msg.ask.partial": "{ask}: osittain, ja se maksoi.",

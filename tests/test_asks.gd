@@ -207,8 +207,8 @@ func test_there_has_to_be_something_to_bargain_over() -> void:
 	assert_eq(Game.rng.stream("ask").state, stream_state)
 	assert_eq(_grades, [] as Array[String])
 	Game.end_conversation()
-	_start("bg_dockhand")   # no debt, so nothing to ask Rauno either
-	_meet_outside("npc_rauno")
+	_start("bg_dockhand")   # Veikko has no authored ask at all, debt or not
+	_meet_outside("npc_veikko")
 	assert_eq((await _say("More time, please."))["topic"], "no_ask")
 
 
@@ -254,6 +254,59 @@ func test_it_works_by_text_as_well() -> void:
 	Game.clock.total_minutes += 60
 	await Game.phone_director.process_due()
 	assert_eq(_deadline(), before + 7)
+
+
+# --- vouching (M8 step 11, D-087) -----------------------------------------------------------------------
+
+## Rauno has nothing to extend once there is no debt (bg_dockhand), so
+## `ask_vouch_rauno` is what `offer()` finds instead — the natural way to
+## reach it without waiting out `ask_rauno_time`'s cooldown.
+
+func test_vouching_for_yourself_writes_knowledge_not_a_flag() -> void:
+	_start("bg_dockhand")
+	_meet_outside("npc_rauno")
+	_rig("success", _chance("npc_rauno", "persuasion", 40))
+	var reply := await _say("Give me a break, would you?")
+	assert_eq(reply["topic"], "ask_success")
+	var known := Game.knowledge.what_is_known_about("npc_rauno", PlayerState.ID)
+	assert_eq(known[0]["predicate"], "vouched_for")
+	assert_true(known[0]["firsthand"])
+
+
+func test_only_a_full_win_vouches() -> void:
+	_start("bg_dockhand")
+	_meet_outside("npc_rauno")
+	_rig("partial", _chance("npc_rauno", "persuasion", 40))
+	await _say("Give me a break, would you?")
+	assert_eq(Game.knowledge.what_is_known_about("npc_rauno", PlayerState.ID), [] as Array[Dictionary])
+
+
+func test_being_vouched_for_opens_the_shop_to_a_stranger() -> void:
+	_start("bg_dockhand")
+	_meet_outside("npc_rauno")
+	_rig("success", _chance("npc_rauno", "persuasion", 40))
+	await _say("Give me a break, would you?")
+	Game.end_conversation()
+	var floor_needed := DealRules.familiarity_floor(0.75, 0.1)   # Rauno's own greed and lawfulness
+	assert_lt(Game.relationships.peek("npc_rauno", PlayerState.ID).familiarity, floor_needed,
+		"too little to pass the ordinary floor on its own")
+	var rejected: Array[String] = []
+	var handler := func(_proposal: Dictionary, code: String) -> void: rejected.append(code)
+	Events.action_rejected.connect(handler)
+	_meet_outside("npc_rauno")
+	var said := await _say("Got anything?")
+	Events.action_rejected.disconnect(handler)
+	assert_true(rejected.is_empty(), str(rejected))
+	assert_eq(said["topic"], "deal_offered")
+
+
+func test_an_ask_requiring_dealing_must_be_put_to_a_dealer() -> void:
+	var data := DataRegistry.new()
+	data.load_all()
+	data.tables["asks"]["ask_broken_vouch"] = {"id": "ask_broken_vouch", "npc": "npc_ida", "skill": "persuasion",
+		"requires": {"deals": true}, "grades": {"success": [], "partial": [], "failure": [], "backfire": []}}
+	var text := "\n".join(data.validate_references())
+	assert_true(text.contains("requires dealing but 'npc_ida' deals from nothing"), text)
 
 
 # --- Marika and the case -------------------------------------------------------------------------------

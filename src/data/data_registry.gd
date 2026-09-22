@@ -151,9 +151,14 @@ func _ask_reference_problems(id: String, ask: Dictionary) -> Array[String]:
 		problems.append("ask '%s' is put to unknown person '%s'" % [id, ask.get("npc")])
 	if not has_entry("skills", str(ask.get("skill", ""))):
 		problems.append("ask '%s' turns on unknown skill '%s'" % [id, ask.get("skill")])
-	var quest := str((ask.get("requires", {}) as Dictionary).get("quest", ""))
+	var requires: Dictionary = ask.get("requires", {})
+	var quest := str(requires.get("quest", ""))
 	if quest != "" and not has_entry("quests", quest):
 		problems.append("ask '%s' waits on unknown quest '%s'" % [id, quest])
+	## M8 step 11: an ask that requires dealing must be put to someone who
+	## actually deals, or it could never be offered.
+	if bool(requires.get("deals", false)) and (get_entry("npcs", str(ask.get("npc", ""))).get("deals", []) as Array).is_empty():
+		problems.append("ask '%s' requires dealing but '%s' deals from nothing" % [id, ask.get("npc")])
 	var grades: Dictionary = ask.get("grades", {})
 	for grade in AskRules.GRADES:
 		if not grades.has(grade):

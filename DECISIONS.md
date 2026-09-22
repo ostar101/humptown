@@ -3426,3 +3426,65 @@ throughout, and none of it has been played by a person yet — worth trying
 at a keyboard before session C: ask Rauno for something at night with
 nobody about, then again in daylight at the harbour with Marika in sight,
 per the plan's own verification note.
+
+---
+
+## D-087 — Vouching: an ask that writes knowledge, not a flag
+
+**Why (M8 step 11, opening session C).** D-085's `_vouched_for(npc_id)`
+already reads the `KnowledgeNetwork` correctly and has done since step 9 —
+it has just never had anything to find. This step is the writer: a third
+authored `AskDirector.EFFECTS` verb, `"vouch"`, and the one new `requires`
+key the plan asked for, `{"deals": true}`.
+
+**The ask is put directly to the dealer, not to a third party.** Two new
+`data/asks.json` entries, `ask_vouch_rauno` and `ask_vouch_kimmo`, each
+`requires: {"deals": true}` — a safety net more than a functional gate,
+since each is already hard-tied to one specific `npc` the way every ask is
+(`AskDirector.offer()` matches on `ask.npc == npc_id`); `DataRegistry`
+now checks it at load time regardless
+(`ask '%s' requires dealing but '%s' deals from nothing`,
+`tests/test_asks.gd`'s `test_an_ask_requiring_dealing_must_be_put_to_a_
+dealer`), so authoring a `requires: {"deals": true}` ask for someone who
+never will deal is a caught content bug, not a silently-dead ask. On
+success, the effect makes **that same dealer** a firsthand witness of
+`"vouched_for"` about the player: `_knowledge.observe_event(PlayerState.
+ID, "vouched_for", now, [npc_id], {"visibility": "social", "severity":
+0.5})`. Nothing hardcodes who the vouching is *for* — the fact's own
+`visibility` and `KnowledgeNetwork`'s existing gossip spread
+(`_schedule_tellings`, along `RelationshipGraph.close_contacts`) are what
+the plan meant by "buys spreading along relationship edges": if this
+dealer later talks to another dealer they are close to, the player's
+reputation as vouched-for can travel there too, with no new mechanism.
+Only a full **success** vouches — **partial** just warms trust a little,
+matching the shape `ask_rauno_time` already has for its own two winning
+grades (`test_only_a_full_win_vouches`).
+
+**`AskDirector.setup()` gained a `KnowledgeNetwork` parameter**, exactly
+the signature change the plan called out. `asks.setup(...)` has exactly
+one real caller (`Game.new_game()`) and no test constructs `AskDirector`
+directly (verified by search before making the change), so the fix was
+one line, not the sweep the plan's own note warned might be needed.
+
+**Proven end to end, tying step 9 back in**:
+`test_being_vouched_for_opens_the_shop_to_a_stranger` vouches with Rauno
+under a background with no other reason to know him, ends the
+conversation, confirms the resulting familiarity is still below
+`DealRules.familiarity_floor(0.75, 0.1)` — Rauno's own greed and
+lawfulness, called directly rather than duplicated — and then asks him for
+something in a *second*, otherwise-cold conversation: no refusal, topic
+`deal_offered`. Vouching is the only reason it succeeds. 4 new tests in
+`tests/test_asks.gd` (kept there rather than a new file — this is the ask
+system doing one more thing, not a new one). 1116 tests green (was 1112).
+No benchmark — nothing here runs per simulated minute.
+
+**One existing test needed fixing, the D-084/D-082 pattern again.**
+`test_there_has_to_be_something_to_bargain_over` asserted Rauno had
+nothing to ask once the debt quest was inactive — true before this step,
+false now that `ask_vouch_rauno` is always available to anyone talking to
+him. Moved that half of the test to Veikko, who has no authored ask at
+all, debt or not. The lesson from D-084's near-identical fixture break
+holds: authoring a new always-available ask for an existing story NPC is
+exactly the kind of change that quietly invalidates an "and there is
+nothing else here" assumption elsewhere, and the only defence is running
+the whole suite, not just the new tests.

@@ -6,6 +6,7 @@ versions are milestones rather than releases until there is something to release
 ## [Unreleased]
 
 ### Added
+- Talking a dealer into trusting you is now something you can put to them directly, on your persuasion — win them over and word of it can travel to whoever they're close to, so it might reach another dealer before you ever meet them (D-087, M8 session C step 11).
 - Dealing has consequences now: being seen buying or selling something illicit is a crime like any other, weighed by how serious the particular thing was, not just that it happened; the police mind it more than most things, other criminals barely at all; and the dealer themselves never turns you in for it, however it goes (D-086, M8 session B step 10 — closes session B).
 - Asking a dealer for something ("Got anything?", "Onko sulla mitään?") now works: whether they will deal with you at all depends on who they are, whether they know and trust you, your standing and how much heat you're carrying, and whether anyone else is about — a stranger just gets turned away, but pushing a genuinely straight person on it costs their trust. Getting a yes opens their shop, priced by how well you know each other (D-085, M8 session B step 9).
 - Internal: two illicit shops exist in the data now — Rauno's harder drugs out of Warehouse 9, Kimmo's cannabis and mushrooms out of the Eastfield scrapyard — but there is still no way to reach either one in play; that is next (D-084, M8 session B step 8).

@@ -27,5 +27,31 @@
      "partial": [{"do": "leniency", "delta": -0.15}],
      "failure": [],
      "backfire": [{"do": "leniency", "delta": 0.15},
-                  {"do": "feel", "dimension": "respect", "delta": -0.05}]}}
+                  {"do": "feel", "dimension": "respect", "delta": -0.05}]}},
+
+  {"id": "ask_vouch_rauno", "npc": "npc_rauno", "name_key": "ask.vouch_rauno", "skill": "persuasion", "difficulty": 40,
+   "cooldown_days": 3, "requires": {"deals": true},
+   "happened": {
+     "success": "They asked you to trust them enough to put in a word — and you did. People will hear it.",
+     "partial": "They asked you to trust them. You will mention them, carefully, nothing more.",
+     "failure": "They asked you to trust them enough to vouch for them. You are not sure enough of them for that.",
+     "backfire": "They pushed too hard to be trusted. You trust them less for it, not more."},
+   "grades": {
+     "success": [{"do": "vouch"}, {"do": "feel", "dimension": "trust", "delta": 0.1}],
+     "partial": [{"do": "feel", "dimension": "trust", "delta": 0.03}],
+     "failure": [],
+     "backfire": [{"do": "feel", "dimension": "trust", "delta": -0.08}]}},
+
+  {"id": "ask_vouch_kimmo", "npc": "npc_kimmo", "name_key": "ask.vouch_kimmo", "skill": "persuasion", "difficulty": 40,
+   "cooldown_days": 3, "requires": {"deals": true},
+   "happened": {
+     "success": "They asked you to trust them enough to put in a word — and you did. People will hear it.",
+     "partial": "They asked you to trust them. You will mention them, carefully, nothing more.",
+     "failure": "They asked you to trust them enough to vouch for them. You are not sure enough of them for that.",
+     "backfire": "They pushed too hard to be trusted. You trust them less for it, not more."},
+   "grades": {
+     "success": [{"do": "vouch"}, {"do": "feel", "dimension": "trust", "delta": 0.1}],
+     "partial": [{"do": "feel", "dimension": "trust", "delta": 0.03}],
+     "failure": [],
+     "backfire": [{"do": "feel", "dimension": "trust", "delta": -0.08}]}}
 ]

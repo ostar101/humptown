@@ -749,6 +749,8 @@
   "ui.msg.police_forced.fine": "You did not come in. {name} has fined you €{fine}.",
   "ask.rauno_time": "More time from Rauno",
   "ask.marika_leniency": "Going easy on you",
+  "ask.vouch_rauno": "Earning Rauno's trust",
+  "ask.vouch_kimmo": "Earning Kimmo's trust",
   "ui.quests.owed_more": "He wants €{extra} more.",
   "ui.msg.ask.success": "{ask}: it worked.",
   "ui.msg.ask.partial": "{ask}: partly, and it cost you.",

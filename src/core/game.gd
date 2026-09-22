@@ -167,7 +167,7 @@ func new_game(background_id: String = "", world_seed: int = 0) -> Result:
 	_start_background_quests(background_id)
 	meetings.setup(calendar, npcs, world, player, relationships, memories, events_queue, clock, data)
 	crime.setup(npcs, knowledge, relationships, memories, events_queue, clock)
-	asks.setup(data, relationships, quests, crime, player, clock, rng)
+	asks.setup(data, relationships, quests, crime, player, clock, rng, knowledge)
 	fights.setup(npcs, player, relationships, crime, memories, clock, data, rng)
 	consequences.setup(npcs, knowledge, relationships, crime, quests, work, phone_director, meetings, data, clock)
 	phone_director.setup(phone, npcs, relationships, quests, player, clock, dialogue, meetings)

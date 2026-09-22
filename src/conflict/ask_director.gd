@@ -9,9 +9,12 @@ extends RefCounted
 ##
 ## Effects: `feel` {npc, dimension, delta} · `flag` {flag, value} · `cash`
 ## {amount} · `extend_deadline` {quest, days} · `raise_requirement` {quest,
-## amount} · `leniency` {delta} (how the officer weighs the player's case).
+## amount} · `leniency` {delta} (how the officer weighs the player's case) ·
+## `vouch` (M8 step 11, D-087): the person being asked comes to know
+## `"vouched_for"` about the player, firsthand — knowledge, not a flag, so
+## it can spread to whoever they talk to, same as anything else witnessed.
 
-const EFFECTS: Array[String] = ["feel", "flag", "cash", "extend_deadline", "raise_requirement", "leniency"]
+const EFFECTS: Array[String] = ["feel", "flag", "cash", "extend_deadline", "raise_requirement", "leniency", "vouch"]
 
 ## ask id -> the day it was last put to them: nobody is asked twice in a breath.
 var asked: Dictionary = {}
@@ -23,10 +26,12 @@ var _crime: CrimeDirector = null
 var _player: PlayerState = null
 var _clock: GameClock = null
 var _rng: RngStreams = null
+## For the `vouch` effect (M8 step 11).
+var _knowledge: KnowledgeNetwork = null
 
 
 func setup(data: DataRegistry, relationships: RelationshipGraph, quests: QuestLog, crime: CrimeDirector,
-		player: PlayerState, clock: GameClock, rng: RngStreams) -> void:
+		player: PlayerState, clock: GameClock, rng: RngStreams, knowledge: KnowledgeNetwork) -> void:
 	_data = data
 	_relationships = relationships
 	_quests = quests
@@ -34,6 +39,7 @@ func setup(data: DataRegistry, relationships: RelationshipGraph, quests: QuestLo
 	_player = player
 	_clock = clock
 	_rng = rng
+	_knowledge = knowledge
 
 
 ## What this person could be asked for right now: the ask's entry, or {}.
@@ -94,6 +100,10 @@ func _requirements_met(requires: Dictionary, npc_id: String) -> bool:
 		return false
 	if bool(requires.get("open_summons", false)) and _crime.open_summons_for(npc_id).is_empty():
 		return false
+	## M8 step 11: an ask that only makes sense put to someone who deals.
+	if bool(requires.get("deals", false)) and _data != null \
+			and (_data.get_entry("npcs", npc_id).get("deals", []) as Array).is_empty():
+		return false
 	return true
 
 
@@ -113,3 +123,7 @@ func _apply_effects(effects: Array, npc_id: String) -> void:
 				_quests.raise_requirement(str(raw["quest"]), int(raw["amount"]))
 			"leniency":
 				_crime.leniency[npc_id] = float(_crime.leniency.get(npc_id, 0.0)) + float(raw["delta"])
+			"vouch":
+				if _knowledge != null:
+					_knowledge.observe_event(PlayerState.ID, "vouched_for", now, [npc_id],
+						{"visibility": "social", "severity": 0.5})
