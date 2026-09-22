@@ -6,6 +6,7 @@ versions are milestones rather than releases until there is something to release
 ## [Unreleased]
 
 ### Added
+- Internal: the rules for whether someone will make a grey or illicit deal with the player, and on what terms — not wired to anything yet, so still no player-visible change (D-083, M8 session B step 7).
 - Internal: every person now has a `nature` — how lawful, greedy, risk-taking and discreet they are — backfilled by hand for all 20 from their existing traits and bio, and a `deals` list (currently empty on everyone) naming which shops they deal from. Nothing reads either yet; no player-visible change (D-082, M8 session B step 6).
 - Examine (D-081): pick anything in your bag, or whatever you're wearing, to see its picture, what it is, what it does, and — for about a third of the 115 things in the game — a sentence about it. Wear and take off boots and weapons from there, or lay a thing straight onto the bench to work with. What is worn shows on the left of the window on every tab.
 - Equipment (D-080): six slots — head, body, legs, feet, hand, back — for weapons, boots and a backpack. Wearing something else in the same slot just swaps it, no need to take the old thing off first; a worn backpack widens what you can carry, a worn weapon is what a fight uses. Boots take the edge off a blow. No window to wear things from yet — that comes with examine.

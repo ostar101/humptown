@@ -3097,3 +3097,63 @@ happy-path counterparts. Benchmark re-run back to back on the same machine
 populations, a second sample landed back in line with the pre-change
 baseline — the same run-to-run drift on this machine already noted in
 D-077, not a regression from four extra dictionary lookups at load time.
+
+---
+
+## D-083 — `DealRules`: the gate order for a grey or illicit deal
+
+**Why (M8 step 7).** The plan weighed three mechanisms for the illicit trade
+and recommended a hybrid: the exchange itself runs through `ShopWindow` like
+any other shop, priced from data; the only new judgement is whether the
+keeper will deal with the player *at all*, and on what terms. `DealRules`
+(`src/economy/deal_rules.gd`, pure, the `ShopRules`/`AskRules` pattern —
+facts in, a `Result` out, nothing changes on a refusal) is that judgement.
+It is unused this step: `ask_deal` (step 9) is its first caller. Writing it
+now, against synthetic facts, means the eight-check order and every refusal
+code are settled and tested before anything in the game depends on them.
+
+**The order is the design**, unchanged from the plan's table: `not_a_dealer`
+(no deal covers this shop) → `wont_deal` (`legality == "illicit"` and
+`lawfulness > 0.6` — a shop that is merely `"grey"` never checks lawfulness
+at all, so a by-the-book pawnbroker can still fence, just not deal drugs) →
+`requires_unmet` (the shop's own authored gate, checked by the caller) →
+`dont_know_you` / `dont_trust_you` (skipped entirely when `vouched`, not
+loosened) → `bad_standing` (criminal-scope `Reputation` below `-0.2`) →
+`too_hot` (`heat > risk`) → `not_now` (someone is watching and `risk < 0.7`).
+Earlier checks always win: `test_checks_run_in_order_not_a_dealer_first`
+sets every other fact to its worst value and confirms `not_a_dealer` is
+still what comes back.
+
+**The two floors and the two success numbers are formulas I chose**, since
+the plan named the shape ("familiarity below a greed/lawfulness-shaped
+floor", "trust below a risk/greed-shaped floor") but not the arithmetic:
+`familiarity_floor = 0.6 − greed×0.4 + lawfulness×0.3` (greed lowers how
+well a dealer needs to know you, lawfulness raises it back even in someone
+greedy) and `trust_floor = 0.6 − greed×0.3 − risk×0.3` (a dealer's own risk
+tolerance also lowers how much trust they need, the way a cautious one would
+not take the chance). Success returns `{"factor", "visibility"}`, never a
+plain yes: `price_factor = clamp(1.0 + greed×0.6 − closeness×0.3, 0.5, 2.5)`
+(closeness averages familiarity and trust, trust floored at zero so
+distrust never becomes a discount) and `visibility_for(discretion) =
+clamp(1.0 − discretion, 0.05, 1.0)` — discretion **is** the inverse of
+visibility, the one axis of `nature` that never gates anything, only costs;
+never quite zero, so even the most discreet dealer leaves some trace in
+`KnowledgeNetwork` once step 9 wires the write. These constants are a
+starting point, not a locked contract — nothing downstream depends on their
+exact values yet, only on the shape (`Result` with those two keys on
+success).
+
+**`heat`, the player's current standing with the police in [0, 1] the way
+this step defines it, is not computed anywhere yet.** `DealRules.judge`
+takes it as a caller-supplied fact, same as every other input; something
+step 9 or 10 will derive it from (recent crime record, an open summons) is
+an open question for that step, not this one — this step only needed a
+number in a known range to gate against `risk`. Not to be confused with the
+per-*item* `heat` the plan adds to `items.json` in step 10, which feeds a
+deal's *visibility* as a crime, not this gate.
+
+17 new tests in `tests/test_deals.gd`: the eight refusal codes, the happy
+path, vouching skipping both feeling floors, a lawful person still dealing
+at a merely-grey shop, check ordering, and the `price_factor`/
+`visibility_for` formulas' monotonicity and range. No benchmark — nothing
+calls this yet, so nothing simulated changed.
