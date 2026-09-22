@@ -1,50 +1,21 @@
 class_name InventoryWindow
-extends CanvasLayer
+extends GameWindow
 ## What the player carries (D-041): each thing, how many, what it weighs,
 ## and a Use for what can be eaten, drunk or put on a wound. Using goes
 ## through `Game.use_item()`, which decides; a refusal is shown in plain
 ## words. Time stands still while it is open; using something takes the
 ## minutes it takes.
 
-signal closed()
-
-var _time_was_paused := false
-
-@onready var _root: Control = $Root
 @onready var _condition: Label = %Condition
 @onready var _rows: VBoxContainer = %Rows
 @onready var _message: Label = %Message
 @onready var _carrying: Label = %Carrying
 @onready var _job: Label = %Job
-@onready var _close: Button = %Close
 
 
 func _ready() -> void:
-	_root.visible = false
-	_close.pressed.connect(close)
-
-
-func open() -> void:
-	if _root.visible or not Game.is_running():
-		return
-	_time_was_paused = Game.clock.paused
-	Game.pause_time(true)
-	_message.text = ""
-	_render()
-	_root.visible = true
-	_focus_first()
-
-
-func close() -> void:
-	if not _root.visible:
-		return
-	_root.visible = false
-	Game.pause_time(_time_was_paused)
-	closed.emit()
-
-
-func is_open() -> bool:
-	return _root.visible
+	super._ready()
+	toggle_action = "inventory"
 
 
 func use(item_id: String) -> Result:
@@ -54,8 +25,7 @@ func use(item_id: String) -> Result:
 	if used.is_ok():
 		_message.text = Localization.t("ui.bag.used." + str(item.get("kind", "food")), {"item": item_name})
 	else:
-		var key := "ui.bag.refused." + used.code
-		_message.text = Localization.t(key) if Localization.t(key) != key else Localization.t("ui.bag.refused.other")
+		_message.text = _refusal_text("ui.bag", used.code)
 	_render()
 	return used
 
@@ -76,10 +46,9 @@ func message() -> String:
 	return _message.text
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if _root.visible and (event.is_action_pressed("ui_cancel") or event.is_action_pressed("inventory")):
-		get_viewport().set_input_as_handled()
-		close()
+func _before_show() -> void:
+	_message.text = ""
+	_render()
 
 
 func _render() -> void:

@@ -1,5 +1,5 @@
 class_name CraftWindow
-extends CanvasLayer
+extends GameWindow
 ## Putting things together (D-070), the way a workbench does it in a block game:
 ## a grid to lay things on, an arrow, and what they would make. Pick a thing in
 ## your bag to lay it on the grid, click one on the grid to take it off, press
@@ -9,20 +9,16 @@ extends CanvasLayer
 ## does it — uses things up, hands things over, takes the minutes — and a
 ## refusal is shown in plain words. Time stands still while it is open.
 
-signal closed()
-
 const SLOTS := 9
 const GRID_SLOT := 60.0
 const OUTPUT_SLOT := 84.0
 const BAG_SLOT := 56.0
 
-var _time_was_paused := false
 ## What lies on each grid slot, "" for nothing.
 var _placed: Array[String] = []
 var _grid_slots: Array[ItemSlot] = []
 var _output: ItemSlot = null
 
-@onready var _root: Control = $Root
 @onready var _grid: GridContainer = %Grid
 @onready var _output_holder: VBoxContainer = %OutputHolder
 @onready var _result: Label = %Result
@@ -32,12 +28,11 @@ var _output: ItemSlot = null
 @onready var _book_rows: VBoxContainer = %BookRows
 @onready var _message: Label = %Message
 @onready var _carrying: Label = %Carrying
-@onready var _close: Button = %Close
 
 
 func _ready() -> void:
-	_root.visible = false
-	_close.pressed.connect(close)
+	super._ready()
+	toggle_action = "craft"
 	_make.pressed.connect(make)
 	_clear.pressed.connect(clear)
 	for i in SLOTS:
@@ -51,29 +46,11 @@ func _ready() -> void:
 	_output_holder.add_child(_output)
 
 
-func open() -> void:
-	if _root.visible or not Game.is_running():
-		return
-	_time_was_paused = Game.clock.paused
-	Game.pause_time(true)
+func _before_show() -> void:
 	Game.refresh_recipes()
 	_placed.fill("")
 	_message.text = ""
 	_render()
-	_root.visible = true
-	_focus_first()
-
-
-func close() -> void:
-	if not _root.visible:
-		return
-	_root.visible = false
-	Game.pause_time(_time_was_paused)
-	closed.emit()
-
-
-func is_open() -> bool:
-	return _root.visible
 
 
 ## Lays one of a thing from the bag on the first empty slot. Refused
@@ -191,17 +168,10 @@ func book_texts() -> Array[String]:
 	return out
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if _root.visible and (event.is_action_pressed("ui_cancel") or event.is_action_pressed("craft")):
-		get_viewport().set_input_as_handled()
-		close()
-
-
 # --- internals ---------------------------------------------------------------------
 
 func _refuse(code: String) -> Result:
-	var key := "ui.craft.refused." + code
-	_message.text = Localization.t(key) if Localization.t(key) != key else Localization.t("ui.craft.refused.other")
+	_message.text = _refusal_text("ui.craft", code)
 	_render()
 	return Result.failure(code)
 

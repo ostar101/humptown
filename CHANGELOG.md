@@ -6,6 +6,7 @@ versions are milestones rather than releases until there is something to release
 ## [Unreleased]
 
 ### Changed
+- Internal: the bag and bench windows now share one base class for opening, closing and refusal messages (`GameWindow`), no player-visible change (D-078).
 - Old Town and Eastfield are open from the start: no timetable to read, no cash or contact to carry. Walking between any two districts still costs time, halved from before (9/18/13 minutes) (D-077).
 
 ### Added (lamps)

@@ -2745,3 +2745,32 @@ against a ~3188 baseline), but a back-to-back run against the prior commit
 (e2234b6) shows the same elevation there too — the baseline in
 `PROJECT_STATUS.md` simply predates D-072's two new regions and was never
 re-measured after it. This change itself causes no regression.
+
+## D-078 — `GameWindow`, the base every modal window shares
+
+**Why (M8 step 2).** `InventoryWindow` and `CraftWindow` are about to merge
+into one `ItemsWindow` (M8 step 3). Before that merge, the ~25 lines the two
+already had in common — `_root`, `_time_was_paused`, `closed`, `is_open`,
+closing on `ui_cancel`, the `"ui.<prefix>.refused." + code` lookup — are
+pulled into a base class, `GameWindow` (`src/ui/game_window.gd`), so the merge
+starts from a smaller diff. Only these two windows are converted; the other
+seven `CanvasLayer` windows (`ShopWindow`, `PhoneWindow`, `QuestWindow`, …)
+are left as they are, for a later commit.
+
+**Shape.** `GameWindow extends CanvasLayer` owns `open()`/`close()`/`is_open()`,
+the pause/resume of the clock, and `_unhandled_input` for `ui_cancel` plus one
+optional `toggle_action` a subclass sets in its own `_ready()` (`"inventory"`,
+`"craft"`). It owns no rendering, data or focus: `open()` calls two virtual
+hooks a subclass overrides — `_before_show()` (render and reset, called before
+the window is shown) and `_focus_first()` (defaults to the close button).
+`_refusal_text(prefix, code)` centralises the `"<prefix>.refused." + code`
+lookup with its `"<prefix>.refused.other"` fallback, used by both windows'
+own refusal-message builders. `_root` and `_close` are declared once in the
+base with `$Root` / `%Close`, which resolves correctly in either subclass's
+scene because every window scene already has a `Root` node and a
+unique-named `Close` button.
+
+**No behaviour change.** `InventoryWindow` and `CraftWindow` keep their public
+method surface and every test untouched; the suite is green with the same
+1009 tests before and after. This step is deliberately boring — the visible
+merge is D-079.
