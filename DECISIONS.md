@@ -3037,3 +3037,63 @@ Compatibility renderer (`WorldView._ready()` and `ui_preview.gd` both call
 `DevCapture.maybe_capture`, so the screenshot tool renders twice per run),
 not something a player at a real window would see. Worth a look if it recurs
 somewhere that matters more than a debug screenshot.
+
+---
+
+## D-082 — `Npc.nature` and `Npc.deals`: personality a rule can read, frozen now, spent later
+
+**Why (M8 step 6, opening session B).** Every NPC has three free-text fields
+(`traits`, `bio`, `voice`) that no rule ever reads, so a shady proposal gets
+refused identically by a fixer and a librarian — there is no axis for the
+game to tell them apart on. `nature` is that axis: **what kind of person
+someone is**, not how they feel about the player — `Relationship.
+disposition()` already owns the second question, so the new block gets its
+own name rather than crowding that one. `deals` names the shop ids a person
+deals from, so a future illicit exchange runs entirely through
+`ShopRegistry` (price, stock, till, haggling, restock, saving all come free)
+instead of a bespoke goods list.
+
+**Four axes, each `[0, 1]`:** `lawfulness` (the gate on illicit trade),
+`greed` (lowers the trust a deal needs, raises its price), `risk` (how much
+police heat someone will wear, whether they deal with people about), and
+`discretion` (how visible a deal becomes in `KnowledgeNetwork` — a chatty
+dealer is a real cost even on a successful deal, and this is the one axis
+that does not gate anything, which is why there are four and not three).
+Defaults are `{lawfulness: 0.8, greed: 0.3, risk: 0.2, discretion: 0.5}` — an
+ordinary person who will not deal — applied per-axis in `Npc.from_data`, so
+an entry can author one axis and still get sane values for the rest.
+
+**Backfilled for all 20 existing NPCs this step**, by hand, from the traits
+and bio already on record — `never_writes_anything_down` and
+`asks_no_questions` read as low lawfulness and high discretion; `by_the_book`
+reads as `lawfulness: 1.0`; `hears_everything`/`gossips`/`talks_to_everyone`
+read as low discretion; a fixer, a pawnbroker and a scrap dealer who "knows
+where things came from" land furthest from the default; a constable lands at
+the opposite corner. These are judgement calls, not a formula — the point of
+authoring by hand is that the numbers should already feel right to anyone
+who has read the bios, without inventing a scoring rule that would have to
+be defended line by line.
+
+**`deals` stays empty on every NPC this step.** The field is parsed and
+validated (`DataRegistry._npc_nature_problems`: a deal must name a real
+`shops` entry) but nothing is authored into it yet, because the shops it
+would point at do not exist until step 8. Authoring `deals: ["shop_rauno_
+pocket"]` on Rauno now, before that shop exists, would fail the very
+reference check it is there to enforce — so the shop and the deal that names
+it land together, in the same later commit, the way `test_asks.gd`'s
+`ask_broken` fixture shows a bad reference should always be caught, never
+silently accepted for one commit and fixed in the next.
+
+**This is the one-way door the plan called out.** Renaming `nature` or
+`deals`, or any of the four axis names, is free today and stops being free
+the moment 30–40 more NPCs are authored against them in session C (step 12).
+Nothing reads `nature` or `deals` yet — `DealRules` (step 7) is the first
+consumer — so this step is exactly what it claims to be: the schema frozen,
+zero behaviour change. 11 new tests in `tests/test_npc_nature.gd`: defaults,
+partial-axis backfill, the four validator refusal paths (out-of-range axis,
+unknown axis name, non-numeric axis, a deal naming an unknown shop) and their
+happy-path counterparts. Benchmark re-run back to back on the same machine
+(`Npc.gd` is under `src/npc/`): first sample ran high at the top two
+populations, a second sample landed back in line with the pre-change
+baseline — the same run-to-run drift on this machine already noted in
+D-077, not a regression from four extra dictionary lookups at load time.

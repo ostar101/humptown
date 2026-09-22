@@ -97,6 +97,7 @@ func validate_references() -> Array[String]:
 		var work := str(npc.get("workplace", ""))
 		if not work.is_empty() and not has_entry("locations", work):
 			problems.append("npc '%s' references unknown workplace '%s'" % [id, work])
+		problems.append_array(_npc_nature_problems(id, npc))
 	for id in table("schedules"):
 		var sched: Dictionary = table("schedules")[id]
 		for block in sched.get("blocks", []):
@@ -215,6 +216,32 @@ func _job_reference_problems(id: String, job: Dictionary) -> Array[String]:
 			problems.append("job '%s' teaches unknown skill '%s'" % [id, skill_id])
 	if int(job.get("shift_end", 0)) <= int(job.get("shift_start", 0)):
 		problems.append("job '%s' ends before it starts" % id)
+	return problems
+
+
+## An NPC's nature, if authored, names only the four known axes and keeps
+## each one in [0, 1]; anything they deal from is a shop that exists (M8
+## D-082 — the schema is frozen here, deal ids are authored alongside the
+## shops that give them meaning in a later step).
+func _npc_nature_problems(id: String, npc: Dictionary) -> Array[String]:
+	var problems: Array[String] = []
+	var raw_nature: Variant = npc.get("nature", {})
+	if raw_nature is Dictionary:
+		var nature: Dictionary = raw_nature
+		for axis in nature:
+			if not Npc.NATURE_AXES.has(str(axis)):
+				problems.append("npc '%s' has an unknown nature axis '%s'" % [id, axis])
+				continue
+			var value: Variant = nature[axis]
+			if typeof(value) != TYPE_FLOAT and typeof(value) != TYPE_INT:
+				problems.append("npc '%s' nature axis '%s' is not a number" % [id, axis])
+			elif float(value) < 0.0 or float(value) > 1.0:
+				problems.append("npc '%s' nature axis '%s' is out of range [0, 1]" % [id, axis])
+	else:
+		problems.append("npc '%s' nature must be an object of axis -> number" % id)
+	for deal in npc.get("deals", []):
+		if not has_entry("shops", str(deal)):
+			problems.append("npc '%s' deals from unknown shop '%s'" % [id, deal])
 	return problems
 
 

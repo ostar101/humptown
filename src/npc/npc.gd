@@ -35,6 +35,14 @@ var look: Dictionary = {}
 ## background people, who are described from their occupation and traits.
 var bio: String = ""
 var voice: String = ""
+## What kind of person they are, not how they feel about the player (that is
+## Relationship.disposition()). Four axes in [0, 1], authored or defaulted;
+## never merges, never changes at runtime (M8 D-082).
+var nature: Dictionary = DEFAULT_NATURE.duplicate()
+## Shop ids this person deals from, on top of any ordinary workplace shop —
+## a list, not a bespoke goods list, so price/stock/till/restock all come
+## free from ShopRegistry (M8 D-082).
+var deals: Array[String] = []
 
 # --- runtime state (saved) --------------------------------------------------
 var location: String = ""
@@ -53,6 +61,12 @@ var memory_ids: Array[String] = []
 
 const LIFE_STAGE_NAMES := ["child", "teen", "young_adult", "adult", "middle_aged", "elder"]
 const IMPORTANCE_NAMES := ["background", "named", "story"]
+
+## An ordinary person who will not deal: high lawfulness, everything else low
+## or middling. Applied per-axis, so an author can set just one and still get
+## sane values for the rest.
+const NATURE_AXES := ["lawfulness", "greed", "risk", "discretion"]
+const DEFAULT_NATURE := {"lawfulness": 0.8, "greed": 0.3, "risk": 0.2, "discretion": 0.5}
 
 
 static func from_data(d: Dictionary) -> Npc:
@@ -85,6 +99,19 @@ static func from_data(d: Dictionary) -> Npc:
 	for g in d.get("groups", []):
 		gr_list.append(str(g))
 	n.groups = gr_list
+
+	var raw_nature: Variant = d.get("nature", {})
+	var nat: Dictionary = DEFAULT_NATURE.duplicate()
+	if raw_nature is Dictionary:
+		for axis in NATURE_AXES:
+			if (raw_nature as Dictionary).has(axis):
+				nat[axis] = float((raw_nature as Dictionary)[axis])
+	n.nature = nat
+
+	var deal_list: Array[String] = []
+	for deal in d.get("deals", []):
+		deal_list.append(str(deal))
+	n.deals = deal_list
 
 	n.location = n.home
 	return n
