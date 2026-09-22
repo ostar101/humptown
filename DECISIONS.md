@@ -2774,3 +2774,70 @@ unique-named `Close` button.
 method surface and every test untouched; the suite is green with the same
 1009 tests before and after. This step is deliberately boring — the visible
 merge is D-079.
+
+## D-079 — One window for things: `ItemsWindow`
+
+**Why (M8 step 3).** The bag (`I`) and the bench (`C`) were two windows that
+shared a footer, a weight line and a refusal pattern, and could not both be
+seen at once — you could not read what a thing does while deciding to craft
+with it. `InventoryWindow` and `CraftWindow` are gone; `ItemsWindow`
+(`src/ui/items_window.gd` + `scenes/ui/items_window.tscn`, `extends
+GameWindow`) replaces both, as three tabs — **Bag**, **Bench**, **Recipes** —
+on the `%BuyTab`/`%SellTab` toggle-button precedent already in
+`shop_window.tscn`.
+
+**The split.** The Bag tab is exactly the old bag: the row list (`_rows`),
+Use buttons, the same refusal words. The Bench tab is the old bench's grid
+column plus its own bag-picker grid (`_bag_grid`) side by side — you still
+pick from your bag onto the 3×3 grid in one view. The recipe book, previously
+a third column glued to the bench, is its own **Recipes** tab now — a
+reorganisation, not new gameplay, since `book_texts()` reads the same rows
+either way. `Condition`, `Job`, `Message` and `Carrying` sit outside the tab
+body and stay current regardless of which tab is showing, same as before.
+
+**`I` opens on Bag, `C` opens on Bench — and if the window is already open,
+the key switches tab instead of closing it.** This is a real, deliberate
+behaviour change from the old two-window design, where pressing the same key
+twice closed the window (each window closed on its own toggle key via
+`GameWindow.toggle_action`, D-078). `ItemsWindow` leaves `toggle_action`
+unset — only `ui_cancel` (Esc) closes it now — and `WorldView.open_bag()` /
+`open_bench()` both call `ItemsWindow.open_on(tab)`, which opens on that tab
+if closed or just calls `show_tab(tab)` if already open. One `if`, as
+intended: `open_on()` is the only place that decides.
+
+**`world.tscn` edited in the same commit** (one-way door #5): `$Inventory`
+(instancing `inventory_window.tscn`) and `$Craft` (`craft_window.tscn`) are
+gone, replaced by one `$Items` instancing `items_window.tscn`. Both old
+script+scene pairs are deleted in this commit too — leaving them would have
+split every world-driving test into "before" and "after" failures instead of
+one clean pass. `WorldView` drops `_bag`/`_craft` for one `_items:
+ItemsWindow`, collapsing the three places that named both of them by hand:
+the `@onready` block, the `_refresh_prompt()` OR-chain, and the two close-all
+blocks in `_on_player_collapsed()`/`_on_player_arrested()`. `open_inventory()`
+/`open_crafting()`/`inventory_window()`/`craft_window()` are renamed
+`open_bag()`/`open_bench()`/`items_window()` — `WorldView`'s own accessor
+names, not part of the preserved surface the ground truth named, so they
+follow the new shape.
+
+**Public method surface kept, as promised**: `row_texts`, `message`, `use`,
+`grid_ids`, `output_id`, `can_make`, `result_text`, `bag_texts`, `book_texts`,
+`place`, `take_off`, `clear`, `fill_recipe`, `make` are all on `ItemsWindow`
+unchanged in shape. `open()` (inherited from `GameWindow`, no argument)
+defaults to whichever tab is current — `Tab.BAG` the first time — so
+`test_condition.gd`'s `bag.open()` needed only a scene path and a type
+change, not a rewrite.
+
+**Tests.** `test_craft_window.gd` is deleted; its content becomes
+`tests/test_items_window.gd`, ported mechanically (`craft_window()` →
+`items_window()`, `open_crafting()` → `open_bench()`), plus three new tests
+for the merge itself: opening on the right tab, switching tabs without
+closing, and the bag and the bench agreeing on what is carried.
+`test_item_icons.gd:99` and `test_condition.gd:143` are ported the same way.
+`src/debug/ui_preview.gd`'s `--bag`/`--craft` flags are unchanged from the
+player's side; internally both now call through `open_bag()`/`open_bench()`/
+`items_window()`.
+
+**Not built here.** No equipment, no examine panel, no `WORN` column — those
+are D-080 and D-081. The recipe book's move to its own tab is the only
+visible change a player would notice; everything else is the same words in a
+new container.

@@ -6,6 +6,7 @@ versions are milestones rather than releases until there is something to release
 ## [Unreleased]
 
 ### Changed
+- The bag and the bench are one window now, "Things", with a Bag/Bench/Recipes tab each. `I` opens on the bag, `C` on the bench; pressing the other key switches tab instead of closing the window, so you no longer lose your place to check what something does (D-079).
 - Internal: the bag and bench windows now share one base class for opening, closing and refusal messages (`GameWindow`), no player-visible change (D-078).
 - Old Town and Eastfield are open from the start: no timetable to read, no cash or contact to carry. Walking between any two districts still costs time, halved from before (9/18/13 minutes) (D-077).
 

@@ -95,9 +95,9 @@ func test_the_bag_and_the_shop_rows_carry_the_picture() -> void:
 	var view: WorldView = packed.instantiate()
 	(Engine.get_main_loop() as SceneTree).root.add_child(view)
 	Game.player.inventory.add("item_puukko", 1)
-	view.open_inventory()
-	var row := view.inventory_window().get_node("%Rows").get_child(0) as HBoxContainer
+	view.open_bag()
+	var row := view.items_window().get_node("%Rows").get_child(0) as HBoxContainer
 	assert_true(row.get_child(0) is PanelContainer, "the first thing in a row is the picture")
-	assert_true(view.inventory_window().row_texts().size() > 0)
-	view.inventory_window().close()
+	assert_true(view.items_window().row_texts().size() > 0)
+	view.items_window().close()
 	view.free()

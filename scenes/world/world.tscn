@@ -9,13 +9,12 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/dialogue_box.tscn" id="7"]
 [ext_resource type="Script" path="res://src/debug/dev_overlay.gd" id="8"]
 [ext_resource type="PackedScene" path="res://scenes/ui/shop_window.tscn" id="9"]
-[ext_resource type="PackedScene" path="res://scenes/ui/inventory_window.tscn" id="10"]
+[ext_resource type="PackedScene" path="res://scenes/ui/items_window.tscn" id="10"]
 [ext_resource type="PackedScene" path="res://scenes/ui/stash_window.tscn" id="11"]
 [ext_resource type="PackedScene" path="res://scenes/ui/quest_window.tscn" id="12"]
 [ext_resource type="PackedScene" path="res://scenes/ui/phone_window.tscn" id="13"]
 [ext_resource type="PackedScene" path="res://scenes/ui/atm_window.tscn" id="14"]
 [ext_resource type="PackedScene" path="res://scenes/ui/combat_window.tscn" id="15"]
-[ext_resource type="PackedScene" path="res://scenes/ui/craft_window.tscn" id="16"]
 [ext_resource type="PackedScene" path="res://scenes/ui/time_skip_overlay.tscn" id="17"]
 
 [node name="World" type="Node2D"]
@@ -43,7 +42,7 @@ script = ExtResource("4")
 
 [node name="Shop" parent="." instance=ExtResource("9")]
 
-[node name="Inventory" parent="." instance=ExtResource("10")]
+[node name="Items" parent="." instance=ExtResource("10")]
 
 [node name="Bin" parent="." instance=ExtResource("11")]
 
@@ -56,8 +55,6 @@ script = ExtResource("4")
 [node name="Atm" parent="." instance=ExtResource("14")]
 
 [node name="Combat" parent="." instance=ExtResource("15")]
-
-[node name="Craft" parent="." instance=ExtResource("16")]
 
 [node name="TimeSkip" parent="." instance=ExtResource("17")]
 

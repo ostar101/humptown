@@ -18,11 +18,10 @@ extends Node2D
 @onready var _daylight: CanvasModulate = $Daylight
 @onready var _dialogue: DialogueBox = $Dialogue
 @onready var _shop: ShopWindow = $Shop
-@onready var _bag: InventoryWindow = $Inventory
+@onready var _items: ItemsWindow = $Items
 @onready var _stash: StashWindow = $Stash
 @onready var _bin: StashWindow = $Bin
 @onready var _quests: QuestWindow = $Quests
-@onready var _craft: CraftWindow = $Craft
 @onready var _skip: TimeSkipOverlay = $TimeSkip
 @onready var _phone: PhoneWindow = $Phone
 @onready var _atm: AtmWindow = $Atm
@@ -55,12 +54,11 @@ func _ready() -> void:
 	Events.game_loaded.connect(refresh_daylight)
 	_dialogue.closed.connect(_on_dialogue_closed)
 	_shop.closed.connect(_on_shop_closed)
-	_bag.closed.connect(_on_shop_closed)
+	_items.closed.connect(_on_shop_closed)
 	_stash.closed.connect(_on_shop_closed)
 	_bin.use_as_bin()
 	_bin.closed.connect(_on_shop_closed)
 	_quests.closed.connect(_on_shop_closed)
-	_craft.closed.connect(_on_shop_closed)
 	_skip.finished.connect(_on_time_skip_finished)
 	_phone.closed.connect(_on_shop_closed)
 	_phone.call_requested.connect(_on_call_requested)
@@ -220,10 +218,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		interact()
 	elif event.is_action_pressed("inventory") and _player.input_enabled:
 		get_viewport().set_input_as_handled()
-		open_inventory()
+		open_bag()
 	elif event.is_action_pressed("craft") and _player.input_enabled:
 		get_viewport().set_input_as_handled()
-		open_crafting()
+		open_bench()
 	elif event.is_action_pressed("quests") and _player.input_enabled:
 		get_viewport().set_input_as_handled()
 		open_quests()
@@ -272,29 +270,28 @@ func quest_window() -> QuestWindow:
 	return _quests
 
 
-## Opens what the player carries (D-041); walking waits until it closes.
-func open_inventory() -> void:
-	_bag.open()
-	if _bag.is_open():
+## Opens what the player carries (D-041), on the Bag tab; walking waits until
+## it closes. If the window is already open on another tab, this switches to
+## the Bag tab instead of closing it (D-079).
+func open_bag() -> void:
+	_items.open_on(ItemsWindow.Tab.BAG)
+	if _items.is_open():
 		_player.input_enabled = false
 		_hud.set_prompt("")
 
 
-## Opens the bench where things are put together (D-070); walking waits until
-## it closes.
-func open_crafting() -> void:
-	_craft.open()
-	if _craft.is_open():
+## Opens the bench where things are put together (D-070), on the Bench tab;
+## walking waits until it closes. If the window is already open on another
+## tab, this switches to the Bench tab instead of closing it (D-079).
+func open_bench() -> void:
+	_items.open_on(ItemsWindow.Tab.BENCH)
+	if _items.is_open():
 		_player.input_enabled = false
 		_hud.set_prompt("")
 
 
-func craft_window() -> CraftWindow:
-	return _craft
-
-
-func inventory_window() -> InventoryWindow:
-	return _bag
+func items_window() -> ItemsWindow:
+	return _items
 
 
 func atm_window() -> AtmWindow:
@@ -417,7 +414,7 @@ func hud() -> Hud:
 ## Works out the prompt only when the faced cell, or who is standing on it,
 ## changes — not every frame.
 func _refresh_prompt() -> void:
-	if _dialogue.is_open() or _shop.is_open() or _bag.is_open() or _stash.is_open() or _bin.is_open() or _quests.is_open() or _craft.is_open() or _phone.is_open() or _atm.is_open() or _combat.is_open():
+	if _dialogue.is_open() or _shop.is_open() or _items.is_open() or _stash.is_open() or _bin.is_open() or _quests.is_open() or _phone.is_open() or _atm.is_open() or _combat.is_open():
 		return
 	var front := _player.current_cell() + _player.facing
 	var body := _npcs.body_at(front)
@@ -438,16 +435,14 @@ func _on_player_collapsed(woke_at: String, bill: int) -> void:
 		_dialogue.close()
 	if _shop.is_open():
 		_shop.close()
-	if _bag.is_open():
-		_bag.close()
+	if _items.is_open():
+		_items.close()
 	if _stash.is_open():
 		_stash.close()
 	if _bin.is_open():
 		_bin.close()
 	if _quests.is_open():
 		_quests.close()
-	if _craft.is_open():
-		_craft.close()
 	if _phone.is_open():
 		_phone.close()
 	if _atm.is_open():
@@ -496,7 +491,7 @@ func _on_ask_resolved(ask_id: String, grade: String) -> void:
 
 ## A night in the cells, or a fine for not coming in (D-052).
 func _on_player_arrested(officer_id: String, _released_at: int) -> void:
-	for window: Node in [_dialogue, _shop, _bag, _stash, _bin, _quests, _craft, _phone, _atm]:
+	for window: Node in [_dialogue, _shop, _items, _stash, _bin, _quests, _phone, _atm]:
 		if window.has_method("is_open") and window.is_open():
 			window.close()
 	show_current_area()

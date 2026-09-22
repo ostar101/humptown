@@ -1,24 +1,38 @@
-class_name CraftWindow
+class_name ItemsWindow
 extends GameWindow
-## Putting things together (D-070), the way a workbench does it in a block game:
-## a grid to lay things on, an arrow, and what they would make. Pick a thing in
-## your bag to lay it on the grid, click one on the grid to take it off, press
-## Make. The recipe book lists what you have found; click one to lay it out.
+## Everything the player carries and can put together, in one window (M8
+## step 3, D-079): the bag, the bench, and the recipes you know, as three
+## tabs. `I` opens on the bag, `C` opens on the bench; if the window is
+## already open the key switches tab instead of closing it.
 ##
-## It shows and proposes. `CraftRules` says what a grid makes and `Game.craft()`
-## does it — uses things up, hands things over, takes the minutes — and a
-## refusal is shown in plain words. Time stands still while it is open.
+## It shows and proposes. Using goes through `Game.use_item()` and crafting
+## through `Game.craft()`, both deciding; a refusal is shown in plain words.
+## Time stands still while it is open.
+
+enum Tab { BAG, BENCH, RECIPES }
 
 const SLOTS := 9
 const GRID_SLOT := 60.0
 const OUTPUT_SLOT := 84.0
 const BAG_SLOT := 56.0
 
-## What lies on each grid slot, "" for nothing.
+var _tab: Tab = Tab.BAG
+## What lies on each bench slot, "" for nothing.
 var _placed: Array[String] = []
 var _grid_slots: Array[ItemSlot] = []
 var _output: ItemSlot = null
 
+@onready var _condition: Label = %Condition
+@onready var _job: Label = %Job
+@onready var _message: Label = %Message
+@onready var _carrying: Label = %Carrying
+@onready var _bag_tab: Button = %BagTab
+@onready var _bench_tab: Button = %BenchTab
+@onready var _recipes_tab: Button = %RecipesTab
+@onready var _bag_body: Control = %BagBody
+@onready var _bench_body: Control = %BenchBody
+@onready var _recipes_body: Control = %RecipesBody
+@onready var _rows: VBoxContainer = %Rows
 @onready var _grid: GridContainer = %Grid
 @onready var _output_holder: VBoxContainer = %OutputHolder
 @onready var _result: Label = %Result
@@ -26,13 +40,13 @@ var _output: ItemSlot = null
 @onready var _clear: Button = %Clear
 @onready var _bag_grid: GridContainer = %BagGrid
 @onready var _book_rows: VBoxContainer = %BookRows
-@onready var _message: Label = %Message
-@onready var _carrying: Label = %Carrying
 
 
 func _ready() -> void:
 	super._ready()
-	toggle_action = "craft"
+	_bag_tab.pressed.connect(func() -> void: show_tab(Tab.BAG))
+	_bench_tab.pressed.connect(func() -> void: show_tab(Tab.BENCH))
+	_recipes_tab.pressed.connect(func() -> void: show_tab(Tab.RECIPES))
 	_make.pressed.connect(make)
 	_clear.pressed.connect(clear)
 	for i in SLOTS:
@@ -46,12 +60,71 @@ func _ready() -> void:
 	_output_holder.add_child(_output)
 
 
+## Opens on a given tab, or switches to it if already open — it never closes
+## the window, which is what makes `I`/`C` behave as tab keys once merged.
+func open_on(tab: Tab) -> void:
+	if is_open():
+		show_tab(tab)
+		return
+	_tab = tab
+	open()
+
+
+func current_tab() -> Tab:
+	return _tab
+
+
+func show_tab(tab: Tab) -> void:
+	_tab = tab
+	_bag_tab.button_pressed = tab == Tab.BAG
+	_bench_tab.button_pressed = tab == Tab.BENCH
+	_recipes_tab.button_pressed = tab == Tab.RECIPES
+	_bag_body.visible = tab == Tab.BAG
+	_bench_body.visible = tab == Tab.BENCH
+	_recipes_body.visible = tab == Tab.RECIPES
+	_message.text = ""
+	_render()
+	_focus_first()
+
+
 func _before_show() -> void:
 	Game.refresh_recipes()
 	_placed.fill("")
 	_message.text = ""
-	_render()
+	show_tab(_tab)
 
+
+# --- the bag --------------------------------------------------------------------
+
+func use(item_id: String) -> Result:
+	var used := Game.use_item(item_id)
+	var item := Game.data.get_entry("items", item_id)
+	var item_name := Localization.t(str(item.get("name_key", item_id)))
+	if used.is_ok():
+		_message.text = Localization.t("ui.bag.used." + str(item.get("kind", "food")), {"item": item_name})
+	else:
+		_message.text = _refusal_text("ui.bag", used.code)
+	_render()
+	return used
+
+
+## The bag rows as shown, "name|count|weight", for tests and for reading.
+func row_texts() -> Array[String]:
+	var out: Array[String] = []
+	for row in _rows.get_children():
+		var parts: Array[String] = []
+		for child in row.get_children():
+			if child is Label:
+				parts.append((child as Label).text)
+		out.append("|".join(parts))
+	return out
+
+
+func message() -> String:
+	return _message.text
+
+
+# --- the bench --------------------------------------------------------------------
 
 ## Lays one of a thing from the bag on the first empty slot. Refused
 ## `not_owned` (all of it is already on the grid) and `grid_full`.
@@ -144,10 +217,6 @@ func result_text() -> String:
 	return _result.text
 
 
-func message() -> String:
-	return _message.text
-
-
 ## The bag's slots as "item_id|left": how many of each are not yet on the grid.
 func bag_texts() -> Array[String]:
 	var out: Array[String] = []
@@ -198,11 +267,12 @@ func _things(counts: Dictionary) -> String:
 
 
 func _render() -> void:
-	for i in SLOTS:
-		_grid_slots[i].show_item(_placed[i], 1)
-	_render_bag()
-	_render_output()
+	_render_bag_rows()
+	_render_bench()
 	_render_book()
+	_condition.text = StatusText.condition()
+	_job.text = StatusText.job()
+	_job.visible = _job.text != ""
 	var inventory := Game.player.inventory
 	_carrying.text = Localization.t("ui.bag.carrying", {
 		"weight": "%.1f" % inventory.total_weight(), "capacity": "%.0f" % inventory.capacity(),
@@ -210,7 +280,63 @@ func _render() -> void:
 	})
 
 
-func _render_bag() -> void:
+func _render_bag_rows() -> void:
+	for child in _rows.get_children():
+		_rows.remove_child(child)
+		child.queue_free()
+	var inventory := Game.player.inventory
+	for item_id in inventory.item_ids():
+		_rows.add_child(_row(item_id, inventory.count_of(item_id)))
+	if inventory.item_ids().is_empty():
+		var holder := HBoxContainer.new()
+		var none := Label.new()
+		none.theme_type_variation = &"MutedLabel"
+		none.text = Localization.t("ui.bag.empty")
+		holder.add_child(none)
+		_rows.add_child(holder)
+
+
+func _row(item_id: String, count: int) -> HBoxContainer:
+	var item := Game.data.get_entry("items", item_id)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 16)
+	var item_name := Label.new()
+	item_name.text = Localization.t(str(item.get("name_key", item_id)))
+	item_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var how_many := Label.new()
+	how_many.text = "× %d" % count
+	how_many.custom_minimum_size = Vector2(60, 0)
+	var weight := Label.new()
+	weight.theme_type_variation = &"MutedLabel"
+	var total := float(item.get("weight", 0.0)) * count
+	weight.text = ("%.2f kg" if total < 0.1 else "%.1f kg") % total   # a paper weighs grams, and says so
+	weight.custom_minimum_size = Vector2(80, 0)
+	weight.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	row.add_child(ItemIcons.tile(item_id, 40))
+	for child: Control in [item_name, how_many, weight]:
+		row.add_child(child)
+	if not ItemRules.effects_of(item).is_empty() and ItemRules.USABLE_KINDS.has(str(item.get("kind", ""))):
+		var action := Button.new()
+		action.theme_type_variation = &"SmallButton"
+		action.custom_minimum_size = Vector2(90, 0)
+		action.text = Localization.t("ui.bag.use")
+		action.pressed.connect(func() -> void: use(item_id))
+		row.add_child(action)
+	else:
+		var spacer := Control.new()
+		spacer.custom_minimum_size = Vector2(90, 0)
+		row.add_child(spacer)
+	return row
+
+
+func _render_bench() -> void:
+	for i in SLOTS:
+		_grid_slots[i].show_item(_placed[i], 1)
+	_render_bag_grid()
+	_render_output()
+
+
+func _render_bag_grid() -> void:
 	for child in _bag_grid.get_children():
 		_bag_grid.remove_child(child)
 		child.queue_free()
@@ -282,8 +408,22 @@ func _render_book() -> void:
 
 
 func _focus_first() -> void:
-	for slot in _bag_grid.get_children():
-		if slot is ItemSlot and not (slot as ItemSlot).disabled:
-			(slot as ItemSlot).grab_focus()
-			return
+	match _tab:
+		Tab.BAG:
+			for row in _rows.get_children():
+				for child in row.get_children():
+					if child is Button:
+						(child as Button).grab_focus()
+						return
+		Tab.BENCH:
+			for slot in _bag_grid.get_children():
+				if slot is ItemSlot and not (slot as ItemSlot).disabled:
+					(slot as ItemSlot).grab_focus()
+					return
+		Tab.RECIPES:
+			for row in _book_rows.get_children():
+				for child in row.get_children():
+					if child is Button:
+						(child as Button).grab_focus()
+						return
 	_close.grab_focus()

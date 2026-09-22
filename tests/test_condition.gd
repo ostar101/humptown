@@ -143,7 +143,7 @@ func test_the_hud_keeps_the_status_current() -> void:
 func test_the_bag_lists_what_you_carry_and_uses_it() -> void:
 	Game.player.inventory.add("item_sandwich", 2)
 	Game.player.stats.hunger = 0.5
-	var bag: InventoryWindow = (load("res://scenes/ui/inventory_window.tscn") as PackedScene).instantiate()
+	var bag: ItemsWindow = (load("res://scenes/ui/items_window.tscn") as PackedScene).instantiate()
 	(Engine.get_main_loop() as SceneTree).root.add_child(bag)
 	Game.pause_time(false)
 	bag.open()

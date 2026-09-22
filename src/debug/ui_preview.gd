@@ -195,15 +195,15 @@ func _stock_bag() -> void:
 ## `--bag=1`: the bag open with that in it.
 func _drive_bag(view: WorldView) -> void:
 	_stock_bag()
-	view.open_inventory()
+	view.open_bag()
 
 
 ## `--craft=empty|joint|spoon`: the bench open — empty, with a joint laid out, or with the
 ## heroin spoon chain's first step laid out (and the recipes the bag holds known).
 func _drive_craft(view: WorldView, mode: String) -> void:
 	_stock_bag()
-	view.open_crafting()
-	var window := view.craft_window()
+	view.open_bench()
+	var window := view.items_window()
 	match mode:
 		"joint":
 			window.fill_recipe("rcp_joint_from_bud")

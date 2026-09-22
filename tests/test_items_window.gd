@@ -1,6 +1,8 @@
 extends TestCase
-## The bench window (D-070): lay things from the bag on the grid, see what they
-## make, make it; the recipe book lays a recipe out; the key opens it.
+## The bag and the bench, merged into one window with tabs (M8 step 3,
+## D-079): lay things from the bag on the grid, see what they make, make it;
+## the recipe book lays a recipe out; `I` opens on the bag, `C` on the bench,
+## and if the window is already open the key switches tab instead of closing.
 
 var _view: WorldView = null
 
@@ -16,19 +18,19 @@ func before_each() -> void:
 
 
 func after_each() -> void:
-	if _view.craft_window().is_open():
-		_view.craft_window().close()
+	if _view.items_window().is_open():
+		_view.items_window().close()
 	_view.free()
-	Game.saves.delete_slot("test_craft_window")
+	Game.saves.delete_slot("test_items_window")
 
 
 func _bag(item_id: String, count: int = 1) -> void:
 	assert_ok(Game.player.inventory.add(item_id, count))
 
 
-func _window() -> CraftWindow:
-	_view.open_crafting()
-	return _view.craft_window()
+func _window() -> ItemsWindow:
+	_view.open_bench()
+	return _view.items_window()
 
 
 func test_the_key_opens_the_bench_and_walking_waits() -> void:
@@ -36,10 +38,10 @@ func test_the_key_opens_the_bench_and_walking_waits() -> void:
 	event.action = "craft"
 	event.pressed = true
 	_view._unhandled_input(event)
-	assert_true(_view.craft_window().is_open())
+	assert_true(_view.items_window().is_open())
 	assert_false(_view.player_body().input_enabled, "you are at the bench, not walking")
 	assert_true(Game.clock.paused)
-	_view.craft_window().close()
+	_view.items_window().close()
 	assert_true(_view.player_body().input_enabled)
 
 
@@ -165,7 +167,7 @@ func test_a_recipe_laid_out_short_says_so() -> void:
 func test_an_empty_book_says_how_to_start() -> void:
 	var window := _window()
 	assert_eq(window.book_texts(), [] as Array[String])
-	assert_true(_view.craft_window().get_node("%BookRows").get_child(0) is Label)
+	assert_true(_view.items_window().get_node("%BookRows").get_child(0) is Label)
 
 
 func test_the_bench_closes_when_you_collapse() -> void:
@@ -175,3 +177,33 @@ func test_the_bench_closes_when_you_collapse() -> void:
 	Game.player.stats.hunger = 1.0
 	Game.advance_time(120)
 	assert_false(window.is_open())
+
+
+# --- the merge itself (D-079) -------------------------------------------------
+
+func test_the_bag_key_opens_on_the_bag_tab() -> void:
+	_view.open_bag()
+	var window := _view.items_window()
+	assert_true(window.is_open())
+	assert_eq(window.current_tab(), ItemsWindow.Tab.BAG)
+
+
+func test_pressing_the_other_key_switches_tab_instead_of_closing() -> void:
+	_view.open_bag()
+	var window := _view.items_window()
+	assert_true(window.is_open())
+	_view.open_bench()
+	assert_true(window.is_open(), "the window stays open")
+	assert_eq(window.current_tab(), ItemsWindow.Tab.BENCH)
+	_view.open_bag()
+	assert_true(window.is_open())
+	assert_eq(window.current_tab(), ItemsWindow.Tab.BAG)
+
+
+func test_the_bag_and_the_bench_share_what_is_carried() -> void:
+	_bag("item_sandwich", 1)
+	_view.open_bag()
+	var window := _view.items_window()
+	assert_has(window.row_texts(), "Sandwich|× 1|0.3 kg")
+	_view.open_bench()
+	assert_eq(window.bag_texts(), ["item_sandwich|1"] as Array[String])
