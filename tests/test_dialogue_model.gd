@@ -49,6 +49,16 @@ func test_the_prompt_is_who_they_are_where_they_are_and_the_rules() -> void:
 	assert_true(text.contains("Never say you are an AI"))
 
 
+## M8 step 12, D-088: an Old Town or Eastfield person is not told they live
+## in Harbourside.
+func test_someone_elsewhere_is_told_where_they_actually_are() -> void:
+	var aarne := Game.npcs.get_npc("npc_aarne")
+	aarne.location = aarne.home
+	var text := DialoguePrompt.system_text(Game.dialogue.prompt_context("npc_aarne"))
+	assert_true(text.contains("in Old Town, the old quarter"), text.substr(0, 160))
+	assert_false(text.contains("harbour district"), text.substr(0, 160))
+
+
 func test_they_know_the_people_they_know_and_nobody_else() -> void:
 	_talk_to_ida_in_her_shop()
 	var people: Array = Game.dialogue.prompt_context("npc_ida")["people"]

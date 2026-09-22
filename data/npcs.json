@@ -401,5 +401,317 @@
     "relationships": [
       {"to": "npc_rauno", "kind": "acquaintance", "trust": 0.2, "familiarity": 0.4}
     ]
+  },
+
+  {
+    "id": "npc_miika", "name": "Miika Salonen", "age": 26, "occupation": "occ_unemployed",
+    "home": "loc_ida_flat", "workplace": "", "schedule": "sched_local_idle", "importance": "background",
+    "traits": ["easily_led", "cheerful", "always_short_of_cash"],
+    "nature": {"lawfulness": 0.45, "greed": 0.5, "risk": 0.55, "discretion": 0.45},
+    "bio": "Elias's friend from school, still drifting between casual jobs and worse ideas. Owes people money the way Elias does, just with less charm about it.",
+    "voice": "Quick, eager to please, talks himself into corners.",
+    "groups": [],
+    "relationships": [{"to": "npc_elias", "kind": "friend", "trust": 0.5, "familiarity": 0.7}]
+  },
+  {
+    "id": "npc_noora", "name": "Noora Aho", "age": 24, "occupation": "occ_dockhand",
+    "home": "loc_veikko_flat", "workplace": "loc_harbour", "schedule": "sched_docks_early", "importance": "background",
+    "traits": ["steady", "saving_for_a_boat", "early_riser"],
+    "nature": {"lawfulness": 0.75, "greed": 0.25, "risk": 0.3, "discretion": 0.4},
+    "bio": "Boards with Veikko and works the same shifts. Wants a boat of her own within five years and does the arithmetic on it constantly.",
+    "voice": "Plain and practical. Talks money and weather.",
+    "groups": ["harbour_crew"],
+    "relationships": [{"to": "npc_veikko", "kind": "colleague", "trust": 0.4, "familiarity": 0.6}]
+  },
+  {
+    "id": "npc_saara", "name": "Saara Nieminen", "age": 19, "occupation": "occ_unemployed",
+    "home": "loc_veikko_flat", "workplace": "", "schedule": "sched_student_day", "importance": "background",
+    "traits": ["restless", "sharp_tongued", "embarrassed_by_her_father"],
+    "nature": {"lawfulness": 0.8, "greed": 0.2, "risk": 0.35, "discretion": 0.4},
+    "bio": "Veikko's daughter, halfway through a course she is not sure she wants. Loves him and is mortified by the Anchor stories about him.",
+    "voice": "Fast, dry, quick to change the subject.",
+    "groups": [],
+    "relationships": [{"to": "npc_veikko", "kind": "family", "trust": 0.7, "affection": 0.7, "familiarity": 1.0}]
+  },
+  {
+    "id": "npc_hanna", "name": "Hanna Ström", "age": 34, "occupation": "occ_nurse",
+    "home": "loc_sanna_house", "workplace": "loc_clinic", "schedule": "sched_clinic_day", "importance": "background",
+    "traits": ["calm", "overworked", "blunt_with_drunks"],
+    "nature": {"lawfulness": 0.85, "greed": 0.2, "risk": 0.2, "discretion": 0.45},
+    "bio": "Works the clinic alongside Sanna and rents the spare room. Has no patience left for nonsense by the evening shift.",
+    "voice": "Calm until pushed, then very direct.",
+    "groups": ["clinic_staff"],
+    "relationships": [{"to": "npc_sanna", "kind": "colleague", "trust": 0.5, "familiarity": 0.7}]
+  },
+  {
+    "id": "npc_petri", "name": "Petri Laine", "age": 41, "occupation": "occ_unemployed",
+    "home": "loc_tuomas_flat", "workplace": "", "schedule": "sched_local_idle", "importance": "background",
+    "traits": ["quiet", "methodical", "drinks_alone"],
+    "nature": {"lawfulness": 0.9, "greed": 0.15, "risk": 0.15, "discretion": 0.35},
+    "bio": "Left the force in another town for reasons he does not discuss and rents a room from Tuomas now. Still carries himself like an officer; still notices what an officer would.",
+    "voice": "Few words, careful ones. Listens more than he answers.",
+    "groups": [],
+    "relationships": [
+      {"to": "npc_marika", "kind": "acquaintance", "trust": 0.4, "familiarity": 0.5},
+      {"to": "npc_tuomas", "kind": "acquaintance", "trust": 0.3, "familiarity": 0.5}
+    ]
+  },
+  {
+    "id": "npc_topi", "name": "Topi Salmi", "age": 23, "occupation": "occ_dockhand",
+    "home": "loc_rauno_room", "workplace": "loc_harbour", "schedule": "sched_docks_early", "importance": "background",
+    "traits": ["quick_with_his_hands", "keeps_his_head_down", "owes_rauno"],
+    "nature": {"lawfulness": 0.5, "greed": 0.45, "risk": 0.5, "discretion": 0.55},
+    "bio": "Rents the other room from Rauno and runs the odd errand for him, never asking what is in the bag. Works the docks the rest of the time.",
+    "voice": "Short answers, eyes elsewhere.",
+    "groups": ["harbour_crew"],
+    "relationships": [{"to": "npc_rauno", "kind": "colleague", "trust": 0.2, "familiarity": 0.6}]
+  },
+  {
+    "id": "npc_liisa", "name": "Liisa Ranta", "age": 63, "occupation": "occ_unemployed",
+    "home": "loc_ida_flat", "workplace": "", "schedule": "sched_local_idle", "importance": "background",
+    "traits": ["quiet", "knits_by_the_window", "missed_nothing_in_forty_years"],
+    "nature": {"lawfulness": 0.85, "greed": 0.15, "risk": 0.1, "discretion": 0.35},
+    "bio": "Has rented the back room from Ida's family since before Elias was born. Sees everyone come and go from her window and says little about it.",
+    "voice": "Soft-spoken, careful, notices more than she says.",
+    "groups": [],
+    "relationships": [{"to": "npc_ida", "kind": "acquaintance", "trust": 0.5, "familiarity": 0.7}]
+  },
+  {
+    "id": "npc_pirkko", "name": "Pirkko Lehto", "age": 55, "occupation": "occ_unemployed",
+    "home": "loc_sanna_house", "workplace": "", "schedule": "sched_local_idle", "importance": "background",
+    "traits": ["talkative", "generous", "worries_about_everyone"],
+    "nature": {"lawfulness": 0.8, "greed": 0.2, "risk": 0.15, "discretion": 0.25},
+    "bio": "An old friend of Pirjo's from the fish hall days, now often round at Sanna's kitchen table with her.",
+    "voice": "Warm, rambling, asks after your health first.",
+    "groups": [],
+    "relationships": [{"to": "npc_pirjo", "kind": "friend", "trust": 0.6, "affection": 0.5, "familiarity": 0.8}]
+  },
+  {
+    "id": "npc_antti", "name": "Antti Koski", "age": 29, "occupation": "occ_dockhand",
+    "home": "loc_tuomas_flat", "workplace": "loc_harbour", "schedule": "sched_docks_early", "importance": "background",
+    "traits": ["competitive", "easy_laugh", "bad_with_money"],
+    "nature": {"lawfulness": 0.7, "greed": 0.3, "risk": 0.3, "discretion": 0.4},
+    "bio": "Works the docks with Veikko and loses most of his wages at cards before he sees them. Never seems to mind.",
+    "voice": "Loud, cheerful, always up for a bet.",
+    "groups": ["harbour_crew"],
+    "relationships": [{"to": "npc_veikko", "kind": "colleague", "trust": 0.4, "familiarity": 0.5}]
+  },
+  {
+    "id": "npc_emma", "name": "Emma Virtanen", "age": 21, "occupation": "occ_counter_hand",
+    "home": "loc_marika_flat", "workplace": "loc_cafe_kaisla", "schedule": "sched_shop_day", "importance": "background",
+    "traits": ["bright", "impatient", "wants_out_of_harbourside"],
+    "nature": {"lawfulness": 0.8, "greed": 0.25, "risk": 0.25, "discretion": 0.45},
+    "bio": "Marika's niece, working the counter at Kaisla's while she saves for somewhere bigger than Harbourside.",
+    "voice": "Quick, a little sharp, always counting days.",
+    "groups": ["harbourside_traders"],
+    "relationships": [
+      {"to": "npc_marika", "kind": "family", "trust": 0.6, "affection": 0.5, "familiarity": 0.9},
+      {"to": "npc_leena", "kind": "colleague", "trust": 0.4, "familiarity": 0.5}
+    ]
+  },
+
+  {
+    "id": "npc_kaisa", "name": "Kaisa Vainio", "age": 26, "occupation": "occ_librarian",
+    "home": "loc_ilona_flat", "workplace": "loc_library", "schedule": "sched_oldtown_day", "importance": "background",
+    "traits": ["precise", "quietly_ambitious", "reads_everything"],
+    "nature": {"lawfulness": 0.85, "greed": 0.15, "risk": 0.15, "discretion": 0.4},
+    "bio": "Ilona's assistant at the library and, everyone assumes, her eventual successor. Already keeps better records than she lets on.",
+    "voice": "Measured, precise, a little too formal for her age.",
+    "groups": ["old_town_traders"],
+    "relationships": [{"to": "npc_ilona", "kind": "colleague", "trust": 0.5, "familiarity": 0.6}]
+  },
+  {
+    "id": "npc_otto", "name": "Otto Peltola", "age": 22, "occupation": "occ_labourer",
+    "home": "loc_helmi_flat", "workplace": "", "schedule": "sched_local_idle", "importance": "background",
+    "traits": ["cheerful", "unreliable", "good_with_a_ladder"],
+    "nature": {"lawfulness": 0.75, "greed": 0.25, "risk": 0.3, "discretion": 0.35},
+    "bio": "Helmi's grandson, does odd jobs around Old Town and turns up for the bakery's early hours about half the time.",
+    "voice": "Easy, apologetic, always has an excuse ready.",
+    "groups": [],
+    "relationships": [{"to": "npc_helmi", "kind": "family", "trust": 0.6, "affection": 0.6, "familiarity": 0.9}]
+  },
+  {
+    "id": "npc_mari", "name": "Mari Salo", "age": 24, "occupation": "occ_unemployed",
+    "home": "loc_tapio_flat", "workplace": "", "schedule": "sched_student_day", "importance": "background",
+    "traits": ["restless", "argues_with_her_father", "studying_by_correspondence"],
+    "nature": {"lawfulness": 0.75, "greed": 0.2, "risk": 0.3, "discretion": 0.4},
+    "bio": "Tapio's daughter, working through a correspondence course and itching to leave Old Town before she finishes it.",
+    "voice": "Impatient, direct, rolls her eyes easily.",
+    "groups": [],
+    "relationships": [{"to": "npc_tapio", "kind": "family", "trust": 0.5, "affection": 0.5, "familiarity": 0.9}]
+  },
+  {
+    "id": "npc_eero", "name": "Eero Nurmi", "age": 51, "occupation": "occ_unemployed",
+    "home": "loc_oskar_flat", "workplace": "", "schedule": "sched_local_idle", "importance": "background",
+    "traits": ["quiet", "watches_the_room", "never_repeats_what_he_hears"],
+    "nature": {"lawfulness": 0.55, "greed": 0.35, "risk": 0.35, "discretion": 0.7},
+    "bio": "Oskar's cousin, semi-retired, and at the Lantern most evenings watching the room without much comment.",
+    "voice": "Dry, brief, rarely volunteers an opinion.",
+    "groups": ["old_town_traders"],
+    "relationships": [{"to": "npc_oskar", "kind": "family", "trust": 0.5, "familiarity": 0.7}]
+  },
+  {
+    "id": "npc_sini", "name": "Sini Aaltonen", "age": 20, "occupation": "occ_counter_hand",
+    "home": "loc_aarne_flat", "workplace": "loc_pharmacy", "schedule": "sched_oldtown_day", "importance": "background",
+    "traits": ["cheerful", "careful_with_stock", "wants_to_study_medicine"],
+    "nature": {"lawfulness": 0.85, "greed": 0.2, "risk": 0.2, "discretion": 0.4},
+    "bio": "Aarne's granddaughter, working the pharmacy counter and saving toward nursing college in the city.",
+    "voice": "Warm, careful, explains things twice like Tapio taught her.",
+    "groups": ["old_town_traders"],
+    "relationships": [
+      {"to": "npc_aarne", "kind": "family", "trust": 0.6, "affection": 0.6, "familiarity": 0.9},
+      {"to": "npc_tapio", "kind": "colleague", "trust": 0.4, "familiarity": 0.5}
+    ]
+  },
+  {
+    "id": "npc_pekka", "name": "Pekka Virtanen", "age": 35, "occupation": "occ_barkeep",
+    "home": "loc_ilona_flat", "workplace": "loc_lantern_bar", "schedule": "sched_night_bar_old", "importance": "background",
+    "traits": ["steady", "good_memory_for_drinks", "discreet"],
+    "nature": {"lawfulness": 0.7, "greed": 0.3, "risk": 0.25, "discretion": 0.6},
+    "bio": "Covers the Lantern's bar on Oskar's nights off. Remembers everyone's usual and forgets everything else on request.",
+    "voice": "Smooth, unhurried, good at changing the subject.",
+    "groups": ["old_town_traders"],
+    "relationships": [{"to": "npc_oskar", "kind": "colleague", "trust": 0.4, "familiarity": 0.5}]
+  },
+  {
+    "id": "npc_annaliisa", "name": "Anna-Liisa Kivi", "age": 60, "occupation": "occ_unemployed",
+    "home": "loc_helmi_flat", "workplace": "", "schedule": "sched_local_idle", "importance": "background",
+    "traits": ["devout", "kind", "terrible_gossip"],
+    "nature": {"lawfulness": 0.85, "greed": 0.15, "risk": 0.1, "discretion": 0.2},
+    "bio": "Helmi's oldest friend, at church most mornings and at the bakery counter most of the rest. Knows everyone's business and shares it freely.",
+    "voice": "Warm, chatty, cannot keep a secret past noon.",
+    "groups": [],
+    "relationships": [{"to": "npc_helmi", "kind": "friend", "trust": 0.6, "affection": 0.5, "familiarity": 0.8}]
+  },
+  {
+    "id": "npc_jussi", "name": "Jussi Manninen", "age": 28, "occupation": "occ_labourer",
+    "home": "loc_tapio_flat", "workplace": "", "schedule": "sched_local_idle", "importance": "background",
+    "traits": ["good_with_his_hands", "asks_no_questions", "always_between_jobs"],
+    "nature": {"lawfulness": 0.5, "greed": 0.4, "risk": 0.45, "discretion": 0.6},
+    "bio": "Takes whatever work turns up around Old Town and has learned not to ask why a job pays better than it should.",
+    "voice": "Laconic, shrugs a lot, changes the subject.",
+    "groups": [],
+    "relationships": []
+  },
+  {
+    "id": "npc_riina", "name": "Riina Laakso", "age": 19, "occupation": "occ_unemployed",
+    "home": "loc_ilona_flat", "workplace": "", "schedule": "sched_student_day", "importance": "background",
+    "traits": ["bookish", "shy", "dreams_of_leaving"],
+    "nature": {"lawfulness": 0.8, "greed": 0.2, "risk": 0.3, "discretion": 0.45},
+    "bio": "Spends most of her days at the library, half studying and half hiding from a town she finds too small.",
+    "voice": "Quiet, thoughtful, opens up slowly.",
+    "groups": [],
+    "relationships": [{"to": "npc_ilona", "kind": "acquaintance", "trust": 0.3, "familiarity": 0.4}]
+  },
+  {
+    "id": "npc_kalle", "name": "Kalle Forsman", "age": 41, "occupation": "occ_labourer",
+    "home": "loc_oskar_flat", "workplace": "loc_bakery", "schedule": "sched_baker_early", "importance": "background",
+    "traits": ["strong", "early_riser", "quietly_proud_of_his_route"],
+    "nature": {"lawfulness": 0.8, "greed": 0.25, "risk": 0.2, "discretion": 0.45},
+    "bio": "Delivers flour and sacks of sugar to Helmi's bakery before dawn and to half of Old Town after it.",
+    "voice": "Plain, friendly, talks about the weather and the roads.",
+    "groups": ["old_town_traders"],
+    "relationships": [{"to": "npc_helmi", "kind": "colleague", "trust": 0.4, "familiarity": 0.5}]
+  },
+
+  {
+    "id": "npc_ville", "name": "Ville Koivisto", "age": 23, "occupation": "occ_scrap_dealer",
+    "home": "loc_kimmo_flat", "workplace": "loc_scrapyard", "schedule": "sched_scrap_late", "importance": "background",
+    "traits": ["friendly", "knows_a_buyer_for_anything", "careful_who_he_talks_to"],
+    "nature": {"lawfulness": 0.25, "greed": 0.75, "risk": 0.55, "discretion": 0.7},
+    "bio": "Kimmo's cousin and shadow at the scrapyard. If it has no papers and needs to disappear quietly, Ville knows someone who wants it.",
+    "voice": "Easy and friendly, until the question gets specific.",
+    "groups": ["eastfield_yard"],
+    "relationships": [{"to": "npc_kimmo", "kind": "family", "trust": 0.5, "familiarity": 0.8}]
+  },
+  {
+    "id": "npc_suvi", "name": "Suvi Rantanen", "age": 21, "occupation": "occ_counter_hand",
+    "home": "loc_pauliina_flat", "workplace": "loc_fuel_station", "schedule": "sched_eastfield_shop", "importance": "background",
+    "traits": ["quick", "tired_of_the_till", "saving_for_a_car"],
+    "nature": {"lawfulness": 0.8, "greed": 0.3, "risk": 0.3, "discretion": 0.4},
+    "bio": "Pauliina's younger sister, working the same till on the shifts Pauliina doesn't want.",
+    "voice": "Fast, a little bored, brightens for regulars.",
+    "groups": ["eastfield_yard"],
+    "relationships": [{"to": "npc_pauliina", "kind": "family", "trust": 0.6, "affection": 0.6, "familiarity": 0.9}]
+  },
+  {
+    "id": "npc_aleksi", "name": "Aleksi Niemi", "age": 33, "occupation": "occ_mechanic",
+    "home": "loc_jari_flat", "workplace": "loc_garage", "schedule": "sched_eastfield_day", "importance": "background",
+    "traits": ["patient", "good_teacher", "oil_under_his_nails_too"],
+    "nature": {"lawfulness": 0.75, "greed": 0.3, "risk": 0.25, "discretion": 0.5},
+    "bio": "Learning the garage trade properly under Jari, and asking fewer questions about the cars than Jari does.",
+    "voice": "Steady, practical, likes explaining how things work.",
+    "groups": ["eastfield_yard"],
+    "relationships": [{"to": "npc_jari", "kind": "colleague", "trust": 0.5, "familiarity": 0.7}]
+  },
+  {
+    "id": "npc_heidi", "name": "Heidi Latva", "age": 26, "occupation": "occ_labourer",
+    "home": "loc_reijo_flat", "workplace": "loc_eastfield_yard", "schedule": "sched_eastfield_day", "importance": "background",
+    "traits": ["stubborn", "strong", "proving_a_point_to_her_father"],
+    "nature": {"lawfulness": 0.75, "greed": 0.3, "risk": 0.35, "discretion": 0.4},
+    "bio": "Reijo's daughter, working the yard despite his objections and better at it than he will admit.",
+    "voice": "Blunt, a little combative, softens rarely.",
+    "groups": ["eastfield_yard"],
+    "relationships": [{"to": "npc_reijo", "kind": "family", "trust": 0.4, "affection": 0.4, "familiarity": 0.9}]
+  },
+  {
+    "id": "npc_teemu", "name": "Teemu Hakkarainen", "age": 45, "occupation": "occ_labourer",
+    "home": "loc_marko_flat", "workplace": "loc_eastfield_yard", "schedule": "sched_eastfield_day", "importance": "background",
+    "traits": ["reliable", "quiet_drinker", "missed_his_chance_years_ago"],
+    "nature": {"lawfulness": 0.75, "greed": 0.25, "risk": 0.25, "discretion": 0.45},
+    "bio": "Has worked the yard under two foremen and expects a third eventually. Drinks at the Furnace most evenings, saying little.",
+    "voice": "Flat, resigned, occasionally very funny.",
+    "groups": ["eastfield_yard"],
+    "relationships": [{"to": "npc_marko", "kind": "acquaintance", "trust": 0.3, "familiarity": 0.5}]
+  },
+  {
+    "id": "npc_paula", "name": "Paula Ojanen", "age": 58, "occupation": "occ_unemployed",
+    "home": "loc_pauliina_flat", "workplace": "", "schedule": "sched_local_idle", "importance": "background",
+    "traits": ["practical", "sharp_eyed", "remembers_when_it_was_all_fields"],
+    "nature": {"lawfulness": 0.8, "greed": 0.2, "risk": 0.15, "discretion": 0.35},
+    "bio": "Pauliina's aunt, retired from the cannery years before it shut for good. Keeps half an eye on the street from her window.",
+    "voice": "Dry, practical, nostalgic when asked.",
+    "groups": [],
+    "relationships": [{"to": "npc_pauliina", "kind": "family", "trust": 0.5, "affection": 0.4, "familiarity": 0.8}]
+  },
+  {
+    "id": "npc_ismo", "name": "Ismo Kettunen", "age": 30, "occupation": "occ_labourer",
+    "home": "loc_kimmo_flat", "workplace": "loc_scrapyard", "schedule": "sched_scrap_late", "importance": "background",
+    "traits": ["quiet", "reliable_for_the_wrong_reasons", "good_with_a_torch"],
+    "nature": {"lawfulness": 0.5, "greed": 0.45, "risk": 0.4, "discretion": 0.65},
+    "bio": "Works the scrapyard for Kimmo and has learned exactly which questions not to ask about where things came from.",
+    "voice": "Few words, careful ones.",
+    "groups": ["eastfield_yard"],
+    "relationships": [{"to": "npc_kimmo", "kind": "colleague", "trust": 0.3, "familiarity": 0.5}]
+  },
+  {
+    "id": "npc_laura", "name": "Laura Mattila", "age": 24, "occupation": "occ_counter_hand",
+    "home": "loc_jari_flat", "workplace": "loc_fuel_station", "schedule": "sched_eastfield_shop", "importance": "background",
+    "traits": ["friendly", "sharp_with_change", "wants_her_own_till_someday"],
+    "nature": {"lawfulness": 0.8, "greed": 0.3, "risk": 0.25, "discretion": 0.4},
+    "bio": "Jari's niece, working the fuel station counter and picking up more of the business than anyone taught her.",
+    "voice": "Friendly, efficient, quick with the change.",
+    "groups": ["eastfield_yard"],
+    "relationships": [{"to": "npc_jari", "kind": "family", "trust": 0.5, "affection": 0.5, "familiarity": 0.8}]
+  },
+  {
+    "id": "npc_rami", "name": "Rami Toivonen", "age": 37, "occupation": "occ_labourer",
+    "home": "loc_marko_flat", "workplace": "loc_eastfield_yard", "schedule": "sched_eastfield_day", "importance": "background",
+    "traits": ["quiet", "steady", "plays_darts_badly"],
+    "nature": {"lawfulness": 0.75, "greed": 0.25, "risk": 0.3, "discretion": 0.45},
+    "bio": "Works the yard and loses at darts in the Furnace most Fridays without much caring.",
+    "voice": "Calm, dry, understated.",
+    "groups": ["eastfield_yard"],
+    "relationships": [{"to": "npc_marko", "kind": "acquaintance", "trust": 0.3, "familiarity": 0.4}]
+  },
+  {
+    "id": "npc_elli", "name": "Elli Korhonen", "age": 20, "occupation": "occ_unemployed",
+    "home": "loc_reijo_flat", "workplace": "", "schedule": "sched_student_day", "importance": "background",
+    "traits": ["restless", "sharp", "counting_the_days"],
+    "nature": {"lawfulness": 0.8, "greed": 0.2, "risk": 0.35, "discretion": 0.4},
+    "bio": "Reijo's youngest, working through a plan to leave Eastfield the moment she has saved enough.",
+    "voice": "Quick, a little impatient, direct.",
+    "groups": [],
+    "relationships": [{"to": "npc_reijo", "kind": "family", "trust": 0.5, "affection": 0.4, "familiarity": 0.9}]
   }
 ]

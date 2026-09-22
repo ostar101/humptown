@@ -366,6 +366,7 @@ func prompt_context(npc_id: String, happened: String = "", convo: Conversation =
 		},
 		"now": {
 			"place": DialoguePrompt.english(place.name_key) if place != null else "",
+			"region": _world.region_of(npc.location) if _world != null else "",
 			"part_of_day": DialoguePrompt.part_of_day(minute),
 			"weekday": WEEKDAYS[_clock.weekday()] if _clock != null else "weekday",
 			"doing": DialoguePrompt.english("activity." + npc.activity),

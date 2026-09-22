@@ -35,6 +35,16 @@ func test_every_npc_has_a_reachable_home_in_a_real_region() -> void:
 			"%s lives in an unknown region" % npc_id)
 
 
+## M8 step 12, D-088: the median age was 46 before this step (a town of
+## nobody young); guards against that drifting back unnoticed.
+func test_the_town_has_young_adults_too() -> void:
+	var young := 0
+	for npc_id in data.ids("npcs"):
+		if int(data.get_entry("npcs", npc_id).get("age", 99)) < 30:
+			young += 1
+	assert_gt(float(young), 10.0, "the town should not read as everyone being middle-aged or older")
+
+
 func test_every_npc_is_an_adult() -> void:
 	# The world contains mature themes; every simulated inhabitant who can be
 	# approached romantically must be unambiguously an adult. Enforcing it in

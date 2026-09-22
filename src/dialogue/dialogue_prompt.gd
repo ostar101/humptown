@@ -11,7 +11,7 @@ extends RefCounted
 ##
 ## Context keys:
 ##   npc          {name, age, occupation, bio, voice, traits}
-##   now          {place, part_of_day, weekday, doing}
+##   now          {place, region, part_of_day, weekday, doing}
 ##   player       {name ("" when they do not know it), pronouns}
 ##   relationship {trust, affection, respect, fear, familiarity}
 ##   people       ["Ida Lahtinen (friend)", ...]
@@ -35,6 +35,16 @@ const RULE_REMEMBER := """
 - What is written under "What you remember of them" really happened between you: you remember it, including your own texts and calls. If they mention an earlier talk, a call or a text, go along with it as written there. If it is not written there, you do not remember it, and you say so instead of guessing."""
 
 const LANGUAGE_NAMES := {"en": "English", "fi": "Finnish"}
+
+## What a region is, in the same apposition shape the game has always used
+## for Harbourside (M8 step 12, D-088): every one of them is still the same
+## small Finnish port town underneath.
+const REGION_PHRASE := {
+	"harbourside": "Harbourside, the harbour district of a small Finnish port town",
+	"old_town": "Old Town, the old quarter of the same small Finnish port town",
+	"eastfield": "Eastfield, the industrial edge of the same small Finnish port town",
+}
+const DEFAULT_REGION_PHRASE := "a small Finnish port town"
 
 static var _stage_directions := RegEx.create_from_string("\\*[^*]*\\*|\\([^)]*\\)")
 
@@ -73,8 +83,9 @@ static func system_text(context: Dictionary, opening: Array[String] = []) -> Str
 		meeting = "Someone has sent you a text message on your phone; you are not with them."
 	elif channel == "call":
 		meeting = "You are on the phone with someone; you can hear them but not see them."
-	parts.append("You are %s, %s, %s in Harbourside, the harbour district of a small Finnish port town. %s" % [
-		name, str(npc.get("age", "")), str(npc.get("occupation", "a local")), meeting])
+	var region_phrase: String = REGION_PHRASE.get(str(now.get("region", "")), DEFAULT_REGION_PHRASE)
+	parts.append("You are %s, %s, %s in %s. %s" % [
+		name, str(npc.get("age", "")), str(npc.get("occupation", "a local")), region_phrase, meeting])
 	if str(npc.get("bio", "")) != "":
 		parts.append("Who you are: " + str(npc["bio"]))
 	if str(npc.get("voice", "")) != "":
@@ -85,7 +96,7 @@ static func system_text(context: Dictionary, opening: Array[String] = []) -> Str
 
 	parts.append("Right now it is %s on a %s. You are at %s, %s." % [
 		str(now.get("part_of_day", "day")), str(now.get("weekday", "weekday")),
-		str(now.get("place", "somewhere in Harbourside")), str(now.get("doing", "going about your day"))])
+		str(now.get("place", "somewhere in town")), str(now.get("doing", "going about your day"))])
 
 	var who := str(player.get("name", ""))
 	var pronouns := str(player.get("pronouns", "they"))

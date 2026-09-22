@@ -3488,3 +3488,106 @@ holds: authoring a new always-available ask for an existing story NPC is
 exactly the kind of change that quietly invalidates an "and there is
 nothing else here" assumption elsewhere, and the only defence is running
 the whole suite, not just the new tests.
+
+---
+
+## D-088 — Thirty new people, and Harbourside stops being the only place anyone lives
+
+**Why (M8 step 12, closing M8's planned scope).** Twenty NPCs with a median
+age of 46 read as a retirement town, not a place with a future. This step
+is content, not mechanism: 30 new people authored against the schema
+D-082 froze in session B, and one real bug in how the model was told where
+it was.
+
+**Homes, not new locations.** Every `kind: "home"` location already has
+exactly one `owner` — but four of the twenty original NPCs already shared
+a home with another (Ida and Elias, Veikko and Joonas, Sanna and Pirjo,
+Marika and Leena), so a shared flat or a boarding room was already the
+established shape, not a new one. All 30 new people live in the sixteen
+existing non-player homes, one or two to a home, as family, boarders or
+both — nothing added to `data/locations.json`, and none of the eleven
+workplaces gained a new building either: everyone works, or does not, at a
+place that already exists. Occupations come from the existing sixteen in
+`data/occupations.json`, schedules from the existing fifteen in
+`data/schedules.json` — the `@home`/`@work` token design (D-011) is
+exactly what makes reusing them for a different person, in a different
+region, cost nothing.
+
+**The archetypes the plan asked for, without a new shop mechanic to serve
+them.** "A couple of real dealers" reads as already satisfied by Rauno and
+Kimmo (D-084) — this step adds no third kept shop, which would have meant
+repeating the schema-validation and `DealRules` wiring work session B
+already finished for a marginal narrative gain. What it does add: several
+"in-betweens who look away" (`npc_miika`, `npc_topi`, `npc_eero`,
+`npc_jussi`, `npc_ismo` — moderate-to-low `lawfulness`, higher
+`discretion`, no shop of their own) and **a fence in nature only**,
+`npc_ville` — Kimmo's cousin at the scrapyard, `{lawfulness: 0.25, greed:
+0.75, discretion: 0.7}`, described in his bio as someone who "knows a
+buyer for anything" with no `deals` array and no shop behind him. A
+character who reads right before the mechanic exists is cheaper to build
+than the mechanic, and was already this project's approach to Aarne and
+Kimmo themselves before D-084 gave Kimmo an actual shop — fencing stolen
+goods stays a named idea for a later pass (D-084's own note), not
+mechanised here.
+
+**Ages: median 46 to 34.5, computed and checked, not eyeballed.** 20
+existing plus 30 new is 50 NPCs, ages 19 to 71, no duplicate id or name.
+`test_the_town_has_young_adults_too` (`tests/test_content.gd`) counts
+everyone under 30 and asserts more than ten — a guard against this
+demographic drifting back unnoticed in a later session, the way D-082's
+`nature` schema needed guarding once it existed. Every entry's `age` is
+explicit; `test_every_npc_is_an_adult` (unchanged) still enforces `>= 17`
+on all fifty.
+
+**A second police officer nearly happened, and the fix was to not have
+one.** `npc_petri` was first authored as `occ_officer` in the
+`police_harbour` group — a second working officer at the post, which
+seemed like reasonable flavour for a town this size. It broke twelve
+tests across `test_fights.gd`, `test_police.gd` and `test_theft.gd`, all
+of them built on `CrimeDirector.officers()` returning exactly one person:
+a report going to two officers instead of one, a summons issued by the
+wrong one, a case's `known_offences` count doubling. The honest fix was
+not chasing twelve tests through a change nothing asked for — it was
+recognising Marika is deliberately the harbour's only officer
+(`ui.msg.police_*`, the whole `PoliceRules` case-weighing design, assumes
+exactly one desk) and giving Petri a different story instead: left the
+force elsewhere, for reasons he does not discuss, now renting a room from
+Tuomas and still noticing what an officer would. Same character, same
+traits, no group membership — `test_fights.gd`/`test_police.gd`/
+`test_theft.gd` all green again with no change to any of the three files
+themselves. **A second officer is a real idea for later** (the roadmap's
+own M6 notes list "other crimes," "a fence," more of the police system as
+open); it should be built as a deliberate widening of `CrimeDirector`, not
+discovered as a side effect of a name and an occupation in a content pass.
+
+**The model was told it lived in Harbourside no matter where it actually
+was.** `DialoguePrompt.system_text()` hardcoded *"in Harbourside, the
+harbour district of a small Finnish port town"* for every NPC — harmless
+while only Harbourside had people, a real bug the moment Old Town and
+Eastfield did (M7, D-072) and never caught, because M7 shipped no new
+dialogue-model tests. Fixed now, since 20 of the 50 NPCs (Old Town and
+Eastfield's original ten plus twenty of this step's thirty) would
+otherwise have told the model they lived somewhere they have never been.
+`DialogueDirector.prompt_context()` gained `now.region` (`_world.
+region_of(npc.location)`); `DialoguePrompt.REGION_PHRASE` maps each of the
+three regions to the same apposition shape Harbourside always had ("Old
+Town, the old quarter of the same small Finnish port town"; "Eastfield,
+the industrial edge of the same small Finnish port town"), falling back to
+the bare "a small Finnish port town" for anything stranger. The other
+hardcoded fallback, `now.place`'s `"somewhere in Harbourside"` default,
+became the region-agnostic `"somewhere in town"` — it only ever fires when
+location lookup itself fails, but a Harbourside-specific guess was never
+right for that case either. `test_someone_elsewhere_is_told_where_they_
+actually_are` (new, `tests/test_dialogue_model.gd`) proves an Old Town
+resident's prompt says Old Town and never says harbour district.
+
+2 new tests, 30 new people, 1 real bug fixed that M7 shipped and nothing
+had caught until a full roster made it visible. 1118 tests green (was
+1116). Benchmark re-run (content touches `src/npc/`-adjacent data, per
+house rule): numbers landed inside this session's own established noise
+band (D-077, D-082) at every population size, both layouts — no
+regression. **This is M8's last planned step.** Sessions D+ — downtown
+with skyscrapers, walkable upper floors, romance, sex work as an economy —
+are sequenced after M8 entirely and not detailed in this plan; the plan
+itself never wrote a session-D handoff prompt the way sessions B and C
+got one.
