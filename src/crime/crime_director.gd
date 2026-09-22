@@ -8,8 +8,11 @@ extends RefCounted
 ## told is a separate step (D-052); here they only come to know — and, in
 ## the second half of this class, decide what to do about what they know.
 
-## The predicates the police act on.
-const CRIME_PREDICATES: Array[String] = ["stole_from", "assaulted"]
+## The predicates the police act on. One predicate for dealing, not one per
+## commodity — severity (the item's own `heat`, M8 D-086) carries the
+## difference between a joint and a bag of heroin, the way it already does
+## between a sandwich and a wallet for theft.
+const CRIME_PREDICATES: Array[String] = ["stole_from", "assaulted", "dealt_illicit"]
 
 ## What the player has been dealt with for: [{"fact", "outcome", "day"}], one
 ## per case. An earlier offence weighs on the next (`PoliceRules`).

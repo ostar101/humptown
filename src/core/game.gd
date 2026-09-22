@@ -651,6 +651,39 @@ func _current_staff() -> String:
 	return _deal_keeper if _dealing else staff_serving(_shopping)
 
 
+## Buying or selling something not plainly legal may be seen, the way a
+## theft may (M8 D-086): whoever else is about, the keeper's own discretion
+## standing in for how carefully it was done — for `TheftRules.
+## notice_chance()`'s purposes, as if it were the player's own stealth,
+## since it is the keeper who controls how the exchange happens, not the
+## player. The keeper is never a witness of their own sale: `watchers()` is
+## called with no staff id, so nobody gets the elevated "watching their own
+## counter" attention a shopkeeper otherwise would, and the keeper is
+## filtered out of who is asked to notice at all.
+func _observe_illicit_deal(shop_id: String, item_id: String) -> void:
+	if shops.legality(shop_id) == "legal":
+		return
+	var keeper_id := _current_staff()
+	if keeper_id.is_empty():
+		return
+	var keeper := npcs.get_npc(keeper_id)
+	var location := keeper.location if keeper != null else _shopping
+	var discretion := float(keeper.nature.get("discretion", 0.5)) if keeper != null else 0.5
+	var stealth_stand_in := int(round(discretion * 99.0))
+	var watchers := crime.watchers(location, "", stealth_stand_in, player.stats.effectiveness())
+	var noticed: Array[String] = []
+	for watcher in watchers:
+		if str(watcher["id"]) == keeper_id:
+			continue
+		if rng.stream("deal").randf() < float(watcher["chance"]):
+			noticed.append(str(watcher["id"]))
+	if noticed.is_empty():
+		return
+	var heat := ItemRules.heat_of(data.get_entry("items", item_id))
+	crime.record_crime("dealt_illicit", location, keeper_id, noticed, heat, false,
+		"dealt in something they shouldn't with you")
+
+
 ## Sets today's negotiated price at a gated shop, from a successful
 ## ask_deal (M8 step 9).
 func set_deal_factor(shop_id: String, factor: float) -> void:
@@ -719,6 +752,7 @@ func buy(item_id: String, quantity: int = 1) -> Result:
 	player.inventory.add(item_id, quantity)
 	shops.sold(shop_id, item_id, quantity, total)
 	_shop_deals += 1
+	_observe_illicit_deal(shop_id, item_id)
 	Events.player_deed.emit("bought", {"item": item_id, "shop": shop_id, "quantity": quantity})
 	return Result.success({"kind": "bought", "item": item_id, "quantity": quantity, "total": total})
 
@@ -821,6 +855,7 @@ func sell(item_id: String, quantity: int = 1) -> Result:
 	player.wallet.add_cash(total, "sell:" + item_id)
 	shops.bought(shop_id, item_id, quantity, total)
 	_shop_deals += 1
+	_observe_illicit_deal(shop_id, item_id)
 	return Result.success({"kind": "sold", "item": item_id, "quantity": quantity, "total": total})
 
 

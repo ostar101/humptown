@@ -26,6 +26,12 @@ const NOT_HURT := 0.99
 ## GIFT_KEEP at D-081 so there is one list of them).
 const KEEP: Array[String] = ["item_phone", "item_keys"]
 
+## How serious it is to be caught dealing in a kind of thing, defaulted so
+## the 19 weapons and 16 drugs already in the game need nothing added to
+## work (M8 D-086); an item's own `"heat"` overrides its kind.
+const HEAT_BY_KIND := {"drug": 0.4, "weapon": 0.5}
+const ORDINARY_HEAT := 0.25
+
 
 ## What using one does: {meter: delta}, from the item's data.
 static func effects_of(item: Dictionary) -> Dictionary:
@@ -70,3 +76,11 @@ static func damage_of(item: Dictionary) -> float:
 ## How much a worn thing softens a blow: 0 for anything that is not armour.
 static func armour_of(item: Dictionary) -> float:
 	return maxf(float(item.get("armour", 0.0)), 0.0)
+
+
+## How serious it is to be caught dealing in this thing, [0, 1] — authored
+## per item where it matters, defaulted by kind otherwise (M8 D-086).
+static func heat_of(item: Dictionary) -> float:
+	if item.has("heat"):
+		return clampf(float(item["heat"]), 0.0, 1.0)
+	return float(HEAT_BY_KIND.get(str(item.get("kind", "")), ORDINARY_HEAT))

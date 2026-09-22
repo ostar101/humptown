@@ -22,13 +22,24 @@ const DEFAULT_WEIGHTS := {
 	"assaulted": -0.60,
 	"arrested": -0.35,
 	"snitched": -0.50,
+	## M8 D-086: dealing in something illicit, seen or heard of.
+	"dealt_illicit": -0.35,
+	## M8 D-086: someone vouched for the player — knowledge, not a flag
+	## (D-085); read by whoever comes to know it, same as anything else.
+	"vouched_for": 0.20,
 }
 
 ## Some groups read the same act differently. A criminal crew does not mind
-## that you were arrested; it minds that you talked.
+## that you were arrested; it minds that you talked. Dealing reads the
+## opposite way in the two scopes that actually care about it: criminals
+## barely mind, the police weigh it more heavily than an ordinary theft
+## (M8 D-086). Being vouched for lands hardest exactly where the vouching
+## happened — being trusted by one of their own means more among criminals
+## than a stranger's good word means anywhere else.
 const SCOPE_MODIFIERS := {
-	"criminal": {"arrested": 0.05, "snitched": -1.0, "assaulted": -0.1, "stole_from": 0.0},
-	"police": {"arrested": -0.5, "snitched": 0.3},
+	"criminal": {"arrested": 0.05, "snitched": -1.0, "assaulted": -0.1, "stole_from": 0.0,
+		"dealt_illicit": 0.10, "vouched_for": 0.35},
+	"police": {"arrested": -0.5, "snitched": 0.3, "dealt_illicit": -0.55},
 }
 
 ## Explicit standings set by scripted events, independent of gossip.

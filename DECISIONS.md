@@ -3353,3 +3353,76 @@ a `ScriptedDialogueModel` with `available = false`, offline throughout —
 consistent with "no live LLM call has ever been made" (PROJECT_STATUS.md)
 staying true through this step too. 1104 tests green (was 1093). No
 benchmark — nothing touched here runs per simulated minute.
+
+---
+
+## D-086 — Consequences: `dealt_illicit`, item `heat`, and the keeper who never tells
+
+**Why (M8 step 10, closing session B).** The plan asked for this step to
+land alone, and it is small on purpose: one predicate, one pair of
+`Reputation` weights, one call site duplicated from `steal()`, and one pure
+default-by-kind function — no new system, just wiring the ones D-082
+through D-085 already built into `CrimeDirector`'s existing machinery.
+
+**One predicate, not one per commodity.** `CrimeDirector.CRIME_PREDICATES
++= "dealt_illicit"` — a bag of heroin and a joint are the same *kind* of
+offence; what makes one worse is `ItemRules.heat_of(item)` (new,
+`src/economy/item_rules.gd`, the `damage_of`/`armour_of` pattern exactly):
+an item's own `"heat"` if authored, else `0.4` for any `kind: "drug"`,
+`0.5` for `kind: "weapon"`, `0.25` for everything else. Every one of the 19
+weapons and 16 drugs already in the game gets a sensible default with
+nothing added to `items.json` — the plan's own arithmetic (19 + 16 = 35)
+confirmed this needed no authoring pass, only the function.
+
+**`Reputation` reads `dealt_illicit` and `vouched_for` oppositely in the
+two scopes that actually care.** `DEFAULT_WEIGHTS["dealt_illicit"] =
+-0.35` (between `stole_from`'s -0.45 and `assaulted`'s -0.60 — a real
+offence, not the worst one), `["vouched_for"] = 0.20`. `SCOPE_MODIFIERS`:
+criminals barely mind dealing (`"criminal": {"dealt_illicit": 0.10}` — a
+positive relative to the default, the same shape `"arrested": 0.05`
+already has there) and the police mind it more than almost anything
+(`"police": {"dealt_illicit": -0.55}`, next to `"arrested": -0.5`). Being
+vouched for lands hardest exactly where the vouching happened —
+`"criminal": {"vouched_for": 0.35}` outweighs the default, since trust from
+one of their own means more than a stranger's word means anywhere. Nothing
+writes a `"vouched_for"` fact yet (M8 step 11); the weight is ready for it.
+
+**`Game._observe_illicit_deal(shop_id, item_id)`**, called from both `buy()`
+and `sell()` after the transaction completes, is `steal()`'s witness check
+transplanted: it returns at once for a `"legal"` shop (every ordinary
+purchase, unchanged, proven by `test_a_legal_shop_is_never_watched_for_it`)
+and otherwise calls the *same* `CrimeDirector.watchers()` `steal()` already
+uses. **The keeper's `discretion` stands in for the player's stealth** —
+`int(round(discretion × 99))` feeds `TheftRules.notice_chance()`'s
+`stealth_level` argument exactly where a skill level would go, since it is
+the *dealer* who controls how the exchange happens here, not the player.
+**The keeper is filtered out of who gets asked to notice, and never
+granted the elevated "watching their own counter" attention `is_staff`
+gives a shopkeeper** — `watchers()` is called with `staff: ""`, then the
+keeper's own id is dropped from the result before any roll is drawn. A
+dealer does not witness, and cannot report, their own sale;
+`test_the_keeper_alone_leaves_no_trace` and the `dealt_illicit` case in
+`test_a_witnessed_deal_is_a_crime_the_keeper_never_reports` both prove it.
+A caught deal is recorded as `crime.record_crime("dealt_illicit", …,
+caught: false, …)` — nobody stops a deal in the act the way a shopkeeper
+stops a theft; being seen is the whole of the consequence here.
+
+**Confirmed, not changed: `PoliceRules` and every `ui.msg.police_*` key are
+predicate-blind**, exactly as the plan asked to verify. `PoliceRules`
+works only from `{"severity", "strength"}` pairs and never reads a
+predicate string; grepping `src/ui/` for `predicate` turns up nothing that
+builds a locale key from one. `dealt_illicit` needed no new UI string to
+avoid rendering as a raw key on screen — the existing `ui.msg.police_
+forced.warning`/`.fine` already cover every predicate there is.
+
+8 new tests in `tests/test_dealt_illicit.gd`: `heat_of`'s defaults and
+override, the two `Reputation` tables' shape, an unwitnessed deal leaving
+nothing, a missed roll leaving nothing, a caught deal recorded correctly
+with the keeper excluded, and a legal shop never watched at all. 1112
+tests green (was 1104). No benchmark — nothing here runs per simulated
+minute. **This closes M8 session B** (steps 6–10): `Npc.nature`, `DealRules`,
+gated shops, `ask_deal` and its consequences are all in, tested offline
+throughout, and none of it has been played by a person yet — worth trying
+at a keyboard before session C: ask Rauno for something at night with
+nobody about, then again in daylight at the harbour with Marika in sight,
+per the plan's own verification note.
