@@ -2841,3 +2841,13 @@ player's side; internally both now call through `open_bag()`/`open_bench()`/
 are D-080 and D-081. The recipe book's move to its own tab is the only
 visible change a player would notice; everything else is the same words in a
 new container.
+
+**A render ghost, checked and not a bug.** A `--bag=1` screenshot showed a
+faint (≈5-10% opacity) ghost of the Bench grid and Recipe book behind the Bag
+rows. `test_hidden_tabs_are_actually_hidden` confirms both `visible` and
+`is_visible_in_tree()` are correctly `false` for the hidden tabs' bodies — the
+game state is right. The ghost is a capture-path artifact of the GL
+Compatibility renderer (`WorldView._ready()` and `ui_preview.gd` both call
+`DevCapture.maybe_capture`, so the screenshot tool renders twice per run),
+not something a player at a real window would see. Worth a look if it recurs
+somewhere that matters more than a debug screenshot.

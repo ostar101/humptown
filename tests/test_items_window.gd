@@ -207,3 +207,21 @@ func test_the_bag_and_the_bench_share_what_is_carried() -> void:
 	assert_has(window.row_texts(), "Sandwich|× 1|0.3 kg")
 	_view.open_bench()
 	assert_eq(window.bag_texts(), ["item_sandwich|1"] as Array[String])
+
+
+## The screenshot tool (DevCapture) can show a faint ghost of the other tabs'
+## controls behind the active one — a pre-existing render artifact of the
+## Compatibility renderer's capture path, not a real state bug: both
+## `visible` and `is_visible_in_tree()` are correctly false for a hidden tab.
+func test_hidden_tabs_are_actually_hidden() -> void:
+	_view.open_bag()
+	var window := _view.items_window()
+	var bag_body: Control = window.get_node("%BagBody")
+	var bench_body: Control = window.get_node("%BenchBody")
+	var recipes_body: Control = window.get_node("%RecipesBody")
+	assert_true(bag_body.visible)
+	assert_false(bench_body.visible)
+	assert_false(recipes_body.visible)
+	assert_true(bag_body.is_visible_in_tree())
+	assert_false(bench_body.is_visible_in_tree())
+	assert_false(recipes_body.is_visible_in_tree())

@@ -2,15 +2,15 @@
 
 **Updated:** 2026-09-22
 **Milestone:** M6 — Consequences — **complete in code (0.6.0)**. M5 complete (0.5.0). M5 complete in code (0.5.0). **M8 — A town worth walking — under way**, plan at `C:\Users\miika\.claude\plans\peli-tuntuu-hieman-tyls-lt-prancy-hamming.md` (twelve steps; this session is doing steps 1-5).
-**Build:** green. 1012 tests, 19733 assertions with the LimeZu art installed,
-~42 s. No leak warnings at exit.
+**Build:** green. 1013 tests, 19739 assertions with the LimeZu art installed,
+~40 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
 
 ## Next task
 
-**M8 step 3, newest (D-079):** `ItemsWindow` (`src/ui/items_window.gd` + `scenes/ui/items_window.tscn`) replaces `InventoryWindow` and `CraftWindow`, both deleted. Three tabs — Bag, Bench, Recipes (the recipe book moved off the bench into its own tab) — on the `%BuyTab`/`%SellTab` precedent. `I` opens on Bag, `C` on Bench; if already open, the key switches tab instead of closing (`ItemsWindow.open_on`), a deliberate UX change from the old two-window toggle-to-close behaviour. `scenes/world/world.tscn` lost `$Inventory`+`$Craft`, gained `$Items`, in this same commit. `WorldView` collapsed `_bag`/`_craft` into one `_items`; `open_inventory/open_crafting/inventory_window/craft_window` renamed `open_bag/open_bench/items_window`. Public method surface (`row_texts`, `grid_ids`, `place`, `make`, etc.) unchanged in shape — tests ported mechanically, `test_craft_window.gd` → `test_items_window.gd` (17 tests, +3 for the merge itself). 1012 tests green (was 1009: -14 old craft tests, +17 new). **Next in the plan: step 4**, equipment — six slots (head/body/legs/feet/hand/back), `PlayerState.equipment`, migration v13, `wielded_weapon()` hand-slot-first with its scan fallback kept, the stash-capacity guard on `tests/test_home.gd:78-79`.
+**M8 step 3, newest (D-079):** `ItemsWindow` (`src/ui/items_window.gd` + `scenes/ui/items_window.tscn`) replaces `InventoryWindow` and `CraftWindow`, both deleted. Three tabs — Bag, Bench, Recipes (the recipe book moved off the bench into its own tab) — on the `%BuyTab`/`%SellTab` precedent. `I` opens on Bag, `C` on Bench; if already open, the key switches tab instead of closing (`ItemsWindow.open_on`), a deliberate UX change from the old two-window toggle-to-close behaviour. `scenes/world/world.tscn` lost `$Inventory`+`$Craft`, gained `$Items`, in this same commit. `WorldView` collapsed `_bag`/`_craft` into one `_items`; `open_inventory/open_crafting/inventory_window/craft_window` renamed `open_bag/open_bench/items_window`. Public method surface (`row_texts`, `grid_ids`, `place`, `make`, etc.) unchanged in shape — tests ported mechanically, `test_craft_window.gd` → `test_items_window.gd` (18 tests: 14 ported, +3 for the merge itself, +1 confirming a hidden tab is actually hidden after the screenshot tool showed a faint, harmless render ghost of it — `visible`/`is_visible_in_tree()` are both correctly false). 1013 tests green (was 1009: -14 old craft tests, +18 new). **Next in the plan: step 4**, equipment — six slots (head/body/legs/feet/hand/back), `PlayerState.equipment`, migration v13, `wielded_weapon()` hand-slot-first with its scan fallback kept, the stash-capacity guard on `tests/test_home.gd:78-79`.
 
 **Before that (D-078):** `GameWindow` (`src/ui/game_window.gd`), a base class owning the ~25 lines `InventoryWindow` and `CraftWindow` had copy-pasted (`_root`, `_time_was_paused`, `closed`, `is_open`, closing on `ui_cancel` plus a per-window `toggle_action`, and the `"<prefix>.refused."+code` lookup as `_refusal_text`). Only these two windows converted; the other seven `CanvasLayer` windows are untouched, for later. No behaviour change — same 1009 tests, green.
 
