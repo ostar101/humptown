@@ -53,7 +53,7 @@ const SOLID_NAMES := {
 }
 
 ## What a person can do something with. See Game.interact_at().
-const OBJECT_KINDS := ["counter", "bed", "sign", "stash", "atm"]
+const OBJECT_KINDS := ["counter", "bed", "sign", "stash", "atm", "stairs"]
 ## Rows of wall along the top of an interior: the far wall shows its face.
 const INTERIOR_TOP_WALL := 2
 
@@ -93,6 +93,11 @@ var objects: Dictionary = {}
 var interior_of: String = ""
 var exit_door := Vector2i(-1, -1)
 var staff_cell := Vector2i(-1, -1)
+## Interiors only: which floor of the building this is, ground floor 1. A
+## building with upper floors authors one interior per floor, sharing
+## `interior_of`; a `stairs` object climbs, the door descends above floor 1
+## (Game._change_floor()). Always 1 on region maps and single-floor interiors.
+var storey: int = 1
 
 var _ground := PackedByteArray()
 var _structure := PackedByteArray()   # stores Terrain + 1 so NONE fits in a byte
@@ -124,6 +129,9 @@ static func from_data(d: Dictionary) -> Result:
 	if m.is_interior():
 		if m.size.x < 4 or m.size.y < INTERIOR_TOP_WALL + 3:
 			return Result.failure("map_invalid", "%s: interior is too small" % m.id)
+		m.storey = int(d.get("floor", 1))
+		if m.storey < 1:
+			problems.append("floor %d must be 1 or more" % m.storey)
 		m._build_interior_shell(_cell_from(d.get("door")), problems)
 
 	for area in d.get("areas", []):
@@ -411,6 +419,15 @@ func edge_cell() -> Vector2i:
 				if not is_blocked(Vector2i(x, y)):
 					return Vector2i(x, y)
 	return spawn
+
+
+## The key WorldState.interiors uses for one floor of one building: the
+## location id alone for the ground floor (unchanged from before floors
+## existed, so no save or content needs to know they exist), "<location
+## id>#<floor>" above it. A location id never contains "#", so the two never
+## collide.
+static func floor_key(location_id: String, storey: int) -> String:
+	return location_id if storey <= 1 else "%s#%d" % [location_id, storey]
 
 
 static func cell_to_world(cell: Vector2i) -> Vector2:

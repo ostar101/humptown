@@ -23,6 +23,10 @@ static func prompt_for(interaction: Dictionary) -> String:
 			return Localization.t("ui.prompt.enter", {"place": place_name(target)})
 		"exit":
 			return Localization.t("ui.prompt.leave", {"place": place_name(target)})
+		"stairs":
+			return Localization.t("ui.prompt.stairs_up")
+		"stairs_down":
+			return Localization.t("ui.prompt.stairs_down")
 		"counter":
 			return Localization.t("ui.prompt.counter")
 		"bed":

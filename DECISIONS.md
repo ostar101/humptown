@@ -3739,3 +3739,83 @@ schema bump: nothing changed shape, only gained optional fields.
 `ConsequenceDirector` closed a cycle (consequences → phone → dialogue →
 consequences) of `RefCounted`s that is never freed — the suite's exit showed
 "38 resources still in use". It holds two `Callable`s instead.
+
+---
+
+## D-091 — Walkable upper floors: a building's own floors are just more interiors, no new field, no migration
+
+**Why.** M8's own closing note sequenced "downtown, with skyscrapers and
+walkable upper floors" after it, sized by the user's own choice of scope for
+this session: the floor/stairs mechanic first (this entry), the district
+itself after (`tools/import_limezu_downtown.py`, then the region). Full plan
+at `C:\Users\miika\.claude\plans\parallel-swimming-hummingbird.md`. That
+closing note guessed the mechanic would need "a richer `PlayerState.interior`
+... and a v14 migration". It does not, and this entry records why, so a
+later reader does not re-litigate it.
+
+**The insight.** `player.interior` was never typed as "a location id" — it
+is an opaque `String` `WorldState.interior_for()` looks up in a dict. A
+floor is just another entry in that same dict, addressed by a slightly
+richer key: `DistrictMap.floor_key(location_id, storey)` returns the bare
+`location_id` for the ground floor (storey ≤ 1, exactly what every building
+already used) and `"<location id>#<floor>"` above it. A location id can
+never itself contain `#`, so the two value spaces never collide, and nothing
+already saved (which only ever holds `""` or a bare location id) needs
+reshaping — that is the whole reason no v14 migration exists for this.
+`PlayerState.interior` keeps its shape; the floor-change function
+(`Game._change_floor`) sets it to a composed key exactly the way
+`_enter_building` already sets it to a plain one.
+
+**`DistrictMap` gains one field, `storey: int = 1`** (named to dodge
+GDScript's built-in `floor()` global — this project treats warnings as
+errors, and a member var shadowing a global is exactly the kind of thing
+that trips), read from the authored JSON key `"floor"` (natural for a
+content author to type; the internal name and the authoring key are allowed
+to differ). Every one of the 17 interiors authored before this step is
+silently floor 1 — no data migration for what already exists.
+
+**The `stairs` object needs no new authored field.** Every interior already
+has one required, wall-embedded, always-reachable door cell (`exit_door`).
+On the ground floor it means "leave to the region"; reinterpreted above
+floor 1, the same cell means "go down one floor" — `Game.interaction_at`
+reports it as `"exit"` on the ground floor, `"stairs_down"` above it, and
+`interact_at` branches accordingly. Ascending is the one genuinely new
+interactable (`OBJECT_KINDS += "stairs"`), and defining it as "always one
+floor up, from wherever it's authored" needs no per-object data either —
+`_add_object()`'s existing `{id, kind, text_key, sets_flag}` shape is
+untouched, and its furniture-reachability validation already applies to a
+`stairs` object exactly as it does to a `counter` or an `atm`.
+
+**`DataRegistry._interior_floor_problems()`** (new, run once over the whole
+`interiors` table rather than per-entry) replaces the accidental uniqueness
+the old dict-collision gave "for free" (two interiors sharing `interior_of`
+silently let the last one loaded win, undetected) with an explicit rule:
+distinct floors per building, and the set of floors must be a contiguous run
+from 1 — no floor 3 authored without a floor 2 beneath it.
+
+**Named follow-up, deliberately not fixed here** (nothing in this session's
+own scope reaches it): five call sites compare `player.interior` to a real
+location id by exact string equality — `Game._findable()`, the stash gate in
+`Game._move_between()`, `Game.buy`/`sell`'s shop lookups, the phone's "you
+are here" pin (`phone_window.gd`), and "is this NPC in the room"
+(`dialogue_director.gd`). None of them ever see a composite key this pass,
+because downtown authors no home, staffed shop, stash or scheduled NPC above
+floor 1. The day a future pass does, those five sites need a
+`player.interior_base()`-style helper (strip the `#N` suffix) instead of raw
+equality — cheap when it is needed, wasted effort now.
+
+**This "no migration" conclusion has a shelf life.** It holds exactly as
+long as `player.interior`'s only job is "an opaque key into
+`WorldState.interior_for()`". The day a future feature needs *structured*
+per-player floor state — remembering which floor of which building for
+every building visited, not just the one stood on now — that is a real
+schema change and would need its own v14.
+
+Proven against a synthetic two-floor fixture attached to `loc_corner_shop`
+at runtime (`tests/test_stairs.gd`, 6 tests; 2 more in
+`tests/test_region_map.gd` cover `storey`'s round trip and that `stairs`
+validates like `atm`) — no real building has an upper floor yet, so nothing
+about the mechanic depends on downtown's own content existing. 8 new tests,
+1152 green (was 1144). No behaviour change for any existing building: every
+ground floor still keys by its bare location id, exactly as before this
+step.

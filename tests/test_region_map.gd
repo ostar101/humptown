@@ -34,6 +34,17 @@ func _build(overrides: Dictionary = {}) -> DistrictMap:
 	return built.value if built.ok else null
 
 
+## A minimal interior, for mechanics (floors, objects) that only make sense
+## inside a building. Mirrors test_interaction.gd's own _interior() helper.
+func _small_interior(overrides: Dictionary = {}) -> Dictionary:
+	var d := {
+		"id": "test_interior", "interior_of": "loc_t", "width": 6, "height": 6,
+		"fill": "floor", "door": [3, 5],
+	}
+	d.merge(overrides, true)
+	return d
+
+
 # --- DistrictMap ------------------------------------------------------------
 
 func test_areas_are_rasterised_in_order() -> void:
@@ -128,6 +139,28 @@ func test_reports_every_problem_at_once() -> void:
 	assert_err(result, "map_invalid")
 	assert_true(result.message.contains("lava"), result.message)
 	assert_true(result.message.contains("spawn"), result.message)
+
+
+func test_interior_floor_defaults_to_one_and_round_trips() -> void:
+	var ground := DistrictMap.from_data(_small_interior())
+	assert_ok(ground)
+	assert_eq(ground.value.storey, 1)
+	var upper := DistrictMap.from_data(_small_interior({"floor": 2}))
+	assert_ok(upper)
+	assert_eq(upper.value.storey, 2)
+	assert_err(DistrictMap.from_data(_small_interior({"floor": 0})), "map_invalid")
+
+
+func test_stairs_object_validates_like_an_atm() -> void:
+	var solids := [{"kind": "table", "rect": [1, 2, 1, 1]}]
+	assert_err(DistrictMap.from_data(_small_interior({
+		"objects": [{"id": "o", "kind": "stairs", "cell": [2, 3]}],
+	})), "map_invalid", "stairs need furniture under them, same as an atm")
+	var built := DistrictMap.from_data(_small_interior({
+		"solids": solids, "objects": [{"id": "obj_up", "kind": "stairs", "cell": [1, 2]}],
+	}))
+	assert_ok(built)
+	assert_eq(built.value.object_at(Vector2i(1, 2))["kind"], "stairs")
 
 
 # --- ChunkStreamer ----------------------------------------------------------

@@ -13,7 +13,9 @@ var flags: Dictionary = {}         # story/world flags: name -> Variant
 var current_region: String = ""
 ## region_id -> DistrictMap. Derived from content, so never saved.
 var maps: Dictionary = {}
-## location_id -> DistrictMap of the inside of that building. Also derived.
+## DistrictMap.floor_key(location_id, floor) -> DistrictMap of that floor's
+## inside. Ground floor keys are a bare location id, unchanged from before
+## floors existed. Also derived.
 var interiors: Dictionary = {}
 
 var _locations_by_region: Dictionary = {}   # region_id -> Array[String]
@@ -56,7 +58,7 @@ func build_from(registry: DataRegistry) -> void:
 		var inside: DistrictMap = built.value
 		var location: Location = locations.get(inside.interior_of)
 		inside.region = location.region if location != null else ""
-		interiors[inside.interior_of] = inside
+		interiors[DistrictMap.floor_key(inside.interior_of, inside.storey)] = inside
 
 
 # --- queries ----------------------------------------------------------------
@@ -70,9 +72,10 @@ func map_for(region_id: String) -> DistrictMap:
 	return maps.get(region_id)
 
 
-## The inside of a building, or null for buildings nobody can enter.
-func interior_for(location_id: String) -> DistrictMap:
-	return interiors.get(location_id)
+## The inside of a building at the given DistrictMap.floor_key(), or null for
+## a building nobody can enter or a floor nothing built.
+func interior_for(key: String) -> DistrictMap:
+	return interiors.get(key)
 
 
 func get_location(id: String) -> Location:

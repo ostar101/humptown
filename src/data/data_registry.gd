@@ -110,6 +110,7 @@ func validate_references() -> Array[String]:
 		problems.append_array(_map_reference_problems(id, table("maps")[id]))
 	for id in table("interiors"):
 		problems.append_array(_interior_reference_problems(id, table("interiors")[id]))
+	problems.append_array(_interior_floor_problems())
 	for id in table("shops"):
 		problems.append_array(_shop_reference_problems(id, table("shops")[id]))
 	for id in table("jobs"):
@@ -346,6 +347,38 @@ func _interior_reference_problems(id: String, interior: Dictionary) -> Array[Str
 				standing = true
 	if not standing:
 		problems.append("interior '%s' belongs to '%s', which is not a building on a map" % [id, loc_id])
+	return problems
+
+
+## A building with upper floors authors one interior per floor, all sharing
+## `interior_of`. Each must claim a distinct floor, and the set of floors
+## must be a contiguous run starting at 1 — no floor 3 without a floor 2
+## beneath it, and no two interiors both claiming to be the same floor.
+func _interior_floor_problems() -> Array[String]:
+	var problems: Array[String] = []
+	var floors_by_location: Dictionary = {}   # interior_of -> {storey: id}
+	for id in table("interiors"):
+		var interior: Dictionary = table("interiors")[id]
+		var loc_id := str(interior.get("interior_of", ""))
+		var storey := int(interior.get("floor", 1))
+		if storey < 1:
+			problems.append("interior '%s' floor %d must be 1 or more" % [id, storey])
+			continue
+		if not floors_by_location.has(loc_id):
+			floors_by_location[loc_id] = {}
+		var floors: Dictionary = floors_by_location[loc_id]
+		if floors.has(storey):
+			problems.append("interiors '%s' and '%s' are both floor %d of '%s'" % [floors[storey], id, storey, loc_id])
+			continue
+		floors[storey] = id
+	for loc_id in floors_by_location:
+		var floors: Dictionary = floors_by_location[loc_id]
+		var storeys: Array = floors.keys()
+		storeys.sort()
+		for i in storeys.size():
+			if int(storeys[i]) != i + 1:
+				problems.append("'%s' floors are not a run from 1 (has %s)" % [loc_id, storeys])
+				break
 	return problems
 
 

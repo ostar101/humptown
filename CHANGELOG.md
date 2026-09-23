@@ -5,6 +5,9 @@ versions are milestones rather than releases until there is something to release
 
 ## [Unreleased]
 
+### Added (D-091)
+- Buildings can now have walkable upper floors, reached by stairs — the engine mechanic only; no building uses it yet (downtown, next, is the first).
+
 ### Fixed (from playing, D-090)
 - Sleeping no longer keeps ending at the clinic: health now recovers with rest when you're fed (most of all overnight), and a night's sleep makes you hungry for breakfast rather than starving.
 - "Injured" no longer appears without an injury: low health with no wound now reads "Weak" / "Heikko".

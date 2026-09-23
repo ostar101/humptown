@@ -1,16 +1,33 @@
 # Project status
 
 **Updated:** 2026-09-23
-**Milestone:** M6 — Consequences — **complete in code (0.6.0)**. M5 complete (0.5.0). M5 complete in code (0.5.0). **M8 — A town worth walking — complete (all twelve planned steps).** Plan at `C:\Users\miika\.claude\plans\peli-tuntuu-hieman-tyls-lt-prancy-hamming.md`. Sessions A, B and C all done. Sessions D+ (downtown/skyscrapers, upper floors, romance, sex work) are sequenced after but not detailed in this plan — **the game wants playing by a person before any of that starts**, per the plan's own note; nothing from M8 has been seen at a keyboard yet.
-**Build:** green. 1144 tests, 30903 assertions with the LimeZu art installed,
-~47 s. No leak warnings at exit.
+**Milestone:** M6 — Consequences — **complete in code (0.6.0)**. M5 complete (0.5.0). M5 complete in code (0.5.0). **M8 — A town worth walking — complete (all twelve planned steps).** Plan at `C:\Users\miika\.claude\plans\peli-tuntuu-hieman-tyls-lt-prancy-hamming.md`. Sessions A, B and C all done. **Session D — downtown + walkable upper floors — under way** (user's explicit choice, ahead of the plan's own "wait for the play-through list" note — see D-091). Plan at `C:\Users\miika\.claude\plans\parallel-swimming-hummingbird.md`.
+**Build:** green. 1152 tests, 30948 assertions with the LimeZu art installed,
+~49 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
 
 ## Next task
 
-**Newest (D-090) — the first play-through's findings, and three design calls
+**Newest (D-091) — walkable upper floors, the mechanic (Session D, steps
+1–3 of the downtown plan).** `DistrictMap.storey` (named to dodge GDScript's
+built-in `floor()`; authored as JSON `"floor"`, default 1), `OBJECT_KINDS +=
+"stairs"`, `DistrictMap.floor_key(location_id, storey)` (bare id on the
+ground floor, `"id#N"` above it — a strict, non-colliding extension of the
+value space `player.interior` already lived in, so **no v14 migration and no
+new `PlayerState` field**, a deliberate reversal of what M8's own closing
+note guessed this would need). `WorldState.build_from()` keys `interiors` by
+that composite; `DataRegistry._interior_floor_problems()` enforces a
+contiguous floor run per building. `Game._change_floor()` climbs/descends;
+the ground floor's own door is untouched, floor>1's same door cell now reads
+as `"stairs_down"`. Proven against a synthetic two-floor fixture on
+`loc_corner_shop` — no real building has an upper floor yet, that is
+downtown's own job, next. 8 new tests, 1152 green (was 1144). **Next: step
+4, art plumbing (`tools/import_limezu_downtown.py`, three new `BuildingArt`
+keys) — end of Session D — then Session E authors downtown itself.**
+
+**Before that (D-090) — the first play-through's findings, and three design calls
 settled.** The user has played (first time since M4) and found no big bugs, only
 small ones, which they will report together later — **wait for that list**.
 Fixed now, from what they did report: waking in the clinic after sleeping and

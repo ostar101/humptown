@@ -471,6 +471,8 @@ func interaction_at(cell: Vector2i) -> Dictionary:
 	if map == null:
 		return {}
 	if map.is_interior() and cell == map.exit_door:
+		if map.storey > 1:
+			return {"kind": "stairs_down", "target": map.interior_of}
 		return {"kind": "exit", "target": map.interior_of}
 	var building := map.building_with_door(cell)
 	if not building.is_empty():
@@ -509,6 +511,10 @@ func interact_at(cell: Vector2i) -> Result:
 			return _enter_building(proposal, str(what["target"]))
 		"exit":
 			return _leave_building(proposal)
+		"stairs":
+			return _change_floor(proposal, 1)
+		"stairs_down":
+			return _change_floor(proposal, -1)
 		"counter":
 			return _use_counter(proposal, map.interior_of)
 		"bed":
@@ -572,6 +578,26 @@ func _leave_building(proposal: Dictionary) -> Result:
 	player.position = DistrictMap.cell_to_world(anchor)
 	_set_player_location(outside.location_at(anchor))
 	return Result.success({"kind": "exited", "location": left})
+
+
+## Climbs (delta=1) or descends (delta=-1) one floor of the building the
+## player is inside. The building itself (player.location) is unchanged —
+## a floor is not a new Location, just another interior of the same one.
+func _change_floor(proposal: Dictionary, delta: int) -> Result:
+	var map := current_map()
+	var base_id := map.interior_of
+	var target_storey := map.storey + delta
+	if target_storey < 1:
+		return _reject(proposal, "no_such_floor")   # floor 1's own way down is _leave_building
+	var next := world.interior_for(DistrictMap.floor_key(base_id, target_storey))
+	if next == null:
+		return _reject(proposal, "no_such_floor")   # a mis-authored top floor
+	player.interior = DistrictMap.floor_key(base_id, target_storey)
+	player.position = DistrictMap.cell_to_world(next.entry_cell())
+	_set_player_location(base_id)
+	return Result.success({
+		"kind": "climbed" if delta > 0 else "descended", "location": base_id, "floor": target_storey,
+	})
 
 
 func _use_counter(proposal: Dictionary, location_id: String) -> Result:

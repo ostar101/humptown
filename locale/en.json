@@ -203,6 +203,8 @@
   "activity.patrol": "on patrol",
   "ui.prompt.enter": "Enter {place}",
   "ui.prompt.leave": "Leave {place}",
+  "ui.prompt.stairs_up": "Go upstairs",
+  "ui.prompt.stairs_down": "Go downstairs",
   "ui.prompt.counter": "Go to the counter",
   "ui.prompt.sleep": "Sleep",
   "ui.prompt.read": "Read",

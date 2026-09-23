@@ -21,7 +21,9 @@ var region: String = ""
 ## Empty while the player is out in the region but in no particular place.
 var location: String = ""
 ## The building the player is inside, or empty when out in the region. While
-## inside, `position` is on that building's interior map.
+## inside, `position` is on that building's interior map. A DistrictMap.floor_key()
+## value: the location id on the ground floor (unchanged since before upper
+## floors existed), "<location id>#<floor>" above it.
 var interior: String = ""
 ## World position on the current map (DistrictMap units): the region's, or the
 ## interior's while inside. ZERO means "not placed yet";
