@@ -5,10 +5,11 @@ versions are milestones rather than releases until there is something to release
 
 ## [Unreleased]
 
-### Added (D-091, D-092, D-093, D-094)
+### Added (D-091, D-092, D-093, D-094, D-095)
 - Buildings can now have walkable upper floors, reached by stairs.
 - Downtown is open: a fourth region, reachable from Harbourside and Old Town, with four towers on the street.
-- Both of Downtown's office towers can be walked into and climbed all the way to the top, floor by floor. The two apartment blocks are there too, but private — nobody lives in them yet, so a stranger is turned away at the door.
+- Both of Downtown's office towers can be walked into and climbed all the way to the top, floor by floor.
+- Downtown's first two residents: Saana Virtanen and Iiro Mäkelä, each living in one of the apartment blocks and working in one of the towers.
 
 ### Fixed (from playing, D-090)
 - Sleeping no longer keeps ending at the clinic: health now recovers with rest when you're fed (most of all overnight), and a night's sleep makes you hungry for breakfast rather than starving.

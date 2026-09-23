@@ -1,8 +1,8 @@
 # Project status
 
 **Updated:** 2026-09-23
-**Milestone:** M6 — Consequences — **complete in code (0.6.0)**. M5 complete (0.5.0). M5 complete in code (0.5.0). **M8 — A town worth walking — complete (all twelve planned steps).** Plan at `C:\Users\miika\.claude\plans\peli-tuntuu-hieman-tyls-lt-prancy-hamming.md`. Sessions A, B and C all done. **Downtown + walkable upper floors — complete** (user's explicit choice, ahead of the plan's own "wait for the play-through list" note — see D-091). Plan at `C:\Users\miika\.claude\plans\parallel-swimming-hummingbird.md`, all seven steps done (D-091 to D-094). Downtown is real and walkable; not yet lived in — see D-094.
-**Build:** green. 1155 tests, 31116 assertions with the LimeZu art installed,
+**Milestone:** M6 — Consequences — **complete in code (0.6.0)**. M5 complete (0.5.0). M5 complete in code (0.5.0). **M8 — A town worth walking — complete (all twelve planned steps).** Plan at `C:\Users\miika\.claude\plans\peli-tuntuu-hieman-tyls-lt-prancy-hamming.md`. Sessions A, B and C all done. **Downtown + walkable upper floors — complete, and two people now live there.** Plan at `C:\Users\miika\.claude\plans\parallel-swimming-hummingbird.md`, all seven steps done (D-091 to D-094); D-095 (past the plan's own scope, the user's "continue" with no further detail) added Downtown's first two residents.
+**Build:** green. 1155 tests, 32323 assertions with the LimeZu art installed,
 ~51 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
@@ -10,8 +10,29 @@
 
 ## Next task
 
-**Newest (D-094) — sixteen interiors, the floor/stairs mechanic proven on
-real content, closing the downtown plan.** Every floor of all four downtown
+**Newest (D-095) — two people move into Downtown.** One new occupation
+(`occ_clerk`), two jobs (`job_downtown_tower_a`/`_b`, weekday 08:00–17:00),
+one new schedule (`sched_downtown_office`, copied from `sched_clinic_day`'s
+shape since Downtown has no shop/bar of its own yet for a schedule to
+name). Saana Virtanen lives in `loc_downtown_flats_a` and works
+`loc_downtown_tower_a`; Iiro Mäkelä lives in `loc_downtown_flats_b` and
+works `loc_downtown_tower_b` — each their own job's employer, matching
+`npc_veikko`'s own dockhand precedent. Both homes gained an `owner` field
+like every other resident's home. **Caught by the suite, not by
+inspection**: the first name chosen for the second NPC, "Eero", collided
+with an existing `npc_eero` — `new_game()` failed outright and cascaded
+into ~90 unrelated-looking failures across half the suite, all downstream
+of the same root cause; renamed to Iiro. No new tests — the existing
+per-district weekly-walk check and content-reference checks absorbed both
+people for free (assertions 31116 → 32323). 1155 tests still green.
+**Downtown's shops, and its other two buildings' own residents, remain
+unbuilt — still the user's call, same as the rest of the Sessions D+ list
+(civic art, home variants, romance, sex work).**
+
+**Before that (D-091 to D-094) — the downtown plan, closed.**
+`C:\Users\miika\.claude\plans\parallel-swimming-hummingbird.md`, all seven
+steps done. D-094 — sixteen interiors, the floor/stairs mechanic proven on
+real content, closing the downtown plan. Every floor of all four downtown
 towers gets an interior (2+4+4+6 = 16 entries in `data/interiors.json`),
 generated from one reused 6×6 template so sixteen near-identical entries
 can't drift out of sync by hand — every floor but the top has a `table`
@@ -414,7 +435,7 @@ criminal-contacts view (D-050); everything in M7. See `ROADMAP.md`.
 
 - 127 source files in `src/`
 - 56 test suites
-- 50 authored NPCs, 54 locations, 4 regions (all mapped), 33 interiors (16 are downtown's own floors), 15 schedules, 4 backgrounds, 11 shops (2 illicit, kept not walked to), 115 items, 61 recipes, 6 jobs, 4 quests, 3 errands, 4 asks (2 debt/leniency, 2 vouching)
+- 52 authored NPCs, 54 locations, 4 regions (all mapped), 33 interiors (16 are downtown's own floors), 16 schedules, 4 backgrounds, 11 shops (2 illicit, kept not walked to), 115 items, 61 recipes, 8 jobs, 4 quests, 3 errands, 4 asks (2 debt/leniency, 2 vouching)
 
 ---
 

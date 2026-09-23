@@ -106,10 +106,11 @@ func test_a_composite_floor_key_survives_a_save_round_trip_with_no_migration() -
 	assert_eq(SaveMigrations.CURRENT_VERSION, 13, "the floor mechanic needed no new save version")
 
 
-# --- real content: downtown's towers (D-093) --------------------------------
+# --- real content: downtown's towers (D-093, D-095) --------------------------
 ## Both towers are semi_public and walk-in; the two apartment blocks are
-## private with nobody living there yet (D-093), so they are not climbed
-## here — only confirmed still correctly locked to a stranger.
+## private homes now lived in (D-095), so they are not climbed here — only
+## confirmed still correctly locked to a stranger at the door, same as any
+## other resident's flat.
 
 const DOWNTOWN_TOWERS := {"loc_downtown_tower_a": 4, "loc_downtown_tower_b": 6}
 
@@ -160,7 +161,7 @@ func test_every_downtown_tower_can_be_climbed_to_the_top_and_back() -> void:
 		assert_eq(Game.player.interior, "", "%s: back outside" % location_id)
 
 
-func test_downtowns_apartment_blocks_stay_private_with_nobody_living_there() -> void:
+func test_downtowns_apartment_blocks_stay_private_to_a_stranger() -> void:
 	for location_id: String in ["loc_downtown_flats_a", "loc_downtown_flats_b"]:
 		assert_ok(_walk_to_exit("harbourside", "downtown"))
 		var outside := Game.world.map_for("downtown")

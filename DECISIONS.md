@@ -3997,3 +3997,70 @@ id (`Game._findable`, the stash gate, `Game.buy`/`sell`, the phone's "you
 are here" pin, `dialogue_director.gd`'s "is this NPC in the room") remain
 unfixed and, since nothing this pass ever puts a home, shop, stash or
 NPC above floor 1, still unreached.
+
+---
+
+## D-095 — Two people move into Downtown
+
+**Why.** After D-094 closed the downtown plan, the user said "continue" once
+more with no further scope given. Populating Downtown was the call I made
+rather than asked about: it uses no new system (the same `nature`/`deals`
+NPC schema, job/occupation/schedule shapes M8 already froze), follows the
+exact historical sequencing D-072 and D-088 already established (geography
+lands, then people), and is a direct continuation of the district just
+opened rather than a jump to an unrelated one (romance, sex work, civic art
+— all still just named, still all the user's call). Modest on purpose: two
+people, not thirty, since the point is proving the pattern still holds on a
+building with floors, not filling the district.
+
+**One new occupation, `occ_clerk`** (`daily_wage: 105`, `workplace_kind:
+"work"`, skills `observation`/`persuasion` — the same pair `occ_librarian`
+already uses, an office job being closer to a librarian's than a
+dockhand's). Two jobs, `job_downtown_tower_a`/`_b`, weekday 08:00–17:00,
+wages 100/115 (the taller tower pays more — a judgement call, not derived
+from anything). One new schedule, `sched_downtown_office`, built by copying
+`sched_clinic_day`'s exact shape (same shift timing, lunch kept `@work`
+rather than sent to a location) and swapping its one non-`@home`/`@work`
+stop for `loc_downtown_street` — Downtown has no shop or bar yet for a
+lunch or evening stop to name, so the copied schedule's own choice to keep
+lunch `@work` when nothing external exists was already the right answer,
+not something this step had to invent.
+
+**Saana Virtanen (29) lives in `loc_downtown_flats_a`, works
+`loc_downtown_tower_a`. Iiro Mäkelä (34) lives in `loc_downtown_flats_b`,
+works `loc_downtown_tower_b`.** Each is their own job's `employer` — the
+same shape `npc_veikko`'s own dockhand entry already uses (a senior person
+who does the job and is also who the player would ask about it), chosen
+over inventing an unseen owner NPC neither job needs. Both homes gain an
+`owner` field, matching every other resident's home in the game
+(`loc_ida_flat`→`npc_ida` and so on) — `Game._default_home()`'s own
+"first home with no owner" scan for a background-less start still finds
+`loc_player_flat` unchanged, since JSON load order is insertion order and
+Downtown's entries land last in the file.
+
+**A naming collision caught by the suite, not by inspection**: the first
+choice of name for the second new person, "Eero", already belonged to
+`npc_eero` (Eero Nurmi, Harbourside, age 51) — `new_game()` failed
+outright (`"npcs: duplicate id 'npc_eero'"`), cascading into roughly ninety
+unrelated-looking failures across `test_shops`/`test_theft`/`test_work`/
+`test_time_skip`/`test_weapons`, every one of them a downstream symptom of
+`Game.world` never finishing setup. Renamed to Iiro Mäkelä. Worth recording
+as a reminder that a large, flat, hand-authored id/name space like
+`npcs.json` has no compiler to catch a repeat — only the suite, and only
+because `new_game()` fails loudly rather than silently overwriting.
+
+**`test_every_new_person_lives_and_works_in_their_own_district`
+(`tests/test_regions.gd`) gains both ids**, walking each through a full
+week exactly as it already does for every Old Town/Eastfield resident —
+proving the district discipline D-072 established extends to Downtown too,
+not asserted, checked. `test_downtowns_apartment_blocks_stay_private_to_a_
+stranger` (renamed from D-094's own "...with nobody living there", since
+that is no longer true) still passes unchanged: a private home refuses a
+stranger at the door whether or not anyone lives there, and now someone
+does.
+
+No new tests (the existing loop-based checks absorbed both people and both
+jobs for free); assertions rose from 31116 to 32323, almost all of it the
+per-NPC weekly walk. 1155 tests still green. Downtown's shops, and its
+other two buildings' own residents, remain unbuilt and unnamed — still the
+user's call, same as before this step.

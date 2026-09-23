@@ -713,5 +713,25 @@
     "voice": "Quick, a little impatient, direct.",
     "groups": [],
     "relationships": [{"to": "npc_reijo", "kind": "family", "trust": 0.5, "affection": 0.4, "familiarity": 0.9}]
+  },
+  {
+    "id": "npc_saana", "name": "Saana Virtanen", "age": 29, "occupation": "occ_clerk",
+    "home": "loc_downtown_flats_a", "workplace": "loc_downtown_tower_a", "schedule": "sched_downtown_office", "importance": "background",
+    "traits": ["keeps_to_a_schedule", "new_to_the_building", "eats_lunch_at_her_desk"],
+    "nature": {"lawfulness": 0.85, "greed": 0.3, "risk": 0.15, "discretion": 0.45},
+    "bio": "Moved into the block eight months ago and still hasn't met most of the building. Files paperwork on the second floor and leaves the light on late.",
+    "voice": "Polite, a little guarded, answers in complete sentences.",
+    "groups": [],
+    "relationships": []
+  },
+  {
+    "id": "npc_iiro", "name": "Iiro Mäkelä", "age": 34, "occupation": "occ_clerk",
+    "home": "loc_downtown_flats_b", "workplace": "loc_downtown_tower_b", "schedule": "sched_downtown_office", "importance": "background",
+    "traits": ["climbs_the_stairs_for_the_exercise", "remembers_everyone_by_their_floor", "brings_his_own_coffee"],
+    "nature": {"lawfulness": 0.8, "greed": 0.35, "risk": 0.2, "discretion": 0.4},
+    "bio": "Six years at the same desk on the top floor. Knows who is behind on rent two buildings over just from who has stopped taking the lift.",
+    "voice": "Dry, observant, talks like he has already heard the joke.",
+    "groups": [],
+    "relationships": []
   }
 ]

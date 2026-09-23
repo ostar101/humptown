@@ -201,6 +201,23 @@
     ]
   },
   {
+    "id": "sched_downtown_office",
+    "default_activity": "idle",
+    "blocks": [
+      {"start": 0,    "days": "all",     "location": "@home",               "activity": "sleep"},
+      {"start": 390,  "days": "weekday", "location": "@home",               "activity": "eat"},
+      {"start": 450,  "days": "weekday", "location": "@work",               "activity": "work"},
+      {"start": 720,  "days": "weekday", "location": "@work",               "activity": "lunch"},
+      {"start": 780,  "days": "weekday", "location": "@work",               "activity": "work"},
+      {"start": 1020, "days": "weekday", "location": "loc_downtown_street", "activity": "walk"},
+      {"start": 1080, "days": "weekday", "location": "@home",               "activity": "idle"},
+      {"start": 540,  "days": "weekend", "location": "@home",               "activity": "idle"},
+      {"start": 780,  "days": "weekend", "location": "loc_downtown_street", "activity": "walk"},
+      {"start": 1020, "days": "weekend", "location": "@home",               "activity": "idle"},
+      {"start": 1350, "days": "all",     "location": "@home",               "activity": "sleep"}
+    ]
+  },
+  {
     "id": "sched_scrap_late",
     "default_activity": "idle",
     "blocks": [

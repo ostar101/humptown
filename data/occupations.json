@@ -14,5 +14,6 @@
   {"id": "occ_librarian", "name_key": "occ.librarian", "daily_wage": 110, "workplace_kind": "civic", "skills": ["observation", "persuasion"]},
   {"id": "occ_foreman", "name_key": "occ.foreman", "daily_wage": 130, "workplace_kind": "work", "skills": ["labour", "intimidation"]},
   {"id": "occ_mechanic", "name_key": "occ.mechanic", "daily_wage": 115, "workplace_kind": "work", "skills": ["repair", "observation"]},
-  {"id": "occ_scrap_dealer", "name_key": "occ.scrap_dealer", "daily_wage": 100, "workplace_kind": "work", "skills": ["haggling", "streetwise"]}
+  {"id": "occ_scrap_dealer", "name_key": "occ.scrap_dealer", "daily_wage": 100, "workplace_kind": "work", "skills": ["haggling", "streetwise"]},
+  {"id": "occ_clerk", "name_key": "occ.clerk", "daily_wage": 105, "workplace_kind": "work", "skills": ["observation", "persuasion"]}
 ]
