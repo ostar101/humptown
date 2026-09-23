@@ -3819,3 +3819,54 @@ about the mechanic depends on downtown's own content existing. 8 new tests,
 1152 green (was 1144). No behaviour change for any existing building: every
 ground floor still keys by its bare location id, exactly as before this
 step.
+
+---
+
+## D-092 — Downtown's towers: pre-baked art, not a compositing engine
+
+**Why.** `5_Floor_Modular_Building_Singles_32x32` (confirmed present under
+`art/_limezu_source/`) is genuinely modular — a ground cap, a repeatable
+middle window band and a roof cap, meant to be stacked for a building of any
+height. Every existing `BuildingArt.BUILDINGS` entry assumes the opposite:
+one whole, fixed-size image per building, matched exactly against a map's
+authored `rect` (`sprite_for()` returns `""`, silently, on any size
+mismatch — D-060's own standing trap). Teaching the runtime to composite
+tiles would touch three systems that all currently assume "one image per
+building" as a load-bearing invariant: `BuildingArt.covers()`/`.outline()`/
+`.open_cells()` (collision, derived from one sprite's silhouette) and
+`RegionTiles`' draw order. Real surface area for a feature whose own scope
+is "a handful of buildings, walkable and visually distinct" — not arbitrary
+storey counts forever.
+
+**Call: pre-bake instead**, at import time, the same shape
+`tools/import_limezu_buildings.py` already uses for the villa and the
+storefront — `tools/import_limezu_downtown.py` stacks one ground cap
+(`Ground_Floor_Condo_2` — measured against a column-ruled 3x render, door
+centred on column 3 of 7, the same convention `police_1.png` already set for
+a 7-wide building) with N repeats of a plain window-band middle floor
+(`Middle_Floor_1`, correctly doorless — only the ground floor may have one)
+and a flat roof cap (`Roof_1`, not the pitched `Roof_Modular` variant — a
+flat teal-trimmed top reads as a tower's roof, not a house's), into three
+fixed-height PNGs. Zero runtime changes to `BuildingArt`, `RegionTiles` or
+`ArtShape` — each baked file becomes an ordinary `BUILDINGS` entry.
+
+**Three heights, one door position reused across all of them:**
+`downtown_2` (1 middle repeat, 2 walkable floors, 7×13), `downtown_4` (3
+repeats, 4 floors, 7×21), `downtown_6` (5 repeats, 6 floors, 7×29 — the
+skyline piece). `porch_rows: 0` for all three (flush to the sidewalk, like
+`shop`/`bar`/`civic`/`work`, not the villa's porch). Using the same ground
+cap for every height, rather than hunting for a distinct door position per
+variant, is a deliberate simplification — the existing storefront art
+already reuses one image four ways (recoloured, not redrawn), so this is the
+established house style, not a shortcut.
+
+`tests/test_building_art.gd`'s `KINDS_WITH_ART` const gains the three keys,
+which extends every generic per-kind test (wrong-size refusal, footprint
+math, door-column-inside-footprint, real-file-when-installed) to them for
+free — no new test functions needed. 1152 tests still green (assertions rose
+from 30948 to 30972: the same tests, now also checking three more kinds). No
+map or region JSON references these keys yet — that is Session E's job.
+
+Ends Session D. Session E (the plan's steps 5–7) authors the `downtown`
+region itself: the map, the four buildings, and the interiors/stairs that
+make the mechanic from D-091 real.

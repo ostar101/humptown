@@ -2,7 +2,8 @@ extends TestCase
 ## BuildingArt: which whole-building overlay a building gets, if any, and the
 ## geometry that art implies for the map (D-024, D-026, D-028).
 
-const KINDS_WITH_ART := ["home", "shop", "bar", "civic", "work", "police"]
+const KINDS_WITH_ART := ["home", "shop", "bar", "civic", "work", "police",
+	"downtown_2", "downtown_4", "downtown_6"]
 
 
 func test_wrong_size_never_gets_a_sprite() -> void:

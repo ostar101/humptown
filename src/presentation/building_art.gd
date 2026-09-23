@@ -38,6 +38,15 @@ const BUILDINGS := {
 	"work": {"prefix": "work_", "count": 1, "cells": Vector2i(8, 13), "porch_rows": 0, "door_column": 4},
 	# LimeZu's own police station ("Small", 7x13, badge and POLICE sign drawn in), D-060.
 	"police": {"prefix": "police_", "count": 1, "cells": Vector2i(7, 13), "porch_rows": 0, "door_column": 3},
+	# Downtown's towers (D-091): tools/import_limezu_downtown.py stacks a ground
+	# cap, N repeats of a window-band middle floor and a flat roof cap, all 7
+	# cells wide, into one fixed-size image per height so this reads like any
+	# other whole-building sprite — no runtime compositing. The suffix names
+	# how many storeys are walkable (ground floor + N-1 upper floors, reached
+	# by stairs); flush to the sidewalk like the storefronts, no porch.
+	"downtown_2": {"prefix": "downtown_2_", "count": 1, "cells": Vector2i(7, 13), "porch_rows": 0, "door_column": 3},
+	"downtown_4": {"prefix": "downtown_4_", "count": 1, "cells": Vector2i(7, 21), "porch_rows": 0, "door_column": 3},
+	"downtown_6": {"prefix": "downtown_6_", "count": 1, "cells": Vector2i(7, 29), "porch_rows": 0, "door_column": 3},
 }
 
 ## Buildings whose art is their own rather than their kind's: `civic` covers

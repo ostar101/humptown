@@ -2,15 +2,30 @@
 
 **Updated:** 2026-09-23
 **Milestone:** M6 — Consequences — **complete in code (0.6.0)**. M5 complete (0.5.0). M5 complete in code (0.5.0). **M8 — A town worth walking — complete (all twelve planned steps).** Plan at `C:\Users\miika\.claude\plans\peli-tuntuu-hieman-tyls-lt-prancy-hamming.md`. Sessions A, B and C all done. **Session D — downtown + walkable upper floors — under way** (user's explicit choice, ahead of the plan's own "wait for the play-through list" note — see D-091). Plan at `C:\Users\miika\.claude\plans\parallel-swimming-hummingbird.md`.
-**Build:** green. 1152 tests, 30948 assertions with the LimeZu art installed,
-~49 s. No leak warnings at exit.
+**Build:** green. 1152 tests, 30972 assertions with the LimeZu art installed,
+~52 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
 
 ## Next task
 
-**Newest (D-091) — walkable upper floors, the mechanic (Session D, steps
+**Newest (D-092) — downtown's tower art, pre-baked (Session D step 4,
+closing Session D).** `tools/import_limezu_downtown.py` stacks LimeZu's
+modular ground/middle/roof pieces into three fixed-height PNGs at import
+time (`downtown_2`/`downtown_4`/`downtown_6` — 2/4/6 walkable floors) rather
+than teaching the engine to composite tiles at runtime — zero changes to
+`BuildingArt`/`RegionTiles`/`ArtShape`, each baked file is an ordinary
+`BuildingArt.BUILDINGS` entry, door column 3 of 7 (measured, matching
+`police_1.png`'s own convention). No map or region references them yet.
+1152 tests still green (30972 assertions, up from 30948 — the existing
+per-kind `BuildingArt` tests now also cover the three new keys). **Session D
+is done. Next: Session E — author the `downtown` region itself (a new
+entry in `data/regions.json`, a 96×72 map, four buildings using this art,
+and the interiors + `stairs` objects that make D-091's mechanic real on a
+real building for the first time.**
+
+**Before that (D-091) — walkable upper floors, the mechanic (Session D, steps
 1–3 of the downtown plan).** `DistrictMap.storey` (named to dodge GDScript's
 built-in `floor()`; authored as JSON `"floor"`, default 1), `OBJECT_KINDS +=
 "stairs"`, `DistrictMap.floor_key(location_id, storey)` (bare id on the

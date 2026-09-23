@@ -5,8 +5,9 @@ versions are milestones rather than releases until there is something to release
 
 ## [Unreleased]
 
-### Added (D-091)
+### Added (D-091, D-092)
 - Buildings can now have walkable upper floors, reached by stairs — the engine mechanic only; no building uses it yet (downtown, next, is the first).
+- Downtown's tower art is built (three heights, baked from LimeZu's modular building sheet at import time); nothing in the world is drawn with it yet.
 
 ### Fixed (from playing, D-090)
 - Sleeping no longer keeps ending at the clinic: health now recovers with rest when you're fed (most of all overnight), and a night's sleep makes you hungry for breakfast rather than starving.
