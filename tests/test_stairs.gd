@@ -104,3 +104,67 @@ func test_a_composite_floor_key_survives_a_save_round_trip_with_no_migration() -
 	copy.from_dict(Game.player.to_dict())
 	assert_eq(copy.interior, "loc_corner_shop#2")
 	assert_eq(SaveMigrations.CURRENT_VERSION, 13, "the floor mechanic needed no new save version")
+
+
+# --- real content: downtown's towers (D-093) --------------------------------
+## Both towers are semi_public and walk-in; the two apartment blocks are
+## private with nobody living there yet (D-093), so they are not climbed
+## here — only confirmed still correctly locked to a stranger.
+
+const DOWNTOWN_TOWERS := {"loc_downtown_tower_a": 4, "loc_downtown_tower_b": 6}
+
+
+func _walk_to_exit(from_region: String, to: String) -> Result:
+	var map := Game.world.map_for(from_region)
+	for e in map.exits:
+		if str(e["to"]) == to:
+			return Game.move_player(DistrictMap.cell_to_world((e["rect"] as Rect2i).position))
+	fail("no exit from %s to %s" % [from_region, to])
+	return Result.failure("test_setup")
+
+
+func _enter_downtown(location_id: String) -> void:
+	assert_ok(_walk_to_exit("harbourside", "downtown"))
+	var outside := Game.world.map_for("downtown")
+	var door: Vector2i = outside.buildings[location_id]["door"]
+	_stand(outside.anchor_of(location_id))
+	assert_ok(Game.interact_at(door))
+
+
+func test_every_downtown_tower_can_be_climbed_to_the_top_and_back() -> void:
+	for location_id: String in DOWNTOWN_TOWERS:
+		var top: int = DOWNTOWN_TOWERS[location_id]
+		_enter_downtown(location_id)
+		assert_eq(Game.player.interior, location_id, "%s: starts on the ground floor" % location_id)
+		for floor_n in range(2, top + 1):
+			_stand(Vector2i(2, 2))   # beside the stairs; every floor uses the same 6x6 layout
+			var up := Game.interact_at(Vector2i(1, 2))
+			assert_ok(up, "%s: climb to floor %d" % [location_id, floor_n])
+			assert_eq((up.value as Dictionary)["floor"], floor_n)
+			assert_eq(Game.player.interior, "%s#%d" % [location_id, floor_n])
+			assert_eq(DistrictMap.world_to_cell(Game.player.position), Game.current_map().entry_cell())
+		var top_map := Game.current_map()
+		assert_eq(top_map.storey, top, "%s: reached the top floor" % location_id)
+		assert_eq(Game.interaction_at(top_map.exit_door)["kind"], "stairs_down", "%s: no stairs up from the top" % location_id)
+
+		for floor_n in range(top, 1, -1):
+			_stand(Game.current_map().entry_cell())
+			var down := Game.interact_at(Game.current_map().exit_door)
+			assert_ok(down, "%s: descend from floor %d" % [location_id, floor_n])
+		assert_eq(Game.player.interior, location_id, "%s: back on the ground floor" % location_id)
+
+		_stand(Game.current_map().entry_cell())
+		var left := Game.interact_at(Game.current_map().exit_door)
+		assert_ok(left)
+		assert_eq((left.value as Dictionary)["kind"], "exited")
+		assert_eq(Game.player.interior, "", "%s: back outside" % location_id)
+
+
+func test_downtowns_apartment_blocks_stay_private_with_nobody_living_there() -> void:
+	for location_id: String in ["loc_downtown_flats_a", "loc_downtown_flats_b"]:
+		assert_ok(_walk_to_exit("harbourside", "downtown"))
+		var outside := Game.world.map_for("downtown")
+		var door: Vector2i = outside.buildings[location_id]["door"]
+		_stand(outside.anchor_of(location_id))
+		assert_err(Game.interact_at(door), "private", location_id)
+		assert_eq(Game.player.interior, "")

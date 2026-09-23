@@ -3935,3 +3935,65 @@ fourth region with five new locations and two new map exits per neighbour.
 now also covering downtown's own content. Next: step 6 puts real interiors
 — and a real `stairs` object — on these four buildings, the first time
 D-091's mechanic runs on content instead of a test fixture.
+
+---
+
+## D-094 — Sixteen interiors, one template, the mechanic proven on real content
+
+**Why (Session E step 6).** D-091 proved the floor/stairs mechanic against
+a synthetic fixture; nothing real used it. This step authors an interior
+for every floor of all four downtown towers — 2 + 4 + 4 + 6 = 16 entries in
+`data/interiors.json` — closing the loop D-091 opened.
+
+**One 6×6 template, reused on every floor of every building.** Each floor is
+`{width:6, height:6, fill:"floor", door:[3,5]}`; every floor but the top
+also gets a `table` solid at `[1,2,1,1]` (the stairwell's structure — there
+is no dedicated "stairs" `SOLID_NAMES` entry, and inventing one for a single
+placeholder cell would be authoring effort this pass does not need) and a
+`stairs` object at cell `[1,2]`, generated programmatically rather than
+hand-typed to rule out a copy-paste mismatch across sixteen near-identical
+entries. The top floor of each building has neither — no object at all,
+just the required door, which `Game.interaction_at` already reads as
+`"stairs_down"` once `storey > 1` (D-091). Every floor of a building
+reusing the same local layout is a deliberate simplification, the same
+"the stairwell core sits in about the same place on every floor" model
+D-091's own design section already named — not a shortcut invented here.
+
+**Two of the four are climbable this pass, not four.** `loc_downtown_tower_
+a`/`_b` are `semi_public` (matching `loc_worksite`/`loc_garage`'s own
+walk-in-lobby precedent) and are climbed end to end, floor by floor, in
+`test_every_downtown_tower_can_be_climbed_to_the_top_and_back`
+(`tests/test_stairs.gd`). `loc_downtown_flats_a`/`_b` are `private` — D-093's
+own call, nobody lives there yet — and `Game._enter_building`'s access
+check refuses them before it ever reaches the (now real) interior lookup,
+proven by `test_downtowns_apartment_blocks_stay_private_with_nobody_living_
+there`. Their sixteen-entry share of this step's interiors is authored and
+validated (`DataRegistry._interior_floor_problems` checks all sixteen for
+contiguous floors, same as the two towers') even though nothing can reach
+them yet — schema-complete, structurally real, simply locked, exactly
+D-072's own "geography before population" shape one level deeper.
+
+**This is the first real proof that D-091's "no v14 migration" call holds**
+on content, not just a hand-built fixture: climbing every floor of both
+towers and descending back through every one leaves
+`SaveMigrations.CURRENT_VERSION` untouched, and the composite keys
+(`"loc_downtown_tower_b#6"` at the top) round-trip through `PlayerState.
+to_dict()`/`from_dict()` exactly as D-091 predicted.
+
+2 new tests, 1155 green (was 1153). No benchmark — sixteen more interiors
+carry zero per-minute simulation cost (nothing in `src/npc/`, `src/time/`
+or `src/world/`'s hot path changed; interiors are looked up, never ticked).
+
+**This closes the downtown plan's steps 5–7** (`Downtown & Walkable Upper
+Floors`, `C:\Users\miika\.claude\plans\parallel-swimming-hummingbird.md`).
+**Worth trying in play**: walk from Harbourside's west edge (or Old Town's
+north edge) into Downtown, climb either office tower to its top floor and
+back down, and confirm the two apartment blocks correctly refuse a
+stranger at the door. **Deliberately left for a later pass, named so it is
+found by reading**: no shops, jobs, NPCs, or residents anywhere in
+Downtown — the district is real and walkable, not yet lived in. The five
+call sites named in D-091 that assume `player.interior` is a bare location
+id (`Game._findable`, the stash gate, `Game.buy`/`sell`, the phone's "you
+are here" pin, `dialogue_director.gd`'s "is this NPC in the room") remain
+unfixed and, since nothing this pass ever puts a home, shop, stash or
+NPC above floor 1, still unreached.

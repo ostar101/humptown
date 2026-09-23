@@ -1,16 +1,41 @@
 # Project status
 
 **Updated:** 2026-09-23
-**Milestone:** M6 — Consequences — **complete in code (0.6.0)**. M5 complete (0.5.0). M5 complete in code (0.5.0). **M8 — A town worth walking — complete (all twelve planned steps).** Plan at `C:\Users\miika\.claude\plans\peli-tuntuu-hieman-tyls-lt-prancy-hamming.md`. Sessions A, B and C all done. **Session D — downtown + walkable upper floors — under way** (user's explicit choice, ahead of the plan's own "wait for the play-through list" note — see D-091). Plan at `C:\Users\miika\.claude\plans\parallel-swimming-hummingbird.md`.
-**Build:** green. 1153 tests, 31030 assertions with the LimeZu art installed,
-~52 s. No leak warnings at exit.
+**Milestone:** M6 — Consequences — **complete in code (0.6.0)**. M5 complete (0.5.0). M5 complete in code (0.5.0). **M8 — A town worth walking — complete (all twelve planned steps).** Plan at `C:\Users\miika\.claude\plans\peli-tuntuu-hieman-tyls-lt-prancy-hamming.md`. Sessions A, B and C all done. **Downtown + walkable upper floors — complete** (user's explicit choice, ahead of the plan's own "wait for the play-through list" note — see D-091). Plan at `C:\Users\miika\.claude\plans\parallel-swimming-hummingbird.md`, all seven steps done (D-091 to D-094). Downtown is real and walkable; not yet lived in — see D-094.
+**Build:** green. 1155 tests, 31116 assertions with the LimeZu art installed,
+~51 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
 
 ## Next task
 
-**Newest (D-093) — downtown opens, geography before population (Session E
+**Newest (D-094) — sixteen interiors, the floor/stairs mechanic proven on
+real content, closing the downtown plan.** Every floor of all four downtown
+towers gets an interior (2+4+4+6 = 16 entries in `data/interiors.json`),
+generated from one reused 6×6 template so sixteen near-identical entries
+can't drift out of sync by hand — every floor but the top has a `table`
+solid and a `stairs` object at the same local cell; the top floor has
+neither, just the required door, already read as `"stairs_down"` above
+floor 1 (D-091). **Only the two office towers are actually climbable this
+pass** (`semi_public`, matching `loc_worksite`/`loc_garage`'s walk-in-lobby
+precedent) — proven end to end, floor by floor, up and back down, in
+`tests/test_stairs.gd`. The two apartment blocks stay `private` (D-093:
+nobody lives there yet) and correctly refuse a stranger before the
+interior lookup is ever reached, even though their own sixteen-entry share
+of interiors is authored and schema-validated exactly like the towers'.
+2 new tests, 1155 green (was 1153). No benchmark — interiors cost nothing
+per simulated minute. **This closes the whole downtown plan (D-091–D-094).
+Still to come, named and deliberate: no shops, jobs, NPCs or residents
+anywhere in Downtown; the five call sites D-091 named that assume
+`player.interior` is a bare location id remain unfixed, and still unreached
+by anything this pass built.** Worth trying in play: walk from Harbourside's
+west edge or Old Town's north edge into Downtown, climb either tower to its
+top and back, confirm the two apartment blocks refuse a stranger at the
+door. What comes after Downtown (more content there, or the next item on
+Sessions D+'s own list — romance, sex work, civic art) is the user's call.
+
+**Before that (D-093) — downtown opens, geography before population (Session E
 step 5).** A fourth region, `downtown`, neighbouring `old_town` and
 `harbourside` (11 and 15 minutes); a 96×72 map with four towers sharing one
 street level (tallest starting highest, so the skyline reads as varied
@@ -389,7 +414,7 @@ criminal-contacts view (D-050); everything in M7. See `ROADMAP.md`.
 
 - 127 source files in `src/`
 - 56 test suites
-- 50 authored NPCs, 54 locations, 4 regions (all mapped), 17 interiors, 15 schedules, 4 backgrounds, 11 shops (2 illicit, kept not walked to), 115 items, 61 recipes, 6 jobs, 4 quests, 3 errands, 4 asks (2 debt/leniency, 2 vouching)
+- 50 authored NPCs, 54 locations, 4 regions (all mapped), 33 interiors (16 are downtown's own floors), 15 schedules, 4 backgrounds, 11 shops (2 illicit, kept not walked to), 115 items, 61 recipes, 6 jobs, 4 quests, 3 errands, 4 asks (2 debt/leniency, 2 vouching)
 
 ---
 
