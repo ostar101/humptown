@@ -50,7 +50,8 @@
     ],
     "exits": [
       {"to": "old_town", "rect": [42, 0, 4, 1]},
-      {"to": "eastfield", "rect": [95, 31, 1, 4]}
+      {"to": "eastfield", "rect": [95, 31, 1, 4]},
+      {"to": "downtown", "rect": [0, 14, 1, 2]}
     ]
   },
   {
@@ -100,7 +101,8 @@
     ],
     "exits": [
       {"to": "harbourside", "rect": [42, 71, 4, 1]},
-      {"to": "eastfield", "rect": [95, 31, 1, 4]}
+      {"to": "eastfield", "rect": [95, 31, 1, 4]},
+      {"to": "downtown", "rect": [42, 0, 4, 1]}
     ]
   },
   {
@@ -149,6 +151,36 @@
     "exits": [
       {"to": "old_town", "rect": [0, 12, 1, 4]},
       {"to": "harbourside", "rect": [0, 50, 1, 4]}
+    ]
+  },
+  {
+    "id": "downtown",
+    "region": "downtown",
+    "width": 96,
+    "height": 72,
+    "fill": "grass",
+    "spawn": [6, 31],
+    "areas": [
+      {"terrain": "pavement", "rect": [0, 31, 96, 2]},
+      {"terrain": "road", "rect": [0, 33, 96, 4]},
+      {"terrain": "road_line", "rect": [0, 34, 96, 1]},
+      {"terrain": "pavement", "rect": [0, 37, 96, 2]},
+      {"terrain": "pavement", "rect": [40, 39, 2, 33]},
+      {"terrain": "road", "rect": [42, 39, 4, 33]},
+      {"terrain": "pavement", "rect": [46, 39, 2, 33]}
+    ],
+    "buildings": [
+      {"location": "loc_downtown_flats_a", "rect": [4, 18, 7, 13], "door": [7, 30]},
+      {"location": "loc_downtown_flats_b", "rect": [15, 10, 7, 21], "door": [18, 30]},
+      {"location": "loc_downtown_tower_a", "rect": [26, 10, 7, 21], "door": [29, 30]},
+      {"location": "loc_downtown_tower_b", "rect": [37, 2, 7, 29], "door": [40, 30]}
+    ],
+    "places": [
+      {"location": "loc_downtown_street", "rects": [[0, 31, 96, 8], [40, 39, 8, 33]]}
+    ],
+    "exits": [
+      {"to": "old_town", "rect": [42, 71, 4, 1]},
+      {"to": "harbourside", "rect": [95, 37, 1, 2]}
     ]
   }
 ]

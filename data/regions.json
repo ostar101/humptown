@@ -3,8 +3,8 @@
     "id": "harbourside",
     "name_key": "region.harbourside",
     "description_key": "region.harbourside.desc",
-    "neighbours": ["old_town", "eastfield"],
-    "travel_times": {"old_town": 9, "eastfield": 18},
+    "neighbours": ["old_town", "eastfield", "downtown"],
+    "travel_times": {"old_town": 9, "eastfield": 18, "downtown": 15},
     "unlock": [],
     "discovered": true,
     "unlocked": true
@@ -13,8 +13,8 @@
     "id": "old_town",
     "name_key": "region.old_town",
     "description_key": "region.old_town.desc",
-    "neighbours": ["harbourside", "eastfield"],
-    "travel_times": {"harbourside": 9, "eastfield": 13},
+    "neighbours": ["harbourside", "eastfield", "downtown"],
+    "travel_times": {"harbourside": 9, "eastfield": 13, "downtown": 11},
     "unlock": []
   },
   {
@@ -23,6 +23,14 @@
     "description_key": "region.eastfield.desc",
     "neighbours": ["harbourside", "old_town"],
     "travel_times": {"harbourside": 18, "old_town": 13},
+    "unlock": []
+  },
+  {
+    "id": "downtown",
+    "name_key": "region.downtown",
+    "description_key": "region.downtown.desc",
+    "neighbours": ["old_town", "harbourside"],
+    "travel_times": {"old_town": 11, "harbourside": 15},
     "unlock": []
   }
 ]

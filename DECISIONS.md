@@ -3870,3 +3870,68 @@ map or region JSON references these keys yet — that is Session E's job.
 Ends Session D. Session E (the plan's steps 5–7) authors the `downtown`
 region itself: the map, the four buildings, and the interiors/stairs that
 make the mechanic from D-091 real.
+
+---
+
+## D-093 — Downtown, the fourth region: geography before population
+
+**Why (Session E step 5).** D-091/D-092 built the floor mechanic and the
+tower art; nothing in the world used either yet. This step opens the fourth
+region — `downtown`, neighbouring `old_town` and `harbourside`
+(`harbourside↔downtown` 15 min, `old_town↔downtown` 11 min, both in the
+existing 8–18 minute range) — and places the four towers on it, following
+D-072's own precedent that a district's geography lands before anyone lives
+there. **Deliberately not built this pass**: no shops, no jobs, no NPCs, no
+interiors yet (that is step 6) — matching the user's own explicit scope for
+this session, "Downtown + upper floors", not "+ new NPCs".
+
+**Layout, one deliberate departure from the existing two-district
+convention.** Harbourside/Old Town/Eastfield stagger buildings across two
+rows at two different door heights (flats, then shops, each row's doors on
+its own street). Downtown's four towers instead share **one street level**
+— each building's rect is sized so its door lands on the same row (30)
+regardless of height, tallest towers simply starting higher up (`rect.y`),
+matching the varied-height skyline the plan actually asked for; a two-row
+layout would have hidden that variety behind an arbitrary split. `BY_LOCATION`
+(D-060's mechanism, its first user since the police post) gives each of the
+four its own art: `loc_downtown_flats_a`→`downtown_2`,
+`loc_downtown_flats_b`/`loc_downtown_tower_a`→`downtown_4` (the same art
+file on two different buildings — no reference is unique to one location,
+matching how `shop`/`bar`/`civic`/`work` already share one file four ways),
+`loc_downtown_tower_b`→`downtown_6`. `kind` stays `home`/`work`, matching
+what the buildings actually are — `BY_LOCATION` is only ever about *which
+art*, never about what a building means to the rest of the game.
+
+**The apartment blocks are `access: "private"` with no owner** — nobody
+lives there yet, so "you can't get in" is the honest answer, the same
+refusal a real private home gives; `Game._enter_building`'s own
+`"no_interior"` guard (reached only past the lock/access/hours checks) means
+a `"private"`/`"semi_public"` building missing an interior never gets that
+far anyway, so the two towers don't strictly need to wait for step 6 to be
+authored safely, they just are.
+
+**Region/travel wiring is reciprocal by convention, not by a validator that
+enforces it**: harbourside and old_town both gained a third exit (west and
+north respectively — their only free edges once the existing ones to each
+other and to eastfield/downtown occupied the rest) and a `downtown` entry in
+their own `neighbours`/`travel_times`, checked only by
+`test_region_neighbours_are_mutual` (generic, covers any region pair) and
+the new `test_downtown_is_joined_to_its_neighbours` (walks all four new
+exits both ways, mirroring `test_old_town_and_eastfield_are_joined`).
+`test_every_place_in_both_districts_is_on_its_map` and
+`test_the_new_buildings_are_the_size_the_drawn_art_needs` — whose names
+predate a third district — extended to include `"downtown"`, noted in a
+comment rather than renamed, to keep the diff to what this step needed.
+
+**Benchmark re-run back to back against the pre-downtown commit** (be9e128,
+via `git stash`/`stash pop`, same machine, same session) rather than against
+`PROJECT_STATUS.md`'s own table, which this session's numbers already ran
+well above at every population — matching the elevated-but-matched pattern
+D-077 documented once before. Both runs landed within a few percent of each
+other at every population, spread and concentrated: no regression from a
+fourth region with five new locations and two new map exits per neighbour.
+
+1153 tests green (was 1152): the one new test, plus the two extended loops
+now also covering downtown's own content. Next: step 6 puts real interiors
+— and a real `stairs` object — on these four buildings, the first time
+D-091's mechanic runs on content instead of a test fixture.

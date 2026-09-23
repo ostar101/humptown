@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-23
 **Milestone:** M6 — Consequences — **complete in code (0.6.0)**. M5 complete (0.5.0). M5 complete in code (0.5.0). **M8 — A town worth walking — complete (all twelve planned steps).** Plan at `C:\Users\miika\.claude\plans\peli-tuntuu-hieman-tyls-lt-prancy-hamming.md`. Sessions A, B and C all done. **Session D — downtown + walkable upper floors — under way** (user's explicit choice, ahead of the plan's own "wait for the play-through list" note — see D-091). Plan at `C:\Users\miika\.claude\plans\parallel-swimming-hummingbird.md`.
-**Build:** green. 1152 tests, 30972 assertions with the LimeZu art installed,
+**Build:** green. 1153 tests, 31030 assertions with the LimeZu art installed,
 ~52 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
@@ -10,7 +10,22 @@
 
 ## Next task
 
-**Newest (D-092) — downtown's tower art, pre-baked (Session D step 4,
+**Newest (D-093) — downtown opens, geography before population (Session E
+step 5).** A fourth region, `downtown`, neighbouring `old_town` and
+`harbourside` (11 and 15 minutes); a 96×72 map with four towers sharing one
+street level (tallest starting highest, so the skyline reads as varied
+heights rather than a staggered row) — two apartment blocks
+(`loc_downtown_flats_a`/`b`, `downtown_2`/`downtown_4` art via
+`BY_LOCATION`) and two office towers (`loc_downtown_tower_a`/`b`,
+`downtown_4`/`downtown_6`). Harbourside and Old Town each gained a third
+exit on their only free edge. **No shops, jobs, NPCs or interiors yet** —
+deliberate, matching this session's own scope. Benchmark re-run back to
+back against the pre-downtown commit: within a few percent either way, no
+regression. 1153 tests green (was 1152). **Next: step 6 — interiors on all
+four buildings, floor 2+ on the taller three, and a real `stairs` object —
+the first time D-091's floor mechanic runs on real content.**
+
+**Before that (D-092) — downtown's tower art, pre-baked (Session D step 4,
 closing Session D).** `tools/import_limezu_downtown.py` stacks LimeZu's
 modular ground/middle/roof pieces into three fixed-height PNGs at import
 time (`downtown_2`/`downtown_4`/`downtown_6` — 2/4/6 walkable floors) rather
@@ -374,7 +389,7 @@ criminal-contacts view (D-050); everything in M7. See `ROADMAP.md`.
 
 - 127 source files in `src/`
 - 56 test suites
-- 50 authored NPCs, 49 locations, 3 regions (all mapped), 17 interiors, 15 schedules, 4 backgrounds, 11 shops (2 illicit, kept not walked to), 115 items, 61 recipes, 6 jobs, 4 quests, 3 errands, 4 asks (2 debt/leniency, 2 vouching)
+- 50 authored NPCs, 54 locations, 4 regions (all mapped), 17 interiors, 15 schedules, 4 backgrounds, 11 shops (2 illicit, kept not walked to), 115 items, 61 recipes, 6 jobs, 4 quests, 3 errands, 4 asks (2 debt/leniency, 2 vouching)
 
 ---
 

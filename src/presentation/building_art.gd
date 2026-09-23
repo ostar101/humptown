@@ -51,8 +51,17 @@ const BUILDINGS := {
 
 ## Buildings whose art is their own rather than their kind's: `civic` covers
 ## the clinic, the police post and others, but only the post has a building
-## with POLICE across it. Location id -> a key of BUILDINGS.
-const BY_LOCATION := {"loc_police_post": "police"}
+## with POLICE across it. Downtown's four towers all share the "home"/"work"
+## kind but need one of three heights each (D-091/D-092) — `kind` alone
+## cannot express that, so each building names its own art here. Location id
+## -> a key of BUILDINGS.
+const BY_LOCATION := {
+	"loc_police_post": "police",
+	"loc_downtown_flats_a": "downtown_2",
+	"loc_downtown_flats_b": "downtown_4",
+	"loc_downtown_tower_a": "downtown_4",
+	"loc_downtown_tower_b": "downtown_6",
+}
 
 ## Resolved once per path: `sprite_for()` is called per cell by
 ## `RegionTiles.coords_for()` through `covers()`, and hitting the filesystem

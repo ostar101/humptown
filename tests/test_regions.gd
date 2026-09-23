@@ -125,6 +125,17 @@ func test_old_town_and_eastfield_are_joined() -> void:
 	assert_gt(float(DistrictMap.world_to_cell(Game.player.position).x), 88.0, "the east end of Dock Street")
 
 
+func test_downtown_is_joined_to_its_neighbours() -> void:
+	assert_ok(_walk_to_exit("harbourside", "downtown"))
+	assert_eq(Game.player.region, "downtown")
+	assert_ok(_walk_to_exit("downtown", "old_town"))
+	assert_eq(Game.player.region, "old_town")
+	assert_ok(_walk_to_exit("old_town", "downtown"))
+	assert_eq(Game.player.region, "downtown")
+	assert_ok(_walk_to_exit("downtown", "harbourside"))
+	assert_eq(Game.player.region, "harbourside")
+
+
 func test_people_are_sorted_by_where_you_now_are() -> void:
 	Game.world.set_flag("heard_about_old_town")
 	assert_ok(_walk_to_exit("harbourside", "old_town"))
@@ -149,8 +160,9 @@ func test_the_open_regions_are_saved() -> void:
 
 # --- what is there ----------------------------------------------------------------------------------
 
+## Name predates downtown (D-091/D-092): "both" now means three districts.
 func test_every_place_in_both_districts_is_on_its_map() -> void:
-	for region: String in ["old_town", "eastfield"]:
+	for region: String in ["old_town", "eastfield", "downtown"]:
 		var map := Game.world.map_for(region)
 		assert_true(map != null, region)
 		for location_id: String in Game.world.locations_in(region):
@@ -158,7 +170,7 @@ func test_every_place_in_both_districts_is_on_its_map() -> void:
 
 
 func test_the_new_buildings_are_the_size_the_drawn_art_needs() -> void:
-	for region: String in ["old_town", "eastfield"]:
+	for region: String in ["old_town", "eastfield", "downtown"]:
 		var map := Game.world.map_for(region)
 		for location_id: String in map.buildings:
 			var kind := map.kind_of(location_id)

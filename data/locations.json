@@ -47,5 +47,10 @@
   {"id": "loc_pauliina_flat", "region": "eastfield", "name_key": "loc.pauliina_flat", "kind": "home", "access": "private", "owner": "npc_pauliina", "travel_minutes": 6, "connections": ["loc_eastfield_street"]},
   {"id": "loc_jari_flat", "region": "eastfield", "name_key": "loc.jari_flat", "kind": "home", "access": "private", "owner": "npc_jari", "travel_minutes": 6, "connections": ["loc_eastfield_street"]},
   {"id": "loc_marko_flat", "region": "eastfield", "name_key": "loc.marko_flat", "kind": "home", "access": "private", "owner": "npc_marko", "travel_minutes": 6, "connections": ["loc_eastfield_street"]},
-  {"id": "loc_kimmo_flat", "region": "eastfield", "name_key": "loc.kimmo_flat", "kind": "home", "access": "private", "owner": "npc_kimmo", "travel_minutes": 6, "connections": ["loc_eastfield_street"]}
+  {"id": "loc_kimmo_flat", "region": "eastfield", "name_key": "loc.kimmo_flat", "kind": "home", "access": "private", "owner": "npc_kimmo", "travel_minutes": 6, "connections": ["loc_eastfield_street"]},
+  {"id": "loc_downtown_street", "region": "downtown", "name_key": "loc.downtown_street", "kind": "street", "access": "public", "travel_minutes": 2, "connections": ["loc_downtown_flats_a", "loc_downtown_flats_b", "loc_downtown_tower_a", "loc_downtown_tower_b"]},
+  {"id": "loc_downtown_flats_a", "region": "downtown", "name_key": "loc.downtown_flats_a", "kind": "home", "access": "private", "travel_minutes": 4, "connections": ["loc_downtown_street"]},
+  {"id": "loc_downtown_flats_b", "region": "downtown", "name_key": "loc.downtown_flats_b", "kind": "home", "access": "private", "travel_minutes": 5, "connections": ["loc_downtown_street"]},
+  {"id": "loc_downtown_tower_a", "region": "downtown", "name_key": "loc.downtown_tower_a", "kind": "work", "access": "semi_public", "travel_minutes": 5, "connections": ["loc_downtown_street"]},
+  {"id": "loc_downtown_tower_b", "region": "downtown", "name_key": "loc.downtown_tower_b", "kind": "work", "access": "semi_public", "travel_minutes": 6, "connections": ["loc_downtown_street"]}
 ]
