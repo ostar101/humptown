@@ -173,7 +173,8 @@
       {"location": "loc_downtown_flats_a", "rect": [4, 18, 7, 13], "door": [7, 30]},
       {"location": "loc_downtown_flats_b", "rect": [15, 10, 7, 21], "door": [18, 30]},
       {"location": "loc_downtown_tower_a", "rect": [26, 10, 7, 21], "door": [29, 30]},
-      {"location": "loc_downtown_tower_b", "rect": [37, 2, 7, 29], "door": [40, 30]}
+      {"location": "loc_downtown_tower_b", "rect": [37, 2, 7, 29], "door": [40, 30]},
+      {"location": "loc_downtown_kiosk", "rect": [55, 18, 8, 13], "door": [59, 30]}
     ],
     "places": [
       {"location": "loc_downtown_street", "rects": [[0, 31, 96, 8], [40, 39, 8, 33]]}

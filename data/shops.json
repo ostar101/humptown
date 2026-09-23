@@ -30,5 +30,8 @@
    "stock": {"item_heroin_bag": 6, "item_cocaine_bag": 4, "item_amphetamine_bag": 8, "item_opioid_pills": 6, "item_ecstasy_pill": 10, "item_lsd_tab": 8}},
   {"id": "shop_scrapyard_stash", "keeper": "npc_kimmo", "legality": "illicit", "markup": 1.8, "till": 300,
    "buys": [], "buyback": 0.0,
-   "stock": {"item_cannabis_bud": 12, "item_cannabis_ground": 10, "item_mushrooms": 6}}
+   "stock": {"item_cannabis_bud": 12, "item_cannabis_ground": 10, "item_mushrooms": 6}},
+  {"id": "shop_downtown_kiosk", "location": "loc_downtown_kiosk", "markup": 1.25, "till": 300,
+   "buys": [], "buyback": 0.0,
+   "stock": {"item_coffee": 30, "item_sandwich": 10, "item_cigarettes": 10, "item_lighter": 8, "item_water": 20, "item_juice": 10, "item_bandage": 6}}
 ]

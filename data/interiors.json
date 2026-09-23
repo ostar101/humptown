@@ -31,5 +31,6 @@
   {"id": "int_downtown_tower_b_3", "interior_of": "loc_downtown_tower_b", "floor": 3, "width": 6, "height": 6, "fill": "floor", "door": [3, 5], "solids": [{"kind": "table", "rect": [1, 2, 1, 1]}], "objects": [{"id": "obj_dt_tower_b_stairs_3", "kind": "stairs", "cell": [1, 2]}]},
   {"id": "int_downtown_tower_b_4", "interior_of": "loc_downtown_tower_b", "floor": 4, "width": 6, "height": 6, "fill": "floor", "door": [3, 5], "solids": [{"kind": "table", "rect": [1, 2, 1, 1]}], "objects": [{"id": "obj_dt_tower_b_stairs_4", "kind": "stairs", "cell": [1, 2]}]},
   {"id": "int_downtown_tower_b_5", "interior_of": "loc_downtown_tower_b", "floor": 5, "width": 6, "height": 6, "fill": "floor", "door": [3, 5], "solids": [{"kind": "table", "rect": [1, 2, 1, 1]}], "objects": [{"id": "obj_dt_tower_b_stairs_5", "kind": "stairs", "cell": [1, 2]}]},
-  {"id": "int_downtown_tower_b_6", "interior_of": "loc_downtown_tower_b", "floor": 6, "width": 6, "height": 6, "fill": "floor", "door": [3, 5]}
+  {"id": "int_downtown_tower_b_6", "interior_of": "loc_downtown_tower_b", "floor": 6, "width": 6, "height": 6, "fill": "floor", "door": [3, 5]},
+  {"id": "int_downtown_kiosk", "interior_of": "loc_downtown_kiosk", "width": 10, "height": 8, "fill": "floor", "door": [5, 7], "staff": [7, 3], "solids": [{"kind": "shelf", "rect": [1, 2, 3, 1]}, {"kind": "shelf", "rect": [1, 4, 1, 2]}, {"kind": "counter", "rect": [6, 4, 3, 1]}], "objects": [{"id": "obj_kiosk_counter", "kind": "counter", "cell": [6, 4]}]}
 ]

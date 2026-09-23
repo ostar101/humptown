@@ -1,16 +1,34 @@
 # Project status
 
 **Updated:** 2026-09-23
-**Milestone:** M6 — Consequences — **complete in code (0.6.0)**. M5 complete (0.5.0). M5 complete in code (0.5.0). **M8 — A town worth walking — complete (all twelve planned steps).** Plan at `C:\Users\miika\.claude\plans\peli-tuntuu-hieman-tyls-lt-prancy-hamming.md`. Sessions A, B and C all done. **Downtown + walkable upper floors — complete, and two people now live there.** Plan at `C:\Users\miika\.claude\plans\parallel-swimming-hummingbird.md`, all seven steps done (D-091 to D-094); D-095 (past the plan's own scope, the user's "continue" with no further detail) added Downtown's first two residents.
-**Build:** green. 1155 tests, 32323 assertions with the LimeZu art installed,
-~51 s. No leak warnings at exit.
+**Milestone:** M6 — Consequences — **complete in code (0.6.0)**. M5 complete (0.5.0). M5 complete in code (0.5.0). **M8 — A town worth walking — complete (all twelve planned steps).** Plan at `C:\Users\miika\.claude\plans\peli-tuntuu-hieman-tyls-lt-prancy-hamming.md`. Sessions A, B and C all done. **Downtown + walkable upper floors — complete, with three residents and a kiosk.** Plan at `C:\Users\miika\.claude\plans\parallel-swimming-hummingbird.md`, all seven steps done (D-091 to D-094); D-095/D-096 (past the plan's own scope, the user's own repeated "continue" with no further detail each time) added residents and a shop.
+**Build:** green. 1155 tests, 33020 assertions with the LimeZu art installed,
+~52 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
 
 ## Next task
 
-**Newest (D-095) — two people move into Downtown.** One new occupation
+**Newest (D-096) — a fifth building: the kiosk.** `loc_downtown_kiosk`, a
+new ground-level building (not a repurposed tower) wearing the shared
+`shop`/`bar`/`civic`/`work` storefront art, same street level as every
+other downtown door. `shop_downtown_kiosk` sells the usual small-shop
+stock (coffee, a sandwich, cigarettes, water, juice, a lighter, a bandage).
+`occ_shopkeeper` already existed and needed no new occupation.
+`sched_downtown_shop` is `sched_shop_day` with `loc_cafe_kaisla` swapped
+for `loc_downtown_street`, the same substitution D-095 already made for
+`sched_downtown_office`. Taina Lehto (41) runs it and shares a home with
+Saana — D-088's own precedent for two NPCs sharing one flat, not a new
+shape. **This time the id was checked for collisions before authoring**,
+unlike D-095's `npc_eero` mistake. 1155 tests still green (33020
+assertions, was 32323). **Downtown now has geography, walkable upper
+floors, three residents and one shop. Still open, still the user's call:**
+more households in the two apartment blocks, a second shop or a bar, and
+the rest of the Sessions D+ list (civic art, home variants, romance, sex
+work).
+
+**Before that (D-095) — two people move into Downtown.** One new occupation
 (`occ_clerk`), two jobs (`job_downtown_tower_a`/`_b`, weekday 08:00–17:00),
 one new schedule (`sched_downtown_office`, copied from `sched_clinic_day`'s
 shape since Downtown has no shop/bar of its own yet for a schedule to
@@ -435,7 +453,7 @@ criminal-contacts view (D-050); everything in M7. See `ROADMAP.md`.
 
 - 127 source files in `src/`
 - 56 test suites
-- 52 authored NPCs, 54 locations, 4 regions (all mapped), 33 interiors (16 are downtown's own floors), 16 schedules, 4 backgrounds, 11 shops (2 illicit, kept not walked to), 115 items, 61 recipes, 8 jobs, 4 quests, 3 errands, 4 asks (2 debt/leniency, 2 vouching)
+- 53 authored NPCs, 55 locations, 4 regions (all mapped), 34 interiors (16 are downtown's own floors), 17 schedules, 4 backgrounds, 12 shops (2 illicit, kept not walked to), 115 items, 61 recipes, 9 jobs, 4 quests, 3 errands, 4 asks (2 debt/leniency, 2 vouching)
 
 ---
 

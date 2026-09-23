@@ -733,5 +733,15 @@
     "voice": "Dry, observant, talks like he has already heard the joke.",
     "groups": [],
     "relationships": []
+  },
+  {
+    "id": "npc_taina", "name": "Taina Lehto", "age": 41, "occupation": "occ_shopkeeper",
+    "home": "loc_downtown_flats_a", "workplace": "loc_downtown_kiosk", "schedule": "sched_downtown_shop", "importance": "background",
+    "traits": ["keeps_odd_hours", "remembers_every_regular", "always_has_change"],
+    "nature": {"lawfulness": 0.8, "greed": 0.35, "risk": 0.15, "discretion": 0.35},
+    "bio": "Runs the little kiosk on the street between the towers, six days a week. Knows which flat is behind on rent by who has stopped buying coffee.",
+    "voice": "Brisk, friendly, keeps half an eye on the door.",
+    "groups": [],
+    "relationships": []
   }
 ]

@@ -218,6 +218,22 @@
     ]
   },
   {
+    "id": "sched_downtown_shop",
+    "default_activity": "idle",
+    "blocks": [
+      {"start": 0,    "days": "all",         "location": "@home",               "activity": "sleep"},
+      {"start": 390,  "days": "all",         "location": "@home",               "activity": "eat"},
+      {"start": 420,  "days": [1,2,3,4,5,6], "location": "@work",               "activity": "work"},
+      {"start": 750,  "days": [1,2,3,4,5,6], "location": "loc_downtown_street", "activity": "lunch"},
+      {"start": 810,  "days": [1,2,3,4,5,6], "location": "@work",               "activity": "work"},
+      {"start": 1260, "days": [1,2,3,4,5,6], "location": "@home",               "activity": "idle"},
+      {"start": 480,  "days": [0],           "location": "loc_downtown_street", "activity": "walk"},
+      {"start": 600,  "days": [0],           "location": "loc_downtown_street", "activity": "socialise"},
+      {"start": 780,  "days": [0],           "location": "@home",               "activity": "idle"},
+      {"start": 1350, "days": "all",         "location": "@home",               "activity": "sleep"}
+    ]
+  },
+  {
     "id": "sched_scrap_late",
     "default_activity": "idle",
     "blocks": [

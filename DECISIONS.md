@@ -4064,3 +4064,64 @@ jobs for free); assertions rose from 31116 to 32323, almost all of it the
 per-NPC weekly walk. 1155 tests still green. Downtown's shops, and its
 other two buildings' own residents, remain unbuilt and unnamed — still the
 user's call, same as before this step.
+
+---
+
+## D-096 — A fifth building: the kiosk
+
+**Why.** The user said "jatka" (continue) once more, no further detail.
+Downtown could walk and now had two residents, but nowhere to buy anything
+— every other region has at least one shop; Downtown had none. Adding one
+follows directly from D-095's own reasoning (no new system, direct
+continuation of the district just opened) and closes the single most
+obviously missing piece, so it needed no separate check-in.
+
+**A fifth building, not a shop bolted onto an existing one.** The four
+towers already have their own roles (two homes, two workplaces); rather
+than repurpose one, `loc_downtown_kiosk` is new ground, using the shared
+`shop`/`bar`/`civic`/`work` storefront art (`BuildingArt.BUILDINGS["shop"]`,
+the same Post Office image `loc_corner_shop`/`loc_bakery`/`loc_pharmacy`
+already wear) rather than a fourth downtown-specific tower variant — a
+kiosk is not a tower, and the shared storefront is exactly the "ordinary,
+plainer" building D-024's own design intended for anything that doesn't
+need a dedicated sprite. Placed at `rect: [55, 18, 8, 13]`, door row 30 —
+the same street level every other downtown building's door already shares,
+so the skyline stays coherent without any new geometry decision.
+
+**`shop_downtown_kiosk`** (`data/shops.json`): coffee, a sandwich,
+cigarettes, water, juice, a lighter, a bandage — the same "small convenience
+stock" shape `shop_corner`/`shop_fuel` already use, markup 1.25 (between
+`shop_bakery`'s 1.1 and `shop_lantern`'s 1.6), no buyback. **No new
+occupation** — `occ_shopkeeper` already existed and fit exactly.
+**`sched_downtown_shop`** is `sched_shop_day` with `loc_cafe_kaisla` swapped
+for `loc_downtown_street` throughout, the same substitution D-095 already
+made once for `sched_downtown_office`; Downtown still has nothing else to
+send anyone to.
+
+**Taina Lehto (41) runs it, and shares a home with Saana** rather than
+getting a third apartment building authored just for one person —
+`Location.owner_id` names one NPC, but nothing enforces that only its owner
+may set `home` to it, and D-088 already established two NPCs sharing one
+home as the ordinary shape, not a special case (`npc_rami`/`npc_marko`'s
+own flat). Employer is Taina herself, matching `npc_veikko`'s dockhand
+precedent D-095 already used.
+
+**The id collision from D-095 did not repeat**: five candidate names were
+grepped against `npcs.json` before picking one (`npc_riina` was already
+taken; `npc_taina` was not) — the cheap five-second check the previous
+step's failure should have prompted from the start.
+
+`test_every_new_person_lives_and_works_in_their_own_district` gains
+`npc_taina`; `test_every_shop_in_the_new_districts_has_someone_behind_the_
+counter_when_open` gains `shop_downtown_kiosk`, proving the schedule
+actually staffs it for at least 80% of its open hours, not just that the
+data loads. No new test file — both extensions land in the same generic
+loop-based checks D-093 through D-095 already extended. 1155 tests still
+green; assertions rose from 32323 to 33020.
+
+Downtown now has geography, walkable upper floors, three residents and one
+shop. Still open, and still the user's call: more households in the two
+apartment blocks (each plausibly holds more than the one or two people
+living there now, the way a couple of Harbourside/Old Town homes already
+share an occupant), a second shop or a bar, and the rest of the Sessions
+D+ list (civic art, home variants, romance, sex work).
