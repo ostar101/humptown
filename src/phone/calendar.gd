@@ -15,9 +15,12 @@ var meetings: Array[Dictionary] = []
 var _next_id := 1
 
 
-func propose(npc_id: String, location_id: String, start: int, duration: int, hostile: bool = false) -> Dictionary:
+## `purpose` says what a meeting is for when it is neither company nor a fight:
+## "collection", a debt to be talked over (D-090); "" otherwise.
+func propose(npc_id: String, location_id: String, start: int, duration: int, hostile: bool = false,
+		purpose: String = "") -> Dictionary:
 	var meeting := {"id": _next_id, "npc": npc_id, "location": location_id, "start": start,
-		"duration": duration, "status": "proposed", "hostile": hostile}
+		"duration": duration, "status": "proposed", "hostile": hostile, "purpose": purpose}
 	_next_id += 1
 	meetings.append(meeting)
 	return meeting
@@ -90,7 +93,7 @@ func from_dict(d: Dictionary) -> void:
 		meetings.append({"id": int(raw.get("id", 0)), "npc": str(raw.get("npc", "")),
 			"location": str(raw.get("location", "")), "start": int(raw.get("start", 0)),
 			"duration": int(raw.get("duration", 0)), "status": str(raw.get("status", "lapsed")),
-			"hostile": bool(raw.get("hostile", false))})
+			"hostile": bool(raw.get("hostile", false)), "purpose": str(raw.get("purpose", ""))})
 	_next_id = int(d.get("next_id", 1))
 	for meeting in meetings:
 		_next_id = maxi(_next_id, int(meeting["id"]) + 1)

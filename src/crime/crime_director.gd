@@ -14,6 +14,14 @@ extends RefCounted
 ## between a sandwich and a wallet for theft.
 const CRIME_PREDICATES: Array[String] = ["stole_from", "assaulted", "dealt_illicit"]
 
+## Heat (D-090): what an open summons adds, what each thing the police know of
+## and have not dealt with adds, and what a settled case adds when it is fresh,
+## by how it ended — halving every so many days.
+const HEAT_OPEN_SUMMONS := 0.6
+const HEAT_PER_PENDING := 0.2
+const HEAT_OF_OUTCOME := {"warning": 0.15, "fine": 0.25, "arrest": 0.4}
+const HEAT_HALF_LIFE_DAYS := 7.0
+
 ## What the player has been dealt with for: [{"fact", "outcome", "day"}], one
 ## per case. An earlier offence weighs on the next (`PoliceRules`).
 var record: Array[Dictionary] = []
@@ -189,6 +197,28 @@ func assess(officer_id: String) -> Dictionary:
 	_events.schedule(due, "police_summons_due", {"summons": int(issued["id"])})
 	Events.summons_issued.emit(int(issued["id"]))
 	return issued
+
+
+## How hot the player runs with the police, 0..1 (D-090), as a dealer weighs
+## it: an open summons is most of it; what the police know and have not yet
+## acted on counts; and a settled case counts by how it ended and how long ago —
+## half as much every `HEAT_HALF_LIFE_DAYS`, so a quiet fortnight cools you
+## down. It used to be every settled case, for ever: five or six and every
+## dealer in town had shut the door for good.
+func heat(today: int) -> float:
+	var total := 0.0
+	for entry: Dictionary in summons:
+		if str(entry.get("status", "")) == "open":
+			total += HEAT_OPEN_SUMMONS
+	for entry: Dictionary in record:
+		var age := maxi(today - int(entry.get("day", today)), 0)
+		total += float(HEAT_OF_OUTCOME.get(str(entry.get("outcome", "")), 0.0)) * pow(0.5, float(age) / HEAT_HALF_LIFE_DAYS)
+	var pending := {}
+	for officer_id in officers():
+		for entry in case_for(officer_id):
+			pending[str(entry["fact"])] = true
+	total += HEAT_PER_PENDING * float(pending.size())
+	return clampf(total, 0.0, 1.0)
 
 
 func get_summons(summons_id: int) -> Dictionary:

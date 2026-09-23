@@ -3656,3 +3656,86 @@ decision, left to whoever next plays the dealing. `KnowledgeNetwork.
 forget_stale()` drops beliefs but never the facts nobody holds any more, so
 `facts` only grows; harmless at today's rates. A collection has no end once a
 debt quest fails — nothing lets the player pay it off late.
+
+## D-090 — What playing showed: waking in the clinic, grudges that never end, a debt that hunts you
+
+**Why.** The user played and reported, in their words: sleeping often ends in
+the clinic; the player is often "injured" without having fought; an enemy
+runs away just as the player is winning, then forgets the fight and keeps
+challenging and texting "I haven't forgotten what you did" without end. And
+three design calls from the review (D-089) were settled: make dealer heat
+natural, make the knowledge network hold up in a long game, and make an
+unpaid debt a real threat — a summons to talk, threats of harm, and in the end
+the collector coming to find the player.
+
+**The clinic and the phantom injury were one loop.** Health never came back
+on its own — only a bandage, the clinic or a collapse raised it. Hunger rose
+by 1/14 an hour asleep, so a night after a light supper woke the player
+starving, and starving costs health. Below 0.6 health the HUD said "Hurt"
+("Loukkaantunut") whatever the cause. A collapse left health at 0.35: "hurt"
+again, and the next hungry night ended at the clinic again. Now a body that
+is fed (hunger under 0.8) and not exhausted mends: a third of full health over
+a night, a quarter over a waking day, but only up to `Stats.health_cap()` —
+what open wounds allow, each taking off what it took when dealt, so a cracked
+rib is not slept off before it heals. Hunger asleep is 1/24 an hour. And the
+HUD says "Weak"/"Very weak" ("Heikko") for low health with no wound, keeping
+"Hurt" for when something was done to you.
+
+**The enemy who always got away.** `CombatRules.npc_action` sent someone
+under 0.3 health running on 70% of their give-up share, and `Combat` let them
+go every time — the player's own escape is rolled against the quickest foe's
+agility; theirs was not rolled at all. Now running is a third of the give-up
+share (backing down is likelier) and is rolled against the player's agility
+(`foe_cannot_flee`: "tries to run, and you cut them off").
+
+**Grudges end.** A grudge used to be the victim plus every friend who knew, each
+with its own warnings; it "rested" twelve days after a fight or after going
+unanswered, then began again from the same old fact, for ever — that was the
+endless "I haven't forgotten". Now: one holder per blow — the victim, or only
+if they cannot (the law, gone) one friend; one warning; two named times and
+places; and then it is over for good, in `settled_facts` — had out in any
+fight between them (`on_fought`, win or lose), let go if never answered, or
+made up (D-089). A new blow is a new fact and may start a new one.
+
+**Dealer heat cools.** `CrimeDirector.heat(today)`: an open summons 0.6, each
+case the police know and have not dealt with 0.2, and each settled case by its
+outcome (warning 0.15, fine 0.25, arrest 0.4) halving every seven days.
+Replaces `record.size() × 0.15`, which only ever grew.
+
+**Knowledge wears.** `KnowledgeNetwork.fade(now)`, daily, replaces
+`forget_stale`: every belief's confidence halves over `half_life_days` =
+(4 + 56 × severity²) days, three times as long when seen firsthand; below 0.1
+it is forgotten; a fact nobody holds is dropped. Trivia goes in days, a theft
+seen in about three months, a beating the victim took in about eight. Nothing
+else changed to make this so — reputation, the police's evidence, a dealer's
+vouching, who holds a grudge and gossip itself all read `confidence`, so all
+of them cool the same way. Incremental (`Belief.faded_at`), so fading daily
+equals fading once, and saves carry it. `Reputation` is invalidated after.
+
+**The debt, redesigned.** A failed debt now remembers what was paid and the
+interest (`QuestLog.lapsed`): Rauno's €300 with €100 paid and €50 interest is
+€250 owed. Every three days (the phone's own gap for a demand, so none is
+held back and lost): a summons to come and talk — a *meeting* at six in the
+evening, told not asked, `purpose: "collection"`, neither warm nor a fight;
+then a threat of harm; then a last warning naming who will come. Face to face
+he opens with the money ("€250. Where is it?") and the model is told the
+situation. Then the enforcer (Joonas) **hunts**: hourly, 09–22, if the player
+is out at a named place — not at home, the police post or the clinic, and not
+busy — he sets off, arriving 20–60 minutes later; if the player is still
+findable he walks up and starts it (`Events.ambush`), otherwise he looks
+again. Losing (or backing down) he takes the cash the player carries towards
+the debt and leaves it four days; seen off, six; fled, nothing settled. Money
+handed or sent to Rauno *or* Joonas counts, in parts; paid in full it is over
+for good (`settled_debts`), with a "we're square" text on its own short-gap
+message kind so it is never held back. This is the one exception to D-055's
+"never in the street", at the user's request; CLAUDE.md says so.
+
+**Saves.** New fields default when missing (`lapsed`, `settled_facts`,
+`settled_debts`, `purpose`, `faded`); a pre-D-090 collection is read as far
+along as its warnings and meetings took it, owing the quest's full sum. No
+schema bump: nothing changed shape, only gained optional fields.
+
+**A leak caught on the way.** Giving `DialogueDirector` a reference to
+`ConsequenceDirector` closed a cycle (consequences → phone → dialogue →
+consequences) of `RefCounted`s that is never freed — the suite's exit showed
+"38 resources still in use". It holds two `Callable`s instead.

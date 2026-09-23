@@ -5,6 +5,17 @@ versions are milestones rather than releases until there is something to release
 
 ## [Unreleased]
 
+### Fixed (from playing, D-090)
+- Sleeping no longer keeps ending at the clinic: health now recovers with rest when you're fed (most of all overnight), and a night's sleep makes you hungry for breakfast rather than starving.
+- "Injured" no longer appears without an injury: low health with no wound now reads "Weak" / "Heikko".
+- A losing enemy no longer escapes every time just as you're about to win: they give in more often than they run, and their escape is rolled against your speed, as yours is against theirs.
+- Grudges end: one warning, at most two times and places, and once you've fought it out (win or lose), didn't answer, or made up, it's over for good. Only the person you hurt holds it, not all their friends as well.
+
+### Changed (D-090)
+- A dealer's view of you cools with time: old trouble with the police fades over a couple of weeks, instead of every settled case counting for ever.
+- People gradually forget: trivia fades in days, a theft in a few months, a beating slower still. Reputation, the police's evidence, gossip and grudges all cool with it.
+- An unpaid debt is now a real threat: first a summons to come and talk, then a threat of harm, then a last warning, and then someone comes looking for you when you're out and about. If they beat you they take the cash you carry; you can pay in parts to the creditor or the collector, and paying in full ends it.
+
 ### Fixed (review pass, D-089)
 - With an OpenAI `gpt-5` or `o`-series model, every conversation would have failed: they refuse the temperature setting the game sent. It is no longer sent to them, directly or through OpenRouter.
 - A model reply that came back empty (`null`) would have been shown as the word "<null>" in someone's mouth; now they fall back to an authored line, and an OpenAI refusal counts as a refusal.

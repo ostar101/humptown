@@ -11,7 +11,7 @@ extends RefCounted
 ##
 ## Log entries are structured, for `CombatText` to say in the player's language:
 ## {"kind": "hit" | "heavy_hit" | "miss" | "defend" | "intimidate" | "unmoved" |
-## "item" | "flee" | "cannot_flee" | "yield" | "down" | "foe_flee" | "foe_yield",
+## "item" | "flee" | "cannot_flee" | "yield" | "down" | "foe_flee" | "foe_cannot_flee" | "foe_yield",
 ## "actor", "target", "damage"}.
 
 ## "" while it goes on; then "won" | "lost" | "fled" | "yielded".
@@ -195,8 +195,12 @@ func _foes_act() -> void:
 		var action := CombatRules.npc_action(foe, float(_roll.call()))
 		match action:
 			"flee":
-				foe["state"] = "fled"
-				entries.append({"kind": "foe_flee", "actor": foe["id"]})
+				# Tried, not granted: against the player's legs, as theirs is.
+				if float(_roll.call()) < CombatRules.flee_chance(foe, int(player()["agility"])):
+					foe["state"] = "fled"
+					entries.append({"kind": "foe_flee", "actor": foe["id"]})
+				else:
+					entries.append({"kind": "foe_cannot_flee", "actor": foe["id"]})
 			"yield":
 				foe["state"] = "yielded"
 				entries.append({"kind": "foe_yield", "actor": foe["id"]})

@@ -72,6 +72,14 @@ var _item_words: Dictionary = {}
 var _reputation: Reputation = null
 var _shops: ShopRegistry = null
 var _crime: CrimeDirector = null
+## What the world is doing about the player (D-090): a debt someone is
+## collecting colours how they greet the player and what the model is told.
+## Callables, set by Game after setup, rather than the director itself: it
+## holds the phone, which holds this, and a cycle of references is never freed.
+## `debt_of(npc_id) -> int`, `situation_of(npc_id) -> String`; unset in tests
+## that do not need them.
+var debt_of: Callable = Callable()
+var situation_of: Callable = Callable()
 
 
 func setup(npcs: NpcRegistry, world: WorldState, player: PlayerState, relationships: RelationshipGraph,
@@ -132,7 +140,8 @@ func start(npc_id: String, now_minute: int) -> Result:
 	# otherwise they greet the player as someone they have, or have not, met (D-059).
 	var delivered := _deliver_errand(npc_id)
 	var key := DialogueLines.pick(npc_id, "errand_done" if not delivered.is_empty() else _opening_topic(npc_id, now_minute), now_minute)
-	var text := Localization.t(key, delivered)
+	var args := delivered if not delivered.is_empty() else {"owed": _owed_to(npc_id)}
+	var text := Localization.t(key, args)
 	conversation.add(npc_id, text, "authored")
 	return Result.success({"npc": npc_id, "text": text, "key": key})
 
@@ -141,6 +150,8 @@ func start(npc_id: String, now_minute: int) -> Result:
 ## theirs still waiting for an answer, someone they spoke to earlier today,
 ## someone they have met before, someone they already know, or a stranger.
 func _opening_topic(npc_id: String, now_minute: int) -> String:
+	if _owed_to(npc_id) > 0:
+		return "collect_debt"   # before anything else: they want their money (D-090)
 	if memories.unanswered_text(npc_id, now_minute, UNANSWERED_TEXT_MINUTES) != "":
 		return "greet_texted"
 	var last := memories.last_at(npc_id)
@@ -156,6 +167,11 @@ func _opening_topic(npc_id: String, now_minute: int) -> String:
 	if npc != null and npc.workplace != "" and npc.location == npc.workplace and DialogueLines.has_own(npc_id, "greet_work"):
 		return "greet_work"
 	return "greet"
+
+
+## What the player still owes this person on a debt gone to collection, or 0.
+func _owed_to(npc_id: String) -> int:
+	return int(debt_of.call(npc_id)) if debt_of.is_valid() else 0
 
 
 ## Starts a phone call (D-050). Whether they would pick up is judged by
@@ -378,6 +394,7 @@ func prompt_context(npc_id: String, happened: String = "", convo: Conversation =
 		"relationship": _feelings(npc_id),
 		"people": _people_they_know(npc_id),
 		"knows": _what_they_believe_about_the_player(npc_id),
+		"situation": str(situation_of.call(npc_id)) if situation_of.is_valid() else "",
 		"memories": memories.recall(npc_id, _clock.total_minutes if _clock != null else 0, _place_name),
 		"history": history,
 		"happened": happened,
@@ -452,6 +469,8 @@ func message_words(message: Dictionary) -> String:
 		args["place"] = _name_of(str(args["place"]))
 	if args.has("victim"):
 		args["victim"] = _name_of(str(args["victim"]))
+	if args.has("enforcer"):
+		args["enforcer"] = _name_of(str(args["enforcer"]))
 	if args.has("start"):
 		var ahead := int(int(args["start"]) / GameClock.MINUTES_PER_DAY) - (_clock.day_index() if _clock != null else 0)
 		args["when"] = "today" if ahead == 0 else ("tomorrow" if ahead == 1 else WEEKDAYS[posmod((_clock.weekday() if _clock != null else 0) + ahead, 7)])
@@ -740,19 +759,10 @@ func _vouched_for(npc_id: String) -> bool:
 	return false
 
 
-## How hot the player currently runs with the police, [0, 1]: any open
-## summons is most of it; a settled record adds a little more that never
-## quite fades within a session. A judgement call, not yet built on anything
-## more particular — the plan left this open for whichever step first
-## needed a real number (M8 D-083, D-085).
+## How hot the player currently runs with the police, [0, 1]: fresh trouble
+## counts most and old trouble fades (`CrimeDirector.heat`, D-090).
 func _heat_level() -> float:
-	if _crime == null:
-		return 0.0
-	var open_count := 0
-	for entry: Dictionary in _crime.summons:
-		if str(entry.get("status", "")) == "open":
-			open_count += 1
-	return clampf(open_count * 0.6 + _crime.record.size() * 0.15, 0.0, 1.0)
+	return _crime.heat(_today()) if _crime != null else 0.0
 
 
 ## Whether anyone but this person is awake where they are — the same test

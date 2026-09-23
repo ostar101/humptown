@@ -87,6 +87,56 @@ func test_going_without_costs_health_and_nerves() -> void:
 	assert_lt(tired.health, 1.0)
 
 
+## Played: health lost to one hungry evening never came back, so every hungry
+## night after it ended at the clinic (D-090).
+func test_a_fed_body_mends_itself_and_a_night_mends_it_most() -> void:
+	var awake := Stats.new()
+	awake.health = 0.4
+	awake.drift(300, "idle")
+	assert_gt(awake.health, 0.45, "five waking hours, fed: better")
+	var slept := Stats.new()
+	slept.health = 0.4
+	slept.hunger = 0.3
+	slept.sleep = 0.4
+	slept.drift(480, "sleep")
+	assert_gt(slept.health, 0.7, "a night's sleep gives back most")
+	var starving := Stats.new()
+	starving.health = 0.4
+	starving.hunger = 1.0
+	starving.drift(480, "sleep")
+	assert_lt(starving.health, 0.4, "nobody mends while starving")
+
+
+func test_an_open_wound_caps_what_rest_can_give_back() -> void:
+	var stats := Stats.new()
+	stats.add_injury("cracked_rib", "torso", 0.3, 10_000)
+	assert_almost(stats.health_cap(), 0.85, 0.001)
+	stats.health = 0.5
+	stats.drift(600, "sleep")
+	assert_almost(stats.health, 0.85, 0.001, "mended as far as the rib allows")
+	stats.heal_expired_injuries(20_000)
+	stats.hunger = 0.0
+	stats.drift(120, "sleep")
+	assert_gt(stats.health, 0.85, "and past it once it has healed")
+
+
+func test_a_night_after_a_light_supper_is_not_a_night_of_starving() -> void:
+	var stats := Stats.new()
+	stats.hunger = 0.55   # hungry-ish at bedtime
+	stats.drift(8 * 60, "sleep")
+	assert_lt(stats.hunger, Stats.STARVING, "wakes wanting breakfast, not starving")
+	assert_eq(stats.health, 1.0, "and none the worse for it")
+
+
+func test_weak_is_not_hurt() -> void:
+	Game.player.stats.health = 0.5
+	assert_eq(StatusText.condition(), "Weak", "no wound, so no injury")
+	Game.player.stats.health = 0.2
+	assert_eq(StatusText.condition(), "Very weak")
+	Game.player.stats.add_injury("bruise", "arm", 0.12, Game.clock.total_minutes + 60)
+	assert_eq(StatusText.condition(), "Badly hurt", "a wound is an injury")
+
+
 func test_running_out_of_health_wakes_you_in_the_clinic_billed() -> void:
 	Game.player.wallet.cash = 100
 	Game.player.wallet.bank = 0

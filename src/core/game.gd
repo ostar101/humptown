@@ -169,11 +169,13 @@ func new_game(background_id: String = "", world_seed: int = 0) -> Result:
 	crime.setup(npcs, knowledge, relationships, memories, events_queue, clock)
 	asks.setup(data, relationships, quests, crime, player, clock, rng, knowledge)
 	fights.setup(npcs, player, relationships, crime, memories, clock, data, rng)
-	consequences.setup(npcs, knowledge, relationships, crime, quests, work, phone_director, meetings, data, clock)
+	consequences.setup(npcs, knowledge, relationships, crime, quests, work, phone_director, meetings, data, clock, player)
 	phone_director.setup(phone, npcs, relationships, quests, player, clock, dialogue, meetings)
 	phone_director.sync_contacts()
 	dialogue.setup(npcs, world, player, relationships, knowledge, clock, data, LlmDialogueModel.new(llm), memories, work, quests, asks,
 		reputation, shops, crime)
+	dialogue.debt_of = consequences.owed_to
+	dialogue.situation_of = consequences.situation_with
 	_connect_simulation()
 
 	# Open the starting region and place the player.
@@ -913,6 +915,11 @@ func _on_player_deed(kind: String, deed: Dictionary) -> void:
 		return
 	for moved in quests.on_deed(kind, deed, _feeling):
 		_quest_moved(moved)
+	match kind:
+		"gave_money":
+			consequences.on_paid(str(deed.get("npc", "")), int(deed.get("amount", 0)))
+		"fought":
+			consequences.on_fought(str(deed.get("npc", "")), str(deed.get("result", "")))
 
 
 ## Stages that wait on how someone feels are looked at again when a feeling
@@ -1181,6 +1188,47 @@ func _arrest(result: Dictionary) -> void:
 	_arresting = false
 	Log.info("police", "Player arrested", {"officer": officer_id})
 	Events.player_arrested.emit(officer_id, clock.total_minutes)
+
+
+## Where the player can be found by someone looking for them, and whether they
+## are in the middle of something (D-090): not at home, not at the police post
+## or the clinic, not asleep, at work, talking, shopping or fighting — and at a
+## named place, since that is where a person can be walked up to.
+func _findable() -> Dictionary:
+	var sheltered := player.interior == player.home_location or player.location in [POLICE_POST, CLINIC] \
+		or player.location.is_empty()
+	return {"hour": clock.hour(), "exposed": not sheltered,
+		"busy": _player_activity != "idle" or dialogue.is_talking() or is_shopping() or fights.is_fighting()}
+
+
+## Once an hour: a collector who has come to hunting (D-090) goes looking, if
+## the player is out where they can be found. Finding them takes a while — they
+## arrive some twenty minutes to an hour later, if the player is still about.
+func _collector_looks() -> void:
+	var hunter := consequences.hunter_for(_findable())
+	if hunter == "":
+		return
+	var delay := 20 + int(RngStreams.stable_unit("%s/%d" % [hunter, clock.total_minutes], "collector") * 40.0)
+	events_queue.schedule(clock.total_minutes + delay, "collector_arrives", {"npc": hunter})
+
+
+## The collector gets to where the player is. If the player is still findable
+## they walk up and it starts (the fight is theirs, as a named meeting's is);
+## if not, they missed them and will look again.
+func _collector_arrives(npc_id: String) -> void:
+	var npc := npcs.get_npc(npc_id)
+	if npc == null or not npc.alive or not ConsequenceRules.can_be_found(_findable()):
+		consequences.not_found(npc_id)
+		return
+	var here := player.location
+	var now := clock.total_minutes
+	npc.set_override(now, now + 60, here, "socialise", "collecting:%d" % now)
+	npcs.move_to(npc_id, here)
+	npcs.invalidate_location_cache(npc_id)
+	if npc.activity == "sleep" or npc.activity == "work":
+		npc.activity = "socialise"
+	Log.info("consequences", "A collector found the player", {"npc": npc_id, "location": here})
+	Events.ambush.emit(npc_id)
 
 
 ## Someone came for a fight they had named (D-055): that grudge has had its say.
@@ -1840,6 +1888,8 @@ func _on_world_event(event: WorldEventQueue.QueuedEvent) -> void:
 			_police_assess(event.payload)
 		"police_summons_due":
 			_summons_due(event.payload)
+		"collector_arrives":
+			_collector_arrives(str(event.payload.get("npc", "")))
 		_:
 			Log.debug("events", "Unhandled world event", {"kind": event.kind})
 
@@ -1858,6 +1908,7 @@ func _on_hour(hour_of_day: int) -> void:
 	Events.hour_passed.emit(hour_of_day)
 	player.stats.drift(60, _player_activity)
 	_phone_tick()
+	_collector_looks()
 	if player.stats.health <= 0.0 and not _collapsing:
 		_collapse_due = true
 
@@ -1865,7 +1916,8 @@ func _on_hour(hour_of_day: int) -> void:
 func _on_day(day: int) -> void:
 	Events.day_passed.emit(day)
 	llm.budget.on_new_day(day)
-	knowledge.forget_stale(clock.total_minutes)
+	knowledge.fade(clock.total_minutes)
+	reputation.invalidate()   # what people believe has worn a day thinner
 	player.stats.heal_expired_injuries(clock.total_minutes)
 	shops.restock()
 	meetings.lapse()

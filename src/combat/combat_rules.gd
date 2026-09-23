@@ -95,6 +95,11 @@ static func stamina_cost(action: String) -> float:
 	return 0.0
 
 
+## Of the times someone losing gives up, the share that try to run rather than
+## back down.
+const FLEE_SHARE := 0.35
+
+
 ## The chance of getting away: quick against the quickest of those after you.
 static func flee_chance(fleer: Dictionary, quickest_pursuer_agility: int) -> float:
 	var chance := 0.5 + float(int(fleer["agility"]) - quickest_pursuer_agility) * 0.06
@@ -126,8 +131,12 @@ static func npc_action(self_c: Dictionary, roll: float) -> String:
 	var health := float(self_c["health"])
 	var resolve := int(self_c["resolve"])
 	if health < 0.3:
+		# Someone who is losing gives in more often than they bolt, and bolting
+		# is tried, not granted: `Combat` rolls it against the player's legs
+		# the way the player's own attempt is rolled (D-090). It used to be two
+		# rounds in three, and always got away, just as the player was winning.
 		var give_up := clampf(0.55 - float(resolve - 5) * 0.06, 0.15, 0.75)
-		if roll < give_up * 0.7:
+		if roll < give_up * FLEE_SHARE:
 			return "flee"
 		if roll < give_up:
 			return "yield"

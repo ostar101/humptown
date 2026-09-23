@@ -9,6 +9,8 @@ extends RefCounted
 
 ## The hour a fight is called for.
 const CONFRONTATION_HOUR := 21
+## The hour someone owed money calls the player in to talk (D-090).
+const TALK_HOUR := 18
 
 var calendar: Calendar = Calendar.new()
 
@@ -125,6 +127,33 @@ func arrange_confrontation(npc_id: String) -> int:
 	return int(meeting["id"])
 
 
+## Someone owed money calls the player in to talk about it (D-090): tomorrow
+## at six in the evening, at a public place in their own district. Told, not
+## asked, like a confrontation — but it is talk, not a fight. Returns the
+## meeting's id, or 0 when there is nowhere to name.
+func arrange_talk(npc_id: String) -> int:
+	var npc := _npcs.get_npc(npc_id)
+	var home := _world.get_location(npc.home) if npc != null else null
+	if npc == null or not npc.alive or home == null:
+		return 0
+	var day := _clock.day_index() + 1
+	var places: Array[String] = []
+	for location_id: String in _data.ids("locations"):
+		var place := _world.get_location(location_id)
+		if place != null and place.region == home.region and place.is_public() and not place.is_locked() \
+				and bool(_data.get_entry("locations", location_id).get("meeting_place", false)) \
+				and MeetingRules.open_throughout(place.is_open_at, TALK_HOUR * 60):
+			places.append(location_id)
+	if places.is_empty():
+		return 0
+	places.sort()
+	var chosen := places[posmod(("talk/%s/%d" % [npc_id, day]).hash(), places.size())]
+	var meeting := calendar.propose(npc_id, chosen, day * GameClock.MINUTES_PER_DAY + TALK_HOUR * 60,
+		MeetingRules.DURATION, false, "collection")
+	_schedule(int(meeting["id"]))
+	return int(meeting["id"])
+
+
 func decline(meeting_id: int) -> void:
 	if calendar.get_meeting(meeting_id).get("status", "") == "proposed":
 		calendar.set_status(meeting_id, "declined")
@@ -179,6 +208,17 @@ func _settle(meeting: Dictionary) -> void:
 		calendar.set_status(id, verdict)
 		if verdict == "kept":
 			Events.ambush.emit(npc_id)
+		Events.meeting_updated.emit(id, verdict)
+		return
+	if str(meeting.get("purpose", "")) == "collection":
+		# Talk about money that is owed (D-090): turning up is no kindness to
+		# anyone, and not turning up is noted.
+		if verdict == "kept":
+			_memories.add_episode(npc_id, now, location, ["came when you told them to, to talk about the money"] as Array[String], 0.4)
+		elif verdict == "missed":
+			_relationships.adjust(npc_id, PlayerState.ID, "respect", -0.05, now)
+			_memories.add_episode(npc_id, now, location, ["did not come when you told them to, about the money"] as Array[String], 0.6)
+		calendar.set_status(id, verdict)
 		Events.meeting_updated.emit(id, verdict)
 		return
 	match verdict:

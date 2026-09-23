@@ -15,6 +15,11 @@ const CONDITION_WORDS := [
 	["intoxication", ">=", 0.2, "ui.condition.tipsy"],
 	["stress", ">=", 0.7, "ui.condition.on_edge"],
 ]
+## The words for low health when there is no wound to blame (D-090).
+const WITHOUT_WOUNDS := {
+	"ui.condition.badly_hurt": "ui.condition.very_weak",
+	"ui.condition.hurt": "ui.condition.weak",
+}
 
 
 ## "Tue 07:30 · Dock Street · €23"
@@ -42,7 +47,12 @@ static func condition_keys(stats: Stats) -> Array[String]:
 		var value := stats.get_meter(meter)
 		var applies := value >= float(rule[2]) if rule[1] == ">=" else value <= float(rule[2])
 		if applies:
-			out.append(str(rule[3]))
+			var key := str(rule[3])
+			# Low health with no wound is weakness — hunger, no sleep — not an
+			# injury; "hurt" is kept for when something was actually done to you.
+			if meter == "health" and stats.injuries.is_empty():
+				key = WITHOUT_WOUNDS.get(key, key)
+			out.append(key)
 			said.append(meter)
 	return out
 

@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-23
 **Milestone:** M6 — Consequences — **complete in code (0.6.0)**. M5 complete (0.5.0). M5 complete in code (0.5.0). **M8 — A town worth walking — complete (all twelve planned steps).** Plan at `C:\Users\miika\.claude\plans\peli-tuntuu-hieman-tyls-lt-prancy-hamming.md`. Sessions A, B and C all done. Sessions D+ (downtown/skyscrapers, upper floors, romance, sex work) are sequenced after but not detailed in this plan — **the game wants playing by a person before any of that starts**, per the plan's own note; nothing from M8 has been seen at a keyboard yet.
-**Build:** green. 1129 tests, 30831 assertions with the LimeZu art installed,
+**Build:** green. 1144 tests, 30903 assertions with the LimeZu art installed,
 ~47 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
@@ -10,7 +10,25 @@
 
 ## Next task
 
-**Newest (D-089) — a review pass, no new features.** The user asked for the
+**Newest (D-090) — the first play-through's findings, and three design calls
+settled.** The user has played (first time since M4) and found no big bugs, only
+small ones, which they will report together later — **wait for that list**.
+Fixed now, from what they did report: waking in the clinic after sleeping and
+"injured" with no fight (one loop: health never recovered, hunger rose fast
+asleep, the HUD called any low health "hurt" — now rest mends up to what open
+wounds allow, hunger asleep is slower, and it says "Weak" without a wound);
+enemies who always escaped when losing (now rolled against the player's
+agility, and yielding is likelier); grudges that restarted for ever (one holder,
+one warning, over for good once fought, ignored or made up). Design, as the
+user asked: dealer heat fades (`CrimeDirector.heat`), knowledge fades by
+severity and firsthand-ness (`KnowledgeNetwork.fade`), and an unpaid debt goes
+summons-to-talk → threat → last warning → the enforcer **hunts** the player
+when out (09–22, not at home/police/clinic) — the one exception to "no fights
+in the street", recorded in CLAUDE.md. Payable in parts to creditor or
+collector. 15 new tests, 1144 green, no leak. Worth checking in play: fail
+Rauno's debt (bg_in_debt, 14 days) and walk the harbour on day 9+.
+
+**Before that (D-089) — a review pass, no new features.** The user asked for the
 whole project to be read through for bugs. Eight fixed, each with a test that
 fails on the old code (11 new tests, 1129 green): OpenAI reasoning models
 (`gpt-5`, `o*`) were sent a temperature they reject with a 400 — every call

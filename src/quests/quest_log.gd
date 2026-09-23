@@ -13,6 +13,11 @@ var _data: DataRegistry = null
 var active: Dictionary = {}
 ## quest id -> "done" | "failed", in the order they ended
 var finished: Dictionary = {}
+## quest id -> where a quest that failed stood when it did: {"paid", "extra_need"}
+## — what had already been put towards a sum, and what had been added to it. A
+## debt let fail is still owed, less what was paid and plus its interest
+## (D-090).
+var lapsed: Dictionary = {}
 ## errand id -> {"taken_day": int}
 var errands: Dictionary = {}
 ## errand id -> day last done
@@ -91,6 +96,9 @@ func expire(day: int) -> Array[String]:
 	for quest_id in active.keys():
 		var deadline := int(active[quest_id].get("deadline_day", -1))
 		if deadline >= 0 and day > deadline:
+			var state: Dictionary = active[quest_id]
+			lapsed[quest_id] = {"paid": int((state.get("progress", {}) as Dictionary).get("sum", 0)),
+				"extra_need": int(state.get("extra_need", 0))}
 			active.erase(quest_id)
 			finished[quest_id] = "failed"
 			failed.append(str(quest_id))
@@ -129,8 +137,8 @@ func finish_errand(errand_id: String, day: int) -> void:
 
 
 func to_dict() -> Dictionary:
-	return {"active": active.duplicate(true), "finished": finished.duplicate(), "errands": errands.duplicate(true),
-		"errands_done": errands_done.duplicate()}
+	return {"active": active.duplicate(true), "finished": finished.duplicate(), "lapsed": lapsed.duplicate(true),
+		"errands": errands.duplicate(true), "errands_done": errands_done.duplicate()}
 
 
 ## Restores what the save says, dropping anything the data no longer has.
@@ -149,6 +157,11 @@ func from_dict(d: Dictionary) -> void:
 	var raw_finished: Dictionary = d.get("finished", {})
 	for quest_id in raw_finished:
 		finished[str(quest_id)] = str(raw_finished[quest_id])
+	lapsed = {}
+	var raw_lapsed: Dictionary = d.get("lapsed", {})
+	for quest_id in raw_lapsed:
+		var raw: Dictionary = raw_lapsed[quest_id]
+		lapsed[str(quest_id)] = {"paid": int(raw.get("paid", 0)), "extra_need": int(raw.get("extra_need", 0))}
 	errands = {}
 	var raw_errands: Dictionary = d.get("errands", {})
 	for errand_id in raw_errands:

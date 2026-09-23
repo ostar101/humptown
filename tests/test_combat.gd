@@ -156,6 +156,27 @@ func test_being_beaten_is_losing() -> void:
 	assert_true(float(fight.player()["health"]) <= 0.0)
 
 
+## Played: someone losing ran two rounds in three and always got away, just as
+## the player was about to win (D-090). Now they give in more often than they
+## run, and running is rolled against the player's legs like the player's own.
+func test_someone_losing_tries_to_run_and_can_be_cut_off() -> void:
+	var beaten := _c("them", "foe", {"health": 0.2})
+	var runs := 0
+	var gives_in := 0
+	for i in range(100):
+		match CombatRules.npc_action(beaten, (float(i) + 0.5) / 100.0):
+			"flee": runs += 1
+			"yield": gives_in += 1
+	assert_gt(gives_in, runs, "backing down is likelier than bolting")
+	# Their turn: the choice (0.05 = run), then the escape roll, which fails
+	# against a quick player — and the fight goes on.
+	var fight := _fight(_c("player", "player", {"agility": 9}), [beaten], [0.99, 0.05, 0.5])
+	fight.player_act("attack")
+	assert_eq(fight.entries[1]["kind"], "foe_cannot_flee")
+	assert_false(fight.is_over(), "cut off, they are still in it")
+	assert_true(CombatText.line(fight.entries[1]).ends_with("tries to run, and you cut them off."), "and the log says so")
+
+
 func test_running_away_works_or_it_does_not() -> void:
 	var quick := _fight(_c("player", "player", {"agility": 9}), [_c("them", "foe")], [0.1])
 	quick.player_act("flee")

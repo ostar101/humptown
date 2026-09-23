@@ -22,6 +22,8 @@ static func render(message: Dictionary) -> String:
 		args["place"] = InteractionText.place_name(str(args["place"]))
 	if args.has("victim"):
 		args["victim"] = npc_name(str(args["victim"]))
+	if args.has("enforcer"):
+		args["enforcer"] = npc_name(str(args["enforcer"]))
 	if args.has("start"):
 		args["when"] = day_word(int(args["start"]))
 		args["time"] = clock_of(int(args["start"]))

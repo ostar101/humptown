@@ -76,6 +76,7 @@ class Belief extends RefCounted:
 	var learned_at: int = 0
 	var source_id: String = ""      ## who told them, or "" for direct witness
 	var hops: int = 0               ## retellings away from the event
+	var faded_at: int = 0           ## the minute `fade()` last wore it down
 
 	func is_firsthand() -> bool:
 		return hops == 0
@@ -87,7 +88,7 @@ class Belief extends RefCounted:
 	func to_dict() -> Dictionary:
 		return {
 			"fact": fact_id, "conf": confidence, "dist": distortion,
-			"at": learned_at, "src": source_id, "hops": hops,
+			"at": learned_at, "src": source_id, "hops": hops, "faded": faded_at,
 		}
 
 	static func from_dict(d: Dictionary) -> Belief:
@@ -98,6 +99,7 @@ class Belief extends RefCounted:
 		b.learned_at = int(d.get("at", 0))
 		b.source_id = str(d.get("src", ""))
 		b.hops = int(d.get("hops", 0))
+		b.faded_at = int(d.get("faded", b.learned_at))
 		return b
 
 
@@ -301,14 +303,38 @@ func _learn(knower_id: String, fact_id: String, at_minute: int, source_id: Strin
 	b.confidence = clampf(confidence, 0.0, 1.0)
 	b.distortion = clampf(distortion, 0.0, 1.0)
 	b.learned_at = at_minute
+	b.faded_at = at_minute
 	b.source_id = source_id
 	b.hops = hops
 	beliefs[knower_id][fact_id] = b
 	Events.fact_learned.emit(knower_id, fact_id, source_id)
 
 
-## Drops low-value old beliefs so the network cannot grow without bound.
-func forget_stale(now: int, older_than_minutes: int = 20160) -> int:
+## Memory wears (D-090): every belief grows less sure with time, halving over
+## a span that grows with how much it mattered — days for trivia, months for a
+## beating — and three times as long for what someone saw with their own eyes.
+## Because everything that reads knowledge reads `confidence` (reputation,
+## the police, a dealer, a grudge, gossip itself), all of it cools the same
+## way, with nothing special-cased: an old story weighs less, stops being
+## passed on, and in the end is gone. It used to be kept for ever unless it was
+## trivial, and the network only grew.
+const FADE_BASE_DAYS := 4.0
+const FADE_SEVERITY_DAYS := 56.0
+const FIRSTHAND_MEMORY := 3.0
+## Below this, a belief is forgotten.
+const FORGET_BELOW := 0.1
+
+
+## How many days it takes this belief to lose half its certainty.
+static func half_life_days(severity: float, firsthand: bool) -> float:
+	var days := FADE_BASE_DAYS + FADE_SEVERITY_DAYS * severity * severity
+	return days * (FIRSTHAND_MEMORY if firsthand else 1.0)
+
+
+## Wears every belief down to `now`, forgets the ones worn through, and drops
+## facts nobody holds any more. Called once a day. Returns how many beliefs
+## were forgotten.
+func fade(now: int) -> int:
 	var removed := 0
 	for knower_id in beliefs:
 		var to_drop: Array[String] = []
@@ -318,12 +344,22 @@ func forget_stale(now: int, older_than_minutes: int = 20160) -> int:
 			if fact == null:
 				to_drop.append(str(fact_id))
 				continue
-			var age := now - belief.learned_at
-			if age > older_than_minutes and fact.severity < 0.4 and belief.confidence < 0.5:
+			var days := float(now - belief.faded_at) / 1440.0
+			if days > 0.0:
+				belief.confidence *= pow(0.5, days / half_life_days(fact.severity, belief.is_firsthand()))
+				belief.faded_at = now
+			if belief.confidence < FORGET_BELOW:
 				to_drop.append(str(fact_id))
 		for fact_id in to_drop:
 			beliefs[knower_id].erase(fact_id)
 			removed += 1
+	var held := {}
+	for knower_id in beliefs:
+		for fact_id in beliefs[knower_id]:
+			held[fact_id] = true
+	for fact_id in facts.keys():
+		if not held.has(fact_id) and now - (facts[fact_id] as Fact).at_minute > 1440:
+			facts.erase(fact_id)
 	return removed
 
 

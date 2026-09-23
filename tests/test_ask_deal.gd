@@ -148,6 +148,19 @@ func test_the_struck_price_carries_into_the_shop() -> void:
 	assert_ne(shown, plain, "a struck deal prices differently from the shop's plain price")
 
 
+## Played-for, not played: every settled case used to count for ever, so five
+## or six and every dealer had shut the door for good (D-090). Old trouble
+## cools; fresh trouble does not.
+func test_old_trouble_cools_and_fresh_trouble_does_not() -> void:
+	var today := Game.clock.day_index()
+	for i in range(6):
+		Game.crime.record.append({"fact": "fact_old_%d" % i, "outcome": "fine", "day": today})
+	assert_eq(Game.crime.heat(today), 1.0, "six fines this week: too hot to touch")
+	assert_lt(Game.crime.heat(today + 28), 0.2, "a quiet month on, cool again")
+	var rauno := Game.npcs.get_npc("npc_rauno")
+	assert_lt(Game.crime.heat(today + 28), float(rauno.nature["risk"]), "and a dealer will look at you again")
+
+
 ## Who counts as watching a deal is who could see it: someone asleep where the
 ## dealer stands does not, someone awake does — as for a theft (`watchers()`).
 func test_only_someone_awake_is_watching() -> void:

@@ -109,6 +109,9 @@ static func system_text(context: Dictionary, opening: Array[String] = []) -> Str
 		parts.append("People you know: " + ", ".join(people) + ".")
 	var knows: Array = context.get("knows", [])
 	parts.append("What you know about this person:" + ("\n- " + "\n- ".join(knows) if not knows.is_empty() else " nothing beyond what you can see."))
+	var situation := str(context.get("situation", ""))
+	if situation != "":
+		parts.append("Between the two of you: " + situation)
 	var memories: Array = context.get("memories", [])
 	if not memories.is_empty():
 		parts.append("What you remember of them, oldest first (talks in person, calls, and texts you wrote or got, with the words that were said):\n- " + "\n- ".join(memories))

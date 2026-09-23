@@ -156,9 +156,46 @@ func test_stale_trivia_is_forgotten_but_serious_events_are_not() -> void:
 	var serious := net.record("player", "assaulted", 0, {"severity": 0.9})
 	net._learn("person", trivial, 0, "x", 2, 0.4, 0.2)
 	net._learn("person", serious, 0, "x", 2, 0.4, 0.2)
-	net.forget_stale(30000)
+	net.fade(30000)
 	assert_false(net.knows("person", trivial))
 	assert_true(net.knows("person", serious))
+
+
+## Played long, nothing was ever forgotten unless it was trivia (D-090). Now
+## every belief wears down: trivia in days, a beating over months, and what you
+## saw yourself three times as slowly as what you heard.
+func test_memory_wears_by_how_much_it_mattered_and_how_it_was_learned() -> void:
+	var theft := net.record("player", "stole_from", 0, {"severity": 0.3})
+	var beating := net.record("player", "assaulted", 0, {"severity": 0.6})
+	net.witness("saw_theft", theft, 0)
+	net.witness("saw_beating", beating, 0)
+	net._learn("heard_beating", beating, 0, "saw_beating", 1, 0.85, 0.12)
+	var month := 30 * 1440
+	net.fade(month)
+	assert_lt(net.belief_of("saw_theft", theft).confidence, 1.0, "a month on, less sure")
+	assert_gt(net.belief_of("saw_beating", beating).confidence, net.belief_of("saw_theft", theft).confidence,
+		"a beating stays sharper than a theft")
+	assert_gt(net.belief_of("saw_beating", beating).confidence, 0.6, "seen with your own eyes, still vivid")
+	assert_lt(net.belief_of("heard_beating", beating).confidence, 0.5, "only heard of it, it has faded")
+	net.fade(4 * month)
+	assert_false(net.knows("saw_theft", theft), "a theft four months ago is forgotten")
+	assert_false(net.knows("heard_beating", beating))
+	assert_true(net.knows("saw_beating", beating), "the one who took the beating still remembers")
+	assert_null(net.get_fact(theft), "and a fact nobody holds is gone")
+	net.fade(12 * month)
+	assert_false(net.knows("saw_beating", beating), "but not for ever")
+
+
+func test_fading_once_a_day_comes_to_the_same_as_all_at_once() -> void:
+	var fact_id := net.record("player", "assaulted", 0, {"severity": 0.6})
+	net.witness("daily", fact_id, 0)
+	var other := KnowledgeNetwork.new()
+	other.setup(graph, queue)
+	other.from_dict(net.to_dict())
+	for day in range(1, 31):
+		net.fade(day * 1440)
+	other.fade(30 * 1440)
+	assert_almost(net.belief_of("daily", fact_id).confidence, other.belief_of("daily", fact_id).confidence, 0.0001)
 
 
 func test_survives_a_save_round_trip() -> void:

@@ -39,6 +39,19 @@ const EXHAUSTED := 0.05
 ## Hours for starving to empty health from full, and for exhaustion to.
 const STARVING_HOURS := 36.0
 const EXHAUSTED_HOURS := 72.0
+## A body that is fed and rested mends by itself (D-090): a good night's sleep
+## gives back about a third of full health, a waking day about a quarter. Only
+## up to what open wounds allow (`health_cap()`): a cracked rib is not slept off
+## before it has healed.
+const MEND_ASLEEP_HOURS := 24.0
+const MEND_AWAKE_HOURS := 60.0
+## Nobody mends while this hungry or this tired.
+const MEND_HUNGER_BELOW := 0.8
+const MEND_SLEEP_ABOVE := 0.2
+## Hours asleep for hunger to go from nothing to full: slower than awake, so a
+## night's sleep makes you want breakfast, not starve (it was 14 h — a night
+## after a light supper woke you starving, and starving costs health).
+const HUNGER_ASLEEP_HOURS := 24.0
 
 
 func attribute(name: String) -> int:
@@ -82,7 +95,7 @@ func drift(minutes: int, activity: String = "idle") -> void:
 			sleep = minf(1.0, sleep + m / (7.5 * 60.0))
 			stamina = minf(1.0, stamina + m / (5.0 * 60.0))
 			stress = maxf(0.0, stress - m / (10.0 * 60.0))
-			hunger = minf(1.0, hunger + m / (14.0 * 60.0))
+			hunger = minf(1.0, hunger + m / (HUNGER_ASLEEP_HOURS * 60.0))
 		_:
 			sleep = maxf(0.0, sleep - m / (17.0 * 60.0))
 			# Hungry again after ten waking hours: two or three meals a day.
@@ -96,8 +109,22 @@ func drift(minutes: int, activity: String = "idle") -> void:
 	if sleep <= EXHAUSTED:
 		health = maxf(0.0, health - m / (EXHAUSTED_HOURS * 60.0))
 		stress = minf(1.0, stress + m / (8.0 * 60.0))
+	# ...and a body that is fed and rested pays itself back (D-090). Before
+	# this, health lost to one hungry night stayed lost until the clinic.
+	if hunger < MEND_HUNGER_BELOW and sleep > MEND_SLEEP_ABOVE and health < health_cap():
+		var hours := MEND_ASLEEP_HOURS if activity == "sleep" else MEND_AWAKE_HOURS
+		health = minf(health_cap(), health + m / (hours * 60.0))
 	_recompute_mood()
 	_notify()
+
+
+## How healthy the body can get while its wounds are open: each takes off what
+## it took when it was dealt (`add_injury`), until it heals.
+func health_cap() -> float:
+	var cap := 1.0
+	for injury in injuries:
+		cap -= float(injury.get("severity", 0.0)) * 0.5
+	return clampf(cap, 0.1, 1.0)
 
 
 func modify(meter: String, delta: float) -> void:

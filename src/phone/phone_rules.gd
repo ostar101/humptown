@@ -32,6 +32,9 @@ const MIN_GAP := {
 	"grudge_warning": 2 * 24 * 60,
 	"confrontation": 24 * 60,
 	"collection": 3 * 24 * 60,
+	## What came of a collection — taken, seen off, paid (D-090): news, not another
+	## demand, so the demands' three days do not hold it back.
+	"collection_outcome": 6 * 60,
 	"dismissal": 24 * 60,
 }
 
