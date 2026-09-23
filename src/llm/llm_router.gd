@@ -100,7 +100,9 @@ func cached(request: LlmRequest, provider_id: String, model: String, now_seconds
 		_cache.erase(key)
 		_cache_order.erase(key)
 		return null
-	var hit: LlmResponse = entry["response"]
+	# A copy: the caller stamps its own request id and latency on what it gets,
+	# and neither must reach the stored answer or whoever asked first.
+	var hit: LlmResponse = (entry["response"] as LlmResponse).copy()
 	hit.from_cache = true
 	return hit
 
@@ -111,7 +113,7 @@ func store(request: LlmRequest, provider_id: String, model: String, response: Ll
 	var key := request.cache_key(provider_id, model)
 	if not _cache.has(key):
 		_cache_order.append(key)
-	_cache[key] = {"response": response, "at": now_seconds}
+	_cache[key] = {"response": response.copy(), "at": now_seconds}
 	while _cache_order.size() > CACHE_LIMIT:
 		var evicted: String = _cache_order.pop_front()
 		_cache.erase(evicted)

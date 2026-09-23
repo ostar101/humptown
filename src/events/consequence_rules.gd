@@ -49,6 +49,13 @@ static func next_step(state: Dictionary, today: int, warnings_before: int = 1) -
 	return "rest"
 
 
+## Whether a grudge has been made up: the holder has come to like the player
+## as much as a friend who would step into a fight for them
+## (`FightDirector.JOIN_AFFECTION`). Friends do not name a time and a place.
+static func made_up(affection: float) -> bool:
+	return affection >= FightDirector.JOIN_AFFECTION
+
+
 ## Whether a holder is in a state to make good on it.
 static func fit_to_confront(health: float) -> bool:
 	return health >= FIT_TO_CONFRONT

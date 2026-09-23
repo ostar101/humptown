@@ -5,6 +5,16 @@ versions are milestones rather than releases until there is something to release
 
 ## [Unreleased]
 
+### Fixed (review pass, D-089)
+- With an OpenAI `gpt-5` or `o`-series model, every conversation would have failed: they refuse the temperature setting the game sent. It is no longer sent to them, directly or through OpenRouter.
+- A model reply that came back empty (`null`) would have been shown as the word "<null>" in someone's mouth; now they fall back to an authored line, and an OpenAI refusal counts as a refusal.
+- Closing a conversation right after saying goodbye and talking to someone else straight away no longer shuts the new conversation a second later; a slow reply to a closed conversation no longer blocks typing in the next one.
+- Loading a save after playing on past it no longer stops people being re-sorted around you until the clock catches up with the life you abandoned.
+- Someone you beat and have since made up with (they like you as much as a friend would) stops sending threats and naming places to meet.
+- Someone asleep beside a dealer no longer counts as watching the deal.
+- A dealer's shop offers Buy only — no Haggle or Pocket, which could only ever say nobody was serving.
+- A save that fails half-way through no longer risks losing the previous one: the old save is set aside, not deleted, until the new one is safely in place.
+
 ### Added
 - 30 new people across all three districts — dockhands, shopkeepers, a librarian's assistant, a nurse, family and lodgers of people already known, and a fair few in their late teens and twenties, so the town no longer reads as everyone being middle-aged (D-088, M8 session C step 12 — closes M8's planned scope).
 

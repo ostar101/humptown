@@ -35,6 +35,16 @@ static func failure(code: String, message: String = "") -> LlmResponse:
 	return r
 
 
+## A separate response with the same content, so one caller's bookkeeping
+## (latency, request id, from_cache) never lands on another's.
+func copy() -> LlmResponse:
+	var r := LlmResponse.new()
+	for property in ["ok", "text", "finish_reason", "prompt_tokens", "completion_tokens", "model", "provider",
+			"error_code", "error_message", "latency_ms", "from_cache", "request_id"]:
+		r.set(property, get(property))
+	return r
+
+
 ## True when the model stopped because it ran out of room, not because it was
 ## done — the finish reasons the providers use for that.
 func hit_length_limit() -> bool:

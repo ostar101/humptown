@@ -264,6 +264,17 @@ func test_openai_uses_the_new_token_field_for_newer_models() -> void:
 	assert_false(body.has("max_tokens"))
 
 
+func test_openai_reasoning_models_get_no_temperature() -> void:
+	var request := LlmRequest.simple(LlmRequest.Purpose.DIALOGUE, "s", "hello")
+	for model in ["gpt-5", "gpt-5-mini", "o3-mini", "o4-mini"]:
+		var body: Dictionary = JSON.parse_string(OpenAiProvider.new().build_http(request, model, "k")["body"])
+		assert_false(body.has("temperature"), "%s answers a temperature with a 400" % model)
+	var older: Dictionary = JSON.parse_string(OpenAiProvider.new().build_http(request, "gpt-4.1", "k")["body"])
+	assert_true(older.has("temperature"), "older models still take one")
+	var routed: Dictionary = JSON.parse_string(OpenRouterProvider.new().build_http(request, "openai/gpt-5", "k")["body"])
+	assert_false(routed.has("temperature"), "the same model through OpenRouter")
+
+
 func test_google_uses_its_own_shape_and_header_auth() -> void:
 	var provider := GoogleProvider.new()
 	var request := LlmRequest.create(LlmRequest.Purpose.DIALOGUE, "You are Ida.", [
@@ -346,6 +357,37 @@ func test_openai_response_parsing() -> void:
 	assert_true(response.ok)
 	assert_eq(response.text, "Mm.")
 	assert_eq(response.total_tokens(), 93)
+
+
+func test_a_null_answer_is_no_text_not_the_word_null() -> void:
+	for provider: LlmProvider in [OpenAiProvider.new(), OpenRouterProvider.new()]:
+		var response := provider.parse_http(200, JSON.stringify({
+			"choices": [{"message": {"role": "assistant", "content": null}, "finish_reason": "length"}],
+			"usage": null,
+		}), "gpt-5-mini")
+		assert_true(response.ok)
+		assert_eq(response.text, "", "%s: nothing said, so an authored line stands in" % provider.id())
+		assert_true(response.hit_length_limit())
+
+
+func test_an_openai_refusal_is_a_failure_not_a_line() -> void:
+	var response := OpenAiProvider.new().parse_http(200, JSON.stringify({
+		"choices": [{"message": {"content": null, "refusal": "I can't help with that."}, "finish_reason": "stop"}],
+	}), "gpt-5")
+	assert_false(response.ok)
+	assert_eq(response.error_code, "refused")
+
+
+func test_a_cached_answer_is_a_copy() -> void:
+	var router := _router()
+	var request := _request(LlmRequest.Purpose.INTENT)
+	var original := LlmResponse.success("persuade", "m", "openai")
+	router.store(request, "openai", "cheap-model", original, 100.0)
+	var first := router.cached(request, "openai", "cheap-model", 101.0)
+	first.request_id = "someone else's"
+	var second := router.cached(request, "openai", "cheap-model", 102.0)
+	assert_eq(second.request_id, "", "one caller's stamp never reaches the next")
+	assert_false(original.from_cache, "whoever asked first did not get a cached answer")
 
 
 func test_google_response_parsing() -> void:

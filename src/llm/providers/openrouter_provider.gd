@@ -37,9 +37,10 @@ func build_http(request: LlmRequest, model: String, api_key: String) -> Dictiona
 	var body := {
 		"model": model,
 		"messages": LlmProvider.with_system_message(request.system, request.messages),
-		"temperature": request.temperature,
 		"max_tokens": LlmProvider.output_cap(request, model),
 	}
+	if not LlmProvider.rejects_temperature(model):
+		body["temperature"] = request.temperature
 	if LlmProvider.may_reason(model):
 		# Models that do not reason ignore this; the ones that do keep it short.
 		body["reasoning"] = {"effort": "low"}
@@ -68,15 +69,4 @@ func parse_http(status: int, body_text: String, model: String) -> LlmResponse:
 	if parsed.has("error") and not parsed.has("choices"):
 		return LlmResponse.failure("server", LlmProvider.error_text(body_text))
 
-	var choices: Array = parsed.get("choices", [])
-	if choices.is_empty():
-		return LlmResponse.failure("bad_response", "no choices returned")
-
-	var first: Dictionary = choices[0]
-	var message: Dictionary = first.get("message", {})
-	var response := LlmResponse.success(str(message.get("content", "")), str(parsed.get("model", model)), id())
-	response.finish_reason = str(first.get("finish_reason", ""))
-	var usage: Dictionary = parsed.get("usage", {})
-	response.prompt_tokens = int(usage.get("prompt_tokens", 0))
-	response.completion_tokens = int(usage.get("completion_tokens", 0))
-	return response
+	return LlmProvider.parse_chat_completion(parsed, model, id())

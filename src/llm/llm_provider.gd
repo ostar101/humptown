@@ -93,6 +93,49 @@ static func error_text(body_text: String) -> String:
 	return body_text.substr(0, 200)
 
 
+## Whether an OpenAI-style model rejects sampling parameters: the reasoning
+## families take only the default temperature and answer anything else with a
+## 400. As on Anthropic (D-036), a missing sampling parameter costs nothing and
+## a rejected one costs the whole reply.
+static func rejects_temperature(model: String) -> bool:
+	var lower := model.to_lower()
+	var bare := lower.get_slice("/", lower.get_slice_count("/") - 1)   # "openai/gpt-5" -> "gpt-5"
+	return bare.begins_with("gpt-5") or bare.begins_with("o1") or bare.begins_with("o3") or bare.begins_with("o4")
+
+
+## The answer in an OpenAI-shaped (Chat Completions) reply, which OpenAI and
+## OpenRouter both send. JSON `null` is read as nothing, never as the string
+## "<null>" that `str()` would make of it: a reasoning model that spent its
+## whole budget thinking answers `content: null`, and that must fall back to
+## an authored line rather than be said aloud. A `refusal` is a failure.
+static func parse_chat_completion(parsed: Dictionary, model: String, provider_id: String) -> LlmResponse:
+	var choices: Array = parsed.get("choices") if parsed.get("choices") is Array else []
+	if choices.is_empty() or not choices[0] is Dictionary:
+		return LlmResponse.failure("bad_response", "no choices returned")
+	var first: Dictionary = choices[0]
+	var message: Dictionary = first.get("message") if first.get("message") is Dictionary else {}
+	var refusal: Variant = message.get("refusal")
+	if refusal is String and not (refusal as String).is_empty():
+		return LlmResponse.failure("refused", "the model declined")
+	var content: Variant = message.get("content")
+	var response := LlmResponse.success(content if content is String else "", _text(parsed.get("model"), model), provider_id)
+	response.finish_reason = _text(first.get("finish_reason"), "")
+	var usage: Dictionary = parsed.get("usage") if parsed.get("usage") is Dictionary else {}
+	response.prompt_tokens = _count(usage.get("prompt_tokens"))
+	response.completion_tokens = _count(usage.get("completion_tokens"))
+	return response
+
+
+## A JSON value as text, or `fallback` when it is missing or null.
+static func _text(value: Variant, fallback: String) -> String:
+	return value if value is String else fallback
+
+
+## A JSON number as a count, or 0 when it is missing or null.
+static func _count(value: Variant) -> int:
+	return int(value) if value is float or value is int else 0
+
+
 ## Splits our messages into the OpenAI-style array with a leading system turn.
 static func with_system_message(system: String, messages: Array[Dictionary]) -> Array:
 	var out: Array = []

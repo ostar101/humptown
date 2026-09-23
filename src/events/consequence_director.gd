@@ -123,7 +123,10 @@ func _sources() -> Array[Dictionary]:
 ## Someone alive, not the law, and not the player's own friend by now.
 func _may_hold(npc_id: String) -> bool:
 	var npc := _npcs.get_npc(npc_id)
-	return npc != null and npc.alive and not _crime.officers().has(npc_id)
+	if npc == null or not npc.alive or _crime.officers().has(npc_id):
+		return false
+	var feeling := _relationships.peek(npc_id, PlayerState.ID)
+	return feeling == null or not ConsequenceRules.made_up(feeling.affection)
 
 
 ## Takes the next step for one of them, if it is time. Returns whether it did.

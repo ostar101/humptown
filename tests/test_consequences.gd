@@ -177,6 +177,18 @@ func test_friends_take_it_up_one_a_day() -> void:
 	assert_eq(_texts("npc_leena"), ["You hurt Elias Lahtinen. Don't think that's the end of it."] as Array[String])
 
 
+func test_someone_you_have_made_up_with_holds_no_grudge() -> void:
+	_start()
+	_beaten("npc_elias", ["npc_elias"] as Array[String])
+	_daily(0)
+	assert_eq(Game.consequences.grudges["npc_elias"]["warnings"], 1, "warned, while it still hurt")
+	Game.relationships.get_edge("npc_elias", PlayerState.ID).affection = FightDirector.JOIN_AFFECTION
+	for day in range(2, 30):
+		_daily(day)
+	assert_eq(Game.consequences.grudges["npc_elias"]["confrontations"], 0, "a friend by now names no time and place")
+	assert_eq(Game.consequences.grudges["npc_elias"]["warnings"], 1, "and starts nothing again")
+
+
 func test_an_ignored_warning_becomes_a_time_and_a_place() -> void:
 	_start()
 	_beaten("npc_elias", ["npc_elias"] as Array[String])

@@ -24,8 +24,9 @@ func build_http(request: LlmRequest, model: String, api_key: String) -> Dictiona
 	var body := {
 		"model": model,
 		"messages": LlmProvider.with_system_message(request.system, request.messages),
-		"temperature": request.temperature,
 	}
+	if not LlmProvider.rejects_temperature(model):
+		body["temperature"] = request.temperature
 	# Newer reasoning-capable models renamed the output cap.
 	if _uses_completion_tokens(model):
 		body["max_completion_tokens"] = LlmProvider.output_cap(request, model)
@@ -51,18 +52,7 @@ func parse_http(status: int, body_text: String, model: String) -> LlmResponse:
 	var parsed: Variant = SafeJson.parse(body_text)
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return LlmResponse.failure("bad_response", "response was not JSON")
-	var choices: Array = parsed.get("choices", [])
-	if choices.is_empty():
-		return LlmResponse.failure("bad_response", "no choices returned")
-
-	var first: Dictionary = choices[0]
-	var message: Dictionary = first.get("message", {})
-	var response := LlmResponse.success(str(message.get("content", "")), str(parsed.get("model", model)), id())
-	response.finish_reason = str(first.get("finish_reason", ""))
-	var usage: Dictionary = parsed.get("usage", {})
-	response.prompt_tokens = int(usage.get("prompt_tokens", 0))
-	response.completion_tokens = int(usage.get("completion_tokens", 0))
-	return response
+	return LlmProvider.parse_chat_completion(parsed, model, id())
 
 
 func _uses_completion_tokens(model: String) -> bool:

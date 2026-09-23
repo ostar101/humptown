@@ -148,6 +148,43 @@ func test_the_struck_price_carries_into_the_shop() -> void:
 	assert_ne(shown, plain, "a struck deal prices differently from the shop's plain price")
 
 
+## Who counts as watching a deal is who could see it: someone asleep where the
+## dealer stands does not, someone awake does — as for a theft (`watchers()`).
+func test_only_someone_awake_is_watching() -> void:
+	var rauno := _meet_rauno()
+	for npc_id: String in Game.npcs.living_ids():
+		if npc_id != "npc_rauno" and Game.npcs.get_npc(npc_id).location == rauno.location:
+			Game.npcs.get_npc(npc_id).location = Game.npcs.get_npc(npc_id).home
+	var ida := Game.npcs.get_npc("npc_ida")
+	ida.location = rauno.location
+	ida.activity = "sleep"
+	assert_false(bool(Game.dialogue._deal_state("npc_rauno")["watched"]), "asleep, she sees nothing")
+	ida.activity = "idle"
+	assert_true(bool(Game.dialogue._deal_state("npc_rauno")["watched"]), "awake, she might")
+
+
+## A struck deal was the haggle, and there is no counter to pocket from: the
+## window offers Buy and nothing else, where an ordinary shop offers all three.
+func test_a_deal_offers_no_haggling_and_nothing_to_pocket() -> void:
+	_meet_rauno()
+	Game.relationships.adjust("npc_rauno", PlayerState.ID, "familiarity", 0.9)
+	Game.relationships.adjust("npc_rauno", PlayerState.ID, "trust", 0.9)
+	await Game.say_to_npc("Got anything?")
+	Game.end_conversation()
+	var view: WorldView = (load("res://scenes/world/world.tscn") as PackedScene).instantiate()
+	(Engine.get_main_loop() as SceneTree).root.add_child(view)
+	var window := view.shop_window()
+	assert_ok(window.open_deal("npc_rauno", "shop_warehouse_stash"))
+	assert_true(bool(Game.shop_view()["dealing"]))
+	var rows := window.find_child("Rows", true, false)
+	assert_gt(rows.get_child_count(), 0)
+	for row in rows.get_children():
+		var buttons := row.get_children().filter(func(child: Node) -> bool: return child is Button)
+		assert_eq(buttons.size(), 1, "Buy, and only Buy")
+	window.close()
+	view.free()
+
+
 func test_a_stranger_is_turned_away() -> void:
 	_meet_rauno()
 	await Game.say_to_npc("Got anything?")

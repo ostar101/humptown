@@ -31,7 +31,12 @@ func slot_path(slot: String) -> String:
 
 
 func has_slot(slot: String) -> bool:
-	return FileAccess.file_exists(slot_path(slot))
+	return FileAccess.file_exists(slot_path(slot)) or FileAccess.file_exists(_backup_path(slot))
+
+
+## Where the previous save waits while a new one is swapped in.
+func _backup_path(slot: String) -> String:
+	return slot_path(slot) + ".bak"
 
 
 ## Slot ids present on disk, newest first.
@@ -106,14 +111,25 @@ func save(slot: String, sections: Dictionary, meta: Dictionary = {}) -> Result:
 		last_error = "written save did not parse"
 		return Result.failure("save_verify_failed", last_error)
 
+	# The old save is set aside, not deleted, until the new one is in place: a
+	# rename that fails (a file held open by a virus scanner, a full disk) puts
+	# it back, and a crash between the two renames leaves it readable as the
+	# backup `_read_file` falls back to.
 	var absolute_temp := ProjectSettings.globalize_path(temp_path)
 	var absolute_final := ProjectSettings.globalize_path(final_path)
-	if FileAccess.file_exists(final_path):
-		DirAccess.remove_absolute(absolute_final)
-	var moved := DirAccess.rename_absolute(absolute_temp, absolute_final)
-	if moved != OK:
+	var absolute_backup := ProjectSettings.globalize_path(_backup_path(slot))
+	if FileAccess.file_exists(_backup_path(slot)):
+		DirAccess.remove_absolute(absolute_backup)
+	if FileAccess.file_exists(final_path) and DirAccess.rename_absolute(absolute_final, absolute_backup) != OK:
+		last_error = "could not set the previous save aside"
+		return Result.failure("save_replace_failed", last_error)
+	if DirAccess.rename_absolute(absolute_temp, absolute_final) != OK:
+		if FileAccess.file_exists(_backup_path(slot)):
+			DirAccess.rename_absolute(absolute_backup, absolute_final)
 		last_error = "could not replace previous save"
 		return Result.failure("save_replace_failed", last_error)
+	if FileAccess.file_exists(_backup_path(slot)):
+		DirAccess.remove_absolute(absolute_backup)
 
 	Log.info("save", "Game saved", {"slot": slot, "bytes": verify_text.length()})
 	Events.game_saved.emit(slot)
@@ -141,12 +157,17 @@ func load_slot(slot: String) -> Result:
 func delete_slot(slot: String) -> Result:
 	if not has_slot(slot):
 		return Result.failure("save_missing")
-	var error := DirAccess.remove_absolute(ProjectSettings.globalize_path(slot_path(slot)))
-	return Result.success(slot) if error == OK else Result.failure("save_delete_failed")
+	var failed := false
+	for path: String in [slot_path(slot), _backup_path(slot)]:
+		if FileAccess.file_exists(path) and DirAccess.remove_absolute(ProjectSettings.globalize_path(path)) != OK:
+			failed = true
+	return Result.failure("save_delete_failed") if failed else Result.success(slot)
 
 
 func _read_file(slot: String) -> Dictionary:
 	var path := slot_path(slot)
+	if not FileAccess.file_exists(path):
+		path = _backup_path(slot)   # interrupted half-way through a save: the last good one
 	if not FileAccess.file_exists(path):
 		return {}
 	var file := FileAccess.open_compressed(path, FileAccess.READ, FileAccess.COMPRESSION_ZSTD)

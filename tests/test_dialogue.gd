@@ -289,6 +289,29 @@ func test_walking_up_to_someone_and_talking_to_them() -> void:
 	view.free()
 
 
+## A goodbye leaves the box up a moment before it closes itself. Closed sooner
+## by hand and a new conversation begun, that moment must not close the new one.
+func test_a_goodbye_never_closes_the_next_conversation() -> void:
+	var joonas := Game.npcs.get_npc("npc_joonas")
+	joonas.location = "loc_harbour"
+	joonas.activity = "work"
+	var view := _spawn_world()
+	var tree := Engine.get_main_loop() as SceneTree
+	var box := view.dialogue_box()
+	assert_ok(view.talk_to(view.npc_bodies().body_for("npc_joonas")))
+	var bye: Result = await box.submit("Goodbye.")
+	assert_true(bool(bye.value["ends"]))
+	box.close()   # the player does not wait for it
+	assert_ok(view.talk_to(view.npc_bodies().body_for("npc_joonas")))
+	Engine.time_scale = 10.0
+	await tree.create_timer(DialogueBox.LINGER_AFTER_GOODBYE + 3.0).timeout
+	Engine.time_scale = 1.0
+	assert_true(box.is_open(), "the old goodbye's pause is over and the new conversation goes on")
+	assert_true(Game.dialogue.is_talking())
+	box.close()
+	view.free()
+
+
 func test_a_refusal_in_the_world_shows_why_and_opens_nothing() -> void:
 	var joonas := Game.npcs.get_npc("npc_joonas")
 	joonas.location = "loc_harbour"

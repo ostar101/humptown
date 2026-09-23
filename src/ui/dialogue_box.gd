@@ -31,6 +31,10 @@ var _reveal: Tween = null
 var _leaving := false
 var _waiting := false
 var _thinking: Tween = null
+## Which conversation this is. Anything that finishes later — a reply that took
+## a while, the pause after a goodbye — checks it still belongs to the one on
+## screen, so it can never reach into the next conversation.
+var _session := 0
 
 
 func _ready() -> void:
@@ -64,6 +68,8 @@ func open(npc_id: String, by_phone: bool = false) -> Result:
 		return started
 	_npc_id = npc_id
 	_leaving = false
+	_waiting = false
+	_session += 1
 	var npc := Game.npcs.get_npc(npc_id)
 	var palette := NpcLook.palette_for(npc)
 	_portrait.palette = palette
@@ -87,13 +93,14 @@ func submit(text: String) -> Result:
 	if text.strip_edges().is_empty():
 		return Result.failure("empty")
 	_waiting = true
+	var session := _session
 	_set_input_enabled(false)
 	if Game.dialogue.model.is_available():
 		_show_thinking()
 	var said: Result = await Game.say_to_npc(text)
+	if session != _session or not visible:
+		return said   # closed while waiting; whatever is on screen now is not this
 	_waiting = false
-	if not visible:
-		return said   # closed while waiting
 	if said.is_err():
 		_set_input_enabled(true)
 		return said
@@ -105,7 +112,9 @@ func submit(text: String) -> Result:
 	if reply["ends"]:
 		_leaving = true
 		var linger := str(reply["text"]).length() / CHARS_PER_SECOND + LINGER_AFTER_GOODBYE
-		get_tree().create_timer(linger).timeout.connect(close)
+		get_tree().create_timer(linger).timeout.connect(func() -> void:
+			if session == _session:
+				close())
 	else:
 		_set_input_enabled(true)
 		_entry.grab_focus()
@@ -124,6 +133,8 @@ func close() -> void:
 		_thinking = null
 	visible = false
 	_leaving = false
+	_waiting = false
+	_session += 1
 	closed.emit()
 
 

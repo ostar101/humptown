@@ -10,6 +10,10 @@ extends CanvasLayer
 signal closed()
 
 var _selling := false
+## A deal struck in conversation (D-085) rather than a counter stepped up to:
+## the price was already talked over and there is no shelf to pocket from,
+## so neither Haggle nor Pocket it is offered.
+var _dealing := false
 
 @onready var _root: Control = $Root
 @onready var _title: Label = %Title
@@ -160,6 +164,7 @@ func _render() -> void:
 	var view := Game.shop_view()
 	if view.is_empty():
 		return
+	_dealing = bool(view.get("dealing", false))
 	_title.text = InteractionText.place_name(str(view["location"]))
 	var staff := str(view["staff"])
 	_serving.text = Localization.t("ui.shop.serving", {"name": Game.dialogue.display_name(staff, Game.data)}) \
@@ -212,6 +217,10 @@ func _row(entry: Dictionary) -> HBoxContainer:
 		action.text = Localization.t("ui.shop.buy")
 		action.disabled = int(entry["stock"]) <= 0
 		action.pressed.connect(func() -> void: buy(item_id))
+		if _dealing:
+			for child: Control in [item_name, price, detail, action]:
+				row.add_child(child)
+			return row
 		var bargain := Button.new()
 		bargain.theme_type_variation = &"SmallButton"
 		bargain.custom_minimum_size = Vector2(90, 0)

@@ -271,7 +271,18 @@ func unload() -> void:
 	npcs = NpcRegistry.new()
 	director = NpcDirector.new()
 	dialogue = DialogueDirector.new()
+	# What was half-way through in the last life must not carry into the next:
+	# a retier stamped at a later minute than a loaded save would stop the
+	# periodic retier until the clock caught up with it.
+	_last_retier = -999
 	_time_paused_before_talk = false
+	_time_paused_before_fight = false
+	_time_paused_before_shopping = false
+	_player_activity = "idle"
+	_collapse_due = false
+	_collapsing = false
+	_arrest_pending = {}
+	_arresting = false
 	world_unloaded.emit()
 
 
@@ -698,9 +709,11 @@ func _priced_buy(shop_id: String, item_id: String) -> int:
 	return base if is_equal_approx(factor, 1.0) else ShopRegistry.price(base, factor)
 
 
-## The counter as the player sees it: {"shop", "location", "staff", "cash",
-## "bank", "for_sale": [{item, name_key, price, stock}], "will_buy": [{item,
-## name_key, price, owned}]}. Empty when not shopping.
+## The counter as the player sees it: {"shop", "location", "staff", "dealing",
+## "cash", "bank", "for_sale": [{item, name_key, price, stock}], "will_buy":
+## [{item, name_key, price, owned}]}. `dealing` is a deal struck in
+## conversation (D-085): its price was the haggle, and there is no counter to
+## pocket anything from. Empty when not shopping.
 func shop_view() -> Dictionary:
 	if _shopping.is_empty():
 		return {}
@@ -723,7 +736,7 @@ func shop_view() -> Dictionary:
 	var keeper_npc := npcs.get_npc(_deal_keeper) if _dealing else null
 	var location := (keeper_npc.location if keeper_npc != null else "") if _dealing else _shopping
 	return {
-		"shop": shop_id, "location": location, "staff": _current_staff(),
+		"shop": shop_id, "location": location, "staff": _current_staff(), "dealing": _dealing,
 		"cash": player.wallet.cash, "bank": player.wallet.bank,
 		"for_sale": for_sale, "will_buy": will_buy,
 	}

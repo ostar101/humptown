@@ -3591,3 +3591,68 @@ with skyscrapers, walkable upper floors, romance, sex work as an economy —
 are sequenced after M8 entirely and not detailed in this plan; the plan
 itself never wrote a session-D handoff prompt the way sessions B and C
 got one.
+
+## D-089 — A review pass: eight bugs, none of them in a system's own logic
+
+**Why.** The user asked for the whole project to be read through for bugs
+and for what could work better. Nothing from M4 onward has been played at a
+keyboard, so the pass looked hardest where tests are thinnest: the seams
+between systems, the provider adapters no live call has ever exercised, and
+state that outlives one conversation or one life. Every fix below has a
+test that fails on the code before it.
+
+**The providers, before first contact.** OpenAI's reasoning models (`gpt-5*`,
+`o1`/`o3`/`o4`) take only the default temperature and answer any other with a
+400; `gpt-5` was in the adapter's own suggested list and would have failed
+every call. `LlmProvider.rejects_temperature()` now leaves it out for them,
+on OpenAI and through OpenRouter — the same "a missing sampling parameter
+costs nothing" rule the Anthropic adapter already had (D-036). Both
+Chat-Completions adapters also read `content: null` — a reply that spent its
+whole budget thinking, or a refusal — through `str()`, which in Godot makes
+the literal text `<null>`: an NPC would have said it aloud. One shared
+`LlmProvider.parse_chat_completion()` now reads null as no text (so an
+authored line stands in), reads a `refusal` as a `refused` failure, and
+tolerates `usage: null`. The Anthropic adapter was checked against the
+current API (model ids, `output_config.effort`, temperature only on the older
+families, `stop_reason: "refusal"`) and needed nothing. A cached answer is
+now a copy (`LlmResponse.copy()`), so the request id and latency `send()`
+stamps on it no longer overwrite the stored one or the first caller's.
+
+**State that outlived what it belonged to.** `Game.unload()` reset every
+system but not Game's own per-session flags. `_last_retier` is the one that
+bit: play on past a save, go back to it, and the periodic retier stopped
+until the clock caught up with the abandoned life's minute. All eight flags
+are reset now. `DialogueBox` closed itself a moment after a goodbye with a
+timer that closed whatever was open when it fired — close the box by hand
+and talk to someone else within two seconds, and the new conversation was
+shut. A reply still thinking when the box closed also left `_waiting` set,
+refusing input in the next conversation until the old reply came back. A
+per-conversation `_session` counter guards both.
+
+**Rules that did not say what their docstrings said.**
+`ConsequenceDirector._may_hold()` was documented as "not the player's own
+friend by now" and checked no such thing: someone the player had since made
+up with still warned and named a time and a place every twelve days, for
+ever. `ConsequenceRules.made_up()` — affection toward the player at the same
+bar as a friend stepping into a fight (`FightDirector.JOIN_AFFECTION`) — now
+ends it. Only grudges; a creditor's debt is not forgiven by liking you.
+`DialogueDirector._someone_else_about()` counted a sleeping person as
+watching a deal, where `CrimeDirector.watchers()` — which decides who could
+report it — already skipped sleepers; the two now agree.
+
+**Smaller.** A dealt shop (D-085) showed Haggle and Pocket, both of which
+could only ever answer "nobody is serving"; `shop_view()` now carries
+`dealing` and the window offers Buy alone. `_place_name()`'s fallback still
+said "somewhere in Harbourside" — the one D-088 missed. `SaveManager.save()`
+deleted the old save before renaming the new one into place, so a failed
+rename (a file held by a virus scanner) left the player with nothing under
+the slot's name; the old one is now set aside as `.bak`, put back if the
+rename fails, and read by `_read_file()` if a crash lands between the two.
+
+**Seen, not changed — worth deciding deliberately.** `_heat_level()` counts
+`crime.record.size() × 0.15` and the record never fades, so after five or six
+settled cases every dealer is `too_hot` for good; fading it by age is a tuning
+decision, left to whoever next plays the dealing. `KnowledgeNetwork.
+forget_stale()` drops beliefs but never the facts nobody holds any more, so
+`facts` only grows; harmless at today's rates. A collection has no end once a
+debt quest fails — nothing lets the player pay it off late.

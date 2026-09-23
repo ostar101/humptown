@@ -45,6 +45,40 @@ func test_header_reads_without_a_full_load() -> void:
 	assert_gt(float(header["saved_at"]), 0.0)
 
 
+## Played on past the save, then went back to it: the periodic retier must
+## carry on from the loaded minute, not wait for the clock to catch up with
+## where the abandoned life had got to.
+func test_loading_an_earlier_save_keeps_the_retier_going() -> void:
+	assert_ok(Game.new_game("", 3))
+	assert_ok(Game.save_game(Game.save_slot))
+	Game._last_retier = Game.clock.total_minutes + 5000   # the life that was not saved
+	assert_ok(Game.load_game(Game.save_slot))
+	var minute := Game.clock.total_minutes + Game.RETIER_INTERVAL
+	Game._on_minute(minute)
+	assert_eq(Game._last_retier, minute, "tiers were reassigned on schedule")
+	saves.delete_slot(Game.save_slot)
+
+
+func test_saving_over_a_save_leaves_nothing_half_done_behind() -> void:
+	assert_ok(saves.save(SLOT, {"clock": {"total_minutes": 1}}))
+	assert_ok(saves.save(SLOT, {"clock": {"total_minutes": 2}}))
+	assert_eq(saves.load_slot(SLOT).value["clock"]["total_minutes"], 2)
+	assert_false(FileAccess.file_exists(saves.slot_path(SLOT) + ".tmp"))
+	assert_false(FileAccess.file_exists(saves.slot_path(SLOT) + ".bak"))
+
+
+## Stopped between setting the old save aside and putting the new one in its
+## place: the old one is still what loads.
+func test_a_save_interrupted_mid_swap_still_loads_the_last_good_one() -> void:
+	assert_ok(saves.save(SLOT, {"clock": {"total_minutes": 5}}))
+	var path := ProjectSettings.globalize_path(saves.slot_path(SLOT))
+	assert_eq(DirAccess.rename_absolute(path, path + ".bak"), OK)
+	assert_true(saves.has_slot(SLOT))
+	assert_eq(saves.load_slot(SLOT).value["clock"]["total_minutes"], 5)
+	assert_ok(saves.delete_slot(SLOT))
+	assert_false(saves.has_slot(SLOT), "the backup goes with the slot")
+
+
 func test_missing_slots_fail_gracefully() -> void:
 	assert_err(saves.load_slot("does_not_exist"), "save_missing")
 	assert_false(saves.has_slot("does_not_exist"))

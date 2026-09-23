@@ -595,7 +595,8 @@ func _subject_name(intent: Dictionary) -> String:
 
 func _place_name(location_id: String) -> String:
 	var place := _world.get_location(location_id) if _world != null else null
-	return DialoguePrompt.english(place.name_key) if place != null else "somewhere in Harbourside"
+	# Not "in Harbourside": people live in three districts now (D-088).
+	return DialoguePrompt.english(place.name_key) if place != null else "somewhere in town"
 
 
 ## How the person feels about the player, dimension by dimension; empty for
@@ -754,7 +755,9 @@ func _heat_level() -> float:
 	return clampf(open_count * 0.6 + _crime.record.size() * 0.15, 0.0, 1.0)
 
 
-## Whether anyone but this person is standing where they are.
+## Whether anyone but this person is awake where they are — the same test
+## `CrimeDirector.watchers()` uses for who could see the deal: someone asleep
+## in the next room sees nothing.
 func _someone_else_about(npc_id: String) -> bool:
 	var npc := _npcs.get_npc(npc_id)
 	if npc == null:
@@ -763,7 +766,7 @@ func _someone_else_about(npc_id: String) -> bool:
 		if other_id == npc_id:
 			continue
 		var other := _npcs.get_npc(other_id)
-		if other != null and other.location == npc.location:
+		if other != null and other.location == npc.location and other.activity != "sleep":
 			return true
 	return false
 
