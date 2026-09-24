@@ -522,7 +522,7 @@
   },
   {
     "id": "npc_otto", "name": "Otto Peltola", "age": 22, "occupation": "occ_labourer",
-    "home": "loc_helmi_flat", "workplace": "", "schedule": "sched_local_idle", "importance": "background",
+    "home": "loc_helmi_flat", "workplace": "", "schedule": "sched_oldtown_idle", "importance": "background",
     "traits": ["cheerful", "unreliable", "good_with_a_ladder"],
     "nature": {"lawfulness": 0.75, "greed": 0.25, "risk": 0.3, "discretion": 0.35},
     "bio": "Helmi's grandson, does odd jobs around Old Town and turns up for the bakery's early hours about half the time.",
@@ -532,7 +532,7 @@
   },
   {
     "id": "npc_mari", "name": "Mari Salo", "age": 24, "occupation": "occ_unemployed",
-    "home": "loc_tapio_flat", "workplace": "", "schedule": "sched_student_day", "importance": "background",
+    "home": "loc_tapio_flat", "workplace": "", "schedule": "sched_oldtown_student", "importance": "background",
     "traits": ["restless", "argues_with_her_father", "studying_by_correspondence"],
     "nature": {"lawfulness": 0.75, "greed": 0.2, "risk": 0.3, "discretion": 0.4},
     "bio": "Tapio's daughter, working through a correspondence course and itching to leave Old Town before she finishes it.",
@@ -542,7 +542,7 @@
   },
   {
     "id": "npc_eero", "name": "Eero Nurmi", "age": 51, "occupation": "occ_unemployed",
-    "home": "loc_oskar_flat", "workplace": "", "schedule": "sched_local_idle", "importance": "background",
+    "home": "loc_oskar_flat", "workplace": "", "schedule": "sched_oldtown_idle", "importance": "background",
     "traits": ["quiet", "watches_the_room", "never_repeats_what_he_hears"],
     "nature": {"lawfulness": 0.55, "greed": 0.35, "risk": 0.35, "discretion": 0.7},
     "bio": "Oskar's cousin, semi-retired, and at the Lantern most evenings watching the room without much comment.",
@@ -575,7 +575,7 @@
   },
   {
     "id": "npc_annaliisa", "name": "Anna-Liisa Kivi", "age": 60, "occupation": "occ_unemployed",
-    "home": "loc_helmi_flat", "workplace": "", "schedule": "sched_local_idle", "importance": "background",
+    "home": "loc_helmi_flat", "workplace": "", "schedule": "sched_oldtown_idle", "importance": "background",
     "traits": ["devout", "kind", "terrible_gossip"],
     "nature": {"lawfulness": 0.85, "greed": 0.15, "risk": 0.1, "discretion": 0.2},
     "bio": "Helmi's oldest friend, at church most mornings and at the bakery counter most of the rest. Knows everyone's business and shares it freely.",
@@ -585,7 +585,7 @@
   },
   {
     "id": "npc_jussi", "name": "Jussi Manninen", "age": 28, "occupation": "occ_labourer",
-    "home": "loc_tapio_flat", "workplace": "", "schedule": "sched_local_idle", "importance": "background",
+    "home": "loc_tapio_flat", "workplace": "", "schedule": "sched_oldtown_idle", "importance": "background",
     "traits": ["good_with_his_hands", "asks_no_questions", "always_between_jobs"],
     "nature": {"lawfulness": 0.5, "greed": 0.4, "risk": 0.45, "discretion": 0.6},
     "bio": "Takes whatever work turns up around Old Town and has learned not to ask why a job pays better than it should.",
@@ -595,7 +595,7 @@
   },
   {
     "id": "npc_riina", "name": "Riina Laakso", "age": 19, "occupation": "occ_unemployed",
-    "home": "loc_ilona_flat", "workplace": "", "schedule": "sched_student_day", "importance": "background",
+    "home": "loc_ilona_flat", "workplace": "", "schedule": "sched_oldtown_student", "importance": "background",
     "traits": ["bookish", "shy", "dreams_of_leaving"],
     "nature": {"lawfulness": 0.8, "greed": 0.2, "risk": 0.3, "discretion": 0.45},
     "bio": "Spends most of her days at the library, half studying and half hiding from a town she finds too small.",
@@ -666,7 +666,7 @@
   },
   {
     "id": "npc_paula", "name": "Paula Ojanen", "age": 58, "occupation": "occ_unemployed",
-    "home": "loc_pauliina_flat", "workplace": "", "schedule": "sched_local_idle", "importance": "background",
+    "home": "loc_pauliina_flat", "workplace": "", "schedule": "sched_eastfield_idle", "importance": "background",
     "traits": ["practical", "sharp_eyed", "remembers_when_it_was_all_fields"],
     "nature": {"lawfulness": 0.8, "greed": 0.2, "risk": 0.15, "discretion": 0.35},
     "bio": "Pauliina's aunt, retired from the cannery years before it shut for good. Keeps half an eye on the street from her window.",
@@ -706,7 +706,7 @@
   },
   {
     "id": "npc_elli", "name": "Elli Korhonen", "age": 20, "occupation": "occ_unemployed",
-    "home": "loc_reijo_flat", "workplace": "", "schedule": "sched_student_day", "importance": "background",
+    "home": "loc_reijo_flat", "workplace": "", "schedule": "sched_eastfield_student", "importance": "background",
     "traits": ["restless", "sharp", "counting_the_days"],
     "nature": {"lawfulness": 0.8, "greed": 0.2, "risk": 0.35, "discretion": 0.4},
     "bio": "Reijo's youngest, working through a plan to leave Eastfield the moment she has saved enough.",

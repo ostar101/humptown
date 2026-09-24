@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-24
 **Milestone:** M6 — Consequences — **complete in code (0.6.0)**. M5 complete (0.5.0). M5 complete in code (0.5.0). **M8 — A town worth walking — complete (all twelve planned steps).** Plan at `C:\Users\miika\.claude\plans\peli-tuntuu-hieman-tyls-lt-prancy-hamming.md`. Sessions A, B and C all done. **Downtown + walkable upper floors — complete, with three residents and a kiosk.** Plan at `C:\Users\miika\.claude\plans\parallel-swimming-hummingbird.md`, all seven steps done (D-091 to D-094); D-095/D-096 (past the plan's own scope, the user's own repeated "continue" with no further detail each time) added residents and a shop.
-**Build:** green. 1159 tests, 36087 assertions with the LimeZu art installed,
+**Build:** green. 1160 tests, 36830 assertions with the LimeZu art installed,
 ~54 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
@@ -10,7 +10,17 @@
 
 ## Next task
 
-**Newest (D-102) — Finnish: ä/ö restored in the first 99 keys (11 were
+**Newest (D-103) — eight people stop commuting to Harbourside.** D-088
+put six Old Town and two Eastfield people on `sched_local_idle` /
+`sched_student_day`, which name Harbourside places, so they spent every
+day there. Four regional schedules (`sched_oldtown_idle`/`_student`,
+`sched_eastfield_idle`/`_student`) and a test over **every** NPC's week
+(`test_nobody_spends_their_ordinary_week_outside_their_own_district`).
+**Rule going forward: a schedule that names a place belongs to that
+place's region; reuse across regions only through `@home`/`@work`.**
+1160 green.
+
+**Before that (D-102) — Finnish: ä/ö restored in the first 99 keys (11 were
 wrong), Eastfield is "Itäpelto" everywhere.** 1159 green.
 
 **Before that (D-101) — Downtown's signs, an errand, Finnish names.** A notice
@@ -511,7 +521,7 @@ criminal-contacts view (D-050); everything in M7. See `ROADMAP.md`.
 
 - 136 source files in `src/`
 - 74 test suites
-- 58 authored NPCs, 57 locations, 4 regions (all mapped), 35 interiors (16 are downtown's own floors), 19 schedules, 4 backgrounds, 13 shops (2 illicit, kept not walked to), 115 items, 61 recipes, 9 jobs, 4 quests, 4 errands, 4 asks (2 debt/leniency, 2 vouching)
+- 58 authored NPCs, 57 locations, 4 regions (all mapped), 35 interiors (16 are downtown's own floors), 23 schedules, 4 backgrounds, 13 shops (2 illicit, kept not walked to), 115 items, 61 recipes, 9 jobs, 4 quests, 4 errands, 4 asks (2 debt/leniency, 2 vouching)
 
 ---
 

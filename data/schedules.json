@@ -260,6 +260,60 @@
     ]
   },
   {
+    "id": "sched_oldtown_idle",
+    "default_activity": "idle",
+    "blocks": [
+      {"start": 0, "days": "all", "location": "@home", "activity": "sleep"},
+      {"start": 360, "days": "all", "location": "@home", "activity": "eat"},
+      {"start": 480, "days": "all", "location": "loc_old_town_street", "activity": "walk"},
+      {"start": 600, "days": "all", "location": "loc_old_square", "activity": "socialise"},
+      {"start": 780, "days": "all", "location": "loc_old_garden", "activity": "idle"},
+      {"start": 1140, "days": "all", "location": "loc_lantern_bar", "activity": "socialise"},
+      {"start": 1290, "days": "all", "location": "@home", "activity": "sleep"}
+    ]
+  },
+  {
+    "id": "sched_oldtown_student",
+    "default_activity": "idle",
+    "blocks": [
+      {"start": 0, "days": "all", "location": "@home", "activity": "sleep"},
+      {"start": 600, "days": "weekday", "location": "loc_library", "activity": "work"},
+      {"start": 780, "days": "weekday", "location": "loc_old_town_street", "activity": "walk"},
+      {"start": 870, "days": "weekday", "location": "@home", "activity": "idle"},
+      {"start": 1140, "days": "weekday", "location": "loc_lantern_bar", "activity": "socialise"},
+      {"start": 660, "days": "weekend", "location": "loc_market", "activity": "walk"},
+      {"start": 900, "days": "weekend", "location": "loc_old_garden", "activity": "socialise"},
+      {"start": 1380, "days": "all", "location": "@home", "activity": "sleep"}
+    ]
+  },
+  {
+    "id": "sched_eastfield_idle",
+    "default_activity": "idle",
+    "blocks": [
+      {"start": 0, "days": "all", "location": "@home", "activity": "sleep"},
+      {"start": 360, "days": "all", "location": "@home", "activity": "eat"},
+      {"start": 480, "days": "all", "location": "loc_eastfield_street", "activity": "walk"},
+      {"start": 600, "days": "all", "location": "loc_fuel_station", "activity": "socialise"},
+      {"start": 840, "days": "all", "location": "loc_football_pitch", "activity": "idle"},
+      {"start": 1140, "days": "all", "location": "@home", "activity": "idle"},
+      {"start": 1290, "days": "all", "location": "@home", "activity": "sleep"}
+    ]
+  },
+  {
+    "id": "sched_eastfield_student",
+    "default_activity": "idle",
+    "blocks": [
+      {"start": 0, "days": "all", "location": "@home", "activity": "sleep"},
+      {"start": 540, "days": "weekday", "location": "loc_fuel_station", "activity": "work"},
+      {"start": 780, "days": "weekday", "location": "loc_eastfield_street", "activity": "walk"},
+      {"start": 870, "days": "weekday", "location": "@home", "activity": "idle"},
+      {"start": 1140, "days": "weekday", "location": "loc_furnace_bar", "activity": "socialise"},
+      {"start": 660, "days": "weekend", "location": "loc_football_pitch", "activity": "walk"},
+      {"start": 900, "days": "weekend", "location": "loc_furnace_bar", "activity": "socialise"},
+      {"start": 1380, "days": "all", "location": "@home", "activity": "sleep"}
+    ]
+  },
+  {
     "id": "sched_scrap_late",
     "default_activity": "idle",
     "blocks": [

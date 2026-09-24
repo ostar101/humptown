@@ -4305,3 +4305,37 @@ and "Itäkenttä" (its street, the fuel station, the road sign). The region's
 own name wins, since it is the one the travel prompt and the phone show:
 **Itäpelto** everywhere, five strings changed. No test asserted any of the
 old spellings. 1159 green.
+
+## D-103 — Eight people stop commuting to Harbourside every day
+
+Found auditing per-region content after D-100/D-101. D-088 gave its thirty
+new people "existing schedules", reasoning that `@home`/`@work` (D-011)
+makes a schedule cost nothing to reuse in another region. That holds for
+the tokens, not for a schedule that names places: `sched_local_idle` and
+`sched_student_day` name `loc_dock_street`, `loc_cafe_kaisla`,
+`loc_harbour` and `loc_anchor_bar`. Six Old Town and two Eastfield people
+on them — Otto, Eero, Anna-Liisa, Jussi, Mari, Riina, Paula, Elli — left
+home at eight every morning for Harbourside, against their own bios
+("at the Lantern most evenings", "most of her days at the library",
+"keeps half an eye on the street from her window"), and their districts
+were emptier by day than authored. `test_every_new_person_lives_and_works_
+in_their_own_district` could not see it: it walks a hand-written list, and
+none of the eight were on it.
+
+**Four regional schedules, each the Harbourside original's shape with its
+own district's places** (D-099's method for Downtown):
+`sched_oldtown_idle` (street, square, garden, the Lantern at 19:00),
+`sched_oldtown_student` (the library from 10:00 when it opens, not 08:00
+when it would be shut), `sched_eastfield_idle` (street, the fuel station,
+the pitch, home by the window) and `sched_eastfield_student` (the fuel
+station, the Furnace in the evening). A student's `work` block at a shop is
+safe: `staff_serving()` requires the shop to be their workplace.
+
+**The test that would have caught it now covers everyone.**
+`test_nobody_spends_their_ordinary_week_outside_their_own_district` walks
+every NPC in `data`, every hour of a week, and allows only the home region
+or the workplace's (nobody commutes today, but a job in another district
+would be legitimate). One assertion per person, naming the first three
+stray hours. It fails on the old data for exactly these eight. 1160 green.
+No simulation code changed; the eight now count toward their own
+district's local population instead of Harbourside's.

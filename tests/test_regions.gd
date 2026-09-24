@@ -198,6 +198,24 @@ func test_every_new_person_lives_and_works_in_their_own_district() -> void:
 				assert_eq(Game.world.region_of(where), region, "%s leaves their district at %02d:00 on day %d (%s)" % [npc_id, hour, day, where])
 
 
+## D-103: every person, not just a list of them. D-088 reused three schedules
+## that name Harbourside's own places, and eight people in Old Town and
+## Eastfield spent every day in Harbourside because nothing walked them all.
+func test_nobody_spends_their_ordinary_week_outside_their_own_district() -> void:
+	for npc_id: String in Game.data.ids("npcs"):
+		var npc := Game.npcs.get_npc(npc_id)
+		var home_region := Game.world.region_of(npc.home)
+		var work_region := Game.world.region_of(npc.workplace) if npc.workplace != "" else home_region
+		var strays: Array[String] = []
+		for day in 7:
+			for hour in 24:
+				var where := Game.npcs.scheduled_location_of(npc_id, day * 1440 + hour * 60, day)
+				var region := Game.world.region_of(where)
+				if region != home_region and region != work_region:
+					strays.append("%s at %02d:00 day %d" % [where, hour, day])
+		assert_true(strays.is_empty(), "%s (%s) leaves: %s" % [npc_id, home_region, ", ".join(strays.slice(0, 3))])
+
+
 func test_every_shop_in_the_new_districts_has_someone_behind_the_counter_when_open() -> void:
 	for shop_id: String in ["shop_bakery", "shop_pharmacy", "shop_lantern", "shop_fuel", "shop_furnace", "shop_pawn", "shop_downtown_kiosk", "shop_downtown_bar"]:
 		var location_id := str(Game.data.get_entry("shops", shop_id)["location"])
