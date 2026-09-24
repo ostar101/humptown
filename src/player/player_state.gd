@@ -116,6 +116,13 @@ func learn_place(location_id: String, how: String) -> bool:
 	return false
 
 
+## The building the player is inside, whichever floor of it: `interior`
+## without its floor suffix, a real location id (D-097). "" outdoors. Compare
+## this, never `interior` itself, against a location id.
+func interior_base() -> String:
+	return DistrictMap.building_of(interior)
+
+
 func knows_place(location_id: String) -> bool:
 	return known_places.has(location_id)
 

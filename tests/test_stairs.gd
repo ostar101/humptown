@@ -86,6 +86,54 @@ func test_a_ground_floor_door_still_leaves_to_the_region_unchanged() -> void:
 	assert_eq(Game.player.interior, "")
 
 
+## Up the corner shop's stairs to the test's second floor.
+func _climb_to_floor_two() -> DistrictMap:
+	var ground := _shop_ground()
+	var floor2 := _add_floor_two()
+	var stairs_cell := ground.entry_cell() + Vector2i.RIGHT
+	ground.objects[stairs_cell] = {"id": "obj_test_stairs", "kind": "stairs", "text_key": "", "sets_flag": ""}
+	_stand(ground.entry_cell())
+	assert_ok(Game.interact_at(stairs_cell))
+	assert_eq(Game.player.interior, "loc_corner_shop#2")
+	return floor2
+
+
+## D-097: a floor key is never a place. floor_key()'s inverse gives back the
+## building, which is what anything asking "where is the player" compares.
+func test_every_floor_key_belongs_to_its_building() -> void:
+	assert_eq(DistrictMap.building_of("loc_corner_shop"), "loc_corner_shop")
+	assert_eq(DistrictMap.building_of(DistrictMap.floor_key("loc_corner_shop", 3)), "loc_corner_shop")
+	assert_eq(DistrictMap.building_of(""), "")
+	_enter_shop()
+	_climb_to_floor_two()
+	assert_eq(Game.player.interior_base(), "loc_corner_shop")
+
+
+## Someone walking with the player goes upstairs with them into the same
+## building — a real Location — never into "loc_corner_shop#2", which is not one.
+func test_someone_walking_with_the_player_follows_them_upstairs() -> void:
+	_enter_shop()
+	Game.director.follow_location = Game.follow_location()
+	assert_true(Game.director.start_follow("npc_ida", 60))
+	_climb_to_floor_two()
+	var ida := Game.npcs.get_npc("npc_ida")
+	assert_eq(ida.location, "loc_corner_shop")
+	assert_true(Game.world.get_location(ida.location) != null, "a follower stands somewhere real")
+
+
+## Anyone at the building is in the room on whichever floor the player is on
+## (their body is drawn there, NpcBodies reads interior_of); talking to them
+## must agree. Someone elsewhere is still nobody there.
+func test_someone_in_the_building_can_be_talked_to_upstairs() -> void:
+	_enter_shop()
+	_climb_to_floor_two()
+	Game.npcs.move_to("npc_ida", "loc_corner_shop")
+	Game.npcs.get_npc("npc_ida").activity = "idle"
+	assert_ok(Game.dialogue.can_talk_to("npc_ida"))
+	Game.npcs.move_to("npc_ida", "loc_dock_street")
+	assert_err(Game.dialogue.can_talk_to("npc_ida"), "nobody_there")
+
+
 func test_climbing_past_the_top_floor_is_refused() -> void:
 	_enter_shop()
 	assert_err(Game._change_floor({}, 1), "no_such_floor", "no floor 2 exists for this building")

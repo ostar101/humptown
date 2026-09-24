@@ -1,16 +1,33 @@
 # Project status
 
-**Updated:** 2026-09-23
+**Updated:** 2026-09-24
 **Milestone:** M6 — Consequences — **complete in code (0.6.0)**. M5 complete (0.5.0). M5 complete in code (0.5.0). **M8 — A town worth walking — complete (all twelve planned steps).** Plan at `C:\Users\miika\.claude\plans\peli-tuntuu-hieman-tyls-lt-prancy-hamming.md`. Sessions A, B and C all done. **Downtown + walkable upper floors — complete, with three residents and a kiosk.** Plan at `C:\Users\miika\.claude\plans\parallel-swimming-hummingbird.md`, all seven steps done (D-091 to D-094); D-095/D-096 (past the plan's own scope, the user's own repeated "continue" with no further detail each time) added residents and a shop.
-**Build:** green. 1155 tests, 33020 assertions with the LimeZu art installed,
-~52 s. No leak warnings at exit.
+**Build:** green. 1158 tests, 33047 assertions with the LimeZu art installed,
+~54 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
 ---
 
 ## Next task
 
-**Newest (D-096) — a fifth building: the kiosk.** `loc_downtown_kiosk`, a
+**Newest (D-097) — a floor key is never a place.** D-091's deferred
+follow-up became reachable once D-095 put Saana to work in a climbable
+tower: upstairs, people at the building were drawn but refused as
+`nobody_there`, a follower was moved to `"loc_downtown_tower_a#2"` (not a
+Location), and the phone lost its "you are here" pin. `DistrictMap.
+building_of()` (floor_key's inverse) and `PlayerState.interior_base()` now
+stand in for `player.interior` wherever it is compared with a location id
+— **the rule from here on: `interior` is only a key for
+`WorldState.interior_for()`; anything asking *where* uses
+`interior_base()`.** Everyone at a building is in the room on whichever
+floor the player is on (deliberate, matches `NpcBodies`). 3 new tests in
+`test_stairs.gd`, 1158 green. Benchmark back to back with HEAD: noise in
+both directions, nothing here runs per minute. Worth trying in play: ask
+someone to follow you into tower A on a weekday, climb, talk to Saana on
+floor 2. **What comes next is unchanged and still the user's call** — see
+D-096 below (more downtown households, a bar, Sessions D+).
+
+**Before that (D-096) — a fifth building: the kiosk.** `loc_downtown_kiosk`, a
 new ground-level building (not a repurposed tower) wearing the shared
 `shop`/`bar`/`civic`/`work` storefront art, same street level as every
 other downtown door. `shop_downtown_kiosk` sells the usual small-shop

@@ -320,7 +320,7 @@ func interact() -> Result:
 	# The frame from before a night or a shift goes by (D-076), to fade from.
 	var before := _snapshot() if str(what.get("kind", "")) in ["bed", "work"] else null
 	var result := Game.interact_at(cell)
-	if result.is_ok() and result.value.get("kind") == "served" and Game.shops.shop_at(Game.player.interior) != "":
+	if result.is_ok() and result.value.get("kind") == "served" and Game.shops.shop_at(Game.player.interior_base()) != "":
 		# A counter with a shop behind it opens the shop (D-039).
 		var opened := open_shop()
 		_front = NO_CELL

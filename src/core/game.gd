@@ -408,7 +408,7 @@ func _set_player_location(now_at: String) -> void:
 ## (a building's own door and plain pavement are both "outside").
 func follow_location() -> String:
 	if not player.interior.is_empty():
-		return player.interior
+		return player.interior_base()
 	var map := world.map_for(player.region)
 	if not player.location.is_empty() and (map == null or not map.is_building(player.location)):
 		return player.location
@@ -636,16 +636,17 @@ func _sleep_in_bed(proposal: Dictionary, location_id: String) -> Result:
 ## `not_a_shop` and `nobody_serving`. Time stands still while shopping, as it
 ## does while talking; each purchase or sale is a minute, paid on leaving.
 func open_shop() -> Result:
-	var proposal := {"kind": "shop", "location": player.interior}
+	var here := player.interior_base()
+	var proposal := {"kind": "shop", "location": here}
 	if not is_running():
 		return _reject(proposal, "no_world")
 	if not _shopping.is_empty():
 		return _reject(proposal, "already_shopping")
-	if shops.shop_at(player.interior).is_empty():
+	if shops.shop_at(here).is_empty():
 		return _reject(proposal, "not_a_shop")
-	if staff_serving(player.interior).is_empty():
+	if staff_serving(here).is_empty():
 		return _reject(proposal, "nobody_serving")
-	_shopping = player.interior
+	_shopping = here
 	_shop_deals = 0
 	_time_paused_before_shopping = clock.paused
 	clock.paused = true
@@ -1221,7 +1222,7 @@ func _arrest(result: Dictionary) -> void:
 ## or the clinic, not asleep, at work, talking, shopping or fighting — and at a
 ## named place, since that is where a person can be walked up to.
 func _findable() -> Dictionary:
-	var sheltered := player.interior == player.home_location or player.location in [POLICE_POST, CLINIC] \
+	var sheltered := player.interior_base() == player.home_location or player.location in [POLICE_POST, CLINIC] \
 		or player.location.is_empty()
 	return {"hour": clock.hour(), "exposed": not sheltered,
 		"busy": _player_activity != "idle" or dialogue.is_talking() or is_shopping() or fights.is_fighting()}
@@ -1321,7 +1322,7 @@ func take(item_id: String, quantity: int = 1) -> Result:
 
 func _move_between(from: Inventory, to: Inventory, item_id: String, quantity: int,
 		proposal: Dictionary, no_room: String) -> Result:
-	if not is_running() or player.interior != player.home_location or player.home_location.is_empty():
+	if not is_running() or player.interior_base() != player.home_location or player.home_location.is_empty():
 		return _reject(proposal, "not_at_home")
 	if quantity < 1:
 		return _reject(proposal, "bad_quantity")

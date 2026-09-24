@@ -430,6 +430,11 @@ static func floor_key(location_id: String, storey: int) -> String:
 	return location_id if storey <= 1 else "%s#%d" % [location_id, storey]
 
 
+## floor_key()'s inverse: the building a floor key belongs to, whichever floor.
+static func building_of(key: String) -> String:
+	return key.get_slice("#", 0)
+
+
 static func cell_to_world(cell: Vector2i) -> Vector2:
 	return (Vector2(cell) + Vector2(0.5, 0.5)) * CELL_PIXELS
 

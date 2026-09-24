@@ -12,6 +12,11 @@ versions are milestones rather than releases until there is something to release
 - Downtown's first two residents: Saana Virtanen and Iiro Mäkelä, each living in one of the apartment blocks and working in one of the towers.
 - Downtown has a shop: a kiosk between the towers, run by Taina Lehto, selling coffee and the usual small-shop odds and ends.
 
+### Fixed (D-097)
+- Upstairs in a Downtown tower, the people in the building can be talked to; before, you could see them but they counted as "nobody there".
+- Someone following you up a tower's stairs now stays with you in the building instead of ending up nowhere at all.
+- The phone's map shows where you are on an upper floor, not only on the ground floor.
+
 ### Fixed (from playing, D-090)
 - Sleeping no longer keeps ending at the clinic: health now recovers with rest when you're fed (most of all overnight), and a night's sleep makes you hungry for breakfast rather than starving.
 - "Injured" no longer appears without an injury: low health with no wound now reads "Weak" / "Heikko".

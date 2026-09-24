@@ -4125,3 +4125,44 @@ apartment blocks (each plausibly holds more than the one or two people
 living there now, the way a couple of Harbourside/Old Town homes already
 share an occupant), a second shop or a bar, and the rest of the Sessions
 D+ list (civic art, home variants, romance, sex work).
+
+## D-097 — A floor key is never a place: `interior_base()`, and D-091's named follow-up closed
+
+**Why now.** D-091 named five call sites that compared `player.interior` to
+a real location id by exact equality, and deferred them because nothing
+then reached an upper floor with anyone in it. That stopped being true in
+D-095: Saana works at `loc_downtown_tower_a`, and the tower is climbable.
+On floor 2 her body is drawn in the room (`NpcBodies` compares against
+`map.interior_of`, the building), but talking to her refused
+`nobody_there`, because `DialogueDirector._where_problem()` compared her
+location with `"loc_downtown_tower_a#2"`. Worse, and a site D-091 did not
+list: `Game.follow_location()` returned `player.interior` as it was, so
+anyone asked to "follow me" up the stairs was moved to
+`"loc_downtown_tower_a#2"` — a string that is not a `Location`, which
+`WorldState.get_location()` answers with `null`. And the phone's map lost
+its "you are here" pin on any upper floor.
+
+**The fix is the helper D-091 proposed, and nothing more.**
+`DistrictMap.building_of(key)` is `floor_key()`'s inverse (the text before
+`#`, the key itself on a ground floor, `""` for `""`);
+`PlayerState.interior_base()` applies it to `interior`. Every comparison of
+the player's interior with a location id now reads the base: the follower's
+destination, who is in the room for conversation, the phone pin,
+`open_shop()` and the counter-opens-shop check in `WorldView`, the stash
+gate in `_move_between()` and `_findable()`'s "at home". The last four
+never see a floor key today (no home or shop has an upper floor), and are
+changed anyway so that the rule is simple: `interior` is a key for
+`WorldState.interior_for()` and nothing else; anything asking *where* uses
+`interior_base()`. `PlayerState.interior` keeps its shape — no migration,
+D-091's conclusion unchanged.
+
+**Consequence, deliberate:** everyone at a building is in the room on
+whichever floor the player stands on. That matches what `NpcBodies` already
+drew; floors are not places, so a person at work in a tower has no floor of
+their own to be on. If one day they need one, that is the "structured
+per-floor state" D-091 said would need its own schema change.
+
+3 new tests in `tests/test_stairs.gd` (the inverse, a follower upstairs,
+talking to someone in the building upstairs plus the `nobody_there` refusal
+for someone elsewhere); the follower and conversation tests fail on the old
+comparisons, checked by reverting them. 1158 tests green (was 1155).

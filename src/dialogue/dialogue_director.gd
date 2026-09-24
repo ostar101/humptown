@@ -521,7 +521,7 @@ func display_name(npc_id: String, data: DataRegistry) -> String:
 
 func _where_problem(npc: Npc) -> String:
 	if not _player.interior.is_empty():
-		return "" if npc.location == _player.interior else "nobody_there"
+		return "" if npc.location == _player.interior_base() else "nobody_there"
 	var location := _world.get_location(npc.location)
 	if location == null or location.region != _player.region:
 		return "nobody_there"

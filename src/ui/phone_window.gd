@@ -343,8 +343,9 @@ func _render_map() -> void:
 			elsewhere.append(location_id)
 	if map != null:
 		var you := Vector2i(-1, -1)
-		if Game.player.interior != "" and map.buildings.has(Game.player.interior):
-			you = (map.buildings[Game.player.interior]["rect"] as Rect2i).get_center()
+		var inside := Game.player.interior_base()
+		if inside != "" and map.buildings.has(inside):
+			you = (map.buildings[inside]["rect"] as Rect2i).get_center()
 		elif Game.player.interior == "":
 			you = DistrictMap.world_to_cell(Game.player.position)
 		var view := MapView.new()
