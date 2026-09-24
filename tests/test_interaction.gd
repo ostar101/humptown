@@ -167,6 +167,25 @@ func test_a_closed_shop_refuses_and_the_world_is_unchanged() -> void:
 	assert_eq(_rejections[-1][1], "closed")
 
 
+## D-104: inside its hours but on its closed day, the door says so rather
+## than quoting hours the shop is keeping every other day.
+func test_a_shop_on_its_closed_day_says_so_and_the_world_is_unchanged() -> void:
+	_set_time(10 * 60)
+	while Game.clock.weekday() != 0:
+		Game.clock.total_minutes += GameClock.MINUTES_PER_DAY
+	_stand(_outside().anchor_of("loc_corner_shop"))
+	var before := Game.player.position
+	assert_err(Game.interact_at(_door("loc_corner_shop")), "closed_today")
+	assert_eq(Game.player.interior, "")
+	assert_eq(Game.player.position, before)
+	assert_eq(_rejections[-1][1], "closed_today")
+	Localization.set_locale("en")
+	var text := InteractionText.outcome_text({"kind": "door", "target": "loc_corner_shop"}, Result.failure("closed_today"))
+	assert_true(text.contains("closed today"), text)
+	Game.clock.total_minutes += GameClock.MINUTES_PER_DAY
+	assert_ok(Game.interact_at(_door("loc_corner_shop")), "open again on Monday")
+
+
 func test_other_peoples_homes_are_private_and_the_warehouse_is_locked() -> void:
 	assert_err(_enter("loc_ida_flat"), "private")
 	assert_err(_enter("loc_warehouse_9"), "locked")

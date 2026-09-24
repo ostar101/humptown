@@ -85,6 +85,9 @@ func validate_references() -> Array[String]:
 		var loc: Dictionary = table("locations")[id]
 		if not has_entry("regions", str(loc.get("region", ""))):
 			problems.append("location '%s' references unknown region '%s'" % [id, loc.get("region")])
+		for day: Variant in loc.get("closed_days", []):
+			if not (day is float or day is int) or int(day) < 0 or int(day) > 6:
+				problems.append("location '%s' has a closed day that is not 0-6: %s" % [id, str(day)])
 	for id in table("npcs"):
 		var npc: Dictionary = table("npcs")[id]
 		if not has_entry("locations", str(npc.get("home", ""))):

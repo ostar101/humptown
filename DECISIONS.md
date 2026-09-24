@@ -4339,3 +4339,47 @@ would be legitimate). One assertion per person, naming the first three
 stray hours. It fails on the old data for exactly these eight. 1160 green.
 No simulation code changed; the eight now count toward their own
 district's local population instead of Harbourside's.
+
+## D-104 — Closed days: a shop is shut on the days nobody works it
+
+**Found by auditing every shop on every day** (the staffing test checked
+eight shops on a Wednesday). Five were open, by their hours, with nobody
+behind the counter for a whole day: the corner shop, Kaisla and the kiosk
+on Sundays, the pawn shop and the pharmacy all weekend. The player walked
+through an open door to "nobody is serving". No exploit — stealing already
+needs someone serving — but a place that lies about being open.
+
+**Two answers, chosen per place by who else goes there that day:**
+
+- **Shut** where nobody goes on the day: the pharmacy and the pawn shop
+  (weekends), the corner shop (Sundays; the Anchor's barkeep, whose
+  `sched_bar_night` shopped there daily, now spends Sunday afternoon at
+  Kaisla instead). This needed a small mechanism:
+  `Location.closed_days` (weekdays, 0 = Sunday as `GameClock.weekday()`),
+  `is_closed_on(weekday, minute)` — a place open past midnight counts its
+  small hours to the evening they started — and an optional weekday on
+  `is_open_at()`. Callers that know the day pass it: the door
+  (`closed_today`, "{place} is closed today", rather than quoting hours it
+  keeps every other day), `ask_go`'s check now and at the return time, and
+  meetings and summons, which are always for tomorrow
+  (`MeetingDirector._open_tomorrow()`). `DataRegistry` refuses a closed day
+  outside 0–6. Not saved: it is authored data, like the hours.
+- **Staffed** where people go anyway: Kaisla is where Harbourside spends
+  Sunday (its own owner socialises there), so Emma now works Sunday to
+  Friday and has Saturdays off (`sched_cafe_sunday`), and Leena keeps
+  Monday to Saturday. The kiosk is on Downtown's idle round every day, so
+  Tomi (D-099, "looking for work") minds it on Sundays
+  (`sched_downtown_sunday_cover`, `occ_counter_hand`); his bio says so.
+  Elias was the obvious corner-shop cover and deliberately not used: his
+  being out of work is the debt quest's premise.
+
+**Tests.** The staffing test now covers every shop with a counter, every
+day, with closed days honoured (`test_every_shop_has_someone_behind_the_
+counter_whenever_open`); `test_nobody_is_sent_to_a_place_on_its_closed_
+day` walks every NPC's week; plus the Location rules (including past
+midnight), the door's refusal and its text, the validator, and a meeting
+never suggested at a place shut tomorrow. 1165 green (was 1160). Benchmark
+back to back: this machine was heavily loaded (HEAD itself ~75% above the
+morning's numbers) and the two runs differ in both directions; nothing
+here is on the per-minute path — `is_open_at` has no caller in
+`src/npc/` or `src/time/`.

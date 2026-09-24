@@ -556,6 +556,8 @@ func _enter_building(proposal: Dictionary, location_id: String) -> Result:
 			return _reject(proposal, "locked")
 		if location.access == Location.Access.PRIVATE:
 			return _reject(proposal, "private")
+		if location.is_closed_on(clock.weekday(), clock.minute_of_day()):
+			return _reject(proposal, "closed_today")
 		if not location.is_open_at(clock.minute_of_day()):
 			return _reject(proposal, "closed")
 	var inside := world.interior_for(location_id)

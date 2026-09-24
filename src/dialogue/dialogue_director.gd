@@ -698,11 +698,13 @@ func _go_state(npc_id: String, place_id: String) -> Dictionary:
 		return {"problem": "unknown", "free_minutes": 0, "busy": false, "here": false}
 	var free := FollowRules.free_minutes(_npcs.schedule_for(npc), _clock.total_minutes, _clock.weekday())
 	var back_at := (_clock.minute_of_day() + mini(free, FollowRules.GO_MINUTES)) % 1440
+	var today := _clock.weekday()
+	var back_on := posmod(today + 1, 7) if back_at < _clock.minute_of_day() else today
 	var from := _world.get_location(npc.location)
 	var problem := ""
 	if from != null and from.region != place.region:
 		problem = "far"
-	elif not place.is_public() or place.is_locked() or not place.is_open_at(_clock.minute_of_day()) 			or not place.is_open_at(back_at):
+	elif not place.is_public() or place.is_locked() or not place.is_open_at(_clock.minute_of_day(), today) 			or not place.is_open_at(back_at, back_on):
 		problem = "closed"
 	return {
 		"problem": problem, "free_minutes": free, "here": npc.location == place_id,

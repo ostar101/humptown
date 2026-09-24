@@ -188,6 +188,7 @@
   "ui.msg.refused.locked": "Ovi on lukossa.",
   "ui.msg.refused.private": "{place} on jonkun koti. Sinne ei vain kävellä sisään.",
   "ui.msg.refused.closed": "{place} on kiinni. Auki {from}–{until}.",
+  "ui.msg.refused.closed_today": "{place} on tänään kiinni.",
   "ui.msg.refused.nobody_serving": "Tiskin takana ei ole ketään.",
   "ui.msg.refused.not_your_bed": "Tämä ei ole sinun sänkysi.",
   "ui.msg.refused.not_tired": "Et ole tarpeeksi väsynyt nukkumaan.",

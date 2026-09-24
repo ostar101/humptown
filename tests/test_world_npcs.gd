@@ -77,6 +77,30 @@ func test_opening_hours_including_past_midnight() -> void:
 	assert_false(bar.is_open_at(600), "but not in the morning")
 
 
+## D-104: a closed day shuts the whole day, and a bar's small hours belong to
+## the evening they started.
+func test_closed_days_including_past_midnight() -> void:
+	var shop: Location = world.get_location("loc_corner_shop")
+	assert_eq(shop.closed_days, [0] as Array[int])
+	assert_false(shop.is_open_at(600, 0), "shut on Sunday")
+	assert_true(shop.is_open_at(600, 1), "open on Monday")
+	assert_true(shop.is_open_at(600), "no weekday given, no closed day considered")
+	var bar := Location.from_data({"id": "loc_test_bar", "open_from": 1200, "open_until": 180, "closed_days": [0]})
+	assert_true(bar.is_open_at(60, 0), "one on Sunday morning is still Saturday night")
+	assert_false(bar.is_open_at(1300, 0), "Sunday evening it stays shut")
+	assert_false(bar.is_open_at(60, 1), "and so do the small hours after it")
+	assert_true(bar.is_open_at(1300, 1), "open again on Monday evening")
+
+
+func test_a_closed_day_outside_the_week_is_reported() -> void:
+	var fresh := DataRegistry.new()
+	fresh.load_all()
+	fresh.tables["locations"]["loc_corner_shop"]["closed_days"] = [7]
+	var text := "
+".join(fresh.validate_references())
+	assert_true(text.contains("closed day that is not 0-6"), text)
+
+
 # --- population -------------------------------------------------------------
 
 func test_the_town_has_persistent_inhabitants() -> void:

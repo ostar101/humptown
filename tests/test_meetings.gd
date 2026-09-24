@@ -157,6 +157,16 @@ func test_a_friend_suggests_tomorrow_somewhere_open() -> void:
 	assert_eq(Game.meetings.suggest("npc_pirjo"), {}, "not another while one is open")
 
 
+## D-104: nobody suggests meeting somewhere that is shut tomorrow.
+func test_nowhere_closed_tomorrow_is_suggested() -> void:
+	_start()
+	_fond("npc_pirjo")
+	var tomorrow := posmod(Game.clock.weekday() + 1, 7)
+	for location_id: String in Game.world.locations_in("harbourside"):
+		Game.world.get_location(location_id).closed_days = [tomorrow] as Array[int]
+	assert_eq(Game.meetings.suggest("npc_pirjo"), {})
+
+
 func test_the_request_arrives_as_a_text_with_an_answer() -> void:
 	_start()
 	var meeting := _request("npc_pirjo")

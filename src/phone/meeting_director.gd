@@ -54,7 +54,7 @@ func suggest(npc_id: String) -> Dictionary:
 			continue
 		var place := _world.get_location(location_id)
 		if place != null and home != null and place.region == home.region and place.is_public() \
-				and not place.is_locked() and MeetingRules.open_throughout(place.is_open_at, hour * 60):
+				and not place.is_locked() and MeetingRules.open_throughout(_open_tomorrow(place), hour * 60):
 			places.append(location_id)
 	if places.is_empty():
 		return {}
@@ -142,7 +142,7 @@ func arrange_talk(npc_id: String) -> int:
 		var place := _world.get_location(location_id)
 		if place != null and place.region == home.region and place.is_public() and not place.is_locked() \
 				and bool(_data.get_entry("locations", location_id).get("meeting_place", false)) \
-				and MeetingRules.open_throughout(place.is_open_at, TALK_HOUR * 60):
+				and MeetingRules.open_throughout(_open_tomorrow(place), TALK_HOUR * 60):
 			places.append(location_id)
 	if places.is_empty():
 		return 0
@@ -244,3 +244,10 @@ func _release(meeting: Dictionary) -> void:
 	if npc != null and npc.schedule_override != null and npc.schedule_override.reason == "meeting:%d" % int(meeting["id"]):
 		npc.clear_override()
 		_npcs.invalidate_location_cache(npc.id)
+
+
+## Whether a place is open at a minute of tomorrow, the day every meeting and
+## summons is set for — its closed days included (D-104).
+func _open_tomorrow(place: Location) -> Callable:
+	var tomorrow := posmod(_clock.weekday() + 1, 7)
+	return func(minute: int) -> bool: return place.is_open_at(minute, tomorrow)

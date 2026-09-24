@@ -38,7 +38,8 @@
       {"start": 0,    "days": "all", "location": "@work",          "activity": "work"},
       {"start": 180,  "days": "all", "location": "@home",          "activity": "sleep"},
       {"start": 720,  "days": "all", "location": "@home",          "activity": "eat"},
-      {"start": 780,  "days": "all", "location": "loc_corner_shop","activity": "shop"},
+      {"start": 780,  "days": [1,2,3,4,5,6], "location": "loc_corner_shop","activity": "shop"},
+      {"start": 780,  "days": [0], "location": "loc_cafe_kaisla", "activity": "socialise"},
       {"start": 840,  "days": "all", "location": "@home",          "activity": "idle"},
       {"start": 960,  "days": "all", "location": "@work",          "activity": "work"}
     ]
@@ -311,6 +312,40 @@
       {"start": 660, "days": "weekend", "location": "loc_football_pitch", "activity": "walk"},
       {"start": 900, "days": "weekend", "location": "loc_furnace_bar", "activity": "socialise"},
       {"start": 1380, "days": "all", "location": "@home", "activity": "sleep"}
+    ]
+  },
+  {
+    "id": "sched_cafe_sunday",
+    "default_activity": "idle",
+    "blocks": [
+      {"start": 0, "days": "all", "location": "@home", "activity": "sleep"},
+      {"start": 390, "days": "all", "location": "@home", "activity": "eat"},
+      {"start": 420, "days": [0,1,2,3,4,5], "location": "@work", "activity": "work"},
+      {"start": 750, "days": [0,1,2,3,4,5], "location": "loc_cafe_kaisla", "activity": "lunch"},
+      {"start": 810, "days": [0,1,2,3,4,5], "location": "@work", "activity": "work"},
+      {"start": 1260, "days": [0,1,2,3,4,5], "location": "@home", "activity": "idle"},
+      {"start": 480, "days": [6], "location": "loc_dock_street", "activity": "walk"},
+      {"start": 600, "days": [6], "location": "loc_cafe_kaisla", "activity": "socialise"},
+      {"start": 780, "days": [6], "location": "@home", "activity": "idle"},
+      {"start": 1350, "days": "all", "location": "@home", "activity": "sleep"}
+    ]
+  },
+  {
+    "id": "sched_downtown_sunday_cover",
+    "default_activity": "idle",
+    "blocks": [
+      {"start": 0, "days": "all", "location": "@home", "activity": "sleep"},
+      {"start": 360, "days": "all", "location": "@home", "activity": "eat"},
+      {"start": 480, "days": [1,2,3,4,5,6], "location": "loc_downtown_street", "activity": "walk"},
+      {"start": 600, "days": [1,2,3,4,5,6], "location": "loc_downtown_kiosk", "activity": "socialise"},
+      {"start": 840, "days": [1,2,3,4,5,6], "location": "loc_downtown_green", "activity": "idle"},
+      {"start": 1080, "days": [1,2,3,4,5,6], "location": "loc_downtown_bar", "activity": "socialise"},
+      {"start": 1200, "days": [1,2,3,4,5,6], "location": "@home", "activity": "idle"},
+      {"start": 420, "days": [0], "location": "@work", "activity": "work"},
+      {"start": 750, "days": [0], "location": "loc_downtown_street", "activity": "lunch"},
+      {"start": 810, "days": [0], "location": "@work", "activity": "work"},
+      {"start": 1260, "days": [0], "location": "@home", "activity": "idle"},
+      {"start": 1320, "days": "all", "location": "@home", "activity": "sleep"}
     ]
   },
   {

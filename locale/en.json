@@ -216,6 +216,7 @@
   "ui.msg.refused.locked": "It's locked.",
   "ui.msg.refused.private": "{place} is someone's home. You can't just walk in.",
   "ui.msg.refused.closed": "{place} is closed. Open {from}–{until}.",
+  "ui.msg.refused.closed_today": "{place} is closed today.",
   "ui.msg.refused.no_interior": "The door doesn't open.",
   "ui.msg.refused.nobody_serving": "Nobody is behind the counter.",
   "ui.msg.refused.not_your_bed": "This isn't your bed.",

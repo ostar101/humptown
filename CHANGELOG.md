@@ -15,7 +15,8 @@ versions are milestones rather than releases until there is something to release
 - Downtown has a pocket park across the street from the towers, with trees and benches, and four more residents: Raili, who remembers the street before the towers; Lauri and Marja, who work in them; and Marja's nephew Tomi, who is between things.
 - Downtown has a residents' notice and a road sign, Raili sometimes asks for a hand with her shopping, and every Downtown name has a Finnish version.
 
-### Fixed (D-097, D-100, D-102, D-103)
+### Fixed (D-097, D-100, D-102, D-103, D-104)
+- Shops no longer stand open with nobody in them: the pharmacy and the pawn shop close at weekends and the corner shop on Sundays (the door says "closed today"), while Emma now works Sundays at Kaisla and Tomi minds the Downtown kiosk. Nobody suggests meeting somewhere that will be shut.
 - Eight people in Old Town and Eastfield no longer spend every day in Harbourside: they keep to their own districts, as their stories always said (the library, the Lantern, the window over the street).
 - In Finnish, the oldest words in the game have their ä and ö back (Käteinen, Tehtävät, Voileipä, töissä…), and Eastfield is Itäpelto everywhere instead of sometimes Itäkenttä.
 - People who live in Downtown now know they live in Downtown when they talk through a language model; before, they were only told "a small port town".

@@ -8,7 +8,7 @@ extends RefCounted
 ## nothing_there, no_world) cannot come from pressing the button and say
 ## nothing.
 const EXPLAINED_REFUSALS: Array[String] = [
-	"locked", "private", "closed", "no_interior", "nobody_serving", "not_your_bed", "not_tired",
+	"locked", "private", "closed", "closed_today", "no_interior", "nobody_serving", "not_your_bed", "not_tired",
 	"asleep", "on_their_way", "nobody_there", "already_talking",
 	"not_a_work_day", "too_early", "too_late", "already_worked", "too_drunk", "too_exhausted", "busy",
 	"not_your_stash", "nothing_to_treat", "not_enough_money",

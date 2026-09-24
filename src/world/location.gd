@@ -17,6 +17,8 @@ var owner_id: String = ""
 ## Minutes from midnight; [0, 1440] means always open.
 var open_from: int = 0
 var open_until: int = 1440
+## Weekdays it does not open at all, 0 = Sunday as GameClock.weekday() (D-104).
+var closed_days: Array[int] = []
 ## Ids of locations reachable directly from here (for travel-time estimates).
 var connections: Array[String] = []
 ## Rough travel minutes from this location to the region hub.
@@ -34,6 +36,8 @@ static func from_data(d: Dictionary) -> Location:
 	l.owner_id = str(d.get("owner", ""))
 	l.open_from = int(d.get("open_from", 0))
 	l.open_until = int(d.get("open_until", 1440))
+	for day in d.get("closed_days", []):
+		l.closed_days.append(int(day))
 	l.travel_minutes = int(d.get("travel_minutes", 5))
 	match str(d.get("access", "public")):
 		"semi_public": l.access = Access.SEMI_PUBLIC
@@ -51,13 +55,29 @@ func display_name() -> String:
 	return tr(name_key)
 
 
-func is_open_at(minute_of_day: int) -> bool:
+## Open at this minute. Pass the weekday wherever it is known: without it,
+## closed days are not considered (D-104).
+func is_open_at(minute_of_day: int, weekday: int = -1) -> bool:
+	if weekday >= 0 and is_closed_on(weekday, minute_of_day):
+		return false
 	if open_from == 0 and open_until >= 1440:
 		return true
 	if open_from <= open_until:
 		return minute_of_day >= open_from and minute_of_day < open_until
 	# Wraps past midnight (a bar open 20:00-03:00).
 	return minute_of_day >= open_from or minute_of_day < open_until
+
+
+## Whether this is one of its closed days. For a place open past midnight the
+## small hours belong to the evening they started (a bar shut on Sundays still
+## serves at one on Sunday morning).
+func is_closed_on(weekday: int, minute_of_day: int) -> bool:
+	if closed_days.is_empty():
+		return false
+	var opened_on := weekday
+	if open_from > open_until and minute_of_day < open_until:
+		opened_on = posmod(weekday - 1, 7)
+	return closed_days.has(opened_on)
 
 
 func is_locked() -> bool:

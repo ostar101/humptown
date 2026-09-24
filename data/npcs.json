@@ -498,7 +498,7 @@
   },
   {
     "id": "npc_emma", "name": "Emma Virtanen", "age": 21, "occupation": "occ_counter_hand",
-    "home": "loc_marika_flat", "workplace": "loc_cafe_kaisla", "schedule": "sched_shop_day", "importance": "background",
+    "home": "loc_marika_flat", "workplace": "loc_cafe_kaisla", "schedule": "sched_cafe_sunday", "importance": "background",
     "traits": ["bright", "impatient", "wants_out_of_harbourside"],
     "nature": {"lawfulness": 0.8, "greed": 0.25, "risk": 0.25, "discretion": 0.45},
     "bio": "Marika's niece, working the counter at Kaisla's while she saves for somewhere bigger than Harbourside.",
@@ -771,11 +771,11 @@
     ]
   },
   {
-    "id": "npc_tomi", "name": "Tomi Laaksonen", "age": 23, "occupation": "occ_unemployed",
-    "home": "loc_downtown_flats_b", "workplace": "", "schedule": "sched_downtown_idle", "importance": "background",
+    "id": "npc_tomi", "name": "Tomi Laaksonen", "age": 23, "occupation": "occ_counter_hand",
+    "home": "loc_downtown_flats_b", "workplace": "loc_downtown_kiosk", "schedule": "sched_downtown_sunday_cover", "importance": "background",
     "traits": ["between_things", "always_on_his_phone", "sleeps_in"],
     "nature": {"lawfulness": 0.45, "greed": 0.5, "risk": 0.55, "discretion": 0.5},
-    "bio": "Dropped out of a course he never names and moved into his aunt's spare room in the tall block. Says he is looking for work; is mostly found in the park or at the end of the Late Desk's bar.",
+    "bio": "Dropped out of a course he never names and moved into his aunt's spare room in the tall block. Says he is looking for work; minds Taina's kiosk on Sundays, and the rest of the week is mostly found in the park or at the end of the Late Desk's bar.",
     "voice": "Laid-back, half-joking, goes quiet when anyone asks about plans.",
     "groups": [],
     "relationships": [

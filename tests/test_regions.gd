@@ -216,26 +216,47 @@ func test_nobody_spends_their_ordinary_week_outside_their_own_district() -> void
 		assert_true(strays.is_empty(), "%s (%s) leaves: %s" % [npc_id, home_region, ", ".join(strays.slice(0, 3))])
 
 
-func test_every_shop_in_the_new_districts_has_someone_behind_the_counter_when_open() -> void:
-	for shop_id: String in ["shop_bakery", "shop_pharmacy", "shop_lantern", "shop_fuel", "shop_furnace", "shop_pawn", "shop_downtown_kiosk", "shop_downtown_bar"]:
-		var location_id := str(Game.data.get_entry("shops", shop_id)["location"])
+## Every shop with a counter, every day of the week (D-104; it once checked
+## a list of shops on a Wednesday, and five were open with nobody in them on
+## a weekend). A closed day is not an open hour, so it needs no staff.
+func test_every_shop_has_someone_behind_the_counter_whenever_open() -> void:
+	for shop_id: String in Game.data.ids("shops"):
+		var entry: Dictionary = Game.data.get_entry("shops", shop_id)
+		if not entry.has("location"):
+			continue   # a kept shop is wherever its keeper is (D-084)
+		var location_id := str(entry["location"])
 		var location := Game.world.get_location(location_id)
-		var open_slots := 0
-		var staffed_slots := 0
-		for minute in range(0, 1440, 30):
-			if not location.is_open_at(minute):
-				continue
-			open_slots += 1
-			var staffed := false
-			for npc_id: String in Game.npcs.living_ids():
-				var npc := Game.npcs.get_npc(npc_id)
-				if npc.workplace == location_id and Game.npcs.scheduled_location_of(npc_id, 3 * 1440 + minute, 3) == location_id \
-						and _activity(npc_id, minute, 3) == "work":
-					staffed = true
-			if staffed:
-				staffed_slots += 1
-		# a lunch hour without anyone is how a small shop is, but not a whole afternoon
-		assert_gt(float(staffed_slots), float(open_slots) * 0.8, "%s is open with nobody behind the counter for too long (%d of %d half-hours)" % [shop_id, staffed_slots, open_slots])
+		var staff: Array[String] = []
+		for npc_id: String in Game.npcs.living_ids():
+			if Game.npcs.get_npc(npc_id).workplace == location_id:
+				staff.append(npc_id)
+		for day in 7:
+			var open_slots := 0
+			var staffed_slots := 0
+			for minute in range(0, 1440, 30):
+				if not location.is_open_at(minute, day):
+					continue
+				open_slots += 1
+				for npc_id in staff:
+					if Game.npcs.scheduled_location_of(npc_id, day * 1440 + minute, day) == location_id 							and _activity(npc_id, minute, day) == "work":
+						staffed_slots += 1
+						break
+			# a lunch hour without anyone is how a small shop is, but not a whole afternoon
+			assert_true(staffed_slots >= open_slots * 0.8, "%s is open on day %d with nobody behind the counter for too long (%d of %d half-hours)" % [shop_id, day, staffed_slots, open_slots])
+
+
+## Nobody's day takes them to a place on the day it is shut (D-104): they
+## would stand inside a building the player cannot enter.
+func test_nobody_is_sent_to_a_place_on_its_closed_day() -> void:
+	for npc_id: String in Game.data.ids("npcs"):
+		var strays: Array[String] = []
+		for day in 7:
+			for hour in 24:
+				var where := Game.npcs.scheduled_location_of(npc_id, day * 1440 + hour * 60, day)
+				var location := Game.world.get_location(where)
+				if location != null and location.is_closed_on(day, hour * 60):
+					strays.append("%s at %02d:00 day %d" % [where, hour, day])
+		assert_true(strays.is_empty(), "%s: %s" % [npc_id, ", ".join(strays.slice(0, 3))])
 
 
 func test_the_pawn_shop_can_now_be_reached_and_entered() -> void:
