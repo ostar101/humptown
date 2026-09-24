@@ -10,7 +10,10 @@
 
 ## Next task
 
-**Newest (D-101) — Downtown's signs, an errand, Finnish names.** A notice
+**Newest (D-102) — Finnish: ä/ö restored in the first 99 keys (11 were
+wrong), Eastfield is "Itäpelto" everywhere.** 1159 green.
+
+**Before that (D-101) — Downtown's signs, an errand, Finnish names.** A notice
 and a road sign like every other district; `errand_raili_juice` (the first
 errand outside Harbourside — Old Town/Eastfield could have one each the
 same way); Finnish strings for the region and all eight Downtown locations.

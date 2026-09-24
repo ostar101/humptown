@@ -4286,3 +4286,22 @@ did not:
   a test asserts once per missing Finnish key — not a lost check.
 
 1159 green.
+
+## D-102 — The first Finnish strings get their ä and ö back; Eastfield is Itäpelto
+
+Seen while adding Downtown's Finnish names (D-101). `locale/fi.json`'s
+first commit (c5d9290, 99 keys) was written without a single ä or ö, and
+some of it still showed that in a Finnish game: the HUD's "Kateinen" and
+"Tehtavat", "Voileipa" in the bag, people "toissa", "kavelee" and "syo" in
+the developer overlay and conversation header, and two of the region
+descriptions. Every one of those 99 keys was checked by hand (the next
+commit already used umlauts, so the gap is exactly that set); 11 were
+wrong, the other 81 are Finnish that simply has none (Tavarat, Satama,
+Asetukset…). A vocabulary scan of the whole file — any word that appears
+elsewhere with an ä/ö but here without — found nothing outside that set.
+
+**Eastfield had two Finnish names**: "Itapelto" (the region, its yard)
+and "Itäkenttä" (its street, the fuel station, the road sign). The region's
+own name wins, since it is the one the travel prompt and the phone show:
+**Itäpelto** everywhere, five strings changed. No test asserted any of the
+old spellings. 1159 green.
