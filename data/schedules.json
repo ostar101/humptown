@@ -246,6 +246,20 @@
     ]
   },
   {
+    "id": "sched_downtown_idle",
+    "default_activity": "idle",
+    "blocks": [
+      {"start": 0,    "days": "all", "location": "@home",              "activity": "sleep"},
+      {"start": 360,  "days": "all", "location": "@home",              "activity": "eat"},
+      {"start": 480,  "days": "all", "location": "loc_downtown_street", "activity": "walk"},
+      {"start": 600,  "days": "all", "location": "loc_downtown_kiosk",  "activity": "socialise"},
+      {"start": 840,  "days": "all", "location": "loc_downtown_green",  "activity": "idle"},
+      {"start": 1080, "days": "all", "location": "loc_downtown_bar",    "activity": "socialise"},
+      {"start": 1200, "days": "all", "location": "@home",              "activity": "idle"},
+      {"start": 1320, "days": "all", "location": "@home",              "activity": "sleep"}
+    ]
+  },
+  {
     "id": "sched_scrap_late",
     "default_activity": "idle",
     "blocks": [

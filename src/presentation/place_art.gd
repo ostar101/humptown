@@ -68,6 +68,17 @@ const DECORATIONS := {
 		{"file": "bench.png", "at": Vector2i(4, 3), "foot": 24},
 		{"file": "bench.png", "at": Vector2i(24, 3), "foot": 24},
 	],
+	# Downtown (D-099): a pocket park across the street from the towers.
+	"loc_downtown_green": [
+		{"file": "tree_2.png", "at": Vector2i(1, 0), "foot": 32},
+		{"file": "tree_1.png", "at": Vector2i(7, 1), "foot": 32},
+		{"file": "tree_3.png", "at": Vector2i(14, 0), "foot": 32},
+		{"file": "bench.png", "at": Vector2i(6, 5), "foot": 24},
+		{"file": "bench.png", "at": Vector2i(12, 5), "foot": 24},
+		{"file": "tree_4.png", "at": Vector2i(0, 7), "foot": 32},
+		{"file": "tree_1.png", "at": Vector2i(9, 7), "foot": 32},
+		{"file": "tree_2.png", "at": Vector2i(16, 7), "foot": 32},
+	],
 	# Eastfield: a pitch, a yard with a digger, a scrapyard with the same.
 	"loc_football_pitch": [
 		{"file": "court.png", "at": Vector2i(8, 0), "flat": true},

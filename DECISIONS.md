@@ -4203,3 +4203,41 @@ so Downtown's four residents are not four strangers. The id was checked
 against `npcs.json` first (D-095's lesson). The two loop checks in
 `tests/test_regions.gd` gained `npc_venla` and `shop_downtown_bar`; no new
 test file. 1158 green, assertions 33047 → 33744.
+
+## D-099 — Downtown's pocket park, a day for people at home, and four more residents
+
+The user said "continue autonomously". The step D-098 named next was more
+households; doing it well needed two things Downtown lacked, so all three
+land together.
+
+**A park first, because a person at home needs somewhere to be.** Every
+region's idle schedule sends people to an open-air place in the afternoon
+(`sched_local_idle` → `loc_harbour`, `sched_oldtown_day` → `loc_old_garden`);
+Downtown had only its street. `loc_downtown_green` is a `park`, public,
+`meeting_place`, at `[50, 39, 20, 12]` across the street from the kiosk and
+bar, east of the south road — grass already, since Downtown's map fills
+with grass. `PlaceArt.DECORATIONS` gives it Harbour Park's trees and two
+benches, laid out for a rect one row shorter;
+`test_no_decoration_hangs_outside_its_own_place` checks the offsets, a
+screenshot checked the look. It also gives Downtown a second meeting place,
+this one open all day, so meetings starting at noon now have somewhere to go.
+
+**`sched_downtown_idle`** is `sched_local_idle`'s shape with Downtown's own
+places — street walk, a morning at the kiosk, the afternoon in the park —
+plus an early-evening stop at the Late Desk (18:00–20:00), so the bar has
+customers other than its keeper, and sleep at 22:00 rather than 21:30.
+
+**Four residents**, ids and every name part checked against `npcs.json`
+first (D-095). Raili Heikkinen (68, `occ_unemployed` as every retiree is)
+and Lauri Järvinen (51, clerk, tower A, beside Saana) join
+`loc_downtown_flats_a`; Marja Honkanen (44, clerk, tower B, Iiro's
+colleague) and her nephew Tomi Laaksonen (23, between things) join
+`loc_downtown_flats_b`. The low block now holds four, the tall one four.
+Relationships tie them to each other and to the four already there, so
+Downtown is a small web rather than eight strangers. Nobody new needed a
+job (the tower jobs exist and have employers), an occupation or a home.
+
+`test_every_new_person_lives_and_works_in_their_own_district` gained the
+four; it walks each through every hour of a week, so the new schedule is
+proven never to leave Downtown. 1158 green, assertions 33744 → 36092.
+Benchmark back to back with HEAD: within ±2% at every population.

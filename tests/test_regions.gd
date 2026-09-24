@@ -184,7 +184,8 @@ func test_the_new_buildings_are_the_size_the_drawn_art_needs() -> void:
 func test_every_new_person_lives_and_works_in_their_own_district() -> void:
 	for npc_id: String in ["npc_aarne", "npc_helmi", "npc_tapio", "npc_ilona", "npc_oskar",
 			"npc_reijo", "npc_pauliina", "npc_jari", "npc_marko", "npc_kimmo",
-			"npc_saana", "npc_iiro", "npc_taina", "npc_venla"]:
+			"npc_saana", "npc_iiro", "npc_taina", "npc_venla",
+			"npc_raili", "npc_tomi", "npc_marja", "npc_lauri"]:
 		var npc := Game.npcs.get_npc(npc_id)
 		assert_true(npc != null, npc_id)
 		var region := Game.world.region_of(npc.home)

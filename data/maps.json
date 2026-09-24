@@ -178,7 +178,8 @@
       {"location": "loc_downtown_bar", "rect": [67, 18, 8, 13], "door": [71, 30]}
     ],
     "places": [
-      {"location": "loc_downtown_street", "rects": [[0, 31, 96, 8], [40, 39, 8, 33]]}
+      {"location": "loc_downtown_street", "rects": [[0, 31, 96, 8], [40, 39, 8, 33]]},
+      {"location": "loc_downtown_green", "rects": [[50, 39, 20, 12]]}
     ],
     "exits": [
       {"to": "old_town", "rect": [42, 71, 4, 1]},

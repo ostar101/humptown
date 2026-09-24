@@ -756,5 +756,57 @@
       {"to": "npc_taina", "kind": "acquaintance", "trust": 0.4, "familiarity": 0.5},
       {"to": "npc_iiro", "kind": "acquaintance", "trust": 0.3, "familiarity": 0.4}
     ]
+  },
+  {
+    "id": "npc_raili", "name": "Raili Heikkinen", "age": 68, "occupation": "occ_unemployed",
+    "home": "loc_downtown_flats_a", "workplace": "", "schedule": "sched_downtown_idle", "importance": "background",
+    "traits": ["lived_here_before_the_towers", "feeds_the_pigeons", "knows_every_door"],
+    "nature": {"lawfulness": 0.75, "greed": 0.2, "risk": 0.1, "discretion": 0.2},
+    "bio": "Has lived in the low block since it was the tallest thing on the street. Spends her afternoons on a bench in the pocket park, watching the towers empty out and telling anyone who sits down what used to stand there.",
+    "voice": "Chatty, sharp-eyed, starts most stories with 'before all this'.",
+    "groups": [],
+    "relationships": [
+      {"to": "npc_taina", "kind": "friend", "trust": 0.6, "affection": 0.5, "familiarity": 0.8},
+      {"to": "npc_saana", "kind": "acquaintance", "trust": 0.4, "familiarity": 0.3}
+    ]
+  },
+  {
+    "id": "npc_tomi", "name": "Tomi Laaksonen", "age": 23, "occupation": "occ_unemployed",
+    "home": "loc_downtown_flats_b", "workplace": "", "schedule": "sched_downtown_idle", "importance": "background",
+    "traits": ["between_things", "always_on_his_phone", "sleeps_in"],
+    "nature": {"lawfulness": 0.45, "greed": 0.5, "risk": 0.55, "discretion": 0.5},
+    "bio": "Dropped out of a course he never names and moved into his aunt's spare room in the tall block. Says he is looking for work; is mostly found in the park or at the end of the Late Desk's bar.",
+    "voice": "Laid-back, half-joking, goes quiet when anyone asks about plans.",
+    "groups": [],
+    "relationships": [
+      {"to": "npc_venla", "kind": "acquaintance", "trust": 0.4, "familiarity": 0.6},
+      {"to": "npc_marja", "kind": "family", "trust": 0.5, "affection": 0.5, "familiarity": 0.9}
+    ]
+  },
+  {
+    "id": "npc_marja", "name": "Marja Honkanen", "age": 44, "occupation": "occ_clerk",
+    "home": "loc_downtown_flats_b", "workplace": "loc_downtown_tower_b", "schedule": "sched_downtown_office", "importance": "background",
+    "traits": ["worries_out_loud", "organised", "soft_touch"],
+    "nature": {"lawfulness": 0.85, "greed": 0.3, "risk": 0.15, "discretion": 0.55},
+    "bio": "Keeps the accounts two floors under Iiro's desk and her nephew Tomi in her spare room, and is not sure which is more work.",
+    "voice": "Warm, a little anxious, apologises before she disagrees.",
+    "groups": [],
+    "relationships": [
+      {"to": "npc_tomi", "kind": "family", "trust": 0.5, "affection": 0.7, "familiarity": 0.9},
+      {"to": "npc_iiro", "kind": "colleague", "trust": 0.5, "familiarity": 0.6}
+    ]
+  },
+  {
+    "id": "npc_lauri", "name": "Lauri Järvinen", "age": 51, "occupation": "occ_clerk",
+    "home": "loc_downtown_flats_a", "workplace": "loc_downtown_tower_a", "schedule": "sched_downtown_office", "importance": "background",
+    "traits": ["counts_the_days_to_retirement", "by_the_book", "takes_the_stairs_slowly"],
+    "nature": {"lawfulness": 0.9, "greed": 0.25, "risk": 0.1, "discretion": 0.6},
+    "bio": "Twenty years in the lower tower, the last eight at the desk next to whoever is new. This year that is Saana, and he has decided to look out for her whether she wants it or not.",
+    "voice": "Measured, dry, fond of a proverb.",
+    "groups": [],
+    "relationships": [
+      {"to": "npc_saana", "kind": "colleague", "trust": 0.5, "affection": 0.3, "familiarity": 0.5},
+      {"to": "npc_raili", "kind": "acquaintance", "trust": 0.5, "familiarity": 0.7}
+    ]
   }
 ]
