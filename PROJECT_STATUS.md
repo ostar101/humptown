@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-24
 **Milestone:** M6 — Consequences — **complete in code (0.6.0)**. M5 complete (0.5.0). M5 complete in code (0.5.0). **M8 — A town worth walking — complete (all twelve planned steps).** Plan at `C:\Users\miika\.claude\plans\peli-tuntuu-hieman-tyls-lt-prancy-hamming.md`. Sessions A, B and C all done. **Downtown + walkable upper floors — complete, with three residents and a kiosk.** Plan at `C:\Users\miika\.claude\plans\parallel-swimming-hummingbird.md`, all seven steps done (D-091 to D-094); D-095/D-096 (past the plan's own scope, the user's own repeated "continue" with no further detail each time) added residents and a shop.
-**Build:** green. 1158 tests, 33047 assertions with the LimeZu art installed,
+**Build:** green. 1158 tests, 33744 assertions with the LimeZu art installed,
 ~54 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
@@ -10,7 +10,23 @@
 
 ## Next task
 
-**Newest (D-097) — a floor key is never a place.** D-091's deferred
+**Newest (D-098) — Downtown gets a bar, the Late Desk.** A sixth building,
+`loc_downtown_bar` (kind `bar`, the shared `bar_` storefront art, 8×13, door
+column 4 — the same footprint as the Lantern), east of the kiosk on the same
+street level; open 16:00–02:00 and a `meeting_place`, like the Lantern.
+`shop_downtown_bar` sells beer, wine, vodka, coffee, juice, cigarettes.
+`int_downtown_bar` is the Lantern's own layout. `sched_downtown_bar` is
+`sched_night_bar_old` with `loc_market` swapped for `loc_downtown_kiosk`.
+Venla Kallio (28, `occ_barkeep`, no new occupation) keeps it and shares
+Iiro's flat in `loc_downtown_flats_b`; she knows Taina and Iiro. No job for
+the player — the Lantern has none either. Name checked against `npcs.json`
+first. The two loop-based checks in `test_regions.gd` gained her and the
+shop; 1158 green (assertions 33047 → 33744). Screenshot confirmed the art.
+**Downtown now: six buildings, four residents, a kiosk and a bar.** Still
+open, still the user's call: more households, and Sessions D+ (civic art,
+home variants, romance, sex work).
+
+**Before that (D-097) — a floor key is never a place.** D-091's deferred
 follow-up became reachable once D-095 put Saana to work in a climbable
 tower: upstairs, people at the building were drawn but refused as
 `nobody_there`, a follower was moved to `"loc_downtown_tower_a#2"` (not a
@@ -468,9 +484,9 @@ criminal-contacts view (D-050); everything in M7. See `ROADMAP.md`.
 
 ## Size
 
-- 127 source files in `src/`
-- 56 test suites
-- 53 authored NPCs, 55 locations, 4 regions (all mapped), 34 interiors (16 are downtown's own floors), 17 schedules, 4 backgrounds, 12 shops (2 illicit, kept not walked to), 115 items, 61 recipes, 9 jobs, 4 quests, 3 errands, 4 asks (2 debt/leniency, 2 vouching)
+- 136 source files in `src/`
+- 74 test suites
+- 54 authored NPCs, 56 locations, 4 regions (all mapped), 35 interiors (16 are downtown's own floors), 18 schedules, 4 backgrounds, 13 shops (2 illicit, kept not walked to), 115 items, 61 recipes, 9 jobs, 4 quests, 3 errands, 4 asks (2 debt/leniency, 2 vouching)
 
 ---
 

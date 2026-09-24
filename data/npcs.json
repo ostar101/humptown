@@ -743,5 +743,18 @@
     "voice": "Brisk, friendly, keeps half an eye on the door.",
     "groups": [],
     "relationships": []
+  },
+  {
+    "id": "npc_venla", "name": "Venla Kallio", "age": 28, "occupation": "occ_barkeep",
+    "home": "loc_downtown_flats_b", "workplace": "loc_downtown_bar", "schedule": "sched_downtown_bar", "importance": "background",
+    "traits": ["quick_with_a_comeback", "night_owl", "hears_everything"],
+    "nature": {"lawfulness": 0.6, "greed": 0.45, "risk": 0.4, "discretion": 0.5},
+    "bio": "Tends the Late Desk, the bar the towers empty into after five. Hears every office's gossip by the second round and pretends not to have by the third.",
+    "voice": "Quick, wry, warm once she has decided she likes you.",
+    "groups": [],
+    "relationships": [
+      {"to": "npc_taina", "kind": "acquaintance", "trust": 0.4, "familiarity": 0.5},
+      {"to": "npc_iiro", "kind": "acquaintance", "trust": 0.3, "familiarity": 0.4}
+    ]
   }
 ]

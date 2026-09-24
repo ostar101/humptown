@@ -5,12 +5,13 @@ versions are milestones rather than releases until there is something to release
 
 ## [Unreleased]
 
-### Added (D-091, D-092, D-093, D-094, D-095, D-096)
+### Added (D-091, D-092, D-093, D-094, D-095, D-096, D-098)
 - Buildings can now have walkable upper floors, reached by stairs.
 - Downtown is open: a fourth region, reachable from Harbourside and Old Town, with four towers on the street.
 - Both of Downtown's office towers can be walked into and climbed all the way to the top, floor by floor.
 - Downtown's first two residents: Saana Virtanen and Iiro Mäkelä, each living in one of the apartment blocks and working in one of the towers.
 - Downtown has a shop: a kiosk between the towers, run by Taina Lehto, selling coffee and the usual small-shop odds and ends.
+- Downtown has a bar: the Late Desk, next to the kiosk, open from four in the afternoon until two at night and kept by Venla Kallio. A place to arrange to meet people, like the Lantern.
 
 ### Fixed (D-097)
 - Upstairs in a Downtown tower, the people in the building can be talked to; before, you could see them but they counted as "nobody there".

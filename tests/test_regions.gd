@@ -184,7 +184,7 @@ func test_the_new_buildings_are_the_size_the_drawn_art_needs() -> void:
 func test_every_new_person_lives_and_works_in_their_own_district() -> void:
 	for npc_id: String in ["npc_aarne", "npc_helmi", "npc_tapio", "npc_ilona", "npc_oskar",
 			"npc_reijo", "npc_pauliina", "npc_jari", "npc_marko", "npc_kimmo",
-			"npc_saana", "npc_iiro", "npc_taina"]:
+			"npc_saana", "npc_iiro", "npc_taina", "npc_venla"]:
 		var npc := Game.npcs.get_npc(npc_id)
 		assert_true(npc != null, npc_id)
 		var region := Game.world.region_of(npc.home)
@@ -198,7 +198,7 @@ func test_every_new_person_lives_and_works_in_their_own_district() -> void:
 
 
 func test_every_shop_in_the_new_districts_has_someone_behind_the_counter_when_open() -> void:
-	for shop_id: String in ["shop_bakery", "shop_pharmacy", "shop_lantern", "shop_fuel", "shop_furnace", "shop_pawn", "shop_downtown_kiosk"]:
+	for shop_id: String in ["shop_bakery", "shop_pharmacy", "shop_lantern", "shop_fuel", "shop_furnace", "shop_pawn", "shop_downtown_kiosk", "shop_downtown_bar"]:
 		var location_id := str(Game.data.get_entry("shops", shop_id)["location"])
 		var location := Game.world.get_location(location_id)
 		var open_slots := 0

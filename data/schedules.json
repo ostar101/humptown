@@ -234,6 +234,18 @@
     ]
   },
   {
+    "id": "sched_downtown_bar",
+    "default_activity": "idle",
+    "blocks": [
+      {"start": 0,    "days": "all", "location": "@work",              "activity": "work"},
+      {"start": 180,  "days": "all", "location": "@home",              "activity": "sleep"},
+      {"start": 720,  "days": "all", "location": "@home",              "activity": "eat"},
+      {"start": 780,  "days": "all", "location": "loc_downtown_kiosk", "activity": "shop"},
+      {"start": 840,  "days": "all", "location": "@home",              "activity": "idle"},
+      {"start": 960,  "days": "all", "location": "@work",              "activity": "work"}
+    ]
+  },
+  {
     "id": "sched_scrap_late",
     "default_activity": "idle",
     "blocks": [

@@ -4166,3 +4166,40 @@ per-floor state" D-091 said would need its own schema change.
 talking to someone in the building upstairs plus the `nobody_there` refusal
 for someone elsewhere); the follower and conversation tests fail on the old
 comparisons, checked by reverting them. 1158 tests green (was 1155).
+
+## D-098 — Downtown gets a bar: the Late Desk
+
+The user said "continue" again with no direction; D-096 had named "a second
+shop or a bar" as the next in-scope step. A bar gives Downtown what the
+kiosk does not: somewhere to be in the evening, and a `meeting_place`.
+`MeetingDirector.suggest()` only looks in the person's own home region, so
+until now it found nowhere for any Downtown resident and none of them could
+ever suggest meeting (D-047). Now they can, on days their start hour
+(12–19) falls late enough for the bar to be open from gathering to the end
+— 17:00 or later.
+
+**Everything follows an existing shape; nothing new was invented.**
+`loc_downtown_bar` copies the Lantern's location entry (kind `bar`, public,
+16:00–02:00, `meeting_place`), stands on Downtown's one street level east of
+the kiosk at `[67, 18, 8, 13]` with its door at column 4 — the `bar_` art's
+own footprint, which `test_the_new_buildings_are_the_size_the_drawn_art_needs`
+checks — and its interior is `int_lantern_bar`'s layout under new ids.
+`sched_downtown_bar` is `sched_night_bar_old` with its one Old Town place
+(`loc_market`, the afternoon shop) swapped for `loc_downtown_kiosk`, the same
+substitution D-095 and D-096 made. `occ_barkeep` already existed.
+
+**One keeper, not two.** The Lantern has Oskar and Pekka on the same
+schedule; one person on an every-night schedule already staffs the counter
+for every open hour, which the existing staffing test proves. A second
+barkeep is more population, not more bar.
+
+**No job for the player**, matching the Lantern, which has none: jobs are
+authored where the player is meant to be able to work, and none of the
+three bars offers shifts today.
+
+Venla Kallio (28) shares `loc_downtown_flats_b` with Iiro (D-088's
+shared-home precedent) and starts with two acquaintances, Taina and Iiro,
+so Downtown's four residents are not four strangers. The id was checked
+against `npcs.json` first (D-095's lesson). The two loop checks in
+`tests/test_regions.gd` gained `npc_venla` and `shop_downtown_bar`; no new
+test file. 1158 green, assertions 33047 → 33744.

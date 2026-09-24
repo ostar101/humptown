@@ -48,10 +48,11 @@
   {"id": "loc_jari_flat", "region": "eastfield", "name_key": "loc.jari_flat", "kind": "home", "access": "private", "owner": "npc_jari", "travel_minutes": 6, "connections": ["loc_eastfield_street"]},
   {"id": "loc_marko_flat", "region": "eastfield", "name_key": "loc.marko_flat", "kind": "home", "access": "private", "owner": "npc_marko", "travel_minutes": 6, "connections": ["loc_eastfield_street"]},
   {"id": "loc_kimmo_flat", "region": "eastfield", "name_key": "loc.kimmo_flat", "kind": "home", "access": "private", "owner": "npc_kimmo", "travel_minutes": 6, "connections": ["loc_eastfield_street"]},
-  {"id": "loc_downtown_street", "region": "downtown", "name_key": "loc.downtown_street", "kind": "street", "access": "public", "travel_minutes": 2, "connections": ["loc_downtown_flats_a", "loc_downtown_flats_b", "loc_downtown_tower_a", "loc_downtown_tower_b", "loc_downtown_kiosk"]},
+  {"id": "loc_downtown_street", "region": "downtown", "name_key": "loc.downtown_street", "kind": "street", "access": "public", "travel_minutes": 2, "connections": ["loc_downtown_flats_a", "loc_downtown_flats_b", "loc_downtown_tower_a", "loc_downtown_tower_b", "loc_downtown_kiosk", "loc_downtown_bar"]},
   {"id": "loc_downtown_flats_a", "region": "downtown", "name_key": "loc.downtown_flats_a", "kind": "home", "access": "private", "owner": "npc_saana", "travel_minutes": 4, "connections": ["loc_downtown_street"]},
   {"id": "loc_downtown_flats_b", "region": "downtown", "name_key": "loc.downtown_flats_b", "kind": "home", "access": "private", "owner": "npc_iiro", "travel_minutes": 5, "connections": ["loc_downtown_street"]},
   {"id": "loc_downtown_tower_a", "region": "downtown", "name_key": "loc.downtown_tower_a", "kind": "work", "access": "semi_public", "travel_minutes": 5, "connections": ["loc_downtown_street"]},
   {"id": "loc_downtown_tower_b", "region": "downtown", "name_key": "loc.downtown_tower_b", "kind": "work", "access": "semi_public", "travel_minutes": 6, "connections": ["loc_downtown_street"]},
-  {"id": "loc_downtown_kiosk", "region": "downtown", "name_key": "loc.downtown_kiosk", "kind": "shop", "access": "public", "open_from": 420, "open_until": 1260, "travel_minutes": 4, "connections": ["loc_downtown_street"]}
+  {"id": "loc_downtown_kiosk", "region": "downtown", "name_key": "loc.downtown_kiosk", "kind": "shop", "access": "public", "open_from": 420, "open_until": 1260, "travel_minutes": 4, "connections": ["loc_downtown_street"]},
+  {"id": "loc_downtown_bar", "meeting_place": true, "region": "downtown", "name_key": "loc.downtown_bar", "kind": "bar", "access": "public", "open_from": 960, "open_until": 120, "travel_minutes": 5, "connections": ["loc_downtown_street"]}
 ]
