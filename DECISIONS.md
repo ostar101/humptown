@@ -4258,3 +4258,31 @@ flats"). `test_every_region_has_its_own_phrase` (in
 `Game.data.ids("regions")`, so the next region fails the suite until it has
 one, and checks Saana's prompt names Downtown. Fails on the old table,
 passes on the new. 1159 green.
+
+## D-101 — Downtown's signs, an errand, and its names in Finnish
+
+The rest of the per-region check that found D-100. Three pieces of
+hand-authored, per-region content every other district has and Downtown
+did not:
+
+- **Signs.** Each district has a notice and a road sign (`obj_old_town_notice`
+  / `obj_eastfield_road`, …). `obj_downtown_notice` stands on the south
+  pavement at `[24, 38]` (first placed at `[30, 38]`, beside a hydrant, and
+  moved after a screenshot), `obj_downtown_road` by the south exit at
+  `[47, 66]` naming both roads out with D-093's travel times. Neither sets a
+  flag — every road is already open (D-077).
+- **An errand.** Only three people in the town ask for help with shopping,
+  all in Harbourside. Raili (D-099), a retiree like Pirjo, asks for two
+  juices every three days, 12 euros — the kiosk sells juice, so it can be
+  done without leaving Downtown. One is enough to prove Downtown takes part;
+  errands for Old Town and Eastfield are the same one-line job, left for
+  whoever next wants more of them.
+- **Finnish names.** Nothing Downtown had a Finnish string: the region, its
+  description and all eight location names fell back to English in a
+  Finnish game. Added (Keskusta, Taskupuisto, …), with the two sign texts
+  and the errand name. Translation stays deliberately partial elsewhere
+  (known issue 3); this closes only the gap this session's own content
+  opened. The suite's assertion count fell by exactly the 13 keys added —
+  a test asserts once per missing Finnish key — not a lost check.
+
+1159 green.

@@ -4,5 +4,7 @@
   {"id": "errand_elias_cigarettes", "name_key": "errand.elias_cigarettes", "giver": "npc_elias",
    "item": "item_cigarettes", "count": 1, "reward": 14, "every_days": 4},
   {"id": "errand_tuomas_notebook", "name_key": "errand.tuomas_notebook", "giver": "npc_tuomas",
-   "item": "item_notebook", "count": 2, "reward": 12, "every_days": 7}
+   "item": "item_notebook", "count": 2, "reward": 12, "every_days": 7},
+  {"id": "errand_raili_juice", "name_key": "errand.raili_juice", "giver": "npc_raili",
+   "item": "item_juice", "count": 2, "reward": 12, "every_days": 3}
 ]

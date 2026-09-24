@@ -181,6 +181,10 @@
       {"location": "loc_downtown_street", "rects": [[0, 31, 96, 8], [40, 39, 8, 33]]},
       {"location": "loc_downtown_green", "rects": [[50, 39, 20, 12]]}
     ],
+    "objects": [
+      {"id": "obj_downtown_notice", "kind": "sign", "cell": [24, 38], "text_key": "obj.downtown_notice.text"},
+      {"id": "obj_downtown_road", "kind": "sign", "cell": [47, 66], "text_key": "obj.downtown_road.text"}
+    ],
     "exits": [
       {"to": "old_town", "rect": [42, 71, 4, 1]},
       {"to": "harbourside", "rect": [95, 37, 1, 2]}
