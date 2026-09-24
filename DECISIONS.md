@@ -4404,3 +4404,17 @@ session wrote (D-099, D-103) already passed.
 `test_nobody_is_sent_to_a_place_on_its_closed_day` (the closed-day case is
 inside it: `is_open_at(minute, day)`). It failed for exactly the thirteen
 and passes now. 1165 green.
+
+## D-106 — An errand in every district, and each one doable where it is asked
+
+D-101 left Old Town and Eastfield without an errand ("the same one-line
+job"). Anna-Liisa (60) asks for two loaves from the bakery every four days,
+Paula (58) for a carton of milk from the fuel station every three — both
+retirees at home, the same kind of person as Pirjo and Raili, both asking
+for something sold two minutes' walk away. Every district now has someone
+who asks for a hand.
+
+`test_every_errand_can_be_bought_in_its_givers_district` (in
+`test_content.gd`) makes that a rule: whatever an errand asks for must be
+stocked by a counter shop in the giver's own region. The five errands all
+pass; it exists for the next one. 1166 green.

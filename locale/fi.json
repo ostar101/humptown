@@ -526,6 +526,8 @@
   "errand.elias_cigarettes": "Tupakkaa Eliakselle",
   "errand.tuomas_notebook": "Muistivihkoja Tuomakselle",
   "errand.raili_juice": "Mehua Railille",
+  "errand.annaliisa_bread": "Leipää Anna-Liisalle",
+  "errand.paula_milk": "Maitoa Paulalle",
   "ui.quests.finished": "Takana",
   "ui.quests.empty": "Ei mitään käynnissä. Harbourside on täynnä tekemistä — ihmiset kertovat kyllä.",
   "ui.quests.progress": "({have}/{need})",

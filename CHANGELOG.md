@@ -5,7 +5,7 @@ versions are milestones rather than releases until there is something to release
 
 ## [Unreleased]
 
-### Added (D-091, D-092, D-093, D-094, D-095, D-096, D-098, D-099, D-101)
+### Added (D-091, D-092, D-093, D-094, D-095, D-096, D-098, D-099, D-101, D-106)
 - Buildings can now have walkable upper floors, reached by stairs.
 - Downtown is open: a fourth region, reachable from Harbourside and Old Town, with four towers on the street.
 - Both of Downtown's office towers can be walked into and climbed all the way to the top, floor by floor.
@@ -14,6 +14,7 @@ versions are milestones rather than releases until there is something to release
 - Downtown has a bar: the Late Desk, next to the kiosk, open from four in the afternoon until two at night and kept by Venla Kallio. A place to arrange to meet people, like the Lantern.
 - Downtown has a pocket park across the street from the towers, with trees and benches, and four more residents: Raili, who remembers the street before the towers; Lauri and Marja, who work in them; and Marja's nephew Tomi, who is between things.
 - Downtown has a residents' notice and a road sign, Raili sometimes asks for a hand with her shopping, and every Downtown name has a Finnish version.
+- Anna-Liisa in Old Town and Paula in Eastfield sometimes ask for a hand with their shopping too, so there is someone to help in every district.
 
 ### Fixed (D-097, D-100, D-102, D-103, D-104, D-105)
 - At weekends, people no longer sit inside the Anchor or the Furnace hours before either opens; they spend the early afternoon in the park, at the court or at the pitch and go in when the doors open.

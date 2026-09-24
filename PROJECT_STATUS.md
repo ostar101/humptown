@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-24
 **Milestone:** M6 — Consequences — **complete in code (0.6.0)**. M5 complete (0.5.0). M5 complete in code (0.5.0). **M8 — A town worth walking — complete (all twelve planned steps).** Plan at `C:\Users\miika\.claude\plans\peli-tuntuu-hieman-tyls-lt-prancy-hamming.md`. Sessions A, B and C all done. **Downtown + walkable upper floors — complete, with three residents and a kiosk.** Plan at `C:\Users\miika\.claude\plans\parallel-swimming-hummingbird.md`, all seven steps done (D-091 to D-094); D-095/D-096 (past the plan's own scope, the user's own repeated "continue" with no further detail each time) added residents and a shop.
-**Build:** green. 1165 tests, 37326 assertions with the LimeZu art installed,
+**Build:** green. 1166 tests, 37332 assertions with the LimeZu art installed,
 ~54 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
@@ -10,7 +10,11 @@
 
 ## Next task
 
-**Newest (D-105) — nobody is sent anywhere while it is shut.** The D-104
+**Newest (D-106) — an errand in every district** (Anna-Liisa's bread, Paula's
+milk) and a test that every errand's item is sold in its giver's district.
+1166 green.
+
+**Before that (D-105) — nobody is sent anywhere while it is shut.** The D-104
 test widened to opening hours found 13 people inside the Anchor/Furnace
 hours before opening every weekend; three schedules fixed. **Rule: a
 schedule may only send someone to a place while it is open, except their
@@ -538,7 +542,7 @@ criminal-contacts view (D-050); everything in M7. See `ROADMAP.md`.
 
 - 136 source files in `src/`
 - 74 test suites
-- 58 authored NPCs, 57 locations, 4 regions (all mapped), 35 interiors (16 are downtown's own floors), 25 schedules, 4 backgrounds, 13 shops (2 illicit, kept not walked to), 115 items, 61 recipes, 9 jobs, 4 quests, 4 errands, 4 asks (2 debt/leniency, 2 vouching)
+- 58 authored NPCs, 57 locations, 4 regions (all mapped), 35 interiors (16 are downtown's own floors), 25 schedules, 4 backgrounds, 13 shops (2 illicit, kept not walked to), 115 items, 61 recipes, 9 jobs, 4 quests, 6 errands, 4 asks (2 debt/leniency, 2 vouching)
 
 ---
 

@@ -45,6 +45,21 @@ func test_the_town_has_young_adults_too() -> void:
 	assert_gt(float(young), 10.0, "the town should not read as everyone being middle-aged or older")
 
 
+## D-106: an errand can be done without leaving the district of the person
+## who asks — what they want is sold at a counter there.
+func test_every_errand_can_be_bought_in_its_givers_district() -> void:
+	for errand_id in data.ids("errands"):
+		var errand := data.get_entry("errands", errand_id)
+		var giver := data.get_entry("npcs", str(errand["giver"]))
+		var region := str(data.get_entry("locations", str(giver["home"]))["region"])
+		var sold_at: Array[String] = []
+		for shop_id in data.ids("shops"):
+			var shop := data.get_entry("shops", shop_id)
+			if shop.has("location") and str(data.get_entry("locations", str(shop["location"]))["region"]) == region 					and (shop["stock"] as Dictionary).has(str(errand["item"])):
+				sold_at.append(shop_id)
+		assert_false(sold_at.is_empty(), "%s asks for %s, which nobody in %s sells" % [errand_id, errand["item"], region])
+
+
 func test_every_npc_is_an_adult() -> void:
 	# The world contains mature themes; every simulated inhabitant who can be
 	# approached romantically must be unambiguously an adult. Enforcing it in

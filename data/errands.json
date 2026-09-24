@@ -6,5 +6,9 @@
   {"id": "errand_tuomas_notebook", "name_key": "errand.tuomas_notebook", "giver": "npc_tuomas",
    "item": "item_notebook", "count": 2, "reward": 12, "every_days": 7},
   {"id": "errand_raili_juice", "name_key": "errand.raili_juice", "giver": "npc_raili",
-   "item": "item_juice", "count": 2, "reward": 12, "every_days": 3}
+   "item": "item_juice", "count": 2, "reward": 12, "every_days": 3},
+  {"id": "errand_annaliisa_bread", "name_key": "errand.annaliisa_bread", "giver": "npc_annaliisa",
+   "item": "item_bread", "count": 2, "reward": 12, "every_days": 4},
+  {"id": "errand_paula_milk", "name_key": "errand.paula_milk", "giver": "npc_paula",
+   "item": "item_milk", "count": 1, "reward": 10, "every_days": 3}
 ]

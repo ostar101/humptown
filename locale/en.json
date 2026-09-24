@@ -635,6 +635,8 @@
   "errand.elias_cigarettes": "Cigarettes for Elias",
   "errand.tuomas_notebook": "Notebooks for Tuomas",
   "errand.raili_juice": "Juice for Raili",
+  "errand.annaliisa_bread": "Bread for Anna-Liisa",
+  "errand.paula_milk": "Milk for Paula",
   "ui.quests.finished": "Behind you",
   "ui.quests.empty": "Nothing under way. Harbourside has plenty to do — people will tell you.",
   "ui.quests.progress": "({have} of {need})",
