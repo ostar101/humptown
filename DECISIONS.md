@@ -4383,3 +4383,24 @@ back to back: this machine was heavily loaded (HEAD itself ~75% above the
 morning's numbers) and the two runs differ in both directions; nothing
 here is on the per-minute path — `is_open_at` has no caller in
 `src/npc/` or `src/time/`.
+
+## D-105 — Nobody waits inside a shut bar: the test covers opening hours too
+
+D-104's test asked only about closed days. Widened to the general rule —
+nobody's schedule puts them anywhere outside its opening hours, home and
+their own workplace excepted since staff arrive before the doors open —
+it found thirteen people: every weekend, `sched_docks_early` sent the
+dockers into the Anchor at 12:00 and `sched_student_day` at 15:00, though
+it opens at 16:00; `sched_eastfield_day` sent Eastfield into the Furnace at
+12:00, three hours before it opens. They stood inside a building the player
+could not enter.
+
+Each weekend keeps its shape, with the gap spent somewhere open: the
+dockers at Harbour Park, the students at the court, Eastfield staying on at
+the pitch, each into the bar the moment it opens. The two schedules this
+session wrote (D-099, D-103) already passed.
+
+`test_nobody_is_sent_anywhere_while_it_is_shut` replaces
+`test_nobody_is_sent_to_a_place_on_its_closed_day` (the closed-day case is
+inside it: `is_open_at(minute, day)`). It failed for exactly the thirteen
+and passes now. 1165 green.

@@ -10,7 +10,14 @@
 
 ## Next task
 
-**Newest (D-104) — closed days.** Five shops were open with nobody working
+**Newest (D-105) — nobody is sent anywhere while it is shut.** The D-104
+test widened to opening hours found 13 people inside the Anchor/Furnace
+hours before opening every weekend; three schedules fixed. **Rule: a
+schedule may only send someone to a place while it is open, except their
+home and their own workplace** — `test_nobody_is_sent_anywhere_while_it_
+is_shut` enforces it. 1165 green.
+
+**Before that (D-104) — closed days.** Five shops were open with nobody working
 on some day of the week. `Location.closed_days` (0 = Sunday) +
 `is_closed_on()` + weekday-aware `is_open_at()`; the door refuses
 `closed_today`; meetings/summons check tomorrow. Pharmacy and pawn shop

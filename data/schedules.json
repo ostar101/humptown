@@ -27,7 +27,8 @@
       {"start": 990,  "days": "weekday", "location": "loc_anchor_bar",  "activity": "socialise"},
       {"start": 1290, "days": "weekday", "location": "@home",           "activity": "sleep"},
       {"start": 600,  "days": "weekend", "location": "loc_dock_street", "activity": "walk"},
-      {"start": 720,  "days": "weekend", "location": "loc_anchor_bar",  "activity": "socialise"},
+      {"start": 720,  "days": "weekend", "location": "loc_harbour_park", "activity": "socialise"},
+      {"start": 960,  "days": "weekend", "location": "loc_anchor_bar", "activity": "socialise"},
       {"start": 1320, "days": "weekend", "location": "@home",           "activity": "sleep"}
     ]
   },
@@ -112,7 +113,8 @@
       {"start": 870,  "days": "weekday", "location": "@home",            "activity": "idle"},
       {"start": 1140, "days": "weekday", "location": "loc_anchor_bar",   "activity": "socialise"},
       {"start": 660,  "days": "weekend", "location": "loc_dock_street",  "activity": "walk"},
-      {"start": 900,  "days": "weekend", "location": "loc_anchor_bar",   "activity": "socialise"},
+      {"start": 900,  "days": "weekend", "location": "loc_court", "activity": "socialise"},
+      {"start": 960,  "days": "weekend", "location": "loc_anchor_bar", "activity": "socialise"},
       {"start": 1380, "days": "all",     "location": "@home",            "activity": "sleep"}
     ]
   },
@@ -173,7 +175,8 @@
       {"start": 990, "days": "weekday", "location": "loc_furnace_bar", "activity": "socialise"},
       {"start": 1260, "days": "weekday", "location": "@home", "activity": "sleep"},
       {"start": 600, "days": "weekend", "location": "loc_football_pitch", "activity": "walk"},
-      {"start": 720, "days": "weekend", "location": "loc_furnace_bar", "activity": "socialise"},
+      {"start": 720,  "days": "weekend", "location": "loc_football_pitch", "activity": "socialise"},
+      {"start": 900,  "days": "weekend", "location": "loc_furnace_bar", "activity": "socialise"},
       {"start": 1320, "days": "weekend", "location": "@home", "activity": "sleep"}
     ]
   },
