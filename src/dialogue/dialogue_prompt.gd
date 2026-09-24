@@ -43,6 +43,7 @@ const REGION_PHRASE := {
 	"harbourside": "Harbourside, the harbour district of a small Finnish port town",
 	"old_town": "Old Town, the old quarter of the same small Finnish port town",
 	"eastfield": "Eastfield, the industrial edge of the same small Finnish port town",
+	"downtown": "Downtown, the newer centre of the same small Finnish port town, office towers and blocks of flats",
 }
 const DEFAULT_REGION_PHRASE := "a small Finnish port town"
 

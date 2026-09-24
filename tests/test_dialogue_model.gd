@@ -59,6 +59,17 @@ func test_someone_elsewhere_is_told_where_they_actually_are() -> void:
 	assert_false(text.contains("harbour district"), text.substr(0, 160))
 
 
+## D-100: a region added after D-088 got the bare fallback until this was
+## checked for every region, not just the ones that existed then.
+func test_every_region_has_its_own_phrase() -> void:
+	for region_id: String in Game.data.ids("regions"):
+		assert_true(DialoguePrompt.REGION_PHRASE.has(region_id), "%s has no REGION_PHRASE" % region_id)
+	var saana := Game.npcs.get_npc("npc_saana")
+	saana.location = saana.home
+	var text := DialoguePrompt.system_text(Game.dialogue.prompt_context("npc_saana"))
+	assert_true(text.contains("in Downtown, the newer centre"), text.substr(0, 160))
+
+
 func test_they_know_the_people_they_know_and_nobody_else() -> void:
 	_talk_to_ida_in_her_shop()
 	var people: Array = Game.dialogue.prompt_context("npc_ida")["people"]

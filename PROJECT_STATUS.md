@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-24
 **Milestone:** M6 — Consequences — **complete in code (0.6.0)**. M5 complete (0.5.0). M5 complete in code (0.5.0). **M8 — A town worth walking — complete (all twelve planned steps).** Plan at `C:\Users\miika\.claude\plans\peli-tuntuu-hieman-tyls-lt-prancy-hamming.md`. Sessions A, B and C all done. **Downtown + walkable upper floors — complete, with three residents and a kiosk.** Plan at `C:\Users\miika\.claude\plans\parallel-swimming-hummingbird.md`, all seven steps done (D-091 to D-094); D-095/D-096 (past the plan's own scope, the user's own repeated "continue" with no further detail each time) added residents and a shop.
-**Build:** green. 1158 tests, 36092 assertions with the LimeZu art installed,
+**Build:** green. 1159 tests, 36097 assertions with the LimeZu art installed,
 ~54 s. No leak warnings at exit.
 **Engine:** Godot 4.5.1 stable, GL Compatibility renderer.
 
@@ -10,7 +10,12 @@
 
 ## Next task
 
-**Newest (D-099) — Downtown's pocket park, `sched_downtown_idle`, four
+**Newest (D-100) — Downtown in the dialogue prompt.** `DialoguePrompt.
+REGION_PHRASE` had no `downtown`, so its residents got the bare fallback.
+Added, and `test_every_region_has_its_own_phrase` now walks every region in
+`regions.json`, so a future region cannot miss it. 1159 green.
+
+**Before that (D-099) — Downtown's pocket park, `sched_downtown_idle`, four
 more residents.** `loc_downtown_green` (park, public, meeting_place,
 `[50, 39, 20, 12]`, Harbour Park's trees/benches in `PlaceArt`) gives people
 at home somewhere to spend the afternoon and Downtown an all-day meeting

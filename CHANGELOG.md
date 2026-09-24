@@ -14,7 +14,8 @@ versions are milestones rather than releases until there is something to release
 - Downtown has a bar: the Late Desk, next to the kiosk, open from four in the afternoon until two at night and kept by Venla Kallio. A place to arrange to meet people, like the Lantern.
 - Downtown has a pocket park across the street from the towers, with trees and benches, and four more residents: Raili, who remembers the street before the towers; Lauri and Marja, who work in them; and Marja's nephew Tomi, who is between things.
 
-### Fixed (D-097)
+### Fixed (D-097, D-100)
+- People who live in Downtown now know they live in Downtown when they talk through a language model; before, they were only told "a small port town".
 - Upstairs in a Downtown tower, the people in the building can be talked to; before, you could see them but they counted as "nobody there".
 - Someone following you up a tower's stairs now stays with you in the building instead of ending up nowhere at all.
 - The phone's map shows where you are on an upper floor, not only on the ground floor.

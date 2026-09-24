@@ -4241,3 +4241,20 @@ job (the tower jobs exist and have employers), an occupation or a home.
 four; it walks each through every hour of a week, so the new schedule is
 proven never to leave Downtown. 1158 green, assertions 33744 → 36092.
 Benchmark back to back with HEAD: within ±2% at every population.
+
+## D-100 — Downtown in the dialogue prompt, and a test that covers every region
+
+Found while checking Downtown for hand-written per-region tables (the only
+one in `src/` is this). `DialoguePrompt.REGION_PHRASE` (D-088) listed the
+three regions that existed then; everyone living in Downtown was introduced
+to the model as a clerk "in a small Finnish port town", the bare fallback,
+with no district at all. Not wrong, but the exact loss of place D-088 set
+out to fix, and it would have repeated for every region added after.
+
+`"downtown"` gains its phrase in the same apposition shape ("the newer
+centre of the same small Finnish port town, office towers and blocks of
+flats"). `test_every_region_has_its_own_phrase` (in
+`tests/test_dialogue_model.gd`, beside D-088's own test) walks
+`Game.data.ids("regions")`, so the next region fails the suite until it has
+one, and checks Saana's prompt names Downtown. Fails on the old table,
+passes on the new. 1159 green.
