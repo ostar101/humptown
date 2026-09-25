@@ -48,19 +48,23 @@ MIDDLE = SRC / "ME_Singles_Floor_Modular_Building_32x32_Middle_Floor_1.png"
 ROOF = SRC / "ME_Singles_Floor_Modular_Building_32x32_Roof_1.png"
 
 # BuildingArt.BUILDINGS key -> how many Middle_Floor repeats to stack between
-# the ground cap and the roof cap. Walkable floors = repeats + 1 (the ground
+# the roof cap (top) and the ground cap (bottom). Walkable floors = repeats + 1 (the ground
 # floor); total height in cells = 3 (ground) + 4 * repeats (middle) + 6 (roof).
 LINEUP = {"downtown_2": 1, "downtown_4": 3, "downtown_6": 5}
 
 
 def _composite(ground: Image.Image, middle: Image.Image, roof: Image.Image, repeats: int) -> Image.Image:
+    """Roof at the top of the image, ground floor at the bottom: the art is
+    seen from the street, so the door must sit on the building's bottom row,
+    where the map puts it. (D-107: the first version stacked them the other
+    way up, door in the sky and roof on the pavement.)"""
     width = ground.width
     height = ground.height + middle.height * repeats + roof.height
     out = Image.new("RGBA", (width, height))
-    out.paste(ground, (0, 0))
+    out.paste(roof, (0, 0))
     for i in range(repeats):
-        out.paste(middle, (0, ground.height + middle.height * i))
-    out.paste(roof, (0, height - roof.height))
+        out.paste(middle, (0, roof.height + middle.height * i))
+    out.paste(ground, (0, height - ground.height))
     return out
 
 

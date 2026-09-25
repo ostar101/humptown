@@ -10,7 +10,12 @@
 
 ## Next task
 
-**Newest (D-106) — an errand in every district** (Anna-Liisa's bread, Paula's
+**Newest (D-107) — Downtown's towers the right way up** (user report from
+play). The importer stacked ground floor on top and roof at the bottom;
+fixed in `tools/import_limezu_downtown.py`, art re-baked and re-imported on
+this machine. Anyone else must re-run that importer and `--import`.
+
+**Before that (D-106) — an errand in every district** (Anna-Liisa's bread, Paula's
 milk) and a test that every errand's item is sold in its giver's district.
 1166 green.
 

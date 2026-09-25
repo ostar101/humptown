@@ -4418,3 +4418,22 @@ who asks for a hand.
 `test_content.gd`) makes that a rule: whatever an errand asks for must be
 stocked by a counter shop in the giver's own region. The five errands all
 pass; it exists for the next one. 1166 green.
+
+## D-107 — Downtown's towers the right way up
+
+Reported by the user from play: the block of flats downtown was upside down,
+roof at the bottom and door at the top. All four towers were: D-092's
+`tools/import_limezu_downtown.py` pasted the ground-floor cap at the top of
+the baked image and the roof cap at the bottom. The map, the door column and
+the footprint were all correct, which is why every geometry test passed;
+only the picture was inverted, and D-092/D-093's screenshots were read for
+size and placement rather than for which end was up.
+
+`_composite()` now stacks roof (top), middle floors, ground floor (bottom).
+The pieces keep their heights (roof 6, middle 4, ground 3 cells), so every
+baked image keeps its size and `door_column`, and nothing in `BuildingArt`,
+the maps or the interiors changes. The art is git-ignored: after pulling,
+re-run `python tools/import_limezu_downtown.py` and `godot --headless
+--path . --import`. Done on this machine and checked by screenshot, the only
+check that can see it — no test inspects which way up a sprite is drawn.
+1166 green.

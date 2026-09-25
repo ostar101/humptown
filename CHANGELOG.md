@@ -16,7 +16,8 @@ versions are milestones rather than releases until there is something to release
 - Downtown has a residents' notice and a road sign, Raili sometimes asks for a hand with her shopping, and every Downtown name has a Finnish version.
 - Anna-Liisa in Old Town and Paula in Eastfield sometimes ask for a hand with their shopping too, so there is someone to help in every district.
 
-### Fixed (D-097, D-100, D-102, D-103, D-104, D-105)
+### Fixed (D-097, D-100, D-102, D-103, D-104, D-105, D-107)
+- Downtown's towers are drawn the right way up: roof on top, front door on the street (they were upside down). Re-run `tools/import_limezu_downtown.py` and Godot's import to see it.
 - At weekends, people no longer sit inside the Anchor or the Furnace hours before either opens; they spend the early afternoon in the park, at the court or at the pitch and go in when the doors open.
 - Shops no longer stand open with nobody in them: the pharmacy and the pawn shop close at weekends and the corner shop on Sundays (the door says "closed today"), while Emma now works Sundays at Kaisla and Tomi minds the Downtown kiosk. Nobody suggests meeting somewhere that will be shut.
 - Eight people in Old Town and Eastfield no longer spend every day in Harbourside: they keep to their own districts, as their stories always said (the library, the Lantern, the window over the street).
